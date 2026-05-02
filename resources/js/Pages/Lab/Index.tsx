@@ -1,0 +1,94 @@
+import { Head, Link } from '@inertiajs/react';
+import { motion } from 'motion/react';
+
+import PublicLayout from '@/Layouts/PublicLayout';
+
+type LabExperiment = {
+    id: string;
+    title: string;
+    summary: string;
+    status: string;
+};
+
+type LabIndexProps = {
+    experiments: LabExperiment[];
+};
+
+export default function Index({ experiments }: LabIndexProps) {
+    return (
+        <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
+            <Head title="Lab" />
+
+            <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 pb-14 pt-4 sm:pt-8">
+                <header className="flex items-center justify-between gap-4">
+                    <Link
+                        href="/"
+                        className="rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                    >
+                        Water Lab
+                    </Link>
+                    <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-950/70 backdrop-blur-xl">
+                        Preview
+                    </span>
+                </header>
+
+                <section className="flex flex-1 flex-col justify-center gap-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.75, ease: 'easeOut' }}
+                    >
+                        <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-950/70">
+                            Lab Index
+                        </p>
+                        <h1 className="mt-3 text-4xl font-semibold text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.35)] sm:text-6xl">
+                            Experiments
+                        </h1>
+                    </motion.div>
+
+                    {/*
+                        現在はルートから受け取った仮データを表示しています。
+                        props の形を先に固定しておくと、将来 DB 取得へ置き換える時も
+                        このカードUIを大きく変えずにデータ取得元だけ差し替えられます。
+                    */}
+                    <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                        {experiments.map((experiment, index) => (
+                            <motion.article
+                                key={experiment.id}
+                                className="min-h-[230px] rounded-[2rem] border border-white/35 bg-slate-950/36 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_22px_48px_rgba(2,24,45,0.26)] backdrop-blur-2xl"
+                                initial={{ opacity: 0, y: 22 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                    delay: index * 0.08,
+                                    duration: 0.65,
+                                    ease: 'easeOut',
+                                }}
+                                whileHover={{ y: -5 }}
+                            >
+                                <div className="flex h-full flex-col justify-between gap-8">
+                                    <div>
+                                        <span className="inline-flex rounded-full border border-cyan-100/45 bg-cyan-50/20 px-3 py-1 text-xs font-semibold text-cyan-50">
+                                            {experiment.status}
+                                        </span>
+                                        <h2 className="mt-5 text-2xl font-semibold leading-tight text-white">
+                                            {experiment.title}
+                                        </h2>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-sm leading-7 text-cyan-50/90">
+                                            {experiment.summary}
+                                        </p>
+                                        <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/70">
+                                            詳細ページ未実装
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.article>
+                        ))}
+                    </div>
+                </section>
+            </div>
+        </PublicLayout>
+    );
+}

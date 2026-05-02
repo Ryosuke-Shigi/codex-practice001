@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "baseUrl": ".",
+        "isolatedModules": true,
+        "jsx": "react-jsx",
+        "lib": ["DOM", "DOM.Iterable", "ES2020"],
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "noEmit": true,
+        "paths": {
+            "@/*": ["resources/js/*"]
+        },
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ES2020",
+        "types": ["vite/client"]
+    },
+    "include": ["resources/js/**/*.d.ts", "resources/js/**/*.ts", "resources/js/**/*.tsx", "vite.config.js"]
+}
