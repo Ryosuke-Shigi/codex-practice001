@@ -3,10 +3,10 @@ import $ from 'jquery';
 import 'jquery.ripples';
 
 /*
- * jquery.ripples is an imperative jQuery plugin, while the rest of the app is
+ * jquery.ripples is an imperative jQuery plugin, while the app is otherwise
  * declarative React/Inertia. Keeping the import and DOM manipulation in this
- * one visual component prevents jQuery assumptions from spreading into pages,
- * app.tsx, body, or #app.
+ * component prevents jQuery assumptions from spreading into pages, app.tsx,
+ * body, or #app.
  */
 
 /*
@@ -29,27 +29,27 @@ type RipplesElement = JQuery<HTMLElement> & {
 };
 
 /*
- * This gradient is the baseline design, not just an error state. If WebGL or
- * jquery.ripples fails, the screen still has a complete water-themed background
- * instead of becoming blank or visually broken.
+ * This translucent fallback is both a design baseline and a safety net. If
+ * WebGL or jquery.ripples fails, the page still has a water-themed surface, and
+ * ColorShiftBackground can still show through from behind.
  */
 const fallbackBackground =
-    'radial-gradient(circle at 22% 12%, rgba(236,254,255,0.72) 0%, rgba(236,254,255,0) 28%), linear-gradient(155deg, #dffbff 0%, #87e8f1 24%, #2297b2 48%, #0b4e73 70%, #04152f 100%)';
+    'radial-gradient(circle at 22% 12%, rgba(236,254,255,0.48) 0%, rgba(236,254,255,0) 30%), linear-gradient(155deg, rgba(223,251,255,0.48) 0%, rgba(135,232,241,0.4) 24%, rgba(34,151,178,0.34) 48%, rgba(11,78,115,0.42) 70%, rgba(4,21,47,0.56) 100%)';
 
 /*
- * jquery.ripples distorts an image texture. Using an inline SVG gives the plugin
- * a stable water surface without adding another asset file or network request,
- * while the CSS gradient remains available as the no-WebGL fallback.
+ * jquery.ripples distorts an image texture. The SVG stays intentionally
+ * semi-transparent; an opaque texture would cover the ColorShiftBackground and
+ * make the "reflected sky color" layer impossible to see.
  */
 const waterTexture = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="none">
   <defs>
     <linearGradient id="water" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#dffbff"/>
-      <stop offset="0.28" stop-color="#83e8f0"/>
-      <stop offset="0.55" stop-color="#1689aa"/>
-      <stop offset="0.78" stop-color="#0a4268"/>
-      <stop offset="1" stop-color="#04132d"/>
+      <stop offset="0" stop-color="#dffbff" stop-opacity="0.56"/>
+      <stop offset="0.28" stop-color="#83e8f0" stop-opacity="0.46"/>
+      <stop offset="0.55" stop-color="#1689aa" stop-opacity="0.34"/>
+      <stop offset="0.78" stop-color="#0a4268" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#04132d" stop-opacity="0.58"/>
     </linearGradient>
     <radialGradient id="glow" cx="26%" cy="15%" r="55%">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.74"/>
@@ -65,21 +65,20 @@ const waterTexture = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
     </filter>
   </defs>
   <rect width="1600" height="1000" fill="url(#water)"/>
-  <rect width="1600" height="1000" fill="url(#glow)"/>
+  <rect width="1600" height="1000" fill="url(#glow)" opacity="0.72"/>
   <g fill="none" stroke="#e8fdff" stroke-opacity="0.18" stroke-width="8">
     <path d="M-120 210 C 180 120, 420 305, 720 205 S 1230 95, 1720 245"/>
     <path d="M-180 430 C 170 560, 430 340, 760 465 S 1270 650, 1760 475"/>
     <path d="M-160 690 C 210 570, 470 780, 820 690 S 1300 520, 1740 720"/>
   </g>
-  <rect width="1600" height="1000" filter="url(#grain)" opacity="0.48"/>
+  <rect width="1600" height="1000" filter="url(#grain)" opacity="0.28"/>
 </svg>
 `)}`;
 
 export default function WaterBackground() {
     /*
-     * useRef gives jQuery one stable DOM node after React has rendered it. We
-     * avoid document/body queries so the plugin can only affect this background
-     * layer and cannot accidentally take over the React app root.
+     * useRef gives jQuery one stable DOM node after React has rendered it. That
+     * avoids querying body or #app, so the plugin only controls this water layer.
      */
     const rippleRef = useRef<HTMLDivElement>(null);
 
@@ -95,8 +94,8 @@ export default function WaterBackground() {
         let firstDropTimer: number | undefined;
 
         /*
-         * The plugin's pointer interactivity is disabled so the background never
-         * competes with START or Lab card clicks. Programmatic drops keep the
+         * Plugin pointer interactivity is disabled because the background should
+         * not compete with START or Lab card clicks. Programmatic drops keep the
          * water visibly alive while preserving normal React UI interaction.
          */
         const addDrop = () => {
@@ -120,11 +119,10 @@ export default function WaterBackground() {
         };
 
         /*
-         * useEffect runs in the browser after the DOM node exists and has real
-         * dimensions, which jquery.ripples needs to create its WebGL canvas.
-         * try/catch is important because WebGL support differs by device; when
-         * initialization fails, the CSS water gradient is already good enough to
-         * keep the public pages readable and visually intentional.
+         * useEffect runs after the DOM node exists and has real dimensions, which
+         * jquery.ripples needs before creating its WebGL canvas. try/catch keeps
+         * devices without the required WebGL support on the translucent CSS
+         * fallback instead of breaking the page.
          */
         try {
             $water.ripples({
@@ -143,9 +141,9 @@ export default function WaterBackground() {
 
         return () => {
             /*
-             * Inertia can mount/unmount React pages without a full reload. Timers
-             * and the plugin canvas must be cleaned up so returning to this layout
-             * does not leave duplicate canvases, event handlers, or animation work.
+             * Inertia can swap pages without a full browser reload. Destroying the
+             * plugin and timers prevents duplicate canvases, stale handlers, and
+             * unnecessary animation work when this layer unmounts.
              */
             window.clearTimeout(firstDropTimer);
             window.clearInterval(dropTimer);
@@ -159,19 +157,17 @@ export default function WaterBackground() {
     }, []);
 
     return (
-        /*
-         * pointer-events-none makes the animated layer behave like scenery: it can
-         * be seen, but it cannot block clicks. PublicLayout lifts page content with
-         * z-index so buttons and cards remain above this fixed viewport background.
-         */
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 overflow-hidden">
+            {/*
+                The water layer must stay translucent. A solid bg-color or fully
+                opaque gradient here would hide ColorShiftBackground even though
+                the layer order is technically correct.
+            */}
             <div
                 ref={rippleRef}
-                className="absolute inset-0 bg-cover bg-center"
+                className="absolute inset-0 bg-cover bg-center opacity-70"
                 style={{ backgroundImage: fallbackBackground }}
             />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.34),rgba(255,255,255,0)_42%),linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(255,255,255,0)_34%,rgba(1,8,23,0.44)_100%)]" />
-            <div className="absolute inset-0 bg-slate-950/10" />
         </div>
     );
 }

@@ -16,6 +16,12 @@ type LabIndexProps = {
 
 export default function Index({ experiments }: LabIndexProps) {
     return (
+        /*
+            Lab uses PublicLayout for the same public background stack, but it
+            does not pass an effect prop or register key handlers. The left/right
+            switching demo belongs to Welcome only, so this list page stays
+            focused on showing experiments.
+        */
         <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
             <Head title="Lab" />
 
@@ -47,9 +53,9 @@ export default function Index({ experiments }: LabIndexProps) {
                     </motion.div>
 
                     {/*
-                        現在はルートから受け取った仮データを表示しています。
-                        props の形を先に固定しておくと、将来 DB 取得へ置き換える時も
-                        このカードUIを大きく変えずにデータ取得元だけ差し替えられます。
+                        experiments は routes/web.php から渡される Inertia prop です。
+                        現在は将来 DB 取得へ置き換える前提の仮データで、固定配列を
+                        完成扱いにしないため、カードUIとデータ取得元を分けて考えます。
                     */}
                     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                         {experiments.map((experiment, index) => (
