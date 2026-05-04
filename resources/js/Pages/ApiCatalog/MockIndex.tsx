@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 
 import PublicLayout from '@/Layouts/PublicLayout';
+import { mockApiCatalogItems, mockDomains, mockProviders } from './mockApiCatalogData';
 
 const ITEMS_PER_PAGE = 6;
 const ALL_PROVIDERS = 'all';
@@ -12,27 +13,6 @@ type ApiCatalogFilters = {
     keyword: string;
     providerKey: string;
     domain: string;
-};
-
-type ApiCatalogProvider = {
-    providerKey: string;
-    domain: string;
-};
-
-type ApiCatalogListItemSource = {
-    title: string;
-    apiKey: string;
-    providerKey: string;
-    serviceKey: string;
-    domain: string;
-    description: string;
-    preferredVersion: string;
-    openapiVersion: string;
-    sourceLatestUpdatedAt: string;
-};
-
-type ApiCatalogListItem = ApiCatalogListItemSource & {
-    googleSearchUrl: string;
 };
 
 type ApiCatalogPagination = {
@@ -50,219 +30,15 @@ const defaultFilters: ApiCatalogFilters = {
     domain: ALL_DOMAINS,
 };
 
-const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
-    {
-        title: 'Stripe API',
-        apiKey: 'stripe.com',
-        providerKey: 'stripe.com',
-        serviceKey: 'payments',
-        domain: 'payments',
-        description:
-            'Online payment processing APIs for cards, wallets, subscriptions, invoicing, checkout, and connected accounts.',
-        preferredVersion: '2025-02-24',
-        openapiVersion: '3.0.3',
-        sourceLatestUpdatedAt: '2026-04-18',
-    },
-    {
-        title: 'GitHub REST API',
-        apiKey: 'github.com',
-        providerKey: 'github.com',
-        serviceKey: 'rest',
-        domain: 'developer-tools',
-        description:
-            'Repository, issue, pull request, workflow, user, organization, and package operations for GitHub integrations.',
-        preferredVersion: '2022-11-28',
-        openapiVersion: '3.0.1',
-        sourceLatestUpdatedAt: '2026-04-09',
-    },
-    {
-        title: 'Google Calendar API',
-        apiKey: 'googleapis.com:calendar',
-        providerKey: 'googleapis.com',
-        serviceKey: 'calendar:v3',
-        domain: 'productivity',
-        description:
-            'Calendar events, availability, reminders, conference data, and calendar list management for Google Workspace.',
-        preferredVersion: 'v3',
-        openapiVersion: '3.0.0',
-        sourceLatestUpdatedAt: '2026-03-30',
-    },
-    {
-        title: 'Slack Web API',
-        apiKey: 'slack.com:web',
-        providerKey: 'slack.com',
-        serviceKey: 'web-api',
-        domain: 'communication',
-        description:
-            'Workspace messaging, channel management, user lookup, files, reactions, and app workflow endpoints for Slack.',
-        preferredVersion: 'v1',
-        openapiVersion: '3.0.0',
-        sourceLatestUpdatedAt: '2026-04-22',
-    },
-    {
-        title: 'Notion API',
-        apiKey: 'notion.com',
-        providerKey: 'notion.com',
-        serviceKey: 'public-api',
-        domain: 'productivity',
-        description:
-            'Database, page, block, comment, user, and search endpoints for building workspace automation around Notion.',
-        preferredVersion: '2022-06-28',
-        openapiVersion: '3.1.0',
-        sourceLatestUpdatedAt: '2026-04-02',
-    },
-    {
-        title: 'OpenAI API',
-        apiKey: 'openai.com',
-        providerKey: 'openai.com',
-        serviceKey: 'platform',
-        domain: 'ai',
-        description:
-            'Model inference, responses, embeddings, files, vector stores, realtime, and tool calling APIs for AI products.',
-        preferredVersion: 'v1',
-        openapiVersion: '3.1.0',
-        sourceLatestUpdatedAt: '2026-04-26',
-    },
-    {
-        title: 'Twilio Messaging API',
-        apiKey: 'twilio.com:messaging',
-        providerKey: 'twilio.com',
-        serviceKey: 'messaging',
-        domain: 'communication',
-        description:
-            'SMS, MMS, WhatsApp, sender, conversation, delivery status, and phone number messaging workflows.',
-        preferredVersion: '2010-04-01',
-        openapiVersion: '3.0.1',
-        sourceLatestUpdatedAt: '2026-03-16',
-    },
-    {
-        title: 'SendGrid v3 API',
-        apiKey: 'sendgrid.com:v3',
-        providerKey: 'sendgrid.com',
-        serviceKey: 'mail',
-        domain: 'communication',
-        description:
-            'Transactional email, dynamic templates, suppressions, sender authentication, and marketing contact APIs.',
-        preferredVersion: 'v3',
-        openapiVersion: '3.0.0',
-        sourceLatestUpdatedAt: '2026-02-28',
-    },
-    {
-        title: 'Shopify Admin API',
-        apiKey: 'shopify.dev:admin',
-        providerKey: 'shopify.dev',
-        serviceKey: 'admin',
-        domain: 'commerce',
-        description:
-            'Store admin resources for products, inventory, orders, fulfillments, customers, discounts, and app workflows.',
-        preferredVersion: '2026-01',
-        openapiVersion: '3.1.0',
-        sourceLatestUpdatedAt: '2026-04-12',
-    },
-    {
-        title: 'NASA Open APIs',
-        apiKey: 'nasa.gov',
-        providerKey: 'nasa.gov',
-        serviceKey: 'open-data',
-        domain: 'data',
-        description:
-            'Astronomy picture, Mars rover photos, imagery, patents, near earth objects, and public NASA data endpoints.',
-        preferredVersion: 'v1',
-        openapiVersion: '3.0.0',
-        sourceLatestUpdatedAt: '2026-01-24',
-    },
-    {
-        title: 'OpenWeather API',
-        apiKey: 'openweathermap.org',
-        providerKey: 'openweathermap.org',
-        serviceKey: 'weather',
-        domain: 'weather',
-        description:
-            'Current weather, forecasts, geocoding, historical weather, alerts, air pollution, and climate data services.',
-        preferredVersion: '2.5',
-        openapiVersion: '3.0.2',
-        sourceLatestUpdatedAt: '2026-03-08',
-    },
-    {
-        title: 'Spotify Web API',
-        apiKey: 'spotify.com:web',
-        providerKey: 'spotify.com',
-        serviceKey: 'web-api',
-        domain: 'media',
-        description:
-            'Catalog, album, artist, track, playlist, playback, user library, search, and recommendation endpoints.',
-        preferredVersion: 'v1',
-        openapiVersion: '3.0.0',
-        sourceLatestUpdatedAt: '2026-04-06',
-    },
-    {
-        title: 'Cloudflare API',
-        apiKey: 'cloudflare.com',
-        providerKey: 'cloudflare.com',
-        serviceKey: 'global-api',
-        domain: 'infrastructure',
-        description:
-            'DNS, zone, worker, firewall, cache, tunnel, access, account, analytics, and edge infrastructure APIs.',
-        preferredVersion: 'v4',
-        openapiVersion: '3.0.3',
-        sourceLatestUpdatedAt: '2026-04-20',
-    },
-    {
-        title: 'Auth0 Management API',
-        apiKey: 'auth0.com:management',
-        providerKey: 'auth0.com',
-        serviceKey: 'management',
-        domain: 'identity',
-        description:
-            'Tenant, user, organization, client, connection, role, permission, log, and identity provider management.',
-        preferredVersion: 'v2',
-        openapiVersion: '3.0.0',
-        sourceLatestUpdatedAt: '2026-03-25',
-    },
-    {
-        title: 'Microsoft Graph API',
-        apiKey: 'microsoft.com:graph',
-        providerKey: 'microsoft.com',
-        serviceKey: 'graph',
-        domain: 'productivity',
-        description:
-            'Unified Microsoft 365 data APIs for mail, calendar, files, users, groups, Teams, security, and identity.',
-        preferredVersion: 'v1.0',
-        openapiVersion: '3.0.1',
-        sourceLatestUpdatedAt: '2026-04-15',
-    },
-];
-
-function createGoogleSearchUrl(item: Pick<ApiCatalogListItemSource, 'title' | 'apiKey'>) {
-    const queryTarget = item.title.trim() || item.apiKey;
-
-    return `https://www.google.com/search?q=${encodeURIComponent(`${queryTarget} API`)}`;
-}
-
-const mockApiCatalogItems: ApiCatalogListItem[] = mockApiCatalogItemSources.map((item) => ({
-    ...item,
-    googleSearchUrl: createGoogleSearchUrl(item),
-}));
-
-const mockProviders: ApiCatalogProvider[] = Array.from(
-    new Map(
-        mockApiCatalogItems.map((item) => [
-            item.providerKey,
-            {
-                providerKey: item.providerKey,
-                domain: item.domain,
-            },
-        ]),
-    ).values(),
-).sort((first, second) => first.providerKey.localeCompare(second.providerKey));
-
-const mockDomains = Array.from(new Set(mockApiCatalogItems.map((item) => item.domain))).sort();
-
 function shouldIgnorePaginationKey(target: EventTarget | null) {
     if (!(target instanceof HTMLElement)) {
         return false;
     }
 
+    /*
+     * 一覧画面は ArrowLeft / ArrowRight でページ送りします。
+     * 検索 input や select 操作中の矢印キーはフォーム側へ渡します。
+     */
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
 }
 
@@ -289,6 +65,10 @@ export default function MockIndex() {
     const filteredItems = useMemo(() => {
         const keyword = filters.keyword.trim().toLowerCase();
 
+        /*
+         * 本実装では検索条件を Query Action / Repository へ渡す想定です。
+         * モックでは Inertia 部分更新後の props 分割を意識しつつ、React 内で絞り込みます。
+         */
         return mockApiCatalogItems.filter((item) => {
             const matchesKeyword =
                 keyword.length === 0 ||
@@ -311,6 +91,10 @@ export default function MockIndex() {
     const apiCatalogItems = useMemo(() => {
         const startIndex = (pagination.currentPage - 1) * pagination.perPage;
 
+        /*
+         * apiCatalogItems は将来 Responder から渡す主更新対象です。
+         * ここでは固定データをページ単位に slice して同じ形の UI を確認します。
+         */
         return filteredItems.slice(startIndex, startIndex + pagination.perPage);
     }, [filteredItems, pagination.currentPage, pagination.perPage]);
 
@@ -490,21 +274,27 @@ export default function MockIndex() {
                                 {item.description}
                             </p>
 
-                            <dl className="mt-4 grid gap-2 text-xs text-cyan-50/78">
-                                <div className="min-w-0">
-                                    <dt className="sr-only">Search</dt>
-                                    <dd>
-                                        <a
-                                            href={item.googleSearchUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                                        >
-                                            Search
-                                        </a>
-                                    </dd>
-                                </div>
-                            </dl>
+                            {/*
+                                詳細と Search は別リンクにしています。
+                                Google 検索を押した時に詳細画面へ遷移しないよう、カード全体クリックにはしていません。
+                            */}
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                <Link
+                                    href={`/api-catalog/mock/${encodeURIComponent(item.apiKey)}`}
+                                    className="inline-flex min-h-9 items-center justify-center rounded-lg bg-cyan-200 px-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                                >
+                                    詳細
+                                </Link>
+
+                                <a
+                                    href={item.googleSearchUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
+                                >
+                                    Search
+                                </a>
+                            </div>
                         </motion.article>
                     ))}
 

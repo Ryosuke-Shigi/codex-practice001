@@ -41,9 +41,17 @@ Route::get('/lab', function () {
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 
+// API Discovery Hub 本体一覧の UI 確認用モックです。DB 取得や Responder にはまだ接続しません。
 Route::get('/api-catalog/mock', function () {
     return Inertia::render('ApiCatalog/MockIndex');
 })->name('api-catalog.mock');
+
+// API Discovery Hub 本体詳細の UI 確認用モックです。DB 取得や Query Action にはまだ接続しません。
+Route::get('/api-catalog/mock/{apiKey}', function (string $apiKey) {
+    return Inertia::render('ApiCatalog/MockDetail', [
+        'apiKey' => $apiKey,
+    ]);
+})->name('api-catalog.mock.detail');
 
 // API preview は本体同期や DB 保存とは切り離した、開発補助用の確認ルートです。
 Route::get('/api-preview/apis-guru', ApisGuruPreviewController::class)->name('api-preview.apis-guru');

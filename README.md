@@ -2,7 +2,7 @@
 
 このリポジトリは、Laravel + Docker を前提に、CodexApp・ChatGPT・VS Code を使った AI 駆動／仕様駆動開発を練習・検証するためのポートフォリオ用プロジェクトです。
 
-現時点では Laravel 11 の初期構成をベースにした学習用アプリケーションです。独自の業務機能、ADR パターンの具体実装、レイヤードアーキテクチャ用のディレクトリ構成はまだ実装していません。
+現時点では Laravel 11 の初期構成をベースに、Inertia / React の公開画面、API Preview、API Discovery Hub のモック画面、APIs.guru 連携確認、API カタログ同期キャッシュの検証実装を段階的に追加しています。
 
 ## 1. プロジェクト概要
 
@@ -10,7 +10,9 @@ Laravel アプリケーション本体はこの `src` ディレクトリで Git 
 
 Docker 関連ファイルは、ローカル開発環境として一階層上のプロジェクトルートに配置しています。現在確認できている Docker 構成は `docker-compose.yml`、`docker/nginx/default.conf`、`docker/php/Dockerfile`、`docker/php/php.ini`、`docker/mysql/my.cnf`、`docker/node/Dockerfile` です。
 
-現在のアプリケーションは Laravel の初期ルート `GET /` が `welcome` ビューを返す状態です。独自の画面、API、CRUD、認証機能は未実装です。
+現在のアプリケーションは Inertia / React を使った公開画面を持ちます。`GET /` はポートフォリオ入口、`GET /lab` は実験画面一覧、`GET /api-preview` は外部 API 確認用の入口、`GET /api-catalog/mock` は API Discovery Hub 本体一覧のモック画面です。
+
+本番用の API Discovery Hub 一覧はまだ未実装です。現在の一覧画面は DB 接続前に UI と操作感を確認するためのモックであり、Repository / Query Action / Responder には接続していません。
 
 ## 2. このプロジェクトの目的
 
@@ -37,7 +39,10 @@ Docker 関連ファイルは、ローカル開発環境として一階層上の�
 - nginx: stable Alpine イメージ
 - Node.js: LTS 系 Docker イメージ
 - Vite: `^6.0.11`
+- Inertia React: `^2.0.0`
+- React: `^19.0.0`
 - Tailwind CSS: `^3.4.13`
+- motion: `^12.0.0`
 - Axios: `^1.7.4`
 - PHPUnit: `^11.0.1`
 - Laravel Pint
@@ -73,32 +78,78 @@ docker compose run --rm composer install
 docker compose run --rm npm install
 ```
 
-## 5. ディレクトリ構成
+## 5. 現在の画面とルート
+
+現在確認用に用意している主な画面は次のとおりです。
+
+- `GET /`: ポートフォリオ入口。水面などの背景エフェクトを切り替えられる公開画面
+- `GET /lab`: 実験画面一覧。API Preview などの検証画面への入口
+- `GET /api-preview`: 外部 API の疎通確認画面。API Discovery Hub 本体画面モックの入口枠も配置
+- `GET /api-preview/apis-guru`: APIs.guru `list.json` の実取得確認画面
+- `GET /api-preview/apis-guru/mock`: APIs.guru 成功レスポンスの固定データ確認画面
+- `GET /api-preview/apis-guru/mock-error`: APIs.guru エラーレスポンスの固定データ確認画面
+- `GET /api-catalog/mock`: API Discovery Hub 本体の API 一覧モック画面
+
+`/api-catalog/mock` では、固定配列のモックデータを使い、次の操作を確認できます。
+
+- キーワード検索
+- `providerKey` 絞り込み
+- `domain` 絞り込み
+- 条件クリア
+- 1ページ6件のカード表示
+- 左右ボタンと `ArrowLeft` / `ArrowRight` によるページ送り
+- `Search` クリックによる Google 検索
+- `/api-preview` へ戻るボタン
+
+各 API カードでは、一覧確認に必要な情報だけを表示します。`apiKey`、`openapiVersion`、`sourceLatestUpdatedAt` はモックデータ内には持ちますが、カード上には表示しません。Google 検索 URL は DB 保存前提ではなく、React 側で `title` または `apiKey` から生成します。
+
+## 6. ディレクトリ構成
 
 現在確認できている主な Laravel 側の構成です。
 
 ```text
 src/
 ├── app/
+│   ├── Actions/
+│   │   ├── ApiCatalog/
+│   │   └── ApiPreview/
+│   ├── Console/
+│   │   └── Commands/
+│   ├── DTO/
+│   │   ├── ApiCatalog/
+│   │   └── ApiPreview/
+│   ├── Factories/
 │   ├── Http/
 │   │   └── Controllers/
-│   │       └── Controller.php
+│   ├── Jobs/
 │   ├── Models/
-│   │   └── User.php
+│   ├── Repositories/
+│   ├── Responders/
+│   ├── Services/
 │   └── Providers/
-│       └── AppServiceProvider.php
 ├── bootstrap/
 ├── config/
 ├── database/
 │   └── migrations/
 ├── public/
 ├── resources/
+│   ├── css/
+│   └── js/
+│       ├── Components/
+│       ├── Layouts/
+│       └── Pages/
+│           ├── ApiCatalog/
+│           ├── ApiPreview/
+│           ├── Lab/
+│           └── Welcome.tsx
 ├── routes/
 │   ├── console.php
 │   └── web.php
 ├── storage/
 ├── tests/
 │   ├── Feature/
+│   │   ├── ApiPreview/
+│   │   │   └── ApiPreviewTest.php
 │   │   └── ExampleTest.php
 │   ├── Unit/
 │   │   └── ExampleTest.php
@@ -109,13 +160,13 @@ src/
 └── vite.config.js
 ```
 
-現時点では `app/Actions`、`app/Services`、`app/Repositories`、`app/DTOs`、`app/Http/Responders`、`app/Factories`、`app/Strategies` は未作成です。
+API Preview と API カタログ同期検証では、Action / Service / Repository / DTO / Responder / Factory / Job / Command を一部作成済みです。一方で、API Discovery Hub 本体一覧の `/api-catalog/mock` は UI モック確認用のため、Controller / Query Action / Repository / DTO / Responder にはまだ接続していません。
 
-## 6. 設計方針
+## 7. 設計方針
 
 設計方針は、ADR パターンとレイヤードアーキテクチャを組み合わせ、責務を小さく分けて実装することです。ここでの ADR は Action-Domain-Responder の考え方を指します。
 
-ただし、現時点では方針段階であり、具体的な独自実装はまだありません。
+現時点では API Preview と API カタログ同期検証から、Action / Service / Repository / DTO / Responder などを段階的に導入しています。API Discovery Hub 本体一覧は、まず Inertia / React のモック画面で UI と props 分割方針を確認してから本実装へ進める方針です。
 
 今後の責務分離方針は次のとおりです。
 
@@ -131,7 +182,7 @@ src/
 
 設計の詳細なルール、命名規則、ディレクトリ構成は今後追記します。
 
-## 7. AI の使用方針
+## 8. AI の使用方針
 
 このプロジェクトでは AI に丸投げしません。
 
@@ -144,7 +195,7 @@ src/
 
 AI が生成したコードは、そのまま正しいものとして扱わず、責務・命名・テスト・既存構成との整合性を確認します。
 
-## 8. 人間が判断する範囲
+## 9. 人間が判断する範囲
 
 人間が判断する範囲は次のとおりです。
 
@@ -157,7 +208,7 @@ AI が生成したコードは、そのまま正しいものとして扱わず�
 - GitHub に push / merge するかどうか
 - ポートフォリオとして公開してよい品質かどうか
 
-## 9. CodexApp に任せる範囲
+## 10. CodexApp に任せる範囲
 
 CodexApp には、主に次の作業を任せます。
 
@@ -170,7 +221,7 @@ CodexApp には、主に次の作業を任せます。
 
 CodexApp に任せる場合でも、作業範囲、制約、変更してよいファイルは人間が指定します。
 
-## 10. 開発フロー
+## 11. 開発フロー
 
 想定している開発フローは次のとおりです。
 
@@ -184,9 +235,9 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 
 現在の具体的なブランチ運用、Issue 運用、Pull Request 運用は未定です。
 
-## 11. テスト方針
+## 12. テスト方針
 
-現在は Laravel 初期状態の Example テストのみ確認できています。独自機能に対するテストはまだありません。
+現在は Laravel 初期状態の Example テストに加えて、API Preview の Feature テストを追加しています。API Discovery Hub 本体一覧モックに対する専用テストはまだありません。
 
 今後の方針は次のとおりです。
 
@@ -198,25 +249,29 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 
 テスト実行コマンドは今後運用しながら追記します。現時点では Laravel 標準の `php artisan test` を使用する想定です。
 
-## 12. 今後実装予定
+## 13. 今後実装予定
 
-今後実装する内容は未定です。現時点の候補は次のとおりです。
+今後実装する内容の候補は次のとおりです。
 
-- 小さな CRUD 機能
-- ADR パターンを意識した Action / Responder の導入
-- Service / Repository / DTO の責務分離
+- API Discovery Hub 本体一覧の Controller / Query Action / Repository / DTO / Responder 接続
+- Inertia props を `filters`、`providers`、`apiCatalogItems`、`pagination` に分けた本実装
+- Inertia 部分更新を使った検索・ページ送り
+- API Discovery Hub 編集画面モック
+- API Discovery Hub 詳細画面
+- 保存済み API やメモ機能の検討
 - Factory / Strategy の使いどころの検証
 - Feature テストと Unit テストの追加
 - GitHub 上での開発フロー整理
 - README への設計判断や実装履歴の追記
 
-実装済みではないため、詳細は今後追記します。
+API Discovery Hub 本体一覧では、APIs.guru の `list.json` を公開 API カタログデータソースとして扱います。`api_catalog_cache` は同期キャッシュ用テーブルとし、Google 検索リンクは DB に保存せず表示時に生成します。
 
-## 13. 注意事項
+## 14. 注意事項
 
 - この README は現在確認できる構成に基づいています。
-- 独自機能はまだ実装していません。
-- ADR パターン、レイヤードアーキテクチャ、各種責務分離は現時点では設計方針です。
+- API Discovery Hub 本体一覧は現時点ではモック画面です。
+- API Preview 側の Repository / DTO / Responder は本体側に流用しない前提です。
+- ADR パターン、レイヤードアーキテクチャ、各種責務分離は段階的に導入しています。
 - `.env` や `vendor/`、`node_modules/` は Git 管理対象外です。
 - Docker 関連ファイルはローカルのプロジェクトルートにあります。GitHub 上でこの `src` ディレクトリのみを確認する場合、Docker ファイルは含まれない可能性があります。
 - 不明な点や未決定の運用ルールは、今後追記します。
