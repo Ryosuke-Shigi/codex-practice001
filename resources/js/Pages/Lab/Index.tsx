@@ -8,6 +8,7 @@ type LabExperiment = {
     title: string;
     summary: string;
     status: string;
+    href?: string;
 };
 
 type LabIndexProps = {
@@ -58,40 +59,55 @@ export default function Index({ experiments }: LabIndexProps) {
                         完成扱いにしないため、カードUIとデータ取得元を分けて考えます。
                     */}
                     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                        {experiments.map((experiment, index) => (
-                            <motion.article
-                                key={experiment.id}
-                                className="min-h-[230px] rounded-[2rem] border border-white/35 bg-slate-950/36 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_22px_48px_rgba(2,24,45,0.26)] backdrop-blur-2xl"
-                                initial={{ opacity: 0, y: 22 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{
-                                    delay: index * 0.08,
-                                    duration: 0.65,
-                                    ease: 'easeOut',
-                                }}
-                                whileHover={{ y: -5 }}
-                            >
-                                <div className="flex h-full flex-col justify-between gap-8">
-                                    <div>
-                                        <span className="inline-flex rounded-full border border-cyan-100/45 bg-cyan-50/20 px-3 py-1 text-xs font-semibold text-cyan-50">
-                                            {experiment.status}
-                                        </span>
-                                        <h2 className="mt-5 text-2xl font-semibold leading-tight text-white">
-                                            {experiment.title}
-                                        </h2>
-                                    </div>
+                        {experiments.map((experiment, index) => {
+                            const card = (
+                                <motion.article
+                                    className="h-full min-h-[230px] rounded-[2rem] border border-white/35 bg-slate-950/36 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_22px_48px_rgba(2,24,45,0.26)] backdrop-blur-2xl"
+                                    initial={{ opacity: 0, y: 22 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{
+                                        delay: index * 0.08,
+                                        duration: 0.65,
+                                        ease: 'easeOut',
+                                    }}
+                                    whileHover={{ y: -5 }}
+                                >
+                                    <div className="flex h-full flex-col justify-between gap-8">
+                                        <div>
+                                            <span className="inline-flex rounded-full border border-cyan-100/45 bg-cyan-50/20 px-3 py-1 text-xs font-semibold text-cyan-50">
+                                                {experiment.status}
+                                            </span>
+                                            <h2 className="mt-5 text-2xl font-semibold leading-tight text-white">
+                                                {experiment.title}
+                                            </h2>
+                                        </div>
 
-                                    <div>
-                                        <p className="text-sm leading-7 text-cyan-50/90">
-                                            {experiment.summary}
-                                        </p>
-                                        <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/70">
-                                            詳細ページ未実装
-                                        </p>
+                                        <div>
+                                            <p className="text-sm leading-7 text-cyan-50/90">
+                                                {experiment.summary}
+                                            </p>
+                                            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/70">
+                                                {experiment.href ? '開く' : '詳細ページ未実装'}
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                            </motion.article>
-                        ))}
+                                </motion.article>
+                            );
+
+                            if (experiment.href) {
+                                return (
+                                    <Link
+                                        key={experiment.id}
+                                        href={experiment.href}
+                                        className="block h-full rounded-[2rem] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                                    >
+                                        {card}
+                                    </Link>
+                                );
+                            }
+
+                            return <div key={experiment.id}>{card}</div>;
+                        })}
                     </div>
                 </section>
             </div>

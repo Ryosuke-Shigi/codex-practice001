@@ -14,10 +14,11 @@ Route::get('/lab', function () {
     // 今回は公開画面の完成形を先に確認するため、Controller/Service/Repository はまだ使いません。
     $experiments = [
         [
-            'id' => 'vtuber-management',
-            'title' => 'VTuberマネジメントシステム',
-            'summary' => 'タレント、案件、配信予定をまとめるための管理UIプロトタイプ。',
-            'status' => 'Concept',
+            'id' => 'api-preview',
+            'title' => 'API Preview',
+            'summary' => '外部APIを本体実装前に叩き、成功時・失敗時のレスポンスを確認する開発補助画面です。',
+            'status' => 'Ready',
+            'href' => '/api-preview',
         ],
         [
             'id' => 'python-bridge',
