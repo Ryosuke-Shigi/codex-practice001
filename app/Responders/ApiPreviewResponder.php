@@ -5,6 +5,12 @@ namespace App\Responders;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * API Preview 画面用 Responder です。
+ *
+ * Responder は Inertia::render() のみを担当します。
+ * 外部 API 通信、DTO 生成、レスポンス整形をここに入れないことで、返却先の責務を明確にします。
+ */
 class ApiPreviewResponder
 {
     /**

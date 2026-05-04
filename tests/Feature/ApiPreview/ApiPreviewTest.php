@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\ApiPreview;
 
-use App\Repositories\ApiPreview\ApisGuruRepository;
+use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -43,7 +43,7 @@ class ApiPreviewTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('ApiPreview/ApisGuru', false)
-                ->where('api.endpoint', ApisGuruRepository::LIST_URL)
+                ->where('api.endpoint', ApisGuruPreviewRepository::LIST_URL)
                 ->where('hasFetched', false)
                 ->where('result', null)
             );
@@ -55,7 +55,7 @@ class ApiPreviewTest extends TestCase
     {
         // 実 API 確認ルートは fetch=1 のときだけ Repository 経由の HTTP 通信を行います。
         Http::fake([
-            ApisGuruRepository::LIST_URL => Http::response($this->apisGuruPayload(), 200),
+            ApisGuruPreviewRepository::LIST_URL => Http::response($this->apisGuruPayload(), 200),
         ]);
 
         $response = $this->get('/api-preview/apis-guru?fetch=1');
@@ -81,7 +81,7 @@ class ApiPreviewTest extends TestCase
                 ->where('result.request_headers.Accept', 'application/json')
             );
 
-        Http::assertSent(fn (Request $request) => $request->url() === ApisGuruRepository::LIST_URL
+        Http::assertSent(fn (Request $request) => $request->url() === ApisGuruPreviewRepository::LIST_URL
             && $request->method() === 'GET'
             && $request->hasHeader('Accept', 'application/json'));
     }
@@ -90,7 +90,7 @@ class ApiPreviewTest extends TestCase
     {
         // upstream error でも画面表示用 props が返ることを確認します。
         Http::fake([
-            ApisGuruRepository::LIST_URL => Http::response(['message' => 'upstream unavailable'], 503),
+            ApisGuruPreviewRepository::LIST_URL => Http::response(['message' => 'upstream unavailable'], 503),
         ]);
 
         $response = $this->get('/api-preview/apis-guru?fetch=1');
@@ -102,8 +102,8 @@ class ApiPreviewTest extends TestCase
                 ->where('hasFetched', true)
                 ->where('result.success', false)
                 ->where('result.status_code', 503)
-                ->where('result.total_count', 0)
-                ->has('result.items', 0)
+                ->where('result.total_count', null)
+                ->where('result.items', null)
                 ->where('result.error_message', 'APIs.guru list.json request failed. Status: 503')
             );
     }

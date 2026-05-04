@@ -3,10 +3,16 @@
 namespace App\Actions\ApiPreview;
 
 use App\DTO\ApiPreview\ApiPreviewResultDTO;
-use App\Repositories\ApiPreview\ApisGuruRepository;
+use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Responders\ApiPreviewResponder;
 use Inertia\Response;
 
+/**
+ * APIs.guru 画面のエラーレイアウトを固定データで確認する Action です。
+ *
+ * success=false、responsePreview=null の状態を作り、実 API 障害を起こさなくても
+ * エラー表示、未設定表示、raw payload preview の見え方を確認できるようにします。
+ */
 class PreviewMockApisGuruErrorAction
 {
     public function __construct(
@@ -16,10 +22,14 @@ class PreviewMockApisGuruErrorAction
 
     public function execute(): Response
     {
+        /*
+         * 成功 mock と同じ React Page を使います。
+         * canFetch=false にしておくことで、この画面から実 API 通信が起きないことを明示します。
+         */
         return $this->responder->apisGuru([
             'api' => [
                 'name' => 'APIs.guru list.json',
-                'endpoint' => ApisGuruRepository::LIST_URL,
+                'endpoint' => ApisGuruPreviewRepository::LIST_URL,
                 'method' => 'GET',
             ],
             // エラー表示の確認専用なので、外部 API 通信も再取得ボタンも使いません。
@@ -31,10 +41,13 @@ class PreviewMockApisGuruErrorAction
 
     private function mockErrorResult(): ApiPreviewResultDTO
     {
-        // responsePreview は null にして、画面側のエラー時レイアウトを確認します。
+        /*
+         * responsePreview は null にします。
+         * 取得成功だが 0 件という状態ではなく、エラーで preview 対象がない状態を表現します。
+         */
         return new ApiPreviewResultDTO(
             apiName: 'APIs.guru',
-            endpoint: ApisGuruRepository::LIST_URL,
+            endpoint: ApisGuruPreviewRepository::LIST_URL,
             method: 'GET',
             success: false,
             statusCode: 500,

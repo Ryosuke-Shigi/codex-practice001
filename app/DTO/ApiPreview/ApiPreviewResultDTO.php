@@ -5,8 +5,9 @@ namespace App\DTO\ApiPreview;
 final readonly class ApiPreviewResultDTO
 {
     /*
-     * API preview 画面に渡す結果 props の共通形です。
-     * 実 API 取得、成功モック、エラーモックの表示構造をここで揃えます。
+     * API Preview 画面専用 DTO です。
+     * 本体同期処理・保存処理には使わず、本体へ移す場合は改めて DTO を切り直します。
+     * ここでの目的は「DTO 設計前のレスポンス観察」であり、ドメインモデルの確定ではありません。
      */
     /**
      * @param  array<string, string|int|float|bool|null>  $requestHeaders
@@ -35,6 +36,10 @@ final readonly class ApiPreviewResultDTO
      */
     public function toArray(): array
     {
+        /*
+         * React Page の既存 props 名に合わせて snake_case で返します。
+         * PHP 内部の constructor property は camelCase、Inertia props は画面側に合わせる役割分担です。
+         */
         return [
             'api_name' => $this->apiName,
             'endpoint' => $this->endpoint,
