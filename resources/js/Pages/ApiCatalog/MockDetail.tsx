@@ -9,6 +9,29 @@ type MockDetailProps = {
     apiKey: string;
 };
 
+type MockApiNote = {
+    id: string;
+    title: string;
+    body: string;
+};
+
+type MockApiNoteField = keyof Pick<MockApiNote, 'title' | 'body'>;
+
+/*
+ * 将来の本番仕様メモ:
+ * - saved_api_notes テーブルで保存する想定
+ * - 1つの saved_api に複数 note が紐づく想定
+ * - API一覧検索では saved_api_notes.title / saved_api_notes.body も検索対象にする想定
+ * - 同期処理では saved_api_notes を触らない想定
+ */
+function createMockApiNote(): MockApiNote {
+    return {
+        id: `mock-note-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        title: '',
+        body: '',
+    };
+}
+
 function safeDecodeURIComponent(value: string) {
     try {
         return decodeURIComponent(value);
@@ -48,9 +71,30 @@ function buildTechnicalRows(item: ApiCatalogListItem) {
 }
 
 export default function MockDetail({ apiKey }: MockDetailProps) {
-    const [memo, setMemo] = useState('');
+    const [notes, setNotes] = useState<MockApiNote[]>(() => [createMockApiNote()]);
     const [isTechnicalOpen, setIsTechnicalOpen] = useState(false);
     const item = useMemo(() => findMockApiCatalogItem(apiKey), [apiKey]);
+
+    const addNote = () => {
+        setNotes((currentNotes) => [...currentNotes, createMockApiNote()]);
+    };
+
+    const updateNote = (noteId: string, field: MockApiNoteField, value: string) => {
+        setNotes((currentNotes) =>
+            currentNotes.map((note) =>
+                note.id === noteId
+                    ? {
+                          ...note,
+                          [field]: value,
+                      }
+                    : note,
+            ),
+        );
+    };
+
+    const deleteNote = (noteId: string) => {
+        setNotes((currentNotes) => currentNotes.filter((note) => note.id !== noteId));
+    };
 
     if (!item) {
         return (
@@ -58,16 +102,16 @@ export default function MockDetail({ apiKey }: MockDetailProps) {
                 <Head title="API Catalog Mock Detail" />
 
                 <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-5 pb-5">
-                    <header className="flex flex-wrap items-center justify-between gap-3">
+                    <header className="flex flex-wrap items-center justify-end gap-3">
+                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
+                            Mock
+                        </span>
                         <Link
-                            href="/api-catalog/mock"
+                            href="/api-preview"
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
                             戻る
                         </Link>
-                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
-                            Mock
-                        </span>
                     </header>
 
                     <section className="rounded-2xl border border-white/35 bg-slate-950/38 p-6 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_22px_44px_rgba(2,24,45,0.24)] backdrop-blur-2xl">
@@ -93,25 +137,31 @@ export default function MockDetail({ apiKey }: MockDetailProps) {
             <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 pb-5">
                 <header className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-3">
-                        <Link
-                            href="/api-catalog/mock"
-                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
-                        >
-                            戻る
-                        </Link>
                         <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
                             Mock
                         </span>
                     </div>
 
-                    <a
-                        href={item.googleSearchUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                    >
-                        Search
-                    </a>
+                    {/*
+                        詳細画面では外部調査の Search を主操作として先に置き、
+                        API Preview へ戻る導線をその右側に固定します。
+                    */}
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <a
+                            href={item.googleSearchUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
+                        >
+                            Search
+                        </a>
+                        <Link
+                            href="/api-preview"
+                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                        >
+                            戻る
+                        </Link>
+                    </div>
                 </header>
 
                 <motion.section
@@ -149,24 +199,74 @@ export default function MockDetail({ apiKey }: MockDetailProps) {
                                 <div>
                                     <h3 className="text-lg font-semibold text-white">調査メモ</h3>
                                     <p className="mt-1 text-xs font-semibold text-cyan-100/64">
-                                        保存されません / モック入力です
+                                        モックのため保存されません
                                     </p>
                                 </div>
-                                <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold text-cyan-50/78">
-                                    {memo.length} chars
-                                </span>
+                                <button
+                                    type="button"
+                                    onClick={addNote}
+                                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
+                                >
+                                    + メモ追加
+                                </button>
                             </div>
 
                             {/*
-                                メモ欄は保存処理なしの画面モックです。
-                                saved_api_notes などの永続化設計は本実装時に別途決めます。
+                                複数メモの追加・編集・削除だけを React state で確認します。
+                                保存ボタンや Repository / Action 連携はまだ作りません。
                             */}
-                            <textarea
-                                value={memo}
-                                onChange={(event) => setMemo(event.target.value)}
-                                placeholder="このAPIについての調査メモを書く"
-                                className="mt-3 min-h-[180px] w-full resize-y rounded-2xl border border-white/30 bg-white/14 p-4 text-sm leading-7 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.28)] outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
-                            />
+                            <div className="mt-4 grid gap-3">
+                                {notes.map((note, index) => (
+                                    <article
+                                        key={note.id}
+                                        className="rounded-2xl border border-white/28 bg-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-xl"
+                                    >
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
+                                            <span className="rounded-full border border-cyan-100/30 bg-cyan-50/12 px-3 py-1 text-xs font-semibold text-cyan-50/86">
+                                                No.{index + 1}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => deleteNote(note.id)}
+                                                className="inline-flex min-h-8 items-center justify-center rounded-lg border border-rose-100/25 bg-rose-100/8 px-3 text-xs font-semibold text-rose-50/86 transition hover:bg-rose-100/16 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100/20"
+                                            >
+                                                削除
+                                            </button>
+                                        </div>
+
+                                        <label className="mt-4 grid gap-2 text-sm font-semibold text-cyan-50">
+                                            <span>Title</span>
+                                            <input
+                                                type="text"
+                                                value={note.title}
+                                                onChange={(event) =>
+                                                    updateNote(note.id, 'title', event.target.value)
+                                                }
+                                                placeholder="メモタイトル"
+                                                className="h-10 w-full max-w-md rounded-xl border border-white/30 bg-white/14 px-3 text-sm text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
+                                            />
+                                        </label>
+
+                                        <label className="mt-4 grid gap-2 text-sm font-semibold text-cyan-50">
+                                            <span>Body</span>
+                                            <textarea
+                                                value={note.body}
+                                                onChange={(event) =>
+                                                    updateNote(note.id, 'body', event.target.value)
+                                                }
+                                                placeholder="このAPIについての調査メモを書く"
+                                                className="min-h-[120px] w-full resize-y rounded-xl border border-white/30 bg-white/14 p-3 text-sm leading-7 text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
+                                            />
+                                        </label>
+                                    </article>
+                                ))}
+
+                                {notes.length === 0 && (
+                                    <div className="rounded-2xl border border-white/24 bg-white/8 p-5 text-center text-sm font-semibold text-cyan-50/76 backdrop-blur-xl">
+                                        メモはありません。+ メモ追加から追加できます。
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </section>
 
