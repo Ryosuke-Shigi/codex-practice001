@@ -146,6 +146,17 @@ export default function ApisGuru({ api, canFetch = true, hasFetched, result }: A
                     </div>
 
                     <div className="flex flex-wrap gap-3">
+                        {/*
+                            API Catalog 本体の一覧 UI を DB 接続前に確認するためのモック導線です。
+                            APIs.guru の疎通 preview と混ぜず、別画面へのリンクとして置きます。
+                        */}
+                        <Link
+                            href="/api-catalog/mock"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                        >
+                            API一覧モック
+                        </Link>
+
                         <Link
                             href="/api-preview"
                             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
