@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ApiPreviewController;
+use App\Http\Controllers\ApisGuruPreviewController;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
@@ -35,3 +37,12 @@ Route::get('/lab', function () {
         'experiments' => $experiments,
     ]);
 })->name('lab.index');
+
+Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
+
+// API preview は本体同期や DB 保存とは切り離した、開発補助用の確認ルートです。
+Route::get('/api-preview/apis-guru', ApisGuruPreviewController::class)->name('api-preview.apis-guru');
+Route::get('/api-preview/apis-guru/mock', [ApisGuruPreviewController::class, 'mock'])
+    ->name('api-preview.apis-guru.mock');
+Route::get('/api-preview/apis-guru/mock-error', [ApisGuruPreviewController::class, 'mockError'])
+    ->name('api-preview.apis-guru.mock-error');

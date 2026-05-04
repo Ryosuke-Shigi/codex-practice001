@@ -67,7 +67,7 @@ export default function Welcome() {
 
     return (
         <PublicLayout effect={currentEffect} className="flex items-center justify-center px-6 py-10">
-            <Head title="Welcome" />
+            <Head title="Portfolio" />
 
             <section className="flex min-h-[calc(100vh-5rem)] w-full max-w-5xl flex-col items-center justify-end pb-[15vh] text-center sm:pb-[16vh]">
                 <motion.div
@@ -80,7 +80,7 @@ export default function Welcome() {
                         AI Driven Portfolio
                     </p>
                     <h1 className="mt-4 text-5xl font-semibold text-white drop-shadow-[0_8px_28px_rgba(5,24,46,0.35)] sm:text-7xl">
-                        Into the Lab
+                        Portfolio
                     </h1>
                 </motion.div>
 

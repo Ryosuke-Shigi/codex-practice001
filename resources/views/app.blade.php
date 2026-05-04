@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#07213f">
 
-        <title inertia>Water Lab</title>
+        <title inertia>Portfolio</title>
 
         @viteReactRefresh
         @vite(['resources/js/app.tsx'])
