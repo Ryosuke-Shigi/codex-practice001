@@ -12,9 +12,10 @@ Route::get('/', function () {
 
 Route::get('/lab', function () {
     // 将来 DB 取得に置き換える仮データです。
-    // 今回は公開画面の完成形を先に確認するため、Controller/Service/Repository はまだ使いません。
+    // Lab では現在触れる検証入口だけを表示し、未実装の仮カードはここへ戻さない方針です。
     $experiments = [
         [
+            // API Preview は本体同期とは切り離した、外部API疎通確認用の入口です。
             'id' => 'api-preview',
             'title' => 'API Preview',
             'summary' => '外部APIを本体実装前に叩き、成功時・失敗時のレスポンスを確認する開発補助画面です。',
@@ -22,16 +23,12 @@ Route::get('/lab', function () {
             'href' => '/api-preview',
         ],
         [
-            'id' => 'python-bridge',
-            'title' => 'Python連動',
-            'summary' => 'Laravel 画面から Python 側の処理結果を扱う将来検証用の入口。',
-            'status' => 'Planned',
-        ],
-        [
-            'id' => 'water-ui',
-            'title' => 'Water UI 実験',
-            'summary' => '水面、透明感、シーグラス調のコンポーネント表現を試す領域。',
+            // API Discovery Hub は api_catalog_cache を使う本番一覧画面への入口です。
+            'id' => 'api-discovery-hub',
+            'title' => 'API Discovery Hub',
+            'summary' => '公開APIを検索・調査・保存していくためのAPIカタログ画面です。',
             'status' => 'Preview',
+            'href' => '/api-catalog',
         ],
     ];
 
