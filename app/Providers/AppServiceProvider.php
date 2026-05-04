@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Repositories\ApiCatalog\ApisGuruRepository;
 use App\Repositories\ApiCatalog\ApisGuruRepositoryInterface;
+use App\Repositories\ApiCatalog\ApiCatalogCacheRepository;
+use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
@@ -17,9 +19,10 @@ class AppServiceProvider extends ServiceProvider
     {
         /*
          * ApiCatalog 側は API Discovery Hub 本体用の依存です。
-         * Preview 側の bind を追加しても、既存の本体用 bind は変更しません。
+         * Preview 側の Repository / DTO / Responder とは切り離します。
          */
         $this->app->bind(ApisGuruRepositoryInterface::class, ApisGuruRepository::class);
+        $this->app->bind(ApiCatalogCacheRepositoryInterface::class, ApiCatalogCacheRepository::class);
 
         /*
          * ApiPreview 側は開発補助画面専用の依存です。
