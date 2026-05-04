@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiCatalogController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
 use Inertia\Inertia;
@@ -40,6 +41,9 @@ Route::get('/lab', function () {
 })->name('lab.index');
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
+
+// API Discovery Hub 本体一覧です。表示整形は Responder、DB 取得は Repository に分離します。
+Route::get('/api-catalog', ApiCatalogController::class)->name('api-catalog.index');
 
 // API Discovery Hub 本体一覧の UI 確認用モックです。DB 取得や Responder にはまだ接続しません。
 Route::get('/api-catalog/mock', function () {

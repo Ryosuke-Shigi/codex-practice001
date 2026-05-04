@@ -2,9 +2,11 @@
 
 namespace App\Repositories\ApiCatalog;
 
+use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
 use App\DTO\ApiCatalog\Sync\ApiCatalogItemDTO;
 use App\Models\ApiCatalogCache;
 use Carbon\CarbonInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
 {
@@ -44,6 +46,58 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
                 'is_active' => false,
                 'synced_at' => $syncedAt->toDateTimeString(),
             ]);
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, ApiCatalogCache>
+     */
+    public function paginateActiveList(ApiCatalogListQueryDTO $query): LengthAwarePaginator
+    {
+        $builder = ApiCatalogCache::query()
+            ->where('is_active', true);
+
+        if ($query->keyword !== null) {
+            $keyword = '%'.$query->keyword.'%';
+
+            $builder->where(function ($searchBuilder) use ($keyword) {
+                $searchBuilder
+                    ->where('title', 'like', $keyword)
+                    ->orWhere('description', 'like', $keyword)
+                    ->orWhere('provider_key', 'like', $keyword)
+                    ->orWhere('service_key', 'like', $keyword);
+            });
+        }
+
+        if ($query->providerKey !== null) {
+            $builder->where('provider_key', $query->providerKey);
+        }
+
+        /*
+         * 一覧画面の安定表示用の並びだけを Repository で指定します。
+         * 表示用のラベル加工や Google検索URL生成はここでは行いません。
+         */
+        return $builder
+            ->orderBy('provider_key')
+            ->orderBy('service_key')
+            ->orderBy('title')
+            ->orderBy('id')
+            ->paginate($query->perPage, ['*'], 'page', $query->page)
+            ->withQueryString();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function listActiveProviderKeys(): array
+    {
+        return ApiCatalogCache::query()
+            ->where('is_active', true)
+            ->whereNotNull('provider_key')
+            ->distinct()
+            ->orderBy('provider_key')
+            ->pluck('provider_key')
+            ->values()
+            ->all();
     }
 
     /**
