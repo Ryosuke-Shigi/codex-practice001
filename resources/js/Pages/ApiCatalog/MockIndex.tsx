@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 
@@ -266,14 +266,6 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
 }
 
-function formatSourceDate(value: string) {
-    return new Intl.DateTimeFormat('ja-JP', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric',
-    }).format(new Date(value));
-}
-
 function buildPagination(totalItems: number, currentPage: number): ApiCatalogPagination {
     const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
     const clampedPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -381,9 +373,17 @@ export default function MockIndex() {
                         </h1>
                     </div>
 
-                    <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
-                        Mock
-                    </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <Link
+                            href="/api-preview"
+                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                        >
+                            戻る
+                        </Link>
+                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
+                            Mock
+                        </span>
+                    </div>
                 </header>
 
                 <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
@@ -490,29 +490,17 @@ export default function MockIndex() {
                                 {item.description}
                             </p>
 
-                            <dl className="mt-4 grid grid-cols-2 gap-2 text-xs text-cyan-50/78">
+                            <dl className="mt-4 grid gap-2 text-xs text-cyan-50/78">
                                 <div className="min-w-0">
-                                    <dt className="font-semibold uppercase text-cyan-100/58">apiKey</dt>
-                                    <dd className="truncate">{item.apiKey}</dd>
-                                </div>
-                                <div className="min-w-0">
-                                    <dt className="font-semibold uppercase text-cyan-100/58">OpenAPI</dt>
-                                    <dd>{item.openapiVersion}</dd>
-                                </div>
-                                <div className="min-w-0">
-                                    <dt className="font-semibold uppercase text-cyan-100/58">Updated</dt>
-                                    <dd>{formatSourceDate(item.sourceLatestUpdatedAt)}</dd>
-                                </div>
-                                <div className="min-w-0">
-                                    <dt className="font-semibold uppercase text-cyan-100/58">Search</dt>
+                                    <dt className="sr-only">Search</dt>
                                     <dd>
                                         <a
                                             href={item.googleSearchUrl}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="inline-flex max-w-full text-cyan-100 underline decoration-cyan-100/50 underline-offset-4 transition hover:text-white"
+                                            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
                                         >
-                                            Google検索
+                                            Search
                                         </a>
                                     </dd>
                                 </div>
