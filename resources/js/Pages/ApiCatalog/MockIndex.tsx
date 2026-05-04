@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'motion/react';
 
+import ApiCatalogCard, { type ApiCatalogCardItem } from '@/Components/ApiCatalog/ApiCatalogCard';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, mockDomains, mockProviders } from './mockApiCatalogData';
 
@@ -55,6 +55,19 @@ function buildPagination(totalItems: number, currentPage: number): ApiCatalogPag
         perPage: ITEMS_PER_PAGE,
         startItem,
         endItem,
+    };
+}
+
+function toApiCatalogCardItem(item: (typeof mockApiCatalogItems)[number]): ApiCatalogCardItem {
+    return {
+        title: item.title,
+        description: item.description,
+        providerKey: item.providerKey,
+        serviceKey: item.serviceKey,
+        preferredVersion: item.preferredVersion,
+        openapiVersion: item.openapiVersion,
+        googleSearchUrl: item.googleSearchUrl,
+        detailHref: `/api-catalog/mock/${encodeURIComponent(item.apiKey)}`,
     };
 }
 
@@ -247,62 +260,11 @@ export default function MockIndex() {
 
                 <section className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {apiCatalogItems.map((item, index) => (
-                        <motion.article
+                        <ApiCatalogCard
                             key={item.apiKey}
-                            className="group relative flex min-h-[186px] cursor-pointer flex-col rounded-2xl border border-white/35 bg-slate-950/38 p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_38px_rgba(2,24,45,0.22)] backdrop-blur-2xl transition hover:border-cyan-100/55 hover:bg-slate-900/48"
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{
-                                delay: index * 0.035,
-                                duration: 0.36,
-                                ease: 'easeOut',
-                            }}
-                            whileHover={{ y: -3 }}
-                        >
-                            {/*
-                                カード本体を詳細リンクにするため、透明な Link を全面に重ねます。
-                                個別操作の Search は z-20 でこのリンクより前面に置きます。
-                            */}
-                            <Link
-                                href={`/api-catalog/mock/${encodeURIComponent(item.apiKey)}`}
-                                aria-label={`${item.title} の詳細を開く`}
-                                className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
-                            />
-
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="truncate text-xs font-semibold text-cyan-100/70">
-                                        {item.providerKey} / {item.serviceKey}
-                                    </p>
-                                    <h2 className="mt-1 truncate text-lg font-semibold leading-tight text-white">
-                                        {item.title}
-                                    </h2>
-                                </div>
-
-                                <span className="shrink-0 rounded-full border border-cyan-100/35 bg-cyan-50/15 px-2.5 py-1 text-[0.68rem] font-semibold text-cyan-50">
-                                    {item.preferredVersion}
-                                </span>
-                            </div>
-
-                            <p className="mt-3 line-clamp-3 text-sm leading-6 text-cyan-50/86">
-                                {item.description}
-                            </p>
-
-                            {/*
-                                カード全体は詳細モックへのリンクです。
-                                Search は z-index を上げた別リンクにして、Google 検索と詳細遷移を競合させません。
-                            */}
-                            <div className="mt-4 flex flex-wrap gap-2">
-                                <a
-                                    href={item.googleSearchUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="relative z-20 inline-flex min-h-9 items-center justify-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                                >
-                                    Search
-                                </a>
-                            </div>
-                        </motion.article>
+                            item={toApiCatalogCardItem(item)}
+                            index={index}
+                        />
                     ))}
 
                     {apiCatalogItems.length === 0 && (

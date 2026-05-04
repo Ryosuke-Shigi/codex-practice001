@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
 
+import ApiCatalogCard, { type ApiCatalogCardItem } from '@/Components/ApiCatalog/ApiCatalogCard';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type ApiCatalogFilters = {
@@ -50,10 +50,6 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
 }
 
-function displayValue(value: string | null) {
-    return value && value.trim() !== '' ? value : 'n/a';
-}
-
 function buildQueryParams(keyword: string, providerKey: string, page: number) {
     /*
      * URL query は本番一覧の状態そのものです。
@@ -72,6 +68,19 @@ function buildQueryParams(keyword: string, providerKey: string, page: number) {
     }
 
     return params;
+}
+
+function toApiCatalogCardItem(item: ApiCatalogItem): ApiCatalogCardItem {
+    return {
+        title: item.title,
+        description: item.description,
+        providerKey: item.providerKey,
+        serviceKey: item.serviceKey,
+        preferredVersion: item.preferredVersion,
+        openapiVersion: item.openapiVersion,
+        googleSearchUrl: item.googleSearchUrl,
+        detailHref: null,
+    };
 }
 
 export default function Index({ filters, providers, apiCatalogItems, pagination }: IndexProps) {
@@ -230,53 +239,11 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
 
                 <section className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {apiCatalogItems.map((item, index) => (
-                        <motion.article
+                        <ApiCatalogCard
                             key={item.id}
-                            className="flex min-h-[194px] flex-col rounded-2xl border border-white/35 bg-slate-950/38 p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_38px_rgba(2,24,45,0.22)] backdrop-blur-2xl transition hover:border-cyan-100/55 hover:bg-slate-900/48"
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{
-                                delay: index * 0.035,
-                                duration: 0.36,
-                                ease: 'easeOut',
-                            }}
-                            whileHover={{ y: -3 }}
-                        >
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="truncate text-xs font-semibold text-cyan-100/70">
-                                        {item.providerKey} / {displayValue(item.serviceKey)}
-                                    </p>
-                                    <h2 className="mt-1 line-clamp-2 text-lg font-semibold leading-tight text-white">
-                                        {item.title}
-                                    </h2>
-                                </div>
-
-                                <span className="shrink-0 rounded-full border border-cyan-100/35 bg-cyan-50/15 px-2.5 py-1 text-[0.68rem] font-semibold text-cyan-50">
-                                    {displayValue(item.preferredVersion)}
-                                </span>
-                            </div>
-
-                            <p className="mt-3 line-clamp-3 text-sm leading-6 text-cyan-50/86">
-                                {item.description}
-                            </p>
-
-                            <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-4">
-                                <div className="min-w-0 text-xs font-semibold text-cyan-100/68">
-                                    <p className="truncate">OpenAPI {displayValue(item.openapiVersion)}</p>
-                                </div>
-
-                                {/* 本番詳細画面は未作成のため、カードクリック遷移はまだ持たせません。 */}
-                                <a
-                                    href={item.googleSearchUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                                >
-                                    Search
-                                </a>
-                            </div>
-                        </motion.article>
+                            item={toApiCatalogCardItem(item)}
+                            index={index}
+                        />
                     ))}
 
                     {apiCatalogItems.length === 0 && (
