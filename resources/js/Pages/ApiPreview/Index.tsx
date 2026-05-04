@@ -74,7 +74,7 @@ export default function Index({ apis }: IndexProps) {
 
                 {/*
                     API Discovery Hub 本体画面のモック入口枠です。
-                    一覧、編集、詳細などの画面モックを API Preview の疎通確認カードとは分けて並べます。
+                    一覧、詳細などの画面モックを API Preview の疎通確認カードとは分けて並べます。
                 */}
                 <section className="rounded-lg border border-cyan-100/25 bg-cyan-100/8 p-5 shadow-[0_18px_40px_rgba(8,145,178,0.12)]">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -112,22 +112,29 @@ export default function Index({ apis }: IndexProps) {
                             </span>
                         </Link>
 
-                        <div className="flex min-h-[130px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/42 p-4">
+                        {/*
+                            詳細画面モックはまず代表データの stripe.com を開きます。
+                            本実装では一覧から選んだ apiKey を使って詳細へ遷移する想定です。
+                        */}
+                        <Link
+                            href="/api-catalog/mock/stripe.com"
+                            className="group flex min-h-[130px] flex-col justify-between rounded-lg border border-cyan-100/30 bg-slate-950/60 p-4 transition hover:border-cyan-100/60 hover:bg-slate-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                        >
                             <div>
-                                <span className="inline-flex rounded-md border border-amber-300/45 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
-                                    Planned
+                                <span className="inline-flex rounded-md border border-emerald-300/45 bg-emerald-300/15 px-2.5 py-1 text-xs font-semibold text-emerald-50">
+                                    Ready
                                 </span>
                                 <h3 className="mt-3 text-lg font-semibold text-white">
-                                    編集画面
+                                    詳細画面
                                 </h3>
-                                <p className="mt-2 text-sm leading-6 text-slate-200/72">
-                                    次に作る編集画面モック用の枠です。ルート作成後にリンクへ切り替えます。
+                                <p className="mt-2 text-sm leading-6 text-slate-200/80">
+                                    API タイトル、説明、メモ入力欄、技術情報の開閉表示を確認します。
                                 </p>
                             </div>
-                            <span className="mt-4 text-sm font-semibold text-slate-300">
-                                準備中
+                            <span className="mt-4 text-sm font-bold text-cyan-100 transition group-hover:text-white">
+                                モックを開く
                             </span>
-                        </div>
+                        </Link>
                     </div>
                 </section>
 
