@@ -64,26 +64,72 @@ export default function Index({ apis }: IndexProps) {
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
-                        {/*
-                            API Catalog 本体の一覧 UI を DB 接続前に確認するためのモック導線です。
-                            API Preview の疎通確認画面とは責務を分け、リンク先だけをここに置きます。
-                        */}
+                    <Link
+                        href="/lab"
+                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                    >
+                        Lab
+                    </Link>
+                </header>
+
+                {/*
+                    API Discovery Hub 本体画面のモック入口枠です。
+                    一覧、編集、詳細などの画面モックを API Preview の疎通確認カードとは分けて並べます。
+                */}
+                <section className="rounded-lg border border-cyan-100/25 bg-cyan-100/8 p-5 shadow-[0_18px_40px_rgba(8,145,178,0.12)]">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/70">
+                                API Discovery Hub Mock
+                            </p>
+                            <h2 className="mt-2 text-xl font-semibold text-white">
+                                本体画面モック
+                            </h2>
+                            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-200/80">
+                                DB 接続前に、本体側の画面単位で UI と操作感を確認するための入口です。
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                         <Link
                             href="/api-catalog/mock"
-                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                            className="group flex min-h-[130px] flex-col justify-between rounded-lg border border-cyan-100/30 bg-slate-950/60 p-4 transition hover:border-cyan-100/60 hover:bg-slate-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                         >
-                            API一覧モック
+                            <div>
+                                <span className="inline-flex rounded-md border border-emerald-300/45 bg-emerald-300/15 px-2.5 py-1 text-xs font-semibold text-emerald-50">
+                                    Ready
+                                </span>
+                                <h3 className="mt-3 text-lg font-semibold text-white">
+                                    一覧表示
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-slate-200/80">
+                                    API カード、検索、provider/domain 絞り込み、ページ送りを確認します。
+                                </p>
+                            </div>
+                            <span className="mt-4 text-sm font-bold text-cyan-100 transition group-hover:text-white">
+                                モックを開く
+                            </span>
                         </Link>
 
-                        <Link
-                            href="/lab"
-                            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
-                        >
-                            Lab
-                        </Link>
+                        <div className="flex min-h-[130px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/42 p-4">
+                            <div>
+                                <span className="inline-flex rounded-md border border-amber-300/45 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
+                                    Planned
+                                </span>
+                                <h3 className="mt-3 text-lg font-semibold text-white">
+                                    編集画面
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-slate-200/72">
+                                    次に作る編集画面モック用の枠です。ルート作成後にリンクへ切り替えます。
+                                </p>
+                            </div>
+                            <span className="mt-4 text-sm font-semibold text-slate-300">
+                                準備中
+                            </span>
+                        </div>
                     </div>
-                </header>
+                </section>
 
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {apis.map((api) => (
