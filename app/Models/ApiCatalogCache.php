@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ApiCatalogCache extends Model
+{
+    protected $table = 'api_catalog_cache';
+
+    protected $fillable = [
+        'api_key',
+        'provider_key',
+        'service_key',
+        'title',
+        'description',
+        'preferred_version',
+        'openapi_json_url',
+        'openapi_yaml_url',
+        'openapi_version',
+        'source_latest_updated_at',
+        'payload_hash',
+        'is_active',
+        'synced_at',
+    ];
+
+    protected $casts = [
+        'source_latest_updated_at' => 'datetime',
+        'synced_at' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+}
