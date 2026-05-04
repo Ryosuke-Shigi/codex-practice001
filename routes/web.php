@@ -41,6 +41,10 @@ Route::get('/lab', function () {
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 
+Route::get('/api-catalog/mock', function () {
+    return Inertia::render('ApiCatalog/MockIndex');
+})->name('api-catalog.mock');
+
 // API preview は本体同期や DB 保存とは切り離した、開発補助用の確認ルートです。
 Route::get('/api-preview/apis-guru', ApisGuruPreviewController::class)->name('api-preview.apis-guru');
 Route::get('/api-preview/apis-guru/mock', [ApisGuruPreviewController::class, 'mock'])

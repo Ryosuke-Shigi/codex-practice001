@@ -64,12 +64,25 @@ export default function Index({ apis }: IndexProps) {
                         </p>
                     </div>
 
-                    <Link
-                        href="/lab"
-                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
-                    >
-                        Lab
-                    </Link>
+                    <div className="flex flex-wrap gap-3">
+                        {/*
+                            API Catalog 本体の一覧 UI を DB 接続前に確認するためのモック導線です。
+                            API Preview の疎通確認画面とは責務を分け、リンク先だけをここに置きます。
+                        */}
+                        <Link
+                            href="/api-catalog/mock"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-cyan-200 px-4 text-sm font-bold text-slate-950 transition hover:bg-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                        >
+                            API一覧モック
+                        </Link>
+
+                        <Link
+                            href="/lab"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                        >
+                            Lab
+                        </Link>
+                    </div>
                 </header>
 
                 <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
