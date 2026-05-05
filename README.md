@@ -2,7 +2,7 @@
 
 このリポジトリは、Laravel + Docker を前提に、CodexApp・ChatGPT・VS Code を使った AI 駆動／仕様駆動開発を練習・検証するためのポートフォリオ用プロジェクトです。
 
-現時点では Laravel 11 の初期構成をベースに、Inertia / React の公開画面、API Preview、API Discovery Hub のモック画面、APIs.guru 連携確認、API カタログ同期キャッシュの検証実装を段階的に追加しています。
+現時点では Laravel 11 の初期構成をベースに、Inertia / React の公開画面、API Preview、API Discovery Hub の本番一覧・詳細・保存メモ・モック画面、APIs.guru 連携確認、API カタログ同期キャッシュの検証実装を段階的に追加しています。
 
 ## 1. プロジェクト概要
 
@@ -10,9 +10,9 @@ Laravel アプリケーション本体はこの `src` ディレクトリで Git 
 
 Docker 関連ファイルは、ローカル開発環境として一階層上のプロジェクトルートに配置しています。現在確認できている Docker 構成は `docker-compose.yml`、`docker/nginx/default.conf`、`docker/php/Dockerfile`、`docker/php/php.ini`、`docker/mysql/my.cnf`、`docker/node/Dockerfile` です。
 
-現在のアプリケーションは Inertia / React を使った公開画面を持ちます。`GET /` はポートフォリオ入口、`GET /lab` は実験画面一覧、`GET /api-preview` は外部 API 確認用の入口、`GET /api-catalog/mock` は API Discovery Hub 本体一覧のモック画面です。
+現在のアプリケーションは Inertia / React を使った公開画面を持ちます。`GET /` はポートフォリオ入口、`GET /lab` は実験画面一覧、`GET /api-preview` は外部 API 確認用の入口、`GET /api-catalog` は `api_catalog_cache` を使う API Discovery Hub 本番一覧、`GET /api-catalog/mock` は UI 確認用モック画面です。
 
-本番用の API Discovery Hub 一覧はまだ未実装です。現在の一覧画面は DB 接続前に UI と操作感を確認するためのモックであり、Repository / Query Action / Responder には接続していません。
+API Discovery Hub の本番一覧・詳細は Controller / Query Action / Repository / DTO / Responder に接続済みです。保存メモは `saved_api_notes` に保存し、Google 検索リンクや `domain` は DB に保存せず表示時に生成します。手動更新は `sync` connection で HTTP リクエスト内に同期処理まで完了させ、モック画面は DB 取得や本番 Responder / Query Action とは切り離します。
 
 ## 2. このプロジェクトの目的
 
@@ -88,20 +88,26 @@ docker compose run --rm npm install
 - `GET /api-preview/apis-guru`: APIs.guru `list.json` の実取得確認画面
 - `GET /api-preview/apis-guru/mock`: APIs.guru 成功レスポンスの固定データ確認画面
 - `GET /api-preview/apis-guru/mock-error`: APIs.guru エラーレスポンスの固定データ確認画面
+- `GET /api-catalog`: `api_catalog_cache` を使う API Discovery Hub 本番一覧画面
+- `POST /api-catalog/sync`: APIs.guru `list.json` を取得し、同期キャッシュを手動更新する入口
+- `GET /api-catalog/{apiKey}`: API Discovery Hub 本番詳細画面
+- `POST / PATCH / DELETE /api-catalog/{apiKey}/notes`: 本番詳細の保存メモ操作
 - `GET /api-catalog/mock`: API Discovery Hub 本体の API 一覧モック画面
+- `GET /api-catalog/mock/{apiKey}`: API Discovery Hub 本体の API 詳細モック画面
 
-`/api-catalog/mock` では、固定配列のモックデータを使い、次の操作を確認できます。
+`/api-catalog` と `/api-catalog/mock` では、取得元を分けながら同じ検索 UI とカード表示を使い、次の操作を確認できます。
 
 - キーワード検索
 - `providerKey` 絞り込み
 - `domain` 絞り込み
+- 並び替え
 - 条件クリア
 - 1ページ6件のカード表示
 - 左右ボタンと `ArrowLeft` / `ArrowRight` によるページ送り
 - `Search` クリックによる Google 検索
 - `/api-preview` へ戻るボタン
 
-各 API カードでは、一覧確認に必要な情報だけを表示します。`apiKey`、`openapiVersion`、`sourceLatestUpdatedAt` はモックデータ内には持ちますが、カード上には表示しません。Google 検索 URL は DB 保存前提ではなく、React 側で `title` または `apiKey` から生成します。
+各 API カードでは、一覧確認に必要な情報だけを表示します。Google 検索 URL は DB 保存前提ではなく、React 側で `title` または `apiKey` から生成します。本番詳細では `saved_api_notes` に紐づく調査メモを保存・更新・削除できます。
 
 ## 6. ディレクトリ構成
 
@@ -148,6 +154,9 @@ src/
 ├── storage/
 ├── tests/
 │   ├── Feature/
+│   │   ├── ApiCatalog/
+│   │   │   ├── ApiCatalogNoteTest.php
+│   │   │   └── ApiCatalogSyncTest.php
 │   │   ├── ApiPreview/
 │   │   │   └── ApiPreviewTest.php
 │   │   └── ExampleTest.php
@@ -160,13 +169,13 @@ src/
 └── vite.config.js
 ```
 
-API Preview と API カタログ同期検証では、Action / Service / Repository / DTO / Responder / Factory / Job / Command を一部作成済みです。一方で、API Discovery Hub 本体一覧の `/api-catalog/mock` は UI モック確認用のため、Controller / Query Action / Repository / DTO / Responder にはまだ接続していません。
+API Preview と API Discovery Hub では、Action / Service / Repository / DTO / Responder / Factory / Job / Command を一部作成済みです。API Discovery Hub 本体一覧・詳細は本番ルートで DB 取得に接続し、`/api-catalog/mock` は UI モック確認用として DB 取得や本番 Responder / Query Action とは切り離しています。
 
 ## 7. 設計方針
 
 設計方針は、ADR パターンとレイヤードアーキテクチャを組み合わせ、責務を小さく分けて実装することです。ここでの ADR は Action-Domain-Responder の考え方を指します。
 
-現時点では API Preview と API カタログ同期検証から、Action / Service / Repository / DTO / Responder などを段階的に導入しています。API Discovery Hub 本体一覧は、まず Inertia / React のモック画面で UI と props 分割方針を確認してから本実装へ進める方針です。
+現時点では API Preview と API Discovery Hub から、Action / Service / Repository / DTO / Responder などを段階的に導入しています。API Discovery Hub 本体では、本番一覧・詳細・保存メモ・手動同期を ADR / レイヤードアーキテクチャの練習対象として実装しています。
 
 今後の責務分離方針は次のとおりです。
 
@@ -237,7 +246,7 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 
 ## 12. テスト方針
 
-現在は Laravel 初期状態の Example テストに加えて、API Preview の Feature テストを追加しています。API Discovery Hub 本体一覧モックに対する専用テストはまだありません。
+現在は Laravel 初期状態の Example テストに加えて、API Preview、API Discovery Hub の手動同期ルート、保存メモ CRUD と詳細表示 props の Feature テストを追加しています。
 
 今後の方針は次のとおりです。
 
@@ -253,14 +262,12 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 
 今後実装する内容の候補は次のとおりです。
 
-- API Discovery Hub 本体一覧の Controller / Query Action / Repository / DTO / Responder 接続
-- Inertia props を `filters`、`providers`、`apiCatalogItems`、`pagination` に分けた本実装
-- Inertia 部分更新を使った検索・ページ送り
+- OpenAPI 定義本文、paths、schemas、parameters、responses を詳細画面から取得する別導線の検討
 - API Discovery Hub 編集画面モック
-- API Discovery Hub 詳細画面
-- 保存済み API やメモ機能の検討
+- 保存メモ周辺の表示・入力体験の改善
+- API Discovery Hub 一覧・詳細の追加テスト
 - Factory / Strategy の使いどころの検証
-- Feature テストと Unit テストの追加
+- Unit テストの追加
 - GitHub 上での開発フロー整理
 - README への設計判断や実装履歴の追記
 
@@ -269,7 +276,7 @@ API Discovery Hub 本体一覧では、APIs.guru の `list.json` を公開 API �
 ## 14. 注意事項
 
 - この README は現在確認できる構成に基づいています。
-- API Discovery Hub 本体一覧は現時点ではモック画面です。
+- API Discovery Hub 本番一覧・詳細は `api_catalog_cache` を使い、モック画面は UI 確認用として本番 DB 取得とは切り離します。
 - API Preview 側の Repository / DTO / Responder は本体側に流用しない前提です。
 - ADR パターン、レイヤードアーキテクチャ、各種責務分離は段階的に導入しています。
 - `.env` や `vendor/`、`node_modules/` は Git 管理対象外です。
