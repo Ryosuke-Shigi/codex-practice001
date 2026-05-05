@@ -7,16 +7,20 @@ import ApiCatalogPagination, {
     type ApiCatalogPaginationState,
 } from '@/Components/ApiCatalog/ApiCatalogPagination';
 import {
+    createProviderDomainOptions,
+    extractProviderDomain,
+} from '@/Components/ApiCatalog/apiCatalogDomain';
+import {
     DEFAULT_API_CATALOG_SORT_KEY,
     type ApiCatalogSortKey,
     sortApiCatalogItems,
 } from '@/Components/ApiCatalog/apiCatalogSort';
 import PublicLayout from '@/Layouts/PublicLayout';
-import { mockApiCatalogItems, mockDomains, mockProviders } from './mockApiCatalogData';
+import { mockApiCatalogItems, mockProviders } from './mockApiCatalogData';
 
 const ITEMS_PER_PAGE = 6;
-const ALL_PROVIDERS = 'all';
-const ALL_DOMAINS = 'all';
+const ALL_PROVIDERS = '';
+const ALL_DOMAINS = '';
 
 type ApiCatalogFilters = {
     keyword: string;
@@ -122,23 +126,31 @@ export default function MockIndex() {
     const [filters, setFilters] = useState<ApiCatalogFilters>(defaultFilters);
     const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(DEFAULT_API_CATALOG_SORT_KEY);
     const [page, setPage] = useState(1);
+    const domainOptions = useMemo(
+        () => createProviderDomainOptions(mockProviders.map((provider) => provider.providerKey)),
+        [],
+    );
 
     const filteredItems = useMemo(() => {
         const keyword = filters.keyword.trim().toLowerCase();
 
         /*
          * 本実装では検索条件を Query Action / Repository へ渡す想定です。
-         * モックでは Inertia 部分更新後の props 分割を意識しつつ、React 内で絞り込みます。
+         * モックでは同じ検索対象に寄せるため、title / description / provider / service をReact内で絞り込み、
+         * domain は本番と同じく provider_key の末尾から抽出して判定します。
          */
         return mockApiCatalogItems.filter((item) => {
             const matchesKeyword =
                 keyword.length === 0 ||
                 item.title.toLowerCase().includes(keyword) ||
-                item.apiKey.toLowerCase().includes(keyword) ||
-                item.description.toLowerCase().includes(keyword);
+                item.description.toLowerCase().includes(keyword) ||
+                item.providerKey.toLowerCase().includes(keyword) ||
+                item.serviceKey.toLowerCase().includes(keyword);
             const matchesProvider =
                 filters.providerKey === ALL_PROVIDERS || item.providerKey === filters.providerKey;
-            const matchesDomain = filters.domain === ALL_DOMAINS || item.domain === filters.domain;
+            const matchesDomain =
+                filters.domain === ALL_DOMAINS ||
+                extractProviderDomain(item.providerKey) === filters.domain;
 
             return matchesKeyword && matchesProvider && matchesDomain;
         });
@@ -259,33 +271,18 @@ export default function MockIndex() {
 
                 <ApiCatalogFilterPanel
                     keyword={filters.keyword}
-                    keywordPlaceholder="title / apiKey / description"
                     providerKey={filters.providerKey}
-                    providerAllValue={ALL_PROVIDERS}
                     providerOptions={mockProviders.map((provider) => ({
                         value: provider.providerKey,
                         label: provider.providerKey,
                     }))}
+                    domain={filters.domain}
+                    domainOptions={domainOptions.map((domainOption) => ({
+                        value: domainOption,
+                        label: domainOption,
+                    }))}
                     sortKey={sortKey}
                     hasActiveFilters={hasActiveFilters}
-                    extraSelects={[
-                        {
-                            id: 'domain',
-                            label: 'Domain',
-                            value: filters.domain,
-                            allValue: ALL_DOMAINS,
-                            allLabel: 'All domains',
-                            options: mockDomains.map((domain) => ({
-                                value: domain,
-                                label: domain,
-                            })),
-                            onChange: (domain) =>
-                                updateFilters({
-                                    ...filters,
-                                    domain,
-                                }),
-                        },
-                    ]}
                     onKeywordChange={(keyword) =>
                         updateFilters({
                             ...filters,
@@ -296,6 +293,12 @@ export default function MockIndex() {
                         updateFilters({
                             ...filters,
                             providerKey,
+                        })
+                    }
+                    onDomainChange={(domain) =>
+                        updateFilters({
+                            ...filters,
+                            domain,
                         })
                     }
                     onSortKeyChange={updateSortKey}

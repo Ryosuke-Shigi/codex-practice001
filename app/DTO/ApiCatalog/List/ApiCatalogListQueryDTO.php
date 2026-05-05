@@ -25,6 +25,7 @@ final readonly class ApiCatalogListQueryDTO
     public function __construct(
         public ?string $keyword,
         public ?string $providerKey,
+        public ?string $domain,
         public string $sortKey,
         public int $page,
         public int $perPage,
@@ -35,11 +36,13 @@ final readonly class ApiCatalogListQueryDTO
     {
         /*
          * 空文字は null に寄せ、Repository 側で「条件なし」として扱える形に揃えます。
+         * domain は専用カラムではなく provider_key の末尾抽出条件として Repository へ渡します。
          * 1ページ件数はモック一覧と同じ6件を標準にし、過大指定だけ軽く抑えます。
          */
         return new self(
             keyword: self::nullableTrimmedString($request->query('keyword')),
             providerKey: self::nullableTrimmedString($request->query('provider_key')),
+            domain: self::nullableTrimmedString($request->query('domain')),
             sortKey: self::normalizeSortKey($request->query('sort')),
             page: max(1, $request->integer('page', 1)),
             perPage: min(50, max(1, $request->integer('per_page', 6))),

@@ -19,12 +19,13 @@ final readonly class GetApiCatalogListAction
     public function execute(ApiCatalogListQueryDTO $query): ApiCatalogListResultDTO
     {
         /*
-         * Repository では keyword / provider_key を先に適用してから paginate します。
+         * Repository では keyword / provider_key / domain を先に適用してから paginate します。
          * そのため total / lastPage は全API件数ではなく、検索結果件数を基準にした値になります。
          */
         $paginator = $this->repository->paginateActiveList($query);
         $paginator = $this->resolveExistingPage($query, $paginator);
         $providers = $this->repository->listActiveProviderKeys();
+        $domains = $this->extractProviderDomains($providers);
 
         /*
          * Action はユースケースの手順だけを扱います。
@@ -39,9 +40,11 @@ final readonly class GetApiCatalogListAction
             filters: [
                 'keyword' => $query->keyword,
                 'providerKey' => $query->providerKey,
+                'domain' => $query->domain,
                 'sortKey' => $query->sortKey,
             ],
             providers: $providers,
+            domains: $domains,
             items: $items,
             pagination: [
                 'currentPage' => $paginator->currentPage(),
@@ -82,10 +85,53 @@ final readonly class GetApiCatalogListAction
             new ApiCatalogListQueryDTO(
                 keyword: $query->keyword,
                 providerKey: $query->providerKey,
+                domain: $query->domain,
                 sortKey: $query->sortKey,
                 page: $lastPage,
                 perPage: $query->perPage,
             ),
         );
+    }
+
+    /**
+     * @param  array<int, string>  $providers
+     * @return array<int, string>
+     */
+    private function extractProviderDomains(array $providers): array
+    {
+        /*
+         * api_catalog_cache には domain カラムを追加しません。
+         * Action では provider_key 候補から画面用の domain 候補を作るだけに留め、
+         * 実際のDB絞り込みは Repository の読み取り条件として扱います。
+         */
+        $domains = [];
+
+        foreach ($providers as $provider) {
+            $domain = $this->extractProviderDomain($provider);
+
+            if ($domain !== null) {
+                $domains[$domain] = $domain;
+            }
+        }
+
+        natcasesort($domains);
+
+        return array_values($domains);
+    }
+
+    private function extractProviderDomain(string $provider): ?string
+    {
+        $normalizedProvider = strtolower(trim(explode(':', $provider)[0]));
+
+        if ($normalizedProvider === '') {
+            return null;
+        }
+
+        $segments = array_values(array_filter(
+            explode('.', $normalizedProvider),
+            fn (string $segment): bool => $segment !== '',
+        ));
+
+        return $segments[array_key_last($segments)] ?? $normalizedProvider;
     }
 }

@@ -2,6 +2,8 @@ import { Head } from '@inertiajs/react';
 
 import ApiCatalogDetailHeader from '@/Components/ApiCatalog/ApiCatalogDetailHeader';
 import ApiCatalogDetailHero from '@/Components/ApiCatalog/ApiCatalogDetailHero';
+import ApiCatalogNotesPanel from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
+import { extractProviderDomain } from '@/Components/ApiCatalog/apiCatalogDomain';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type ApiCatalogDetailItem = {
@@ -28,7 +30,7 @@ function displayValue(value: string | null) {
     return value && value.trim() !== '' ? value : 'n/a';
 }
 
-function buildTechnicalRows(item: ApiCatalogDetailItem) {
+function buildTechnicalRows(item: ApiCatalogDetailItem, domain: string) {
     /*
      * 詳細画面では同期キャッシュのメタ情報だけを確認できるようにします。
      * OpenAPI 定義本文や paths / schemas の取得は別導線の責務なので、ここでは表示しません。
@@ -37,6 +39,7 @@ function buildTechnicalRows(item: ApiCatalogDetailItem) {
         ['apiKey', item.apiKey],
         ['providerKey', item.providerKey],
         ['serviceKey', displayValue(item.serviceKey)],
+        ['domain', displayValue(domain)],
         ['preferredVersion', displayValue(item.preferredVersion)],
         ['openapiVersion', displayValue(item.openapiVersion)],
         ['openapiJsonUrl', displayValue(item.openapiJsonUrl)],
@@ -46,7 +49,12 @@ function buildTechnicalRows(item: ApiCatalogDetailItem) {
 }
 
 export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
-    const technicalRows = buildTechnicalRows(apiCatalogItem);
+    /*
+     * 本番DBに domain カラムは追加しません。
+     * 詳細表示でも一覧と同じ provider_key 抽出ルールを使い、表示差分を入力データ側で吸収します。
+     */
+    const domain = extractProviderDomain(apiCatalogItem.providerKey);
+    const technicalRows = buildTechnicalRows(apiCatalogItem, domain);
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -64,6 +72,7 @@ export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
                     title={apiCatalogItem.title}
                     providerKey={apiCatalogItem.providerKey}
                     serviceKey={apiCatalogItem.serviceKey}
+                    domain={domain}
                     preferredVersion={apiCatalogItem.preferredVersion}
                 />
 
@@ -73,6 +82,8 @@ export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
                         <p className="mt-4 text-sm leading-7 text-cyan-50/86">
                             {displayValue(apiCatalogItem.description)}
                         </p>
+
+                        <ApiCatalogNotesPanel />
                     </section>
 
                     <aside className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">

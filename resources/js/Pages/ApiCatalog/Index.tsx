@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
+import { createProviderDomainOptions } from '@/Components/ApiCatalog/apiCatalogDomain';
 import {
     DEFAULT_API_CATALOG_SORT_KEY,
     type ApiCatalogSortKey,
@@ -14,6 +15,7 @@ import PublicLayout from '@/Layouts/PublicLayout';
 type ApiCatalogFilters = {
     keyword: string | null;
     providerKey: string | null;
+    domain: string | null;
     sortKey: ApiCatalogSortKey;
 };
 
@@ -41,10 +43,11 @@ type ApiCatalogPagination = {
 type IndexProps = {
     /*
      * Responder から受け取る props は将来の Inertia 部分更新単位に合わせています。
-     * providers は候補リストなので、検索・ページ送りでは基本的に更新しない想定です。
+     * providers/domains は候補リストなので、検索・ページ送りでは基本的に更新しない想定です。
      */
     filters: ApiCatalogFilters;
     providers: string[];
+    domains: string[];
     apiCatalogItems: ApiCatalogItem[];
     pagination: ApiCatalogPagination;
 };
@@ -61,12 +64,14 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
 function buildQueryParams(
     keyword: string,
     providerKey: string,
+    domain: string,
     sortKey: ApiCatalogSortKey,
     page: number,
 ) {
     /*
      * URL query は本番一覧の状態そのものです。
-     * keyword / provider_key / sort / page を明示し、リロードしても同じ一覧状態を再現できます。
+     * keyword / provider_key / domain / sort / page を明示し、
+     * リロードしても同じ一覧状態を再現できます。
      */
     const params: Record<string, string | number> = {
         page,
@@ -78,6 +83,10 @@ function buildQueryParams(
 
     if (providerKey !== '') {
         params.provider_key = providerKey;
+    }
+
+    if (domain !== '') {
+        params.domain = domain;
     }
 
     if (sortKey !== DEFAULT_API_CATALOG_SORT_KEY) {
@@ -117,9 +126,10 @@ function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatal
     };
 }
 
-export default function Index({ filters, providers, apiCatalogItems, pagination }: IndexProps) {
+export default function Index({ filters, providers, domains, apiCatalogItems, pagination }: IndexProps) {
     const [keyword, setKeyword] = useState(filters.keyword ?? '');
     const [providerKey, setProviderKey] = useState(filters.providerKey ?? '');
+    const [domain, setDomain] = useState(filters.domain ?? '');
     const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(
         normalizeApiCatalogSortKey(filters.sortKey),
     );
@@ -128,23 +138,25 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
 
     const canMovePrevious = pagination.currentPage > 1;
     const canMoveNext = pagination.currentPage < pagination.totalPages;
-    const hasActiveFilters = keyword.trim() !== '' || providerKey !== '';
+    const hasActiveFilters = keyword.trim() !== '' || providerKey !== '' || domain !== '';
     const returnUrl = currentListUrl();
+    const domainFilterOptions = domains.length > 0 ? domains : createProviderDomainOptions(providers);
 
     const visitList = (
         nextKeyword: string,
         nextProviderKey: string,
+        nextDomain: string,
         nextSortKey: ApiCatalogSortKey,
         nextPage: number,
     ) => {
         /*
          * 検索・ページ送りは Inertia GET で再訪問します。
          * sort と page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
-         * only を指定して、providers を毎回取り直さない将来構成を先に画面へ反映しています。
+         * only を指定して、候補リストを毎回取り直さない将来構成を先に画面へ反映しています。
          */
         router.get(
             '/api-catalog',
-            buildQueryParams(nextKeyword, nextProviderKey, nextSortKey, nextPage),
+            buildQueryParams(nextKeyword, nextProviderKey, nextDomain, nextSortKey, nextPage),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -160,7 +172,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
          * そのため検索入力の変更時点で必ず1ページ目から取り直します。
          */
         setKeyword(nextKeyword);
-        visitList(nextKeyword, providerKey, sortKey, 1);
+        visitList(nextKeyword, providerKey, domain, sortKey, 1);
     };
 
     const updateProviderKey = (nextProviderKey: string) => {
@@ -169,7 +181,16 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
          * keyword と同じく、条件変更後の存在しないページへ残らないよう1ページ目へ戻します。
          */
         setProviderKey(nextProviderKey);
-        visitList(keyword, nextProviderKey, sortKey, 1);
+        visitList(keyword, nextProviderKey, domain, sortKey, 1);
+    };
+
+    const updateDomain = (nextDomain: string) => {
+        /*
+         * domain は provider_key の末尾から抽出した絞り込み条件です。
+         * 専用カラムを増やさずに本番/モックの検索UIを揃え、条件変更時は1ページ目へ戻します。
+         */
+        setDomain(nextDomain);
+        visitList(keyword, providerKey, nextDomain, sortKey, 1);
     };
 
     const updateSortKey = (nextSortKey: ApiCatalogSortKey) => {
@@ -178,13 +199,14 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
          * sort 変更前の page が変更後の並びでは別の位置を指すため、本番/モック共通で1ページ目へ戻します。
          */
         setSortKey(nextSortKey);
-        visitList(keyword, providerKey, nextSortKey, 1);
+        visitList(keyword, providerKey, domain, nextSortKey, 1);
     };
 
     const clearFilters = () => {
         setKeyword('');
         setProviderKey('');
-        visitList('', '', sortKey, 1);
+        setDomain('');
+        visitList('', '', '', sortKey, 1);
     };
 
     const moveToPreviousPage = () => {
@@ -192,7 +214,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
             return;
         }
 
-        visitList(keyword, providerKey, sortKey, pagination.currentPage - 1);
+        visitList(keyword, providerKey, domain, sortKey, pagination.currentPage - 1);
     };
 
     const moveToNextPage = () => {
@@ -200,7 +222,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
             return;
         }
 
-        visitList(keyword, providerKey, sortKey, pagination.currentPage + 1);
+        visitList(keyword, providerKey, domain, sortKey, pagination.currentPage + 1);
     };
 
     const startPoolSync = () => {
@@ -243,8 +265,9 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
         // Inertia の戻る/進むや部分更新後も、フォーム表示を最新 props と同期します。
         setKeyword(filters.keyword ?? '');
         setProviderKey(filters.providerKey ?? '');
+        setDomain(filters.domain ?? '');
         setSortKey(normalizeApiCatalogSortKey(filters.sortKey));
-    }, [filters.keyword, filters.providerKey, filters.sortKey]);
+    }, [filters.keyword, filters.providerKey, filters.domain, filters.sortKey]);
 
     useEffect(() => {
         // 一覧画面全体の操作として、左右矢印キーでもページ移動できるようにします。
@@ -269,7 +292,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [canMoveNext, canMovePrevious, keyword, providerKey, sortKey, pagination.currentPage]);
+    }, [canMoveNext, canMovePrevious, keyword, providerKey, domain, sortKey, pagination.currentPage]);
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -327,17 +350,21 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
 
                 <ApiCatalogFilterPanel
                     keyword={keyword}
-                    keywordPlaceholder="title / description / provider / service"
                     providerKey={providerKey}
-                    providerAllValue=""
                     providerOptions={providers.map((provider) => ({
                         value: provider,
                         label: provider,
+                    }))}
+                    domain={domain}
+                    domainOptions={domainFilterOptions.map((domainOption) => ({
+                        value: domainOption,
+                        label: domainOption,
                     }))}
                     sortKey={sortKey}
                     hasActiveFilters={hasActiveFilters}
                     onKeywordChange={updateKeyword}
                     onProviderKeyChange={updateProviderKey}
+                    onDomainChange={updateDomain}
                     onSortKeyChange={updateSortKey}
                     onClear={clearFilters}
                 />

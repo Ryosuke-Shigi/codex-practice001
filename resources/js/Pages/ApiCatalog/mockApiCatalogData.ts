@@ -222,5 +222,3 @@ export const mockProviders: ApiCatalogProvider[] = Array.from(
         ]),
     ).values(),
 ).sort((first, second) => first.providerKey.localeCompare(second.providerKey));
-
-export const mockDomains = Array.from(new Set(mockApiCatalogItems.map((item) => item.domain))).sort();

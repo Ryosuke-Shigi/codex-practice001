@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 
 import ApiCatalogDetailHeader from '@/Components/ApiCatalog/ApiCatalogDetailHeader';
 import ApiCatalogDetailHero from '@/Components/ApiCatalog/ApiCatalogDetailHero';
+import ApiCatalogNotesPanel from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
+import { extractProviderDomain } from '@/Components/ApiCatalog/apiCatalogDomain';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, type ApiCatalogListItem } from './mockApiCatalogData';
 
@@ -10,29 +12,6 @@ type MockDetailProps = {
     apiKey: string;
     returnUrl: string;
 };
-
-type MockApiNote = {
-    id: string;
-    title: string;
-    body: string;
-};
-
-type MockApiNoteField = keyof Pick<MockApiNote, 'title' | 'body'>;
-
-/*
- * 将来の本番仕様メモ:
- * - saved_api_notes テーブルで保存する想定
- * - 1つの saved_api に複数 note が紐づく想定
- * - API一覧検索では saved_api_notes.title / saved_api_notes.body も検索対象にする想定
- * - 同期処理では saved_api_notes を触らない想定
- */
-function createMockApiNote(): MockApiNote {
-    return {
-        id: `mock-note-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        title: '',
-        body: '',
-    };
-}
 
 function safeDecodeURIComponent(value: string) {
     try {
@@ -55,7 +34,7 @@ function findMockApiCatalogItem(apiKey: string) {
     );
 }
 
-function buildTechnicalRows(item: ApiCatalogListItem) {
+function buildTechnicalRows(item: ApiCatalogListItem, domain: string) {
     /*
      * 技術情報は初期表示から隠し、必要な時だけ確認する UI にします。
      * OpenAPI 本文や paths / schemas はまだ取得・表示しません。
@@ -64,7 +43,7 @@ function buildTechnicalRows(item: ApiCatalogListItem) {
         ['apiKey', item.apiKey],
         ['providerKey', item.providerKey],
         ['serviceKey', item.serviceKey],
-        ['domain', item.domain],
+        ['domain', domain],
         ['preferredVersion', item.preferredVersion],
         ['openapiVersion', item.openapiVersion],
         ['sourceLatestUpdatedAt', item.sourceLatestUpdatedAt],
@@ -72,30 +51,8 @@ function buildTechnicalRows(item: ApiCatalogListItem) {
 }
 
 export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
-    const [notes, setNotes] = useState<MockApiNote[]>(() => [createMockApiNote()]);
     const [isTechnicalOpen, setIsTechnicalOpen] = useState(false);
     const item = useMemo(() => findMockApiCatalogItem(apiKey), [apiKey]);
-
-    const addNote = () => {
-        setNotes((currentNotes) => [...currentNotes, createMockApiNote()]);
-    };
-
-    const updateNote = (noteId: string, field: MockApiNoteField, value: string) => {
-        setNotes((currentNotes) =>
-            currentNotes.map((note) =>
-                note.id === noteId
-                    ? {
-                          ...note,
-                          [field]: value,
-                      }
-                    : note,
-            ),
-        );
-    };
-
-    const deleteNote = (noteId: string) => {
-        setNotes((currentNotes) => currentNotes.filter((note) => note.id !== noteId));
-    };
 
     if (!item) {
         return (
@@ -130,7 +87,12 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
         );
     }
 
-    const technicalRows = buildTechnicalRows(item);
+    /*
+     * モック詳細も本番と同じ domain 抽出ルールに寄せます。
+     * モック固定データのカテゴリ値は入力データとして残しますが、表示UIの責務には混ぜません。
+     */
+    const domain = extractProviderDomain(item.providerKey);
+    const technicalRows = buildTechnicalRows(item, domain);
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -148,7 +110,7 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                     title={item.title}
                     providerKey={item.providerKey}
                     serviceKey={item.serviceKey}
-                    domain={item.domain}
+                    domain={domain}
                     preferredVersion={item.preferredVersion}
                 />
 
@@ -157,80 +119,7 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                         <h2 className="text-2xl font-semibold text-white">{item.title}</h2>
                         <p className="mt-4 text-sm leading-7 text-cyan-50/86">{item.description}</p>
 
-                        <div className="mt-7">
-                            <div className="flex flex-wrap items-end justify-between gap-3">
-                                <div>
-                                    <h3 className="text-lg font-semibold text-white">調査メモ</h3>
-                                    <p className="mt-1 text-xs font-semibold text-cyan-100/64">
-                                        モックのため保存されません
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={addNote}
-                                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                                >
-                                    + メモ追加
-                                </button>
-                            </div>
-
-                            {/*
-                                複数メモの追加・編集・削除だけを React state で確認します。
-                                保存ボタンや Repository / Action 連携はまだ作りません。
-                            */}
-                            <div className="mt-4 grid gap-3">
-                                {notes.map((note, index) => (
-                                    <article
-                                        key={note.id}
-                                        className="rounded-2xl border border-white/28 bg-white/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] backdrop-blur-xl"
-                                    >
-                                        <div className="flex flex-wrap items-center justify-between gap-3">
-                                            <span className="rounded-full border border-cyan-100/30 bg-cyan-50/12 px-3 py-1 text-xs font-semibold text-cyan-50/86">
-                                                No.{index + 1}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() => deleteNote(note.id)}
-                                                className="inline-flex min-h-8 items-center justify-center rounded-lg border border-rose-100/25 bg-rose-100/8 px-3 text-xs font-semibold text-rose-50/86 transition hover:bg-rose-100/16 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100/20"
-                                            >
-                                                削除
-                                            </button>
-                                        </div>
-
-                                        <label className="mt-4 grid gap-2 text-sm font-semibold text-cyan-50">
-                                            <span>Title</span>
-                                            <input
-                                                type="text"
-                                                value={note.title}
-                                                onChange={(event) =>
-                                                    updateNote(note.id, 'title', event.target.value)
-                                                }
-                                                placeholder="メモタイトル"
-                                                className="h-10 w-full max-w-md rounded-xl border border-white/30 bg-white/14 px-3 text-sm text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
-                                            />
-                                        </label>
-
-                                        <label className="mt-4 grid gap-2 text-sm font-semibold text-cyan-50">
-                                            <span>Body</span>
-                                            <textarea
-                                                value={note.body}
-                                                onChange={(event) =>
-                                                    updateNote(note.id, 'body', event.target.value)
-                                                }
-                                                placeholder="このAPIについての調査メモを書く"
-                                                className="min-h-[120px] w-full resize-y rounded-xl border border-white/30 bg-white/14 p-3 text-sm leading-7 text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
-                                            />
-                                        </label>
-                                    </article>
-                                ))}
-
-                                {notes.length === 0 && (
-                                    <div className="rounded-2xl border border-white/24 bg-white/8 p-5 text-center text-sm font-semibold text-cyan-50/76 backdrop-blur-xl">
-                                        メモはありません。+ メモ追加から追加できます。
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <ApiCatalogNotesPanel />
                     </section>
 
                     <aside className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">

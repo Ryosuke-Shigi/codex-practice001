@@ -73,6 +73,10 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
             $builder->where('provider_key', $query->providerKey);
         }
 
+        if ($query->domain !== null) {
+            $this->applyProviderDomainFilter($builder, $query->domain);
+        }
+
         $this->applyListSort($builder, $query->sortKey);
 
         return $builder
@@ -115,6 +119,29 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
             'is_active' => true,
             'synced_at' => $syncedAt->toDateTimeString(),
         ];
+    }
+
+    /**
+     * @param  Builder<ApiCatalogCache>  $builder
+     */
+    private function applyProviderDomainFilter(Builder $builder, string $domain): void
+    {
+        /*
+         * domain は DB カラムではなく provider_key のホスト末尾として扱います。
+         * 例: stripe.com -> com、shopify.dev -> dev。
+         * Repository では表示整形をせず、読み取り条件として一致判定だけを担当します。
+         */
+        $normalizedDomain = strtolower(trim($domain));
+
+        if ($normalizedDomain === '') {
+            return;
+        }
+
+        $builder->where(function (Builder $domainBuilder) use ($normalizedDomain) {
+            $domainBuilder
+                ->whereRaw('LOWER(provider_key) = ?', [$normalizedDomain])
+                ->orWhereRaw('LOWER(provider_key) LIKE ?', ['%.'.$normalizedDomain]);
+        });
     }
 
     /**
