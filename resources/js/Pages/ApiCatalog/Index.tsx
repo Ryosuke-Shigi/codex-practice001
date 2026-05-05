@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-import ApiCatalogCard, { type ApiCatalogCardItem } from '@/Components/ApiCatalog/ApiCatalogCard';
+import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type ApiCatalogFilters = {
@@ -70,8 +70,9 @@ function buildQueryParams(keyword: string, providerKey: string, page: number) {
     return params;
 }
 
-function toApiCatalogCardItem(item: ApiCatalogItem): ApiCatalogCardItem {
+function toApiCatalogListItem(item: ApiCatalogItem): ApiCatalogListItem {
     return {
+        listKey: item.id,
         title: item.title,
         description: item.description,
         providerKey: item.providerKey,
@@ -237,21 +238,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                     </div>
                 </section>
 
-                <section className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {apiCatalogItems.map((item, index) => (
-                        <ApiCatalogCard
-                            key={item.id}
-                            item={toApiCatalogCardItem(item)}
-                            index={index}
-                        />
-                    ))}
-
-                    {apiCatalogItems.length === 0 && (
-                        <div className="col-span-full flex min-h-[220px] items-center justify-center rounded-2xl border border-white/30 bg-slate-950/32 p-8 text-center text-sm font-semibold text-cyan-50/82 backdrop-blur-2xl">
-                            条件に一致するAPIはありません
-                        </div>
-                    )}
-                </section>
+                <ApiCatalogList items={apiCatalogItems.map(toApiCatalogListItem)} />
 
                 <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
                     <p>
