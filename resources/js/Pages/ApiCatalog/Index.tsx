@@ -123,6 +123,8 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
     const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(
         normalizeApiCatalogSortKey(filters.sortKey),
     );
+    const [isPoolSyncing, setIsPoolSyncing] = useState(false);
+    const [poolSyncMessage, setPoolSyncMessage] = useState<string | null>(null);
 
     const canMovePrevious = pagination.currentPage > 1;
     const canMoveNext = pagination.currentPage < pagination.totalPages;
@@ -201,6 +203,42 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
         visitList(keyword, providerKey, sortKey, pagination.currentPage + 1);
     };
 
+    const startPoolSync = () => {
+        /*
+         * プール更新は本番一覧から開始します。
+         * 同期本体はLaravel側のAction/Jobへ渡し、Reactはクリック操作と開始状態の表示だけを担当します。
+         * return_url に現在の一覧URLを渡すことで、検索・並び替え・ページ番号をPOST後も保ちます。
+         */
+        setIsPoolSyncing(true);
+        setPoolSyncMessage('プール更新を開始しています...');
+
+        router.post(
+            '/api-catalog/sync',
+            {
+                return_url: currentListUrl(),
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    /*
+                     * この時点で分かるのは「同期Jobを開始した」ことだけです。
+                     * 完了や差分件数は断定せず、ユーザーには開始済みとして伝えます。
+                     */
+                    setPoolSyncMessage(
+                        'プール更新を開始しました。反映状況は一覧を再読み込みして確認できます。',
+                    );
+                },
+                onError: () => {
+                    setPoolSyncMessage('プール更新の開始に失敗しました。時間をおいて再度お試しください。');
+                },
+                onFinish: () => {
+                    setIsPoolSyncing(false);
+                },
+            },
+        );
+    };
+
     useEffect(() => {
         // Inertia の戻る/進むや部分更新後も、フォーム表示を最新 props と同期します。
         setKeyword(filters.keyword ?? '');
@@ -252,6 +290,18 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                         <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
                             Live
                         </span>
+                        {/*
+                            更新操作の入口は本番API一覧に集約します。
+                            API Preview は外部API疎通確認用なので、同じボタンをPreview側には置きません。
+                        */}
+                        <button
+                            type="button"
+                            onClick={startPoolSync}
+                            disabled={isPoolSyncing}
+                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30 disabled:cursor-wait disabled:opacity-60"
+                        >
+                            {isPoolSyncing ? '更新開始中' : 'プール更新'}
+                        </button>
                         <Link
                             href="/api-preview"
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
@@ -260,6 +310,20 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                         </Link>
                     </div>
                 </header>
+
+                {poolSyncMessage && (
+                    /*
+                        同期開始はバックグラウンドJob投入なので、一覧データ自体をここで即時更新しません。
+                        aria-live で開始状態を読み上げ対象にし、画面上でも操作結果を見えるようにします。
+                    */
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="rounded-2xl border border-cyan-100/35 bg-cyan-50/15 px-4 py-3 text-sm font-semibold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.14)] backdrop-blur-2xl"
+                    >
+                        {poolSyncMessage}
+                    </div>
+                )}
 
                 <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
                     <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(12rem,0.75fr)_minmax(12rem,0.75fr)_auto] lg:items-end">

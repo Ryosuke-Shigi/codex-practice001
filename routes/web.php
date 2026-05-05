@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApiCatalogController;
+use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
 use Illuminate\Http\Request;
@@ -42,6 +43,9 @@ Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index
 
 // API Discovery Hub 本体一覧です。表示整形は Responder、DB 取得は Repository に分離します。
 Route::get('/api-catalog', ApiCatalogController::class)->name('api-catalog.index');
+
+// API Discovery Hub 本番一覧から起動する同期開始ルートです。API Preview 側には更新責務を持たせません。
+Route::post('/api-catalog/sync', ApiCatalogSyncController::class)->name('api-catalog.sync');
 
 // API Discovery Hub 本体一覧の UI 確認用モックです。DB 取得や Responder にはまだ接続しません。
 Route::get('/api-catalog/mock', function () {
