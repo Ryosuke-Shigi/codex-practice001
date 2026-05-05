@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { motion } from 'motion/react';
 
-import SearchButtons from '@/Components/ApiCatalog/SearchButtons';
+import ApiCatalogDetailHeader from '@/Components/ApiCatalog/ApiCatalogDetailHeader';
+import ApiCatalogDetailHero from '@/Components/ApiCatalog/ApiCatalogDetailHero';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, type ApiCatalogListItem } from './mockApiCatalogData';
 
@@ -137,58 +137,20 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
             <Head title={`${item.title} Mock Detail`} />
 
             <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 pb-5">
-                <header className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
-                            Mock
-                        </span>
-                    </div>
+                <ApiCatalogDetailHeader
+                    modeLabel="Mock"
+                    returnUrl={returnUrl}
+                    returnComment="モック詳細でも一覧状態を含む returnUrl へ戻します。"
+                    searchTarget={item}
+                />
 
-                    <div className="flex flex-wrap items-center justify-end gap-3">
-                        {/*
-                            モック詳細でも本番詳細と同じ SearchButtons を使い、
-                            モック専用の検索リンク実装を持たないようにします。
-                        */}
-                        <SearchButtons
-                            title={item.title}
-                            providerKey={item.providerKey}
-                            description={item.description}
-                            apiKey={item.apiKey}
-                        />
-                        <Link
-                            href={returnUrl}
-                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
-                        >
-                            {/* モック詳細でも一覧状態を含む returnUrl へ戻します。 */}
-                            一覧へ戻る
-                        </Link>
-                    </div>
-                </header>
-
-                <motion.section
-                    className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_22px_48px_rgba(2,24,45,0.24)] backdrop-blur-2xl sm:p-6"
-                    initial={{ opacity: 0, y: 14 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.42, ease: 'easeOut' }}
-                >
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/72">
-                        API Discovery Hub
-                    </p>
-                    <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                        <div className="min-w-0">
-                            <h1 className="text-3xl font-semibold text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.34)] sm:text-5xl">
-                                {item.title}
-                            </h1>
-                            <p className="mt-3 break-all text-sm font-semibold text-cyan-100/78">
-                                {item.providerKey} / {item.serviceKey} / {item.domain}
-                            </p>
-                        </div>
-
-                        <span className="w-fit rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1.5 text-xs font-semibold text-cyan-50">
-                            {item.preferredVersion}
-                        </span>
-                    </div>
-                </motion.section>
+                <ApiCatalogDetailHero
+                    title={item.title}
+                    providerKey={item.providerKey}
+                    serviceKey={item.serviceKey}
+                    domain={item.domain}
+                    preferredVersion={item.preferredVersion}
+                />
 
                 <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
                     <section className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">

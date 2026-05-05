@@ -1,9 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
+import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
-import ApiCatalogSortSelect from '@/Components/ApiCatalog/ApiCatalogSortSelect';
 import {
     DEFAULT_API_CATALOG_SORT_KEY,
     type ApiCatalogSortKey,
@@ -325,47 +325,22 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                     </div>
                 )}
 
-                <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(12rem,0.75fr)_minmax(12rem,0.75fr)_auto] lg:items-end">
-                        <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                            <span>Keyword</span>
-                            <input
-                                type="search"
-                                value={keyword}
-                                onChange={(event) => updateKeyword(event.target.value)}
-                                placeholder="title / description / provider / service"
-                                className="h-11 rounded-xl border border-white/30 bg-white/18 px-4 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.34)] outline-none backdrop-blur-xl placeholder:text-cyan-50/55 focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                            />
-                        </label>
-
-                        <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                            <span>Provider</span>
-                            <select
-                                value={providerKey}
-                                onChange={(event) => updateProviderKey(event.target.value)}
-                                className="h-11 rounded-xl border border-white/30 bg-white/18 px-3 text-sm text-white outline-none backdrop-blur-xl focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                            >
-                                <option value="">All providers</option>
-                                {providers.map((provider) => (
-                                    <option key={provider} value={provider}>
-                                        {provider}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <ApiCatalogSortSelect value={sortKey} onChange={updateSortKey} />
-
-                        <button
-                            type="button"
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters}
-                            className="h-11 rounded-xl border border-white/35 bg-white/18 px-5 text-sm font-bold text-white shadow-[0_12px_26px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                </section>
+                <ApiCatalogFilterPanel
+                    keyword={keyword}
+                    keywordPlaceholder="title / description / provider / service"
+                    providerKey={providerKey}
+                    providerAllValue=""
+                    providerOptions={providers.map((provider) => ({
+                        value: provider,
+                        label: provider,
+                    }))}
+                    sortKey={sortKey}
+                    hasActiveFilters={hasActiveFilters}
+                    onKeywordChange={updateKeyword}
+                    onProviderKeyChange={updateProviderKey}
+                    onSortKeyChange={updateSortKey}
+                    onClear={clearFilters}
+                />
 
                 <ApiCatalogList
                     items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}

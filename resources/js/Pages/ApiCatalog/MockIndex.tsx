@@ -1,11 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination, {
     type ApiCatalogPaginationState,
 } from '@/Components/ApiCatalog/ApiCatalogPagination';
-import ApiCatalogSortSelect from '@/Components/ApiCatalog/ApiCatalogSortSelect';
 import {
     DEFAULT_API_CATALOG_SORT_KEY,
     type ApiCatalogSortKey,
@@ -257,78 +257,50 @@ export default function MockIndex() {
                     </div>
                 </header>
 
-                <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
-                    <div className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(10rem,0.7fr)_minmax(10rem,0.7fr)_minmax(12rem,0.8fr)_auto] xl:items-end">
-                        <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                            <span>Keyword</span>
-                            <input
-                                type="search"
-                                value={filters.keyword}
-                                onChange={(event) =>
-                                    updateFilters({
-                                        ...filters,
-                                        keyword: event.target.value,
-                                    })
-                                }
-                                placeholder="title / apiKey / description"
-                                className="h-11 rounded-xl border border-white/30 bg-white/18 px-4 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.34)] outline-none backdrop-blur-xl placeholder:text-cyan-50/55 focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                            />
-                        </label>
-
-                        <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                            <span>Provider</span>
-                            <select
-                                value={filters.providerKey}
-                                onChange={(event) =>
-                                    updateFilters({
-                                        ...filters,
-                                        providerKey: event.target.value,
-                                    })
-                                }
-                                className="h-11 rounded-xl border border-white/30 bg-white/18 px-3 text-sm text-white outline-none backdrop-blur-xl focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                            >
-                                <option value={ALL_PROVIDERS}>All providers</option>
-                                {mockProviders.map((provider) => (
-                                    <option key={provider.providerKey} value={provider.providerKey}>
-                                        {provider.providerKey}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                            <span>Domain</span>
-                            <select
-                                value={filters.domain}
-                                onChange={(event) =>
-                                    updateFilters({
-                                        ...filters,
-                                        domain: event.target.value,
-                                    })
-                                }
-                                className="h-11 rounded-xl border border-white/30 bg-white/18 px-3 text-sm text-white outline-none backdrop-blur-xl focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                            >
-                                <option value={ALL_DOMAINS}>All domains</option>
-                                {mockDomains.map((domain) => (
-                                    <option key={domain} value={domain}>
-                                        {domain}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <ApiCatalogSortSelect value={sortKey} onChange={updateSortKey} />
-
-                        <button
-                            type="button"
-                            onClick={() => updateFilters(defaultFilters)}
-                            disabled={!hasActiveFilters}
-                            className="h-11 rounded-xl border border-white/35 bg-white/18 px-5 text-sm font-bold text-white shadow-[0_12px_26px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                </section>
+                <ApiCatalogFilterPanel
+                    keyword={filters.keyword}
+                    keywordPlaceholder="title / apiKey / description"
+                    providerKey={filters.providerKey}
+                    providerAllValue={ALL_PROVIDERS}
+                    providerOptions={mockProviders.map((provider) => ({
+                        value: provider.providerKey,
+                        label: provider.providerKey,
+                    }))}
+                    sortKey={sortKey}
+                    hasActiveFilters={hasActiveFilters}
+                    extraSelects={[
+                        {
+                            id: 'domain',
+                            label: 'Domain',
+                            value: filters.domain,
+                            allValue: ALL_DOMAINS,
+                            allLabel: 'All domains',
+                            options: mockDomains.map((domain) => ({
+                                value: domain,
+                                label: domain,
+                            })),
+                            onChange: (domain) =>
+                                updateFilters({
+                                    ...filters,
+                                    domain,
+                                }),
+                        },
+                    ]}
+                    onKeywordChange={(keyword) =>
+                        updateFilters({
+                            ...filters,
+                            keyword,
+                        })
+                    }
+                    onProviderKeyChange={(providerKey) =>
+                        updateFilters({
+                            ...filters,
+                            providerKey,
+                        })
+                    }
+                    onSortKeyChange={updateSortKey}
+                    onClear={() => updateFilters(defaultFilters)}
+                />
 
                 <ApiCatalogList
                     items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}
