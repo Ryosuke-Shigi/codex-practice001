@@ -8,12 +8,15 @@ use Tests\TestCase;
 
 class ApiCatalogSyncTest extends TestCase
 {
-    public function test_api_catalog_sync_route_dispatches_sync_job_on_sync_connection_and_returns_to_current_list(): void
+    public function test_api_catalog_sync_route_dispatches_sync_job_and_returns_to_current_list(): void
     {
         /*
-         * 手動更新は queue worker がなくても動くよう sync connection でJobを実行します。
-         * Queue fake では実処理を止め、HTTP入口が正しいJobを起動することだけを確認します。
+         * 手動更新は同期処理本体をHTTPリクエスト内で実行せず、JobをQueueへ投入します。
+         * Queue fake では実処理を止め、HTTP入口が正しいJobを積むことだけを確認します。
          * return_url には一覧状態を含め、検索・並び替え・ページ番号がPOST後も残ることを守ります。
+         *
+         * connection === 'sync' は期待しません。
+         * Queue 接続先は環境設定に委ね、このルートの責務は Job 投入までに限定します。
          */
         Queue::fake();
 
@@ -24,10 +27,7 @@ class ApiCatalogSyncTest extends TestCase
             ]);
 
         $response->assertRedirect('/api-catalog?keyword=github&sort=name_desc&page=2');
-        Queue::assertPushed(
-            SyncApiCatalogJob::class,
-            fn (SyncApiCatalogJob $job): bool => $job->connection === 'sync',
-        );
+        Queue::assertPushed(SyncApiCatalogJob::class);
     }
 
     public function test_api_catalog_sync_route_does_not_redirect_outside_api_catalog_list(): void

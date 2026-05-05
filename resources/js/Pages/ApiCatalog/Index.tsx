@@ -228,11 +228,14 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
     const startPoolSync = () => {
         /*
          * プール更新は本番一覧から開始します。
-         * 同期本体はLaravel側のAction/Jobへ渡し、Reactはクリック操作と開始状態の表示だけを担当します。
+         * 同期本体はLaravel側のJob/Queueへ渡し、Reactはクリック操作と登録状態の表示だけを担当します。
          * return_url に現在の一覧URLを渡すことで、検索・並び替え・ページ番号をPOST後も保ちます。
+         *
+         * POST成功は「同期が終わった」ではなく「Job登録を受け付けた」という意味です。
+         * ここでは一覧データを完了済みとして扱わず、worker の実行結果は別の状態表示で扱います。
          */
         setIsPoolSyncing(true);
-        setPoolSyncMessage('プール更新を開始しています...');
+        setPoolSyncMessage('プール更新をキューに登録しています...');
 
         router.post(
             '/api-catalog/sync',
@@ -244,15 +247,16 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                 preserveScroll: true,
                 onSuccess: () => {
                     /*
-                     * プール更新ボタン経由の同期は sync connection で即時実行します。
-                     * 差分件数までは返していないため、完了したことだけを表示します。
+                     * React は Job 完了を検知しないため、登録完了だけを表示します。
+                     * 一覧反映の確認や完了通知は、同期状態を扱う別導線の責務です。
+                     * 完了・失敗・差分件数を画面で扱う場合は、同期履歴やポーリング API を追加してから行います。
                      */
                     setPoolSyncMessage(
-                        'プール更新が完了しました。一覧に反映されています。',
+                        'プール更新をキューに登録しました。反映には少し時間がかかる場合があります。',
                     );
                 },
                 onError: () => {
-                    setPoolSyncMessage('プール更新の開始に失敗しました。時間をおいて再度お試しください。');
+                    setPoolSyncMessage('プール更新の登録に失敗しました。時間をおいて再度お試しください。');
                 },
                 onFinish: () => {
                     setIsPoolSyncing(false);
@@ -323,7 +327,7 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                             disabled={isPoolSyncing}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30 disabled:cursor-wait disabled:opacity-60"
                         >
-                            {isPoolSyncing ? '更新開始中' : 'プール更新'}
+                            {isPoolSyncing ? '登録中' : 'プール更新'}
                         </button>
                         <Link
                             href="/api-preview"

@@ -10,14 +10,15 @@ final readonly class StartApiCatalogSyncAction
     {
         /*
          * 一覧画面のボタンは「同期開始」の入口です。
-         * 実際の取得・差分判定・DB保存は既存の SyncApiCatalogJob / Service / Repository に委ねます。
+         * 同期処理本体は直接実行せず、SyncApiCatalogJob を Queue に積みます。
+         * 実処理は queue worker が SyncApiCatalogAction / ApiCatalogSyncService を実行します。
+         * Scheduler からも同じ Job を投入し、手動更新と定期更新で同期本体を二重化しません。
          *
-         * 注意:
-         * .env の QUEUE_CONNECTION=redis だけに任せると、queue worker が動いていない環境では
-         * ボタン押下後に「ジョブを積んだだけ」で同期が進みません。
-         * API一覧の手動更新はユーザーがその場で反映を期待する操作なので、この入口だけは
-         * sync connection を明示して、HTTPリクエスト内で同期処理まで完了させます。
+         * ここで onConnection('sync') は指定しません。
+         * Queue 接続先は .env / queue.php の設定に委ね、HTTP リクエストは
+         * 「Job を受け付けた」時点で返します。
+         * 完了判定、失敗通知、同期履歴は別の状態管理機能で扱う前提です。
          */
-        SyncApiCatalogJob::dispatch()->onConnection('sync');
+        SyncApiCatalogJob::dispatch();
     }
 }

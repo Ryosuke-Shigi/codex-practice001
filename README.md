@@ -12,7 +12,7 @@ Docker 関連ファイルは、ローカル開発環境として一階層上の�
 
 現在のアプリケーションは Inertia / React を使った公開画面を持ちます。`GET /` はポートフォリオ入口、`GET /lab` は実験画面一覧、`GET /api-preview` は外部 API 確認用の入口、`GET /api-catalog` は `api_catalog_cache` を使う API Discovery Hub 本番一覧、`GET /api-catalog/mock` は UI 確認用モック画面です。
 
-API Discovery Hub の本番一覧・詳細は Controller / Query Action / Repository / DTO / Responder に接続済みです。保存メモは `saved_api_notes` に保存し、Google 検索リンクや `domain` は DB に保存せず表示時に生成します。手動更新は `sync` connection で HTTP リクエスト内に同期処理まで完了させ、モック画面は DB 取得や本番 Responder / Query Action とは切り離します。
+API Discovery Hub の本番一覧・詳細は Controller / Query Action / Repository / DTO / Responder に接続済みです。保存メモは `saved_api_notes` に保存し、Google 検索リンクや `domain` は DB に保存せず表示時に生成します。手動プール更新は `SyncApiCatalogJob` を Queue に積み、queue worker が API catalog sync を実行します。Scheduler からも同じ Job を定期投入し、モック画面は DB 取得や本番 Responder / Query Action とは切り離します。
 
 ## 2. このプロジェクトの目的
 
@@ -89,7 +89,7 @@ docker compose run --rm npm install
 - `GET /api-preview/apis-guru/mock`: APIs.guru 成功レスポンスの固定データ確認画面
 - `GET /api-preview/apis-guru/mock-error`: APIs.guru エラーレスポンスの固定データ確認画面
 - `GET /api-catalog`: `api_catalog_cache` を使う API Discovery Hub 本番一覧画面
-- `POST /api-catalog/sync`: APIs.guru `list.json` を取得し、同期キャッシュを手動更新する入口
+- `POST /api-catalog/sync`: APIs.guru `list.json` 同期用の `SyncApiCatalogJob` を Queue に積む入口
 - `GET /api-catalog/{apiKey}`: API Discovery Hub 本番詳細画面
 - `POST / PATCH / DELETE /api-catalog/{apiKey}/notes`: 本番詳細の保存メモ操作
 - `GET /api-catalog/mock`: API Discovery Hub 本体の API 一覧モック画面
@@ -107,7 +107,7 @@ docker compose run --rm npm install
 - `Search` クリックによる Google 検索
 - `/api-preview` へ戻るボタン
 
-各 API カードでは、一覧確認に必要な情報だけを表示します。Google 検索 URL は DB 保存前提ではなく、React 側で `title` または `apiKey` から生成します。本番詳細では `saved_api_notes` に紐づく調査メモを保存・更新・削除できます。
+各 API カードでは、一覧確認に必要な情報だけを表示します。Google 検索 URL は DB 保存前提ではなく、React 側で `title` または `apiKey` から生成します。本番詳細では `saved_api_notes` に紐づく調査メモを保存・更新・削除できます。React 画面はプール更新の Queue 登録までを表示し、同期完了判定はまだ持ちません。
 
 ## 6. ディレクトリ構成
 
@@ -246,7 +246,7 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 
 ## 12. テスト方針
 
-現在は Laravel 初期状態の Example テストに加えて、API Preview、API Discovery Hub の手動同期ルート、保存メモ CRUD と詳細表示 props の Feature テストを追加しています。
+現在は Laravel 初期状態の Example テストに加えて、API Preview、API Discovery Hub の手動同期ルートによる Queue 投入、保存メモ CRUD と詳細表示 props の Feature テストを追加しています。
 
 今後の方針は次のとおりです。
 
@@ -266,6 +266,9 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 - API Discovery Hub 編集画面モック
 - 保存メモ周辺の表示・入力体験の改善
 - API Discovery Hub 一覧・詳細の追加テスト
+- 同期履歴テーブルと同期失敗ログ
+- ポーリングによる同期状態表示
+- Queue worker / Scheduler の運用整理
 - Factory / Strategy の使いどころの検証
 - Unit テストの追加
 - GitHub 上での開発フロー整理
