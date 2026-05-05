@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 
+import SearchButtons from '@/Components/ApiCatalog/SearchButtons';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, type ApiCatalogListItem } from './mockApiCatalogData';
 
@@ -67,7 +68,6 @@ function buildTechnicalRows(item: ApiCatalogListItem) {
         ['preferredVersion', item.preferredVersion],
         ['openapiVersion', item.openapiVersion],
         ['sourceLatestUpdatedAt', item.sourceLatestUpdatedAt],
-        ['googleSearchUrl', item.googleSearchUrl],
     ];
 }
 
@@ -144,19 +144,17 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                         </span>
                     </div>
 
-                    {/*
-                        詳細画面では外部調査の Search を主操作として先に置き、
-                        API Preview へ戻る導線をその右側に固定します。
-                    */}
                     <div className="flex flex-wrap items-center justify-end gap-3">
-                        <a
-                            href={item.googleSearchUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                        >
-                            Search
-                        </a>
+                        {/*
+                            モック詳細でも本番詳細と同じ SearchButtons を使い、
+                            モック専用の検索リンク実装を持たないようにします。
+                        */}
+                        <SearchButtons
+                            title={item.title}
+                            providerKey={item.providerKey}
+                            description={item.description}
+                            apiKey={item.apiKey}
+                        />
                         <Link
                             href={returnUrl}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"

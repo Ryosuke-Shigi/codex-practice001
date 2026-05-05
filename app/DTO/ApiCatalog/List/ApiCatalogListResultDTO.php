@@ -8,7 +8,7 @@ final readonly class ApiCatalogListResultDTO
      * Responder で Inertia props にそのまま分割できるよう、
      * filters / providers / items / pagination を別々に保持します。
      *
-     * @param  array{keyword: string|null, providerKey: string|null}  $filters
+     * @param  array{keyword: string|null, providerKey: string|null, sortKey: string}  $filters
      * @param  array<int, string>  $providers
      * @param  array<int, ApiCatalogListItemDTO>  $items
      * @param  array{currentPage: int, totalPages: int, totalItems: int, perPage: int, from: int|null, to: int|null}  $pagination
@@ -23,7 +23,7 @@ final readonly class ApiCatalogListResultDTO
 
     /**
      * @return array{
-     *     filters: array{keyword: string|null, providerKey: string|null},
+     *     filters: array{keyword: string|null, providerKey: string|null, sortKey: string},
      *     providers: array<int, string>,
      *     apiCatalogItems: array<int, array<string, mixed>>,
      *     pagination: array{currentPage: int, totalPages: int, totalItems: int, perPage: int, from: int|null, to: int|null}

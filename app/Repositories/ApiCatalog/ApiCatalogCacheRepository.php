@@ -7,6 +7,7 @@ use App\DTO\ApiCatalog\Sync\ApiCatalogItemDTO;
 use App\Models\ApiCatalogCache;
 use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
 {
@@ -72,15 +73,9 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
             $builder->where('provider_key', $query->providerKey);
         }
 
-        /*
-         * 一覧画面の安定表示用の並びだけを Repository で指定します。
-         * 表示用のラベル加工や Google検索URL生成はここでは行いません。
-         */
+        $this->applyListSort($builder, $query->sortKey);
+
         return $builder
-            ->orderBy('provider_key')
-            ->orderBy('service_key')
-            ->orderBy('title')
-            ->orderBy('id')
             ->paginate($query->perPage, ['*'], 'page', $query->page)
             ->withQueryString();
     }
@@ -120,5 +115,39 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
             'is_active' => true,
             'synced_at' => $syncedAt->toDateTimeString(),
         ];
+    }
+
+    /**
+     * @param  Builder<ApiCatalogCache>  $builder
+     */
+    private function applyListSort(Builder $builder, string $sortKey): void
+    {
+        /*
+         * Repository は「取得順」というDB取得条件だけを担当します。
+         * sortKey は DTO で許可済みに正規化済みなので、ここでは固定の orderBy へ写像します。
+         */
+        match ($sortKey) {
+            ApiCatalogListQueryDTO::SORT_UPDATED_ASC => $builder
+                ->orderByRaw('source_latest_updated_at IS NULL')
+                ->orderBy('source_latest_updated_at')
+                ->orderByRaw("COALESCE(NULLIF(title, ''), api_key)")
+                ->orderBy('id'),
+            ApiCatalogListQueryDTO::SORT_NAME_ASC => $builder
+                ->orderByRaw("COALESCE(NULLIF(title, ''), api_key)")
+                ->orderBy('id'),
+            ApiCatalogListQueryDTO::SORT_NAME_DESC => $builder
+                ->orderByRaw("COALESCE(NULLIF(title, ''), api_key) DESC")
+                ->orderBy('id'),
+            ApiCatalogListQueryDTO::SORT_UPDATED_DESC => $builder
+                ->orderByRaw('source_latest_updated_at IS NULL')
+                ->orderByDesc('source_latest_updated_at')
+                ->orderByRaw("COALESCE(NULLIF(title, ''), api_key)")
+                ->orderBy('id'),
+            default => $builder
+                ->orderByRaw('source_latest_updated_at IS NULL')
+                ->orderByDesc('source_latest_updated_at')
+                ->orderByRaw("COALESCE(NULLIF(title, ''), api_key)")
+                ->orderBy('id'),
+        };
     }
 }

@@ -1,14 +1,16 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
 
+import SearchButtons from './SearchButtons';
+
 export type ApiCatalogCardItem = {
+    apiKey?: string;
     title: string;
     description: string;
     providerKey: string;
     serviceKey: string | null;
     preferredVersion: string | null;
     openapiVersion: string | null;
-    googleSearchUrl: string;
     detailHref: string | null;
 };
 
@@ -26,7 +28,7 @@ export default function ApiCatalogCard({ item, index }: ApiCatalogCardProps) {
 
     return (
         <motion.article
-            className={`group relative flex min-h-[194px] flex-col rounded-2xl border border-white/35 bg-slate-950/38 p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_38px_rgba(2,24,45,0.22)] backdrop-blur-2xl transition hover:border-cyan-100/55 hover:bg-slate-900/48 ${
+            className={`group relative flex min-h-[232px] flex-col rounded-2xl border border-white/35 bg-slate-950/38 p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_38px_rgba(2,24,45,0.22)] backdrop-blur-2xl transition hover:border-cyan-100/55 hover:bg-slate-900/48 ${
                 item.detailHref ? 'cursor-pointer' : ''
             }`}
             initial={{ opacity: 0, y: 12 }}
@@ -66,19 +68,23 @@ export default function ApiCatalogCard({ item, index }: ApiCatalogCardProps) {
                 {displayValue(item.description)}
             </p>
 
-            <div className="mt-auto flex flex-wrap items-end justify-between gap-3 pt-4">
+            <div className="mt-auto pt-4">
                 <div className="min-w-0 text-xs font-semibold text-cyan-100/68">
                     <p className="truncate">OpenAPI {displayValue(item.openapiVersion)}</p>
                 </div>
 
-                <a
-                    href={item.googleSearchUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="relative z-20 inline-flex min-h-9 items-center justify-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-3 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                >
-                    Search
-                </a>
+                {/*
+                    カードはモック/本番の両一覧で共通利用します。
+                    外部検索URLはpropsで渡さず、SearchButtons側でAPI名/provider名から毎回生成します。
+                */}
+                <SearchButtons
+                    title={item.title}
+                    providerKey={item.providerKey}
+                    description={item.description}
+                    apiKey={item.apiKey}
+                    size="compact"
+                    className="mt-3"
+                />
             </div>
         </motion.article>
     );

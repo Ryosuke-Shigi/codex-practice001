@@ -15,9 +15,7 @@ export type ApiCatalogListItemSource = {
     sourceLatestUpdatedAt: string;
 };
 
-export type ApiCatalogListItem = ApiCatalogListItemSource & {
-    googleSearchUrl: string;
-};
+export type ApiCatalogListItem = ApiCatalogListItemSource;
 
 /*
  * API Discovery Hub 本体一覧・詳細の React 側モックデータです。
@@ -207,20 +205,7 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
     },
 ];
 
-function createGoogleSearchUrl(item: Pick<ApiCatalogListItemSource, 'title' | 'apiKey'>) {
-    const queryTarget = item.title.trim() || item.apiKey;
-
-    /*
-     * Google 検索 URL は DB へ保存しない前提です。
-     * 本実装でも表示時に title または apiKey から生成します。
-     */
-    return `https://www.google.com/search?q=${encodeURIComponent(`${queryTarget} API`)}`;
-}
-
-export const mockApiCatalogItems: ApiCatalogListItem[] = mockApiCatalogItemSources.map((item) => ({
-    ...item,
-    googleSearchUrl: createGoogleSearchUrl(item),
-}));
+export const mockApiCatalogItems: ApiCatalogListItem[] = mockApiCatalogItemSources;
 
 export const mockProviders: ApiCatalogProvider[] = Array.from(
     /*

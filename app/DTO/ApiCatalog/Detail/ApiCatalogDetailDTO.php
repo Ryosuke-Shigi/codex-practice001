@@ -19,7 +19,6 @@ final readonly class ApiCatalogDetailDTO
         public ?string $openapiYamlUrl,
         public ?string $sourceLatestUpdatedAt,
         public bool $isActive,
-        public string $googleSearchUrl,
     ) {
     }
 
@@ -44,7 +43,6 @@ final readonly class ApiCatalogDetailDTO
             openapiYamlUrl: $cache->openapi_yaml_url,
             sourceLatestUpdatedAt: $cache->source_latest_updated_at?->toDateString(),
             isActive: (bool) $cache->is_active,
-            googleSearchUrl: self::buildGoogleSearchUrl($title, $cache->api_key),
         );
     }
 
@@ -61,8 +59,7 @@ final readonly class ApiCatalogDetailDTO
      *     openapiJsonUrl: string|null,
      *     openapiYamlUrl: string|null,
      *     sourceLatestUpdatedAt: string|null,
-     *     isActive: bool,
-     *     googleSearchUrl: string
+     *     isActive: bool
      * }
      */
     public function toArray(): array
@@ -84,17 +81,6 @@ final readonly class ApiCatalogDetailDTO
             'openapiYamlUrl' => $this->openapiYamlUrl,
             'sourceLatestUpdatedAt' => $this->sourceLatestUpdatedAt,
             'isActive' => $this->isActive,
-            'googleSearchUrl' => $this->googleSearchUrl,
         ];
-    }
-
-    private static function buildGoogleSearchUrl(string $title, string $apiKey): string
-    {
-        /*
-         * 一覧 DTO と同じく、Google検索URLは DB へ保存せず表示用 DTO で生成します。
-         */
-        $searchTarget = trim($title) !== '' ? $title : $apiKey;
-
-        return 'https://www.google.com/search?q='.rawurlencode($searchTarget.' API');
     }
 }

@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
 
+import SearchButtons from '@/Components/ApiCatalog/SearchButtons';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type ApiCatalogDetailItem = {
@@ -16,7 +17,6 @@ type ApiCatalogDetailItem = {
     openapiYamlUrl: string | null;
     sourceLatestUpdatedAt: string | null;
     isActive: boolean;
-    googleSearchUrl: string;
 };
 
 type DetailProps = {
@@ -61,14 +61,16 @@ export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-end gap-3">
-                        <a
-                            href={apiCatalogItem.googleSearchUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                        >
-                            Search
-                        </a>
+                        {/*
+                            詳細画面もカードと同じ SearchButtons を使います。
+                            DTOから検索URLを受け取らず、React共通関数で表示時に生成します。
+                        */}
+                        <SearchButtons
+                            title={apiCatalogItem.title}
+                            providerKey={apiCatalogItem.providerKey}
+                            description={apiCatalogItem.description}
+                            apiKey={apiCatalogItem.apiKey}
+                        />
                         <Link
                             href={returnUrl}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"

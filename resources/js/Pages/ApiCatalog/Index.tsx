@@ -3,11 +3,18 @@ import { useEffect, useState } from 'react';
 
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
+import ApiCatalogSortSelect from '@/Components/ApiCatalog/ApiCatalogSortSelect';
+import {
+    DEFAULT_API_CATALOG_SORT_KEY,
+    type ApiCatalogSortKey,
+    normalizeApiCatalogSortKey,
+} from '@/Components/ApiCatalog/apiCatalogSort';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type ApiCatalogFilters = {
     keyword: string | null;
     providerKey: string | null;
+    sortKey: ApiCatalogSortKey;
 };
 
 type ApiCatalogItem = {
@@ -20,7 +27,6 @@ type ApiCatalogItem = {
     preferredVersion: string | null;
     openapiVersion: string | null;
     isActive: boolean;
-    googleSearchUrl: string;
 };
 
 type ApiCatalogPagination = {
@@ -52,10 +58,15 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
 }
 
-function buildQueryParams(keyword: string, providerKey: string, page: number) {
+function buildQueryParams(
+    keyword: string,
+    providerKey: string,
+    sortKey: ApiCatalogSortKey,
+    page: number,
+) {
     /*
      * URL query は本番一覧の状態そのものです。
-     * keyword / provider_key / page を明示し、リロードしても同じ検索状態を再現できます。
+     * keyword / provider_key / sort / page を明示し、リロードしても同じ一覧状態を再現できます。
      */
     const params: Record<string, string | number> = {
         page,
@@ -67,6 +78,10 @@ function buildQueryParams(keyword: string, providerKey: string, page: number) {
 
     if (providerKey !== '') {
         params.provider_key = providerKey;
+    }
+
+    if (sortKey !== DEFAULT_API_CATALOG_SORT_KEY) {
+        params.sort = sortKey;
     }
 
     return params;
@@ -91,13 +106,13 @@ function buildDetailHref(apiKey: string, returnUrl: string) {
 function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatalogListItem {
     return {
         listKey: item.id,
+        apiKey: item.apiKey,
         title: item.title,
         description: item.description,
         providerKey: item.providerKey,
         serviceKey: item.serviceKey,
         preferredVersion: item.preferredVersion,
         openapiVersion: item.openapiVersion,
-        googleSearchUrl: item.googleSearchUrl,
         detailHref: buildDetailHref(item.apiKey, returnUrl),
     };
 }
@@ -105,24 +120,36 @@ function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatal
 export default function Index({ filters, providers, apiCatalogItems, pagination }: IndexProps) {
     const [keyword, setKeyword] = useState(filters.keyword ?? '');
     const [providerKey, setProviderKey] = useState(filters.providerKey ?? '');
+    const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(
+        normalizeApiCatalogSortKey(filters.sortKey),
+    );
 
     const canMovePrevious = pagination.currentPage > 1;
     const canMoveNext = pagination.currentPage < pagination.totalPages;
     const hasActiveFilters = keyword.trim() !== '' || providerKey !== '';
     const returnUrl = currentListUrl();
 
-    const visitList = (nextKeyword: string, nextProviderKey: string, nextPage: number) => {
+    const visitList = (
+        nextKeyword: string,
+        nextProviderKey: string,
+        nextSortKey: ApiCatalogSortKey,
+        nextPage: number,
+    ) => {
         /*
          * 検索・ページ送りは Inertia GET で再訪問します。
-         * page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
+         * sort と page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
          * only を指定して、providers を毎回取り直さない将来構成を先に画面へ反映しています。
          */
-        router.get('/api-catalog', buildQueryParams(nextKeyword, nextProviderKey, nextPage), {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-            only: ['filters', 'apiCatalogItems', 'pagination'],
-        });
+        router.get(
+            '/api-catalog',
+            buildQueryParams(nextKeyword, nextProviderKey, nextSortKey, nextPage),
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: ['filters', 'apiCatalogItems', 'pagination'],
+            },
+        );
     };
 
     const updateKeyword = (nextKeyword: string) => {
@@ -131,7 +158,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
          * そのため検索入力の変更時点で必ず1ページ目から取り直します。
          */
         setKeyword(nextKeyword);
-        visitList(nextKeyword, providerKey, 1);
+        visitList(nextKeyword, providerKey, sortKey, 1);
     };
 
     const updateProviderKey = (nextProviderKey: string) => {
@@ -140,13 +167,22 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
          * keyword と同じく、条件変更後の存在しないページへ残らないよう1ページ目へ戻します。
          */
         setProviderKey(nextProviderKey);
-        visitList(keyword, nextProviderKey, 1);
+        visitList(keyword, nextProviderKey, sortKey, 1);
+    };
+
+    const updateSortKey = (nextSortKey: ApiCatalogSortKey) => {
+        /*
+         * 並び替えは検索後の結果セットに対して適用します。
+         * sort 変更前の page が変更後の並びでは別の位置を指すため、本番/モック共通で1ページ目へ戻します。
+         */
+        setSortKey(nextSortKey);
+        visitList(keyword, providerKey, nextSortKey, 1);
     };
 
     const clearFilters = () => {
         setKeyword('');
         setProviderKey('');
-        visitList('', '', 1);
+        visitList('', '', sortKey, 1);
     };
 
     const moveToPreviousPage = () => {
@@ -154,7 +190,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
             return;
         }
 
-        visitList(keyword, providerKey, pagination.currentPage - 1);
+        visitList(keyword, providerKey, sortKey, pagination.currentPage - 1);
     };
 
     const moveToNextPage = () => {
@@ -162,14 +198,15 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
             return;
         }
 
-        visitList(keyword, providerKey, pagination.currentPage + 1);
+        visitList(keyword, providerKey, sortKey, pagination.currentPage + 1);
     };
 
     useEffect(() => {
         // Inertia の戻る/進むや部分更新後も、フォーム表示を最新 props と同期します。
         setKeyword(filters.keyword ?? '');
         setProviderKey(filters.providerKey ?? '');
-    }, [filters.keyword, filters.providerKey]);
+        setSortKey(normalizeApiCatalogSortKey(filters.sortKey));
+    }, [filters.keyword, filters.providerKey, filters.sortKey]);
 
     useEffect(() => {
         // 一覧画面全体の操作として、左右矢印キーでもページ移動できるようにします。
@@ -194,7 +231,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [canMoveNext, canMovePrevious, keyword, providerKey, pagination.currentPage]);
+    }, [canMoveNext, canMovePrevious, keyword, providerKey, sortKey, pagination.currentPage]);
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -225,7 +262,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                 </header>
 
                 <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(12rem,0.8fr)_auto] lg:items-end">
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(12rem,0.75fr)_minmax(12rem,0.75fr)_auto] lg:items-end">
                         <label className="grid gap-2 text-sm font-semibold text-cyan-50">
                             <span>Keyword</span>
                             <input
@@ -252,6 +289,8 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                                 ))}
                             </select>
                         </label>
+
+                        <ApiCatalogSortSelect value={sortKey} onChange={updateSortKey} />
 
                         <button
                             type="button"

@@ -5,6 +5,12 @@ import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog
 import ApiCatalogPagination, {
     type ApiCatalogPaginationState,
 } from '@/Components/ApiCatalog/ApiCatalogPagination';
+import ApiCatalogSortSelect from '@/Components/ApiCatalog/ApiCatalogSortSelect';
+import {
+    DEFAULT_API_CATALOG_SORT_KEY,
+    type ApiCatalogSortKey,
+    sortApiCatalogItems,
+} from '@/Components/ApiCatalog/apiCatalogSort';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, mockDomains, mockProviders } from './mockApiCatalogData';
 
@@ -48,7 +54,7 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
 function buildPagination(totalItems: number, currentPage: number): ApiCatalogPagination {
     /*
      * モックでも本番と同じ考え方に寄せます。
-     * 先に絞り込んだ filteredItems.length を総件数として受け取り、その件数だけでページ数を計算します。
+     * 先に検索・並び替えを適用した件数を総件数として受け取り、その件数だけでページ数を計算します。
      */
     const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
     const clampedPage = Math.min(Math.max(1, currentPage), totalPages);
@@ -101,19 +107,20 @@ function toApiCatalogListItem(
 ): ApiCatalogListItem {
     return {
         listKey: item.apiKey,
+        apiKey: item.apiKey,
         title: item.title,
         description: item.description,
         providerKey: item.providerKey,
         serviceKey: item.serviceKey,
         preferredVersion: item.preferredVersion,
         openapiVersion: item.openapiVersion,
-        googleSearchUrl: item.googleSearchUrl,
         detailHref: buildMockDetailHref(item.apiKey, returnUrl),
     };
 }
 
 export default function MockIndex() {
     const [filters, setFilters] = useState<ApiCatalogFilters>(defaultFilters);
+    const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(DEFAULT_API_CATALOG_SORT_KEY);
     const [page, setPage] = useState(1);
 
     const filteredItems = useMemo(() => {
@@ -137,9 +144,17 @@ export default function MockIndex() {
         });
     }, [filters]);
 
+    const sortedItems = useMemo(() => {
+        /*
+         * モック側も本番仕様と同じ順番で処理します。
+         * 固定データを検索で絞り込んだ後、共通 sort key で並び替えてからページングします。
+         */
+        return sortApiCatalogItems(filteredItems, sortKey);
+    }, [filteredItems, sortKey]);
+
     const pagination = useMemo(
-        () => buildPagination(filteredItems.length, page),
-        [filteredItems.length, page],
+        () => buildPagination(sortedItems.length, page),
+        [sortedItems.length, page],
     );
 
     const apiCatalogItems = useMemo(() => {
@@ -149,8 +164,8 @@ export default function MockIndex() {
          * apiCatalogItems は将来 Responder から渡す主更新対象です。
          * ここでは固定データをページ単位に slice して同じ形の UI を確認します。
          */
-        return filteredItems.slice(startIndex, startIndex + pagination.perPage);
-    }, [filteredItems, pagination.currentPage, pagination.perPage]);
+        return sortedItems.slice(startIndex, startIndex + pagination.perPage);
+    }, [sortedItems, pagination.currentPage, pagination.perPage]);
 
     const hasActiveFilters =
         filters.keyword !== defaultFilters.keyword ||
@@ -166,6 +181,15 @@ export default function MockIndex() {
          * 本番一覧と同じ仕様として、モック側も検索・絞り込み変更時は1ページ目へ戻します。
          */
         setFilters(nextFilters);
+        setPage(1);
+    };
+
+    const updateSortKey = (nextSortKey: ApiCatalogSortKey) => {
+        /*
+         * 並び替え変更時は、本番一覧と同じく現在ページを1ページ目へ戻します。
+         * これにより、並び替え前のページ位置が変更後の結果へ残る違和感を避けます。
+         */
+        setSortKey(nextSortKey);
         setPage(1);
     };
 
@@ -234,7 +258,7 @@ export default function MockIndex() {
                 </header>
 
                 <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_auto] lg:items-end">
+                    <div className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(10rem,0.7fr)_minmax(10rem,0.7fr)_minmax(12rem,0.8fr)_auto] xl:items-end">
                         <label className="grid gap-2 text-sm font-semibold text-cyan-50">
                             <span>Keyword</span>
                             <input
@@ -292,6 +316,8 @@ export default function MockIndex() {
                                 ))}
                             </select>
                         </label>
+
+                        <ApiCatalogSortSelect value={sortKey} onChange={updateSortKey} />
 
                         <button
                             type="button"

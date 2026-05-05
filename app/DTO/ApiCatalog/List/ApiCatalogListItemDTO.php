@@ -16,7 +16,6 @@ final readonly class ApiCatalogListItemDTO
         public ?string $preferredVersion,
         public ?string $openapiVersion,
         public bool $isActive,
-        public string $googleSearchUrl,
     ) {
     }
 
@@ -38,7 +37,6 @@ final readonly class ApiCatalogListItemDTO
             preferredVersion: $cache->preferred_version,
             openapiVersion: $cache->openapi_version,
             isActive: (bool) $cache->is_active,
-            googleSearchUrl: self::buildGoogleSearchUrl($title, $cache->api_key),
         );
     }
 
@@ -52,8 +50,7 @@ final readonly class ApiCatalogListItemDTO
      *     serviceKey: string|null,
      *     preferredVersion: string|null,
      *     openapiVersion: string|null,
-     *     isActive: bool,
-     *     googleSearchUrl: string
+     *     isActive: bool
      * }
      */
     public function toArray(): array
@@ -68,18 +65,6 @@ final readonly class ApiCatalogListItemDTO
             'preferredVersion' => $this->preferredVersion,
             'openapiVersion' => $this->openapiVersion,
             'isActive' => $this->isActive,
-            'googleSearchUrl' => $this->googleSearchUrl,
         ];
-    }
-
-    private static function buildGoogleSearchUrl(string $title, string $apiKey): string
-    {
-        /*
-         * Google検索URLは api_catalog_cache に保存しません。
-         * 本番詳細でも Model accessor ではなく、表示用 DTO / Responder 境界で生成する想定です。
-         */
-        $searchTarget = trim($title) !== '' ? $title : $apiKey;
-
-        return 'https://www.google.com/search?q='.rawurlencode($searchTarget.' API');
     }
 }

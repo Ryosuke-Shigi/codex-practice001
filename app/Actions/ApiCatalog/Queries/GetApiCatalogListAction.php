@@ -39,6 +39,7 @@ final readonly class GetApiCatalogListAction
             filters: [
                 'keyword' => $query->keyword,
                 'providerKey' => $query->providerKey,
+                'sortKey' => $query->sortKey,
             ],
             providers: $providers,
             items: $items,
@@ -81,6 +82,7 @@ final readonly class GetApiCatalogListAction
             new ApiCatalogListQueryDTO(
                 keyword: $query->keyword,
                 providerKey: $query->providerKey,
+                sortKey: $query->sortKey,
                 page: $lastPage,
                 perPage: $query->perPage,
             ),
