@@ -43,7 +43,7 @@ function buildTechnicalRows(
 ): ApiCatalogDetailTechnicalRow[] {
     /*
      * 技術情報は初期表示から隠し、必要な時だけ確認する UI にします。
-     * OpenAPI 本文や paths / schemas はまだ取得・表示しません。
+     * OpenAPI 本文や paths / schemas は別導線の責務なので、ここでは表示しません。
      */
     return [
         ['apiKey', item.apiKey],

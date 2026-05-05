@@ -48,12 +48,12 @@ Route::get('/api-catalog', ApiCatalogController::class)->name('api-catalog.index
 // API Discovery Hub 本番一覧から起動する同期開始ルートです。API Preview 側には更新責務を持たせません。
 Route::post('/api-catalog/sync', ApiCatalogSyncController::class)->name('api-catalog.sync');
 
-// API Discovery Hub 本体一覧の UI 確認用モックです。DB 取得や Responder にはまだ接続しません。
+// API Discovery Hub 本体一覧の UI 確認用モックです。DB 取得や Responder とは切り離します。
 Route::get('/api-catalog/mock', function () {
     return Inertia::render('ApiCatalog/MockIndex');
 })->name('api-catalog.mock');
 
-// API Discovery Hub 本体詳細の UI 確認用モックです。DB 取得や Query Action にはまだ接続しません。
+// API Discovery Hub 本体詳細の UI 確認用モックです。DB 取得や Query Action とは切り離します。
 Route::get('/api-catalog/mock/{apiKey}', function (Request $request, string $apiKey) {
     $returnUrl = $request->query('return_url');
 

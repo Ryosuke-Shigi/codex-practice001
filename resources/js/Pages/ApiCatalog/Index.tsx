@@ -336,7 +336,6 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
 
                 {poolSyncMessage && (
                     /*
-                        同期開始はバックグラウンドJob投入なので、一覧データ自体をここで即時更新しません。
                         aria-live で開始状態を読み上げ対象にし、画面上でも操作結果を見えるようにします。
                     */
                     <div
