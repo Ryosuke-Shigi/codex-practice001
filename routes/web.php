@@ -60,6 +60,7 @@ Route::get('/api-catalog/mock/{apiKey}', function (Request $request, string $api
     /*
      * モック詳細も本番詳細と同じ戻り導線で確認できるよう return_url を受けます。
      * ただし戻り先はモック一覧内に限定し、外部 URL や本番詳細 URL を混ぜないようにします。
+     * /api-catalog は本番一覧なので、モック詳細からの戻り先としては採用しません。
      */
     return Inertia::render('ApiCatalog/MockDetail', [
         'apiKey' => $apiKey,

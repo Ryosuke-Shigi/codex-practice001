@@ -51,6 +51,7 @@ class ApiCatalogController extends Controller
          * 一覧状態は URL query で保持します。
          * 外部URLや詳細URLへ戻らないよう、本番一覧だけを戻り先として許可します。
          * これにより keyword / provider_key / page を含む一覧 URL へ安全に戻せます。
+         * /api-preview や /api-catalog/mock は別導線なので、本番詳細の戻り先には採用しません。
          */
         if (
             is_string($returnUrl)

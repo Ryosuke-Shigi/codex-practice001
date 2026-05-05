@@ -44,6 +44,33 @@ class ApiCatalogNoteTest extends TestCase
             );
     }
 
+    public function test_api_catalog_detail_return_url_is_limited_to_catalog_list(): void
+    {
+        /*
+         * 本番詳細の戻り先は本番一覧だけに閉じます。
+         * preview 画面やモック一覧から開いたようなURLが混ざっても、Detail props には採用しません。
+         */
+        $cache = $this->createApiCatalogCache(['api_key' => 'github.com:rest']);
+
+        $this
+            ->get('/api-catalog/'.rawurlencode($cache->api_key)
+                .'?return_url='.rawurlencode('/api-catalog?keyword=github&page=2'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Detail', false)
+                ->where('returnUrl', '/api-catalog?keyword=github&page=2')
+            );
+
+        $this
+            ->get('/api-catalog/'.rawurlencode($cache->api_key)
+                .'?return_url='.rawurlencode('/api-preview'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Detail', false)
+                ->where('returnUrl', '/api-catalog')
+            );
+    }
+
     public function test_api_catalog_note_can_be_stored_updated_and_deleted(): void
     {
         $cache = $this->createApiCatalogCache(['api_key' => 'github.com:rest']);
@@ -148,6 +175,29 @@ class ApiCatalogNoteTest extends TestCase
 
         $response->assertOk();
         $this->assertDatabaseCount('saved_api_notes', 0);
+    }
+
+    public function test_mock_detail_return_url_is_limited_to_mock_catalog_list(): void
+    {
+        /*
+         * モック詳細は API Preview から確認するUI導線なので、戻り先もモック一覧に閉じます。
+         * 本番一覧URLを受け取っても採用せず、preview側から本番導線へ誤遷移しないことを守ります。
+         */
+        $this
+            ->get('/api-catalog/mock/github.com?return_url='.rawurlencode('/api-catalog/mock?domain=com'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/MockDetail', false)
+                ->where('returnUrl', '/api-catalog/mock?domain=com')
+            );
+
+        $this
+            ->get('/api-catalog/mock/github.com?return_url='.rawurlencode('/api-catalog'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/MockDetail', false)
+                ->where('returnUrl', '/api-catalog/mock')
+            );
     }
 
     /**
