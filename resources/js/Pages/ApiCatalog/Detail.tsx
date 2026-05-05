@@ -1,8 +1,13 @@
 import { Head } from '@inertiajs/react';
 
+import ApiCatalogDetailBody, {
+    type ApiCatalogDetailTechnicalRow,
+} from '@/Components/ApiCatalog/ApiCatalogDetailBody';
 import ApiCatalogDetailHeader from '@/Components/ApiCatalog/ApiCatalogDetailHeader';
 import ApiCatalogDetailHero from '@/Components/ApiCatalog/ApiCatalogDetailHero';
-import ApiCatalogNotesPanel from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
+import ApiCatalogNotesPanel, {
+    type ApiCatalogNoteItem,
+} from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
 import { extractProviderDomain } from '@/Components/ApiCatalog/apiCatalogDomain';
 import PublicLayout from '@/Layouts/PublicLayout';
 
@@ -19,6 +24,7 @@ type ApiCatalogDetailItem = {
     openapiYamlUrl: string | null;
     sourceLatestUpdatedAt: string | null;
     isActive: boolean;
+    notes: ApiCatalogNoteItem[];
 };
 
 type DetailProps = {
@@ -26,11 +32,10 @@ type DetailProps = {
     returnUrl: string;
 };
 
-function displayValue(value: string | null) {
-    return value && value.trim() !== '' ? value : 'n/a';
-}
-
-function buildTechnicalRows(item: ApiCatalogDetailItem, domain: string) {
+function buildTechnicalRows(
+    item: ApiCatalogDetailItem,
+    domain: string,
+): ApiCatalogDetailTechnicalRow[] {
     /*
      * 詳細画面では同期キャッシュのメタ情報だけを確認できるようにします。
      * OpenAPI 定義本文や paths / schemas の取得は別導線の責務なので、ここでは表示しません。
@@ -38,14 +43,22 @@ function buildTechnicalRows(item: ApiCatalogDetailItem, domain: string) {
     return [
         ['apiKey', item.apiKey],
         ['providerKey', item.providerKey],
-        ['serviceKey', displayValue(item.serviceKey)],
-        ['domain', displayValue(domain)],
-        ['preferredVersion', displayValue(item.preferredVersion)],
-        ['openapiVersion', displayValue(item.openapiVersion)],
-        ['openapiJsonUrl', displayValue(item.openapiJsonUrl)],
-        ['openapiYamlUrl', displayValue(item.openapiYamlUrl)],
-        ['sourceLatestUpdatedAt', displayValue(item.sourceLatestUpdatedAt)],
+        ['serviceKey', item.serviceKey],
+        ['domain', domain],
+        ['preferredVersion', item.preferredVersion],
+        ['openapiVersion', item.openapiVersion],
+        ['openapiJsonUrl', item.openapiJsonUrl],
+        ['openapiYamlUrl', item.openapiYamlUrl],
+        ['sourceLatestUpdatedAt', item.sourceLatestUpdatedAt],
     ];
+}
+
+function buildNoteStoreUrl(apiKey: string) {
+    return `/api-catalog/${encodeURIComponent(apiKey)}/notes`;
+}
+
+function buildNoteUrl(apiKey: string, noteId: number) {
+    return `${buildNoteStoreUrl(apiKey)}/${noteId}`;
 }
 
 export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
@@ -76,35 +89,20 @@ export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
                     preferredVersion={apiCatalogItem.preferredVersion}
                 />
 
-                <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
-                    <section className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">
-                        <h2 className="text-2xl font-semibold text-white">{apiCatalogItem.title}</h2>
-                        <p className="mt-4 text-sm leading-7 text-cyan-50/86">
-                            {displayValue(apiCatalogItem.description)}
-                        </p>
-
-                        <ApiCatalogNotesPanel />
-                    </section>
-
-                    <aside className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">
-                        <h2 className="text-lg font-semibold text-white">技術情報</h2>
-                        <dl className="mt-4 grid gap-2 text-sm">
-                            {technicalRows.map(([label, value]) => (
-                                <div
-                                    key={label}
-                                    className="rounded-xl border border-white/15 bg-black/18 p-3"
-                                >
-                                    <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100/56">
-                                        {label}
-                                    </dt>
-                                    <dd className="mt-1 break-all font-mono text-xs leading-5 text-cyan-50/88">
-                                        {value}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
-                    </aside>
-                </div>
+                <ApiCatalogDetailBody
+                    title={apiCatalogItem.title}
+                    description={apiCatalogItem.description}
+                    technicalRows={technicalRows}
+                    notesPanel={
+                        <ApiCatalogNotesPanel
+                            notes={apiCatalogItem.notes}
+                            isPersistable={true}
+                            storeUrl={buildNoteStoreUrl(apiCatalogItem.apiKey)}
+                            updateUrl={(note) => buildNoteUrl(apiCatalogItem.apiKey, note.id)}
+                            deleteUrl={(note) => buildNoteUrl(apiCatalogItem.apiKey, note.id)}
+                        />
+                    }
+                />
             </div>
         </PublicLayout>
     );

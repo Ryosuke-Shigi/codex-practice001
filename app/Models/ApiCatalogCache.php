@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ApiCatalogCache extends Model
 {
@@ -29,4 +30,12 @@ class ApiCatalogCache extends Model
         'synced_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * @return HasMany<ApiCatalogNote>
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ApiCatalogNote::class, 'api_catalog_cache_id');
+    }
 }

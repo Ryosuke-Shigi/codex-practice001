@@ -2,10 +2,15 @@
 
 namespace App\DTO\ApiCatalog\Detail;
 
+use App\DTO\ApiCatalog\Note\ApiCatalogNoteListItemDTO;
 use App\Models\ApiCatalogCache;
+use App\Models\ApiCatalogNote;
 
 final readonly class ApiCatalogDetailDTO
 {
+    /**
+     * @param  array<int, ApiCatalogNoteListItemDTO>  $notes
+     */
     public function __construct(
         public int $id,
         public string $apiKey,
@@ -19,10 +24,14 @@ final readonly class ApiCatalogDetailDTO
         public ?string $openapiYamlUrl,
         public ?string $sourceLatestUpdatedAt,
         public bool $isActive,
+        public array $notes,
     ) {
     }
 
-    public static function fromModel(ApiCatalogCache $cache): self
+    /**
+     * @param  array<int, ApiCatalogNote>  $notes
+     */
+    public static function fromModel(ApiCatalogCache $cache, array $notes = []): self
     {
         /*
          * 詳細画面で使う表示用元データだけを Model から DTO に写します。
@@ -43,6 +52,10 @@ final readonly class ApiCatalogDetailDTO
             openapiYamlUrl: $cache->openapi_yaml_url,
             sourceLatestUpdatedAt: $cache->source_latest_updated_at?->toDateString(),
             isActive: (bool) $cache->is_active,
+            notes: array_map(
+                fn (ApiCatalogNote $note): ApiCatalogNoteListItemDTO => ApiCatalogNoteListItemDTO::fromModel($note),
+                $notes,
+            ),
         );
     }
 
@@ -59,7 +72,8 @@ final readonly class ApiCatalogDetailDTO
      *     openapiJsonUrl: string|null,
      *     openapiYamlUrl: string|null,
      *     sourceLatestUpdatedAt: string|null,
-     *     isActive: bool
+     *     isActive: bool,
+     *     notes: array<int, array{id: int, title: string|null, body: string, createdAt: string|null, updatedAt: string|null}>
      * }
      */
     public function toArray(): array
@@ -81,6 +95,10 @@ final readonly class ApiCatalogDetailDTO
             'openapiYamlUrl' => $this->openapiYamlUrl,
             'sourceLatestUpdatedAt' => $this->sourceLatestUpdatedAt,
             'isActive' => $this->isActive,
+            'notes' => array_map(
+                fn (ApiCatalogNoteListItemDTO $note): array => $note->toArray(),
+                $this->notes,
+            ),
         ];
     }
 }

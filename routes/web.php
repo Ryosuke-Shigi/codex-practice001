@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApiCatalogController;
+use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
@@ -68,6 +69,17 @@ Route::get('/api-catalog/mock/{apiKey}', function (Request $request, string $api
             : '/api-catalog/mock',
     ]);
 })->name('api-catalog.mock.detail');
+
+/*
+ * API Discovery Hub 本番詳細の保存メモ操作です。
+ * apiKey は詳細表示と同じ識別子として扱い、Controller で rawurldecode してから Action へ渡します。
+ */
+Route::post('/api-catalog/{apiKey}/notes', [ApiCatalogNoteController::class, 'store'])
+    ->name('api-catalog.notes.store');
+Route::patch('/api-catalog/{apiKey}/notes/{note}', [ApiCatalogNoteController::class, 'update'])
+    ->name('api-catalog.notes.update');
+Route::delete('/api-catalog/{apiKey}/notes/{note}', [ApiCatalogNoteController::class, 'destroy'])
+    ->name('api-catalog.notes.destroy');
 
 /*
  * API Discovery Hub 本体詳細です。

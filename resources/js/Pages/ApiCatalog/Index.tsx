@@ -244,11 +244,11 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                 preserveScroll: true,
                 onSuccess: () => {
                     /*
-                     * この時点で分かるのは「同期Jobを開始した」ことだけです。
-                     * 完了や差分件数は断定せず、ユーザーには開始済みとして伝えます。
+                     * プール更新ボタン経由の同期は sync connection で即時実行します。
+                     * 差分件数までは返していないため、完了したことだけを表示します。
                      */
                     setPoolSyncMessage(
-                        'プール更新を開始しました。反映状況は一覧を再読み込みして確認できます。',
+                        'プール更新が完了しました。一覧に反映されています。',
                     );
                 },
                 onError: () => {

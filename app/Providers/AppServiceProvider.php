@@ -6,6 +6,8 @@ use App\Repositories\ApiCatalog\ApisGuruRepository;
 use App\Repositories\ApiCatalog\ApisGuruRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepository;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
+use App\Repositories\ApiCatalog\ApiCatalogNoteRepository;
+use App\Repositories\ApiCatalog\ApiCatalogNoteRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
          */
         $this->app->bind(ApisGuruRepositoryInterface::class, ApisGuruRepository::class);
         $this->app->bind(ApiCatalogCacheRepositoryInterface::class, ApiCatalogCacheRepository::class);
+        $this->app->bind(ApiCatalogNoteRepositoryInterface::class, ApiCatalogNoteRepository::class);
 
         /*
          * ApiPreview 側は開発補助画面専用の依存です。

@@ -1,6 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
+import ApiCatalogDetailBody, {
+    type ApiCatalogDetailTechnicalRow,
+} from '@/Components/ApiCatalog/ApiCatalogDetailBody';
 import ApiCatalogDetailHeader from '@/Components/ApiCatalog/ApiCatalogDetailHeader';
 import ApiCatalogDetailHero from '@/Components/ApiCatalog/ApiCatalogDetailHero';
 import ApiCatalogNotesPanel from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
@@ -34,7 +37,10 @@ function findMockApiCatalogItem(apiKey: string) {
     );
 }
 
-function buildTechnicalRows(item: ApiCatalogListItem, domain: string) {
+function buildTechnicalRows(
+    item: ApiCatalogListItem,
+    domain: string,
+): ApiCatalogDetailTechnicalRow[] {
     /*
      * 技術情報は初期表示から隠し、必要な時だけ確認する UI にします。
      * OpenAPI 本文や paths / schemas はまだ取得・表示しません。
@@ -51,7 +57,6 @@ function buildTechnicalRows(item: ApiCatalogListItem, domain: string) {
 }
 
 export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
-    const [isTechnicalOpen, setIsTechnicalOpen] = useState(false);
     const item = useMemo(() => findMockApiCatalogItem(apiKey), [apiKey]);
 
     if (!item) {
@@ -114,44 +119,14 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                     preferredVersion={item.preferredVersion}
                 />
 
-                <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
-                    <section className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">
-                        <h2 className="text-2xl font-semibold text-white">{item.title}</h2>
-                        <p className="mt-4 text-sm leading-7 text-cyan-50/86">{item.description}</p>
-
-                        <ApiCatalogNotesPanel />
-                    </section>
-
-                    <aside className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">
-                        <button
-                            type="button"
-                            onClick={() => setIsTechnicalOpen((current) => !current)}
-                            className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-left text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                            aria-expanded={isTechnicalOpen}
-                        >
-                            <span>{isTechnicalOpen ? '技術情報を隠す' : '技術情報を表示'}</span>
-                            <span aria-hidden="true">{isTechnicalOpen ? '↑' : '↓'}</span>
-                        </button>
-
-                        {isTechnicalOpen && (
-                            <dl className="mt-4 grid gap-2 text-sm">
-                                {technicalRows.map(([label, value]) => (
-                                    <div
-                                        key={label}
-                                        className="rounded-xl border border-white/15 bg-black/18 p-3"
-                                    >
-                                        <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100/56">
-                                            {label}
-                                        </dt>
-                                        <dd className="mt-1 break-all font-mono text-xs leading-5 text-cyan-50/88">
-                                            {value}
-                                        </dd>
-                                    </div>
-                                ))}
-                            </dl>
-                        )}
-                    </aside>
-                </div>
+                <ApiCatalogDetailBody
+                    title={item.title}
+                    description={item.description}
+                    technicalRows={technicalRows}
+                    notesPanel={<ApiCatalogNotesPanel isPersistable={false} />}
+                    isTechnicalCollapsible={true}
+                    defaultTechnicalOpen={false}
+                />
             </div>
         </PublicLayout>
     );
