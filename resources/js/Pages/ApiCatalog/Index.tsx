@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
+import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type ApiCatalogFilters = {
@@ -113,6 +114,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
     const visitList = (nextKeyword: string, nextProviderKey: string, nextPage: number) => {
         /*
          * 検索・ページ送りは Inertia GET で再訪問します。
+         * page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
          * only を指定して、providers を毎回取り直さない将来構成を先に画面へ反映しています。
          */
         router.get('/api-catalog', buildQueryParams(nextKeyword, nextProviderKey, nextPage), {
@@ -124,13 +126,19 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
     };
 
     const updateKeyword = (nextKeyword: string) => {
-        // 検索条件が変わったらページは必ず1へ戻します。
+        /*
+         * 検索条件が変わると、現在の page が絞り込み後の総ページ数を超える可能性があります。
+         * そのため検索入力の変更時点で必ず1ページ目から取り直します。
+         */
         setKeyword(nextKeyword);
         visitList(nextKeyword, providerKey, 1);
     };
 
     const updateProviderKey = (nextProviderKey: string) => {
-        // provider 絞り込み変更時も、現在ページが範囲外にならないよう1ページ目へ戻します。
+        /*
+         * provider 絞り込みも検索条件の一部です。
+         * keyword と同じく、条件変更後の存在しないページへ残らないよう1ページ目へ戻します。
+         */
         setProviderKey(nextProviderKey);
         visitList(keyword, nextProviderKey, 1);
     };
@@ -260,37 +268,11 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                     items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}
                 />
 
-                <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
-                    <p>
-                        {pagination.from ?? 0}-{pagination.to ?? 0} / {pagination.totalItems}
-                    </p>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={moveToPreviousPage}
-                            disabled={!canMovePrevious}
-                            aria-label="前のページ"
-                            className="grid h-10 w-10 place-items-center rounded-full border border-white/35 bg-white/18 text-xl font-bold text-white shadow-[0_10px_22px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                            ←
-                        </button>
-
-                        <p className="min-w-[6.5rem] text-center text-sm font-semibold text-white">
-                            {pagination.currentPage} / {pagination.totalPages}
-                        </p>
-
-                        <button
-                            type="button"
-                            onClick={moveToNextPage}
-                            disabled={!canMoveNext}
-                            aria-label="次のページ"
-                            className="grid h-10 w-10 place-items-center rounded-full border border-white/35 bg-white/18 text-xl font-bold text-white shadow-[0_10px_22px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                            →
-                        </button>
-                    </div>
-                </footer>
+                <ApiCatalogPagination
+                    pagination={pagination}
+                    onPrevious={moveToPreviousPage}
+                    onNext={moveToNextPage}
+                />
             </div>
         </PublicLayout>
     );

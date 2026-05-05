@@ -2,6 +2,9 @@ import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
+import ApiCatalogPagination, {
+    type ApiCatalogPaginationState,
+} from '@/Components/ApiCatalog/ApiCatalogPagination';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, mockDomains, mockProviders } from './mockApiCatalogData';
 
@@ -43,6 +46,10 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
 }
 
 function buildPagination(totalItems: number, currentPage: number): ApiCatalogPagination {
+    /*
+     * モックでも本番と同じ考え方に寄せます。
+     * 先に絞り込んだ filteredItems.length を総件数として受け取り、その件数だけでページ数を計算します。
+     */
     const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
     const clampedPage = Math.min(Math.max(1, currentPage), totalPages);
     const startItem = totalItems === 0 ? 0 : (clampedPage - 1) * ITEMS_PER_PAGE + 1;
@@ -55,6 +62,20 @@ function buildPagination(totalItems: number, currentPage: number): ApiCatalogPag
         perPage: ITEMS_PER_PAGE,
         startItem,
         endItem,
+    };
+}
+
+function toApiCatalogPaginationState(pagination: ApiCatalogPagination): ApiCatalogPaginationState {
+    /*
+     * モック内部の startItem / endItem を、本番 props と同じ from / to へ変換します。
+     * ここで差を吸収することで、ページネーション表示 Component は本番/モックを意識しません。
+     */
+    return {
+        currentPage: pagination.currentPage,
+        totalPages: pagination.totalPages,
+        totalItems: pagination.totalItems,
+        from: pagination.startItem,
+        to: pagination.endItem,
     };
 }
 
@@ -140,6 +161,10 @@ export default function MockIndex() {
     const returnUrl = currentMockListUrl();
 
     const updateFilters = (nextFilters: ApiCatalogFilters) => {
+        /*
+         * 条件変更後の総ページ数は現在ページより小さくなることがあります。
+         * 本番一覧と同じ仕様として、モック側も検索・絞り込み変更時は1ページ目へ戻します。
+         */
         setFilters(nextFilters);
         setPage(1);
     };
@@ -283,37 +308,11 @@ export default function MockIndex() {
                     items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}
                 />
 
-                <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
-                    <p>
-                        {pagination.startItem}-{pagination.endItem} / {pagination.totalItems}
-                    </p>
-
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={moveToPreviousPage}
-                            disabled={!canMovePrevious}
-                            aria-label="前のページ"
-                            className="grid h-10 w-10 place-items-center rounded-full border border-white/35 bg-white/18 text-xl font-bold text-white shadow-[0_10px_22px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                            ←
-                        </button>
-
-                        <p className="min-w-[6.5rem] text-center text-sm font-semibold text-white">
-                            {pagination.currentPage} / {pagination.totalPages}
-                        </p>
-
-                        <button
-                            type="button"
-                            onClick={moveToNextPage}
-                            disabled={!canMoveNext}
-                            aria-label="次のページ"
-                            className="grid h-10 w-10 place-items-center rounded-full border border-white/35 bg-white/18 text-xl font-bold text-white shadow-[0_10px_22px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                        >
-                            →
-                        </button>
-                    </div>
-                </footer>
+                <ApiCatalogPagination
+                    pagination={toApiCatalogPaginationState(pagination)}
+                    onPrevious={moveToPreviousPage}
+                    onNext={moveToNextPage}
+                />
             </div>
         </PublicLayout>
     );
