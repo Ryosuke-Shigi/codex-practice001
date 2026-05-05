@@ -12,6 +12,12 @@ import {
 } from '@/Components/ApiCatalog/apiCatalogSort';
 import PublicLayout from '@/Layouts/PublicLayout';
 
+/*
+ * 本番 API 一覧の戻るボタンは、ブラウザ履歴や直前画面には依存しません。
+ * Preview から本番一覧を開いた履歴があっても、画面内ボタンは本番導線の入口へ戻します。
+ */
+const API_CATALOG_ENTRY_HREF = '/lab';
+
 type ApiCatalogFilters = {
     keyword: string | null;
     providerKey: string | null;
@@ -319,7 +325,7 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                         </span>
                         {/*
                             更新操作の入口は本番API一覧に集約します。
-                            API Preview は外部API疎通確認用なので、同じボタンをPreview側には置きません。
+                            外部API疎通確認用の画面とは別の本番導線として扱います。
                         */}
                         <button
                             type="button"
@@ -330,12 +336,11 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                             {isPoolSyncing ? '登録中' : 'プール更新'}
                         </button>
                         {/*
-                            本番API一覧は API Preview の確認画面ではなく、Lab 配下の独立した本番導線です。
-                            ここで /api-preview に戻すと、本番一覧から本番詳細へ進んだ後の戻り先も
-                            preview 側に見えてしまうため、上位の実験入口である /lab へ明示的に戻します。
+                            本番API一覧は Lab 配下の独立した本番導線です。
+                            ブラウザ履歴や直前画面ではなく、上位の実験入口へ明示的に戻します。
                         */}
                         <Link
-                            href="/lab"
+                            href={API_CATALOG_ENTRY_HREF}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
                             Labへ戻る

@@ -25,6 +25,7 @@ export default function ApiCatalogDetailHeader({
     /*
      * 本番詳細とモック詳細のヘッダー操作を共通化します。
      * 違いは Live/Mock の表示ラベルと returnUrl の入力値だけにし、SearchButtons も同じComponentを使います。
+     * このComponent自身は履歴を参照せず、呼び出し元が明示した returnUrl へだけ遷移します。
      */
     return (
         <header className="flex flex-wrap items-start justify-between gap-3">

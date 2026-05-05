@@ -11,6 +11,12 @@ import { extractProviderDomain } from '@/Components/ApiCatalog/apiCatalogDomain'
 import PublicLayout from '@/Layouts/PublicLayout';
 import { mockApiCatalogItems, type ApiCatalogListItem } from './mockApiCatalogData';
 
+/*
+ * モック詳細の戻るボタンで許可する唯一のルート境界です。
+ * Preview から確認する画面ですが、戻り先は Preview 画面そのものではなくモック一覧に閉じます。
+ */
+const API_CATALOG_MOCK_LIST_URL = '/api-catalog/mock';
+
 type MockDetailProps = {
     apiKey: string;
     returnUrl: string;
@@ -23,6 +29,22 @@ function safeDecodeURIComponent(value: string) {
         // ルートパラメータが既に decode 済みでも詳細画面を落とさないための保険です。
         return value;
     }
+}
+
+function normalizeMockCatalogListReturnUrl(value: string) {
+    /*
+     * モック詳細は表示確認用の一覧へだけ戻します。
+     * 本番一覧や履歴由来のURLを受けても、共通ヘッダーには渡しません。
+     * 本番側と同じ共通ヘッダーを使うため、呼び出し元で境界を明示します。
+     */
+    if (
+        value === API_CATALOG_MOCK_LIST_URL ||
+        value.startsWith(`${API_CATALOG_MOCK_LIST_URL}?`)
+    ) {
+        return value;
+    }
+
+    return API_CATALOG_MOCK_LIST_URL;
 }
 
 function findMockApiCatalogItem(apiKey: string) {
@@ -57,6 +79,7 @@ function buildTechnicalRows(
 }
 
 export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
+    const mockReturnUrl = normalizeMockCatalogListReturnUrl(returnUrl);
     const item = useMemo(() => findMockApiCatalogItem(apiKey), [apiKey]);
 
     if (!item) {
@@ -70,7 +93,7 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                             Mock
                         </span>
                         <Link
-                            href={returnUrl}
+                            href={mockReturnUrl}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
                             {/* returnUrl は route 側でモック一覧 URL に限定済みです。 */}
@@ -106,7 +129,7 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
             <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-5 pb-5">
                 <ApiCatalogDetailHeader
                     modeLabel="Mock"
-                    returnUrl={returnUrl}
+                    returnUrl={mockReturnUrl}
                     returnComment="モック詳細でも一覧状態を含む returnUrl へ戻します。"
                     searchTarget={item}
                 />
