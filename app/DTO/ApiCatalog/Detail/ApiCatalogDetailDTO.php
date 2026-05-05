@@ -1,10 +1,10 @@
 <?php
 
-namespace App\DTO\ApiCatalog\List;
+namespace App\DTO\ApiCatalog\Detail;
 
 use App\Models\ApiCatalogCache;
 
-final readonly class ApiCatalogListItemDTO
+final readonly class ApiCatalogDetailDTO
 {
     public function __construct(
         public int $id,
@@ -15,6 +15,9 @@ final readonly class ApiCatalogListItemDTO
         public ?string $serviceKey,
         public ?string $preferredVersion,
         public ?string $openapiVersion,
+        public ?string $openapiJsonUrl,
+        public ?string $openapiYamlUrl,
+        public ?string $sourceLatestUpdatedAt,
         public bool $isActive,
         public string $googleSearchUrl,
     ) {
@@ -22,12 +25,12 @@ final readonly class ApiCatalogListItemDTO
 
     public static function fromModel(ApiCatalogCache $cache): self
     {
+        /*
+         * 詳細画面で使う表示用元データだけを Model から DTO に写します。
+         * OpenAPI 本文、paths、schemas などの重い定義は今回の導線修正では読み込みません。
+         */
         $title = $cache->title ?: $cache->api_key;
 
-        /*
-         * 一覧カードから詳細へ遷移するため、DB id とは別に api_key も props へ渡します。
-         * id は React の listKey、api_key は詳細 route の識別子として使い分けます。
-         */
         return new self(
             id: (int) $cache->getKey(),
             apiKey: $cache->api_key,
@@ -37,6 +40,9 @@ final readonly class ApiCatalogListItemDTO
             serviceKey: $cache->service_key,
             preferredVersion: $cache->preferred_version,
             openapiVersion: $cache->openapi_version,
+            openapiJsonUrl: $cache->openapi_json_url,
+            openapiYamlUrl: $cache->openapi_yaml_url,
+            sourceLatestUpdatedAt: $cache->source_latest_updated_at?->toDateString(),
             isActive: (bool) $cache->is_active,
             googleSearchUrl: self::buildGoogleSearchUrl($title, $cache->api_key),
         );
@@ -52,12 +58,19 @@ final readonly class ApiCatalogListItemDTO
      *     serviceKey: string|null,
      *     preferredVersion: string|null,
      *     openapiVersion: string|null,
+     *     openapiJsonUrl: string|null,
+     *     openapiYamlUrl: string|null,
+     *     sourceLatestUpdatedAt: string|null,
      *     isActive: bool,
      *     googleSearchUrl: string
      * }
      */
     public function toArray(): array
     {
+        /*
+         * React 側では DB カラム名ではなく camelCase props として扱います。
+         * 画面都合の名前変換はここに閉じ込め、Component に DB 境界を漏らしません。
+         */
         return [
             'id' => $this->id,
             'apiKey' => $this->apiKey,
@@ -67,6 +80,9 @@ final readonly class ApiCatalogListItemDTO
             'serviceKey' => $this->serviceKey,
             'preferredVersion' => $this->preferredVersion,
             'openapiVersion' => $this->openapiVersion,
+            'openapiJsonUrl' => $this->openapiJsonUrl,
+            'openapiYamlUrl' => $this->openapiYamlUrl,
+            'sourceLatestUpdatedAt' => $this->sourceLatestUpdatedAt,
             'isActive' => $this->isActive,
             'googleSearchUrl' => $this->googleSearchUrl,
         ];
@@ -75,8 +91,7 @@ final readonly class ApiCatalogListItemDTO
     private static function buildGoogleSearchUrl(string $title, string $apiKey): string
     {
         /*
-         * Google検索URLは api_catalog_cache に保存しません。
-         * 本番詳細でも Model accessor ではなく、表示用 DTO / Responder 境界で生成する想定です。
+         * 一覧 DTO と同じく、Google検索URLは DB へ保存せず表示用 DTO で生成します。
          */
         $searchTarget = trim($title) !== '' ? $title : $apiKey;
 

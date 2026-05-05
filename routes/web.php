@@ -3,8 +3,9 @@
 use App\Http\Controllers\ApiCatalogController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
-use Inertia\Inertia;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -48,11 +49,29 @@ Route::get('/api-catalog/mock', function () {
 })->name('api-catalog.mock');
 
 // API Discovery Hub 本体詳細の UI 確認用モックです。DB 取得や Query Action にはまだ接続しません。
-Route::get('/api-catalog/mock/{apiKey}', function (string $apiKey) {
+Route::get('/api-catalog/mock/{apiKey}', function (Request $request, string $apiKey) {
+    $returnUrl = $request->query('return_url');
+
+    /*
+     * モック詳細も本番詳細と同じ戻り導線で確認できるよう return_url を受けます。
+     * ただし戻り先はモック一覧内に限定し、外部 URL や本番詳細 URL を混ぜないようにします。
+     */
     return Inertia::render('ApiCatalog/MockDetail', [
         'apiKey' => $apiKey,
+        'returnUrl' => is_string($returnUrl)
+            && ($returnUrl === '/api-catalog/mock' || str_starts_with($returnUrl, '/api-catalog/mock?'))
+            ? $returnUrl
+            : '/api-catalog/mock',
     ]);
 })->name('api-catalog.mock.detail');
+
+/*
+ * API Discovery Hub 本体詳細です。
+ * api_key には "." や ":" を含むため、slug ではなく path 末尾全体を識別子として受けます。
+ */
+Route::get('/api-catalog/{apiKey}', [ApiCatalogController::class, 'show'])
+    ->where('apiKey', '.*')
+    ->name('api-catalog.show');
 
 // API preview は本体同期や DB 保存とは切り離した、開発補助用の確認ルートです。
 Route::get('/api-preview/apis-guru', ApisGuruPreviewController::class)->name('api-preview.apis-guru');

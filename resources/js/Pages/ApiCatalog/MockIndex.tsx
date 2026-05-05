@@ -58,7 +58,26 @@ function buildPagination(totalItems: number, currentPage: number): ApiCatalogPag
     };
 }
 
-function toApiCatalogListItem(item: (typeof mockApiCatalogItems)[number]): ApiCatalogListItem {
+function currentMockListUrl() {
+    /*
+     * モック一覧でも本番と同じ戻り導線を検証するため、
+     * 現在の一覧 URL を return_url として詳細画面へ渡します。
+     */
+    return `${window.location.pathname}${window.location.search}`;
+}
+
+function buildMockDetailHref(apiKey: string, returnUrl: string) {
+    /*
+     * モック詳細も api_key を route parameter として扱います。
+     * 本番一覧との差を props へ渡す前に吸収し、ApiCatalogList / Card の挙動は共通に保ちます。
+     */
+    return `/api-catalog/mock/${encodeURIComponent(apiKey)}?return_url=${encodeURIComponent(returnUrl)}`;
+}
+
+function toApiCatalogListItem(
+    item: (typeof mockApiCatalogItems)[number],
+    returnUrl: string,
+): ApiCatalogListItem {
     return {
         listKey: item.apiKey,
         title: item.title,
@@ -68,7 +87,7 @@ function toApiCatalogListItem(item: (typeof mockApiCatalogItems)[number]): ApiCa
         preferredVersion: item.preferredVersion,
         openapiVersion: item.openapiVersion,
         googleSearchUrl: item.googleSearchUrl,
-        detailHref: `/api-catalog/mock/${encodeURIComponent(item.apiKey)}`,
+        detailHref: buildMockDetailHref(item.apiKey, returnUrl),
     };
 }
 
@@ -118,6 +137,7 @@ export default function MockIndex() {
         filters.domain !== defaultFilters.domain;
     const canMovePrevious = pagination.currentPage > 1;
     const canMoveNext = pagination.currentPage < pagination.totalPages;
+    const returnUrl = currentMockListUrl();
 
     const updateFilters = (nextFilters: ApiCatalogFilters) => {
         setFilters(nextFilters);
@@ -259,7 +279,9 @@ export default function MockIndex() {
                     </div>
                 </section>
 
-                <ApiCatalogList items={apiCatalogItems.map(toApiCatalogListItem)} />
+                <ApiCatalogList
+                    items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}
+                />
 
                 <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
                     <p>

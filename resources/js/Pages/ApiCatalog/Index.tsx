@@ -11,6 +11,7 @@ type ApiCatalogFilters = {
 
 type ApiCatalogItem = {
     id: number;
+    apiKey: string;
     title: string;
     description: string;
     providerKey: string;
@@ -70,7 +71,23 @@ function buildQueryParams(keyword: string, providerKey: string, page: number) {
     return params;
 }
 
-function toApiCatalogListItem(item: ApiCatalogItem): ApiCatalogListItem {
+function currentListUrl() {
+    /*
+     * 詳細から戻るときに検索条件とページ番号を復元するため、
+     * 現在の一覧 URL を query ごと return_url として詳細リンクへ渡します。
+     */
+    return `${window.location.pathname}${window.location.search}`;
+}
+
+function buildDetailHref(apiKey: string, returnUrl: string) {
+    /*
+     * 本番詳細の識別子は id ではなく APIs.guru の api_key です。
+     * ":" などを含む api_key でも壊れないよう path と return_url の両方を encode します。
+     */
+    return `/api-catalog/${encodeURIComponent(apiKey)}?return_url=${encodeURIComponent(returnUrl)}`;
+}
+
+function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatalogListItem {
     return {
         listKey: item.id,
         title: item.title,
@@ -80,7 +97,7 @@ function toApiCatalogListItem(item: ApiCatalogItem): ApiCatalogListItem {
         preferredVersion: item.preferredVersion,
         openapiVersion: item.openapiVersion,
         googleSearchUrl: item.googleSearchUrl,
-        detailHref: null,
+        detailHref: buildDetailHref(item.apiKey, returnUrl),
     };
 }
 
@@ -91,6 +108,7 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
     const canMovePrevious = pagination.currentPage > 1;
     const canMoveNext = pagination.currentPage < pagination.totalPages;
     const hasActiveFilters = keyword.trim() !== '' || providerKey !== '';
+    const returnUrl = currentListUrl();
 
     const visitList = (nextKeyword: string, nextProviderKey: string, nextPage: number) => {
         /*
@@ -238,7 +256,9 @@ export default function Index({ filters, providers, apiCatalogItems, pagination 
                     </div>
                 </section>
 
-                <ApiCatalogList items={apiCatalogItems.map(toApiCatalogListItem)} />
+                <ApiCatalogList
+                    items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}
+                />
 
                 <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
                     <p>

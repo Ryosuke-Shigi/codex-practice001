@@ -7,6 +7,7 @@ import { mockApiCatalogItems, type ApiCatalogListItem } from './mockApiCatalogDa
 
 type MockDetailProps = {
     apiKey: string;
+    returnUrl: string;
 };
 
 type MockApiNote = {
@@ -70,7 +71,7 @@ function buildTechnicalRows(item: ApiCatalogListItem) {
     ];
 }
 
-export default function MockDetail({ apiKey }: MockDetailProps) {
+export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
     const [notes, setNotes] = useState<MockApiNote[]>(() => [createMockApiNote()]);
     const [isTechnicalOpen, setIsTechnicalOpen] = useState(false);
     const item = useMemo(() => findMockApiCatalogItem(apiKey), [apiKey]);
@@ -107,10 +108,11 @@ export default function MockDetail({ apiKey }: MockDetailProps) {
                             Mock
                         </span>
                         <Link
-                            href="/api-preview"
+                            href={returnUrl}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            戻る
+                            {/* returnUrl は route 側でモック一覧 URL に限定済みです。 */}
+                            一覧へ戻る
                         </Link>
                     </header>
 
@@ -156,10 +158,11 @@ export default function MockDetail({ apiKey }: MockDetailProps) {
                             Search
                         </a>
                         <Link
-                            href="/api-preview"
+                            href={returnUrl}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            戻る
+                            {/* モック詳細でも一覧状態を含む returnUrl へ戻します。 */}
+                            一覧へ戻る
                         </Link>
                     </div>
                 </header>
