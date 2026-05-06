@@ -317,6 +317,9 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                         <h1 className="mt-2 text-3xl font-semibold text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.34)] sm:text-4xl">
                             API Catalog
                         </h1>
+                        <p className="mt-3 max-w-2xl text-sm leading-7 text-cyan-50/86 drop-shadow-[0_8px_20px_rgba(3,25,48,0.22)]">
+                            APIs.guru の公開APIカタログを同期キャッシュとして取り込み、このアプリ内の指標で公開APIを探す補助とAPI調査の入口にします。
+                        </p>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">

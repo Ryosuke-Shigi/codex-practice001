@@ -4,6 +4,8 @@
 
 現時点では Laravel 11 の初期構成をベースに、Inertia / React の公開画面、API Preview、API Discovery Hub の本番一覧・詳細・保存メモ・モック画面、APIs.guru 連携確認、API カタログ同期キャッシュの検証実装を段階的に追加しています。
 
+API Discovery Hub は、公開APIを探す補助とAPI調査の入口を目的にしたアプリとして、AWS Lightsail で外部公開済みです。
+
 ## 1. プロジェクト概要
 
 Laravel アプリケーション本体はこの `src` ディレクトリで Git 管理しています。
@@ -49,6 +51,7 @@ API Discovery Hub の本番一覧・詳細は Controller / Query Action / Reposi
 - Mailpit
 - Adminer
 - Docker Compose
+- AWS Lightsail
 
 ## 4. Docker 構成
 
@@ -66,13 +69,14 @@ Docker 構成はアプリケーション本体の一階層上にあります。L
 - `redis`: cache / queue 用
 - `mailpit`: SMTP は `mailpit:1025`、Web UI は `http://localhost:8025`
 - `adminer`: DB 確認用。Web UI は `http://localhost:8081`
-- `queue-worker`: Queue 練習用。`worker` profile で起動
-- `scheduler`: Scheduler 練習用。`scheduler` profile で起動
+- `queue`: Redis Queue を処理する本番想定の worker
+- `scheduler`: Laravel Scheduler を毎分評価する scheduler loop
+- `queue-worker`: Queue 練習用の legacy/profile-based worker。`worker` profile で起動
 
 基本コマンドはプロジェクトルートで実行します。
 
 ```bash
-docker compose up -d nginx php-fpm mysql redis mailpit adminer
+docker compose up -d nginx php-fpm queue scheduler mysql redis mailpit adminer
 docker compose run --rm artisan migrate
 docker compose run --rm composer install
 docker compose run --rm npm install
@@ -105,7 +109,7 @@ docker compose run --rm npm install
 - 1ページ6件のカード表示
 - 左右ボタンと `ArrowLeft` / `ArrowRight` によるページ送り
 - `Search` クリックによる Google 検索
-- `/api-preview` へ戻るボタン
+- 本番一覧から `/lab` へ戻るボタン
 
 各 API カードでは、一覧確認に必要な情報だけを表示します。Google 検索 URL は DB 保存前提ではなく、React 側で `title` または `apiKey` から生成します。本番詳細では `saved_api_notes` に紐づく調査メモを保存・更新・削除できます。React 画面はプール更新の Queue 登録までを表示し、同期完了判定はまだ持ちません。
 
@@ -269,6 +273,7 @@ CodexApp に任せる場合でも、作業範囲、制約、変更してよい�
 - 同期履歴テーブルと同期失敗ログ
 - ポーリングによる同期状態表示
 - Queue worker / Scheduler の運用整理
+- Lightsail 運用手順の整理
 - Factory / Strategy の使いどころの検証
 - Unit テストの追加
 - GitHub 上での開発フロー整理
