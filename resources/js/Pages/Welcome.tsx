@@ -1,8 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
+import DirectionalNavigationButton from '@/Components/DirectionalNavigationButton';
 import { effectLabels, effectNames, type EffectName } from '@/Components/Effects/EffectLayer';
+import useSwipeNavigation from '@/Hooks/useSwipeNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 function shouldIgnoreEffectKey(target: EventTarget | null) {
@@ -26,6 +28,28 @@ export default function Welcome() {
      */
     const [currentEffect, setCurrentEffect] = useState<EffectName>('water');
 
+    const switchEffect = useCallback((direction: 1 | -1) => {
+        setCurrentEffect((effect) => {
+            const currentIndex = effectNames.indexOf(effect);
+            const nextIndex = (currentIndex + direction + effectNames.length) % effectNames.length;
+
+            return effectNames[nextIndex];
+        });
+    }, []);
+
+    const showPreviousEffect = useCallback(() => {
+        switchEffect(-1);
+    }, [switchEffect]);
+
+    const showNextEffect = useCallback(() => {
+        switchEffect(1);
+    }, [switchEffect]);
+
+    useSwipeNavigation({
+        onSwipeLeft: showNextEffect,
+        onSwipeRight: showPreviousEffect,
+    });
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (shouldIgnoreEffectKey(event.target)) {
@@ -39,18 +63,15 @@ export default function Welcome() {
             event.preventDefault();
 
             /*
-             * Arrow keys only cycle the effect state; navigation to /lab remains
-             * attached to START. The wraparound makes exploration continuous:
-             * right from the last effect returns to the first, and left from the
-             * first returns to the last.
+             * Arrow keys, buttons, and swipe all call the same effect switching
+             * functions. Navigation to /lab remains attached to START.
              */
-            setCurrentEffect((effect) => {
-                const direction = event.key === 'ArrowRight' ? 1 : -1;
-                const currentIndex = effectNames.indexOf(effect);
-                const nextIndex = (currentIndex + direction + effectNames.length) % effectNames.length;
+            if (event.key === 'ArrowRight') {
+                showNextEffect();
+                return;
+            }
 
-                return effectNames[nextIndex];
-            });
+            showPreviousEffect();
         };
 
         /*
@@ -63,7 +84,7 @@ export default function Welcome() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [showNextEffect, showPreviousEffect]);
 
     return (
         <PublicLayout effect={currentEffect} className="flex items-center justify-center px-6 py-10">
@@ -106,6 +127,20 @@ export default function Welcome() {
                 </motion.div>
             </section>
 
+            <DirectionalNavigationButton
+                direction="previous"
+                ariaLabel="前の背景エフェクトへ切り替え"
+                onClick={showPreviousEffect}
+                className="bg-white/18 text-cyan-50 hover:bg-white/28"
+            />
+
+            <DirectionalNavigationButton
+                direction="next"
+                ariaLabel="次の背景エフェクトへ切り替え"
+                onClick={showNextEffect}
+                className="bg-white/18 text-cyan-50 hover:bg-white/28"
+            />
+
             {/*
                 A small status hint makes the effect state discoverable without
                 turning the portfolio entrance into a settings panel. It is
@@ -121,7 +156,7 @@ export default function Welcome() {
                 <div className="inline-flex max-w-full flex-col items-center gap-1 rounded-full border border-white/25 bg-slate-950/22 px-4 py-2 shadow-[0_12px_30px_rgba(2,24,45,0.18)] backdrop-blur-xl sm:flex-row sm:gap-3">
                     <span>{effectLabels[currentEffect]}</span>
                     <span className="hidden h-1 w-1 rounded-full bg-cyan-50/50 sm:block" />
-                    <span>← / → で背景切替</span>
+                    <span>← / → / スワイプで背景切替</span>
                 </div>
             </motion.div>
         </PublicLayout>

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import DirectionalNavigationButton from '@/Components/DirectionalNavigationButton';
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
@@ -11,6 +12,7 @@ import {
     type ApiCatalogSortKey,
     normalizeApiCatalogSortKey,
 } from '@/Components/ApiCatalog/apiCatalogSort';
+import useSwipeNavigation from '@/Hooks/useSwipeNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 /*
@@ -237,29 +239,32 @@ export default function Index({
     const syncMessage = apiCatalogSyncStatusMessage(syncStatus, isStartingSync, syncPollingError);
     const showSyncResult = shouldShowSyncResult(syncStatus);
 
-    const visitList = (
-        nextKeyword: string,
-        nextProviderKey: string,
-        nextDomain: string,
-        nextSortKey: ApiCatalogSortKey,
-        nextPage: number,
-    ) => {
-        /*
-         * 検索・ページ送りは Inertia GET で再訪問します。
-         * sort と page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
-         * only を指定して、候補リストを毎回取り直さない将来構成を先に画面へ反映しています。
-         */
-        router.get(
-            '/api-catalog',
-            buildQueryParams(nextKeyword, nextProviderKey, nextDomain, nextSortKey, nextPage),
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-                only: ['filters', 'apiCatalogItems', 'pagination'],
-            },
-        );
-    };
+    const visitList = useCallback(
+        (
+            nextKeyword: string,
+            nextProviderKey: string,
+            nextDomain: string,
+            nextSortKey: ApiCatalogSortKey,
+            nextPage: number,
+        ) => {
+            /*
+             * 検索・ページ送りは Inertia GET で再訪問します。
+             * sort と page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
+             * only を指定して、候補リストを毎回取り直さない将来構成を先に画面へ反映しています。
+             */
+            router.get(
+                '/api-catalog',
+                buildQueryParams(nextKeyword, nextProviderKey, nextDomain, nextSortKey, nextPage),
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    only: ['filters', 'apiCatalogItems', 'pagination'],
+                },
+            );
+        },
+        [],
+    );
 
     const updateKeyword = (nextKeyword: string) => {
         /*
@@ -304,21 +309,36 @@ export default function Index({
         visitList('', '', '', sortKey, 1);
     };
 
-    const moveToPreviousPage = () => {
+    const moveToPreviousPage = useCallback(() => {
         if (!canMovePrevious) {
             return;
         }
 
         visitList(keyword, providerKey, domain, sortKey, pagination.currentPage - 1);
-    };
+    }, [
+        canMovePrevious,
+        domain,
+        keyword,
+        pagination.currentPage,
+        providerKey,
+        sortKey,
+        visitList,
+    ]);
 
-    const moveToNextPage = () => {
+    const moveToNextPage = useCallback(() => {
         if (!canMoveNext) {
             return;
         }
 
         visitList(keyword, providerKey, domain, sortKey, pagination.currentPage + 1);
-    };
+    }, [canMoveNext, domain, keyword, pagination.currentPage, providerKey, sortKey, visitList]);
+
+    useSwipeNavigation({
+        // Left swipe means the finger moves left, so the list advances to the next page.
+        onSwipeLeft: moveToNextPage,
+        // Right swipe moves back to the previous page.
+        onSwipeRight: moveToPreviousPage,
+    });
 
     const startPoolSync = async () => {
         /*
@@ -400,7 +420,6 @@ export default function Index({
                     if (!nextStatus.isRunning) {
                         router.reload({
                             only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
-                            preserveScroll: true,
                         });
 
                         return;
@@ -459,7 +478,7 @@ export default function Index({
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [canMoveNext, canMovePrevious, keyword, providerKey, domain, sortKey, pagination.currentPage]);
+    }, [canMoveNext, canMovePrevious, moveToNextPage, moveToPreviousPage]);
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -560,6 +579,20 @@ export default function Index({
                     onNext={moveToNextPage}
                 />
             </div>
+
+            <DirectionalNavigationButton
+                direction="previous"
+                ariaLabel="前のAPI一覧ページへ移動"
+                onClick={moveToPreviousPage}
+                disabled={!canMovePrevious}
+            />
+
+            <DirectionalNavigationButton
+                direction="next"
+                ariaLabel="次のAPI一覧ページへ移動"
+                onClick={moveToNextPage}
+                disabled={!canMoveNext}
+            />
         </PublicLayout>
     );
 }
