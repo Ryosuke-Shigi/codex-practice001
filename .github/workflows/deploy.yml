@@ -1,0 +1,41 @@
+name: Deploy to Lightsail
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          LIGHTSAIL_SSH_KEY: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+        run: |
+          set -e
+
+          mkdir -p ~/.ssh
+          echo "$LIGHTSAIL_SSH_KEY" > ~/.ssh/lightsail_key
+          chmod 600 ~/.ssh/lightsail_key
+
+          ssh-keyscan -H "$LIGHTSAIL_HOST" >> ~/.ssh/known_hosts
+
+          ssh -i ~/.ssh/lightsail_key "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" << 'EOF'
+            set -e
+
+            cd /var/www/api-discovery-hub/src
+            git status --short
+            git pull --ff-only origin main
+
+            cd /var/www/api-discovery-hub
+            docker compose run --rm npm npm run build
+            docker compose exec -T php-fpm php artisan optimize:clear
+            docker compose restart php-fpm
+
+            docker compose ps
+            curl -I http://127.0.0.1/
+          EOF
