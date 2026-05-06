@@ -2,11 +2,19 @@
 
 namespace App\Actions\ApiCatalog\Commands;
 
+use App\DTO\ApiCatalog\Sync\ApiCatalogSyncStatusDTO;
 use App\Jobs\ApiCatalog\SyncApiCatalogJob;
+use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
+use RuntimeException;
 
 final readonly class StartApiCatalogSyncAction
 {
-    public function execute(): void
+    public function __construct(
+        private ApiCatalogSyncStatusRepositoryInterface $repository,
+    ) {
+    }
+
+    public function execute(): ApiCatalogSyncStatusDTO
     {
         /*
          * 一覧画面のボタンは「同期開始」の入口です。
@@ -17,8 +25,13 @@ final readonly class StartApiCatalogSyncAction
          * ここで onConnection('sync') は指定しません。
          * Queue 接続先は .env / queue.php の設定に委ね、HTTP リクエストは
          * 「Job を受け付けた」時点で返します。
-         * 完了判定、失敗通知、同期履歴は別の状態管理機能で扱う前提です。
+         * 状態レコードは同期開始時に作り、Job 側で running / completed / failed へ進めます。
          */
-        SyncApiCatalogJob::dispatch();
+        $syncRun = $this->repository->createQueued();
+
+        SyncApiCatalogJob::dispatch((int) $syncRun->getKey());
+
+        return $this->repository->findStatusById((int) $syncRun->getKey())
+            ?? throw new RuntimeException('API catalog sync status was not created.');
     }
 }

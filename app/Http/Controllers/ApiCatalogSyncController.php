@@ -3,21 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Actions\ApiCatalog\Commands\StartApiCatalogSyncAction;
+use App\Actions\ApiCatalog\Queries\GetApiCatalogSyncStatusAction;
+use App\Responders\ApiCatalog\ApiCatalogSyncStatusResponder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ApiCatalogSyncController extends Controller
 {
-    public function __invoke(Request $request, StartApiCatalogSyncAction $action): RedirectResponse
-    {
+    public function __invoke(
+        Request $request,
+        StartApiCatalogSyncAction $action,
+        ApiCatalogSyncStatusResponder $responder,
+    ): RedirectResponse|JsonResponse {
         /*
          * Controller はHTTP入口に留め、同期開始の手順は Action に任せます。
          * 一覧状態は return_url で受け、検索・並び替え・ページ番号を保ったまま戻します。
          * ここで同期結果を整形しないことで、完了確認や集計表示の責務を後続の専用導線へ残します。
          */
-        $action->execute();
+        $status = $action->execute();
+
+        if ($request->expectsJson()) {
+            return $responder->json($status);
+        }
 
         return redirect($this->listReturnUrl($request));
+    }
+
+    public function status(
+        Request $request,
+        GetApiCatalogSyncStatusAction $action,
+        ApiCatalogSyncStatusResponder $responder,
+    ): JsonResponse {
+        $syncRunId = $request->integer('sync_id') > 0 ? $request->integer('sync_id') : null;
+
+        return $responder->json($action->execute($syncRunId));
     }
 
     private function listReturnUrl(Request $request): string

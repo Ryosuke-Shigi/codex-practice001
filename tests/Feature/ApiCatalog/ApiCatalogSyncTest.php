@@ -2,12 +2,39 @@
 
 namespace Tests\Feature\ApiCatalog;
 
+use App\Actions\ApiCatalog\Commands\StartApiCatalogSyncAction;
+use App\Actions\ApiCatalog\Queries\GetApiCatalogSyncStatusAction;
+use App\DTO\ApiCatalog\Sync\ApiCatalogSyncResultDTO;
+use App\DTO\ApiCatalog\Sync\ApiCatalogSyncStatusDTO;
 use App\Jobs\ApiCatalog\SyncApiCatalogJob;
+use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class ApiCatalogSyncTest extends TestCase
 {
+    use RefreshDatabase;
+
+    public function test_start_api_catalog_sync_action_dispatches_sync_job(): void
+    {
+        Queue::fake();
+
+        $status = app(StartApiCatalogSyncAction::class)->execute();
+
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_QUEUED, $status->status);
+        $this->assertTrue($status->isRunning());
+        $this->assertDatabaseHas('api_catalog_sync_runs', [
+            'id' => $status->id,
+            'status' => ApiCatalogSyncStatusDTO::STATUS_QUEUED,
+        ]);
+
+        Queue::assertPushed(
+            SyncApiCatalogJob::class,
+            fn (SyncApiCatalogJob $job) => $job->syncRunId === $status->id,
+        );
+    }
+
     public function test_api_catalog_sync_route_dispatches_sync_job_and_returns_to_current_list(): void
     {
         /*
@@ -44,5 +71,109 @@ class ApiCatalogSyncTest extends TestCase
 
         $response->assertRedirect('/api-catalog');
         Queue::assertPushed(SyncApiCatalogJob::class);
+    }
+
+    public function test_api_catalog_sync_route_returns_json_status_for_polling_start(): void
+    {
+        Queue::fake();
+
+        $response = $this->postJson('/api-catalog/sync', [
+            'return_url' => '/api-catalog',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('syncStatus.status', ApiCatalogSyncStatusDTO::STATUS_QUEUED)
+            ->assertJsonPath('syncStatus.isRunning', true)
+            ->assertJsonPath('syncStatus.result.insertedCount', 0)
+            ->assertJsonPath('syncStatus.result.updatedCount', 0)
+            ->assertJsonPath('syncStatus.result.skippedCount', 0)
+            ->assertJsonPath('syncStatus.result.failedCount', 0);
+
+        Queue::assertPushed(SyncApiCatalogJob::class);
+    }
+
+    public function test_get_api_catalog_sync_status_query_returns_current_status(): void
+    {
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+
+        $status = app(GetApiCatalogSyncStatusAction::class)->execute((int) $syncRun->getKey());
+
+        $this->assertNotNull($status);
+        $this->assertSame((int) $syncRun->getKey(), $status->id);
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_QUEUED, $status->status);
+        $this->assertTrue($status->isRunning());
+    }
+
+    public function test_completed_api_catalog_sync_status_returns_result_counts(): void
+    {
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+
+        $repository->markCompleted(
+            (int) $syncRun->getKey(),
+            new ApiCatalogSyncResultDTO(
+                totalCount: 20,
+                insertedCount: 3,
+                updatedCount: 4,
+                skippedCount: 12,
+                inactiveCount: 1,
+                failedCount: 2,
+            ),
+            now(),
+        );
+
+        $status = app(GetApiCatalogSyncStatusAction::class)->execute((int) $syncRun->getKey());
+
+        $this->assertNotNull($status);
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_COMPLETED, $status->status);
+        $this->assertFalse($status->isRunning());
+        $this->assertSame(3, $status->result->insertedCount);
+        $this->assertSame(4, $status->result->updatedCount);
+        $this->assertSame(12, $status->result->skippedCount);
+        $this->assertSame(2, $status->result->failedCount);
+    }
+
+    public function test_failed_api_catalog_sync_status_returns_failed_state(): void
+    {
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+
+        $repository->markFailed((int) $syncRun->getKey(), 'APIs.guru unavailable.', now(), 1);
+
+        $status = app(GetApiCatalogSyncStatusAction::class)->execute((int) $syncRun->getKey());
+
+        $this->assertNotNull($status);
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_FAILED, $status->status);
+        $this->assertFalse($status->isRunning());
+        $this->assertSame(1, $status->result->failedCount);
+        $this->assertSame('APIs.guru unavailable.', $status->errorMessage);
+    }
+
+    public function test_api_catalog_sync_status_route_returns_current_status(): void
+    {
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+        $repository->markRunning((int) $syncRun->getKey(), now());
+
+        $this
+            ->getJson('/api-catalog/sync/status?sync_id='.$syncRun->getKey())
+            ->assertOk()
+            ->assertJsonPath('syncStatus.id', $syncRun->getKey())
+            ->assertJsonPath('syncStatus.status', ApiCatalogSyncStatusDTO::STATUS_RUNNING)
+            ->assertJsonPath('syncStatus.isRunning', true);
+    }
+
+    public function test_api_catalog_frontend_disables_sync_button_while_sync_is_running(): void
+    {
+        $source = file_get_contents(resource_path('js/Pages/ApiCatalog/Index.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString(
+            'const isSyncButtonDisabled = isStartingSync || (syncStatus?.isRunning ?? false);',
+            $source,
+        );
+        $this->assertStringContainsString('disabled={isSyncButtonDisabled}', $source);
     }
 }

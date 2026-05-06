@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\ApiCatalog\Queries\GetApiCatalogDetailAction;
 use App\Actions\ApiCatalog\Queries\GetApiCatalogListAction;
+use App\Actions\ApiCatalog\Queries\GetApiCatalogSyncStatusAction;
 use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
 use App\Responders\ApiCatalog\ApiCatalogDetailResponder;
 use App\Responders\ApiCatalog\ApiCatalogListResponder;
@@ -15,13 +16,15 @@ class ApiCatalogController extends Controller
     public function __invoke(
         Request $request,
         GetApiCatalogListAction $action,
+        GetApiCatalogSyncStatusAction $syncStatusAction,
         ApiCatalogListResponder $responder,
     ): Response {
         // Controller は HTTP query を DTO に詰める入口だけに留め、取得や表示整形は下位層へ渡します。
         $query = ApiCatalogListQueryDTO::fromRequest($request);
         $result = $action->execute($query);
+        $syncStatus = $syncStatusAction->execute();
 
-        return $responder->index($result);
+        return $responder->index($result, $syncStatus);
     }
 
     public function show(

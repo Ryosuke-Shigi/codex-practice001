@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -17,6 +18,7 @@ import PublicLayout from '@/Layouts/PublicLayout';
  * Preview から本番一覧を開いた履歴があっても、画面内ボタンは本番導線の入口へ戻します。
  */
 const API_CATALOG_ENTRY_HREF = '/lab';
+const API_CATALOG_SYNC_POLL_INTERVAL_MS = 2500;
 
 type ApiCatalogFilters = {
     keyword: string | null;
@@ -46,6 +48,31 @@ type ApiCatalogPagination = {
     to: number | null;
 };
 
+type ApiCatalogSyncResult = {
+    totalCount: number;
+    insertedCount: number;
+    updatedCount: number;
+    skippedCount: number;
+    inactiveCount: number;
+    failedCount: number;
+};
+
+type ApiCatalogSyncStatus = {
+    id: number;
+    status: 'queued' | 'running' | 'completed' | 'failed';
+    isRunning: boolean;
+    result: ApiCatalogSyncResult;
+    errorMessage: string | null;
+    startedAt: string | null;
+    finishedAt: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+};
+
+type ApiCatalogSyncStatusResponse = {
+    syncStatus: ApiCatalogSyncStatus | null;
+};
+
 type IndexProps = {
     /*
      * Responder から受け取る props は将来の Inertia 部分更新単位に合わせています。
@@ -56,6 +83,7 @@ type IndexProps = {
     domains: string[];
     apiCatalogItems: ApiCatalogItem[];
     pagination: ApiCatalogPagination;
+    syncStatus: ApiCatalogSyncStatus | null;
 };
 
 function shouldIgnorePaginationKey(target: EventTarget | null) {
@@ -132,21 +160,68 @@ function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatal
     };
 }
 
-export default function Index({ filters, providers, domains, apiCatalogItems, pagination }: IndexProps) {
+function apiCatalogSyncStatusMessage(
+    status: ApiCatalogSyncStatus | null,
+    isStarting: boolean,
+    pollingError: string | null,
+) {
+    if (isStarting) {
+        return 'APIカタログ同期を開始しています';
+    }
+
+    if (pollingError !== null) {
+        return pollingError;
+    }
+
+    if (status === null) {
+        return null;
+    }
+
+    if (status.status === 'queued') {
+        return 'APIカタログ同期を開始しました';
+    }
+
+    if (status.status === 'running') {
+        return '同期中です';
+    }
+
+    if (status.status === 'completed') {
+        return '同期が完了しました';
+    }
+
+    return '同期に失敗しました';
+}
+
+function shouldShowSyncResult(status: ApiCatalogSyncStatus | null) {
+    return status !== null && !status.isRunning;
+}
+
+export default function Index({
+    filters,
+    providers,
+    domains,
+    apiCatalogItems,
+    pagination,
+    syncStatus: initialSyncStatus,
+}: IndexProps) {
     const [keyword, setKeyword] = useState(filters.keyword ?? '');
     const [providerKey, setProviderKey] = useState(filters.providerKey ?? '');
     const [domain, setDomain] = useState(filters.domain ?? '');
     const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(
         normalizeApiCatalogSortKey(filters.sortKey),
     );
-    const [isPoolSyncing, setIsPoolSyncing] = useState(false);
-    const [poolSyncMessage, setPoolSyncMessage] = useState<string | null>(null);
+    const [syncStatus, setSyncStatus] = useState<ApiCatalogSyncStatus | null>(initialSyncStatus);
+    const [isStartingSync, setIsStartingSync] = useState(false);
+    const [syncPollingError, setSyncPollingError] = useState<string | null>(null);
 
     const canMovePrevious = pagination.currentPage > 1;
     const canMoveNext = pagination.currentPage < pagination.totalPages;
     const hasActiveFilters = keyword.trim() !== '' || providerKey !== '' || domain !== '';
     const returnUrl = currentListUrl();
     const domainFilterOptions = domains.length > 0 ? domains : createProviderDomainOptions(providers);
+    const isSyncButtonDisabled = isStartingSync || (syncStatus?.isRunning ?? false);
+    const syncMessage = apiCatalogSyncStatusMessage(syncStatus, isStartingSync, syncPollingError);
+    const showSyncResult = shouldShowSyncResult(syncStatus);
 
     const visitList = (
         nextKeyword: string,
@@ -231,45 +306,113 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
         visitList(keyword, providerKey, domain, sortKey, pagination.currentPage + 1);
     };
 
-    const startPoolSync = () => {
+    const startPoolSync = async () => {
         /*
          * プール更新は本番一覧から開始します。
-         * 同期本体はLaravel側のJob/Queueへ渡し、Reactはクリック操作と登録状態の表示だけを担当します。
-         * return_url に現在の一覧URLを渡すことで、検索・並び替え・ページ番号をPOST後も保ちます。
+         * 同期本体はLaravel側のJob/Queueへ渡し、Reactは同期状態IDをポーリングします。
          *
          * POST成功は「同期が終わった」ではなく「Job登録を受け付けた」という意味です。
-         * ここでは一覧データを完了済みとして扱わず、worker の実行結果は別の状態表示で扱います。
+         * 完了扱いは状態取得APIが completed / failed を返したときだけに限定します。
          */
-        setIsPoolSyncing(true);
-        setPoolSyncMessage('プール更新をキューに登録しています...');
+        if (isSyncButtonDisabled) {
+            return;
+        }
 
-        router.post(
-            '/api-catalog/sync',
-            {
-                return_url: currentListUrl(),
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                onSuccess: () => {
-                    /*
-                     * React は Job 完了を検知しないため、登録完了だけを表示します。
-                     * 一覧反映の確認や完了通知は、同期状態を扱う別導線の責務です。
-                     * 完了・失敗・差分件数を画面で扱う場合は、同期履歴やポーリング API を追加してから行います。
-                     */
-                    setPoolSyncMessage(
-                        'プール更新をキューに登録しました。反映には少し時間がかかる場合があります。',
-                    );
+        setIsStartingSync(true);
+        setSyncPollingError(null);
+
+        try {
+            const response = await axios.post<ApiCatalogSyncStatusResponse>(
+                '/api-catalog/sync',
+                {
+                    return_url: currentListUrl(),
                 },
-                onError: () => {
-                    setPoolSyncMessage('プール更新の登録に失敗しました。時間をおいて再度お試しください。');
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
                 },
-                onFinish: () => {
-                    setIsPoolSyncing(false);
-                },
-            },
-        );
+            );
+
+            setSyncStatus(response.data.syncStatus);
+        } catch {
+            setSyncPollingError('APIカタログ同期の開始に失敗しました');
+        } finally {
+            setIsStartingSync(false);
+        }
     };
+
+    useEffect(() => {
+        setSyncStatus(initialSyncStatus);
+    }, [
+        initialSyncStatus,
+        initialSyncStatus?.id,
+        initialSyncStatus?.status,
+        initialSyncStatus?.updatedAt,
+    ]);
+
+    useEffect(() => {
+        if (syncStatus === null || !syncStatus.isRunning) {
+            return;
+        }
+
+        let isActive = true;
+        let timeoutId: number | undefined;
+
+        const pollSyncStatus = async () => {
+            try {
+                const response = await axios.get<ApiCatalogSyncStatusResponse>(
+                    '/api-catalog/sync/status',
+                    {
+                        params: {
+                            sync_id: syncStatus.id,
+                        },
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    },
+                );
+
+                if (!isActive) {
+                    return;
+                }
+
+                const nextStatus = response.data.syncStatus;
+
+                if (nextStatus !== null) {
+                    setSyncStatus(nextStatus);
+                    setSyncPollingError(null);
+
+                    if (!nextStatus.isRunning) {
+                        router.reload({
+                            only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
+                            preserveScroll: true,
+                        });
+
+                        return;
+                    }
+                }
+            } catch {
+                if (isActive) {
+                    setSyncPollingError('同期状態の取得に失敗しました');
+                }
+            }
+
+            if (isActive) {
+                timeoutId = window.setTimeout(pollSyncStatus, API_CATALOG_SYNC_POLL_INTERVAL_MS);
+            }
+        };
+
+        timeoutId = window.setTimeout(pollSyncStatus, API_CATALOG_SYNC_POLL_INTERVAL_MS);
+
+        return () => {
+            isActive = false;
+
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+        };
+    }, [syncStatus?.id, syncStatus?.isRunning]);
 
     useEffect(() => {
         // Inertia の戻る/進むや部分更新後も、フォーム表示を最新 props と同期します。
@@ -333,10 +476,10 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                         <button
                             type="button"
                             onClick={startPoolSync}
-                            disabled={isPoolSyncing}
+                            disabled={isSyncButtonDisabled}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30 disabled:cursor-wait disabled:opacity-60"
                         >
-                            {isPoolSyncing ? '登録中' : 'プール更新'}
+                            {isSyncButtonDisabled ? '同期中' : '同期開始'}
                         </button>
                         {/*
                             本番API一覧は Lab 配下の独立した本番導線です。
@@ -351,16 +494,24 @@ export default function Index({ filters, providers, domains, apiCatalogItems, pa
                     </div>
                 </header>
 
-                {poolSyncMessage && (
+                {syncMessage && (
                     /*
-                        aria-live で開始状態を読み上げ対象にし、画面上でも操作結果を見えるようにします。
+                        aria-live で同期状態を読み上げ対象にし、Job / Queue の進行を画面上でも見えるようにします。
                     */
                     <div
                         role="status"
                         aria-live="polite"
                         className="rounded-2xl border border-cyan-100/35 bg-cyan-50/15 px-4 py-3 text-sm font-semibold text-cyan-50 shadow-[0_12px_26px_rgba(2,24,45,0.14)] backdrop-blur-2xl"
                     >
-                        {poolSyncMessage}
+                        <div>{syncMessage}</div>
+                        {showSyncResult && syncStatus && (
+                            <div className="mt-2 text-xs font-bold text-cyan-950/70">
+                                新規: {syncStatus.result.insertedCount}件 / 更新:{' '}
+                                {syncStatus.result.updatedCount}件 / スキップ:{' '}
+                                {syncStatus.result.skippedCount}件 / 失敗:{' '}
+                                {syncStatus.result.failedCount}件
+                            </div>
+                        )}
                     </div>
                 )}
 

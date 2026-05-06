@@ -47,6 +47,8 @@ Route::get('/api-catalog', ApiCatalogController::class)->name('api-catalog.index
 
 // API Discovery Hub 本番一覧から起動する同期開始ルートです。API Preview 側には更新責務を持たせません。
 Route::post('/api-catalog/sync', ApiCatalogSyncController::class)->name('api-catalog.sync');
+Route::get('/api-catalog/sync/status', [ApiCatalogSyncController::class, 'status'])
+    ->name('api-catalog.sync.status');
 
 // API Discovery Hub 本体一覧の UI 確認用モックです。DB 取得や Responder とは切り離します。
 Route::get('/api-catalog/mock', function () {
