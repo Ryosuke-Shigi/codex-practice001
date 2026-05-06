@@ -61,6 +61,7 @@ type ApiCatalogSyncStatus = {
     id: number;
     status: 'queued' | 'running' | 'completed' | 'failed';
     isRunning: boolean;
+    isStale: boolean;
     result: ApiCatalogSyncResult;
     errorMessage: string | null;
     startedAt: string | null;
@@ -177,8 +178,21 @@ function apiCatalogSyncStatusMessage(
         return null;
     }
 
+    /*
+     * stale は「完了」ではありません。
+     * worker が止まっている、または failed hook まで届かない落ち方をした可能性があるため、
+     * ボタンは戻しつつ、画面文言では運用確認が必要な状態として出します。
+     */
+    if (status.isStale) {
+        return '同期状態が一定時間更新されませんでした。Queue worker の状態を確認してください。';
+    }
+
     if (status.status === 'queued') {
-        return 'APIカタログ同期を開始しました';
+        /*
+         * queued は同期本体がまだ始まっていない状態です。
+         * 「同期中」とだけ表示すると処理が進んでいるように見えるため、worker 待ちであることを明示します。
+         */
+        return 'APIカタログ同期を開始しました。Queue worker の処理開始を待っています。';
     }
 
     if (status.status === 'running') {

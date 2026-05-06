@@ -7,6 +7,13 @@ use Carbon\CarbonInterface;
 
 final readonly class ApiCatalogSyncStatusDTO
 {
+    /*
+     * Queue worker が止まっている、または Job が異常終了して failed hook まで届かない場合、
+     * queued/running のまま状態レコードが残ることがあります。
+     * 画面の同期ボタンを永久に disabled にしないため、一定時間更新がなければ stale として扱います。
+     */
+    private const STALE_AFTER_MINUTES = 20;
+
     public const STATUS_QUEUED = 'queued';
 
     public const STATUS_RUNNING = 'running';
@@ -50,7 +57,29 @@ final readonly class ApiCatalogSyncStatusDTO
 
     public function isRunning(): bool
     {
-        return in_array($this->status, [self::STATUS_QUEUED, self::STATUS_RUNNING], true);
+        /*
+         * DB上の status が queued/running でも、古い状態は「現在実行中」とは見なしません。
+         * React 側はこの値だけを見てボタン制御するため、DTO の時点で stale を除外します。
+         */
+        return in_array($this->status, [self::STATUS_QUEUED, self::STATUS_RUNNING], true)
+            && ! $this->isStale();
+    }
+
+    public function isStale(): bool
+    {
+        /*
+         * completed/failed は終端状態なので stale 判定の対象外です。
+         * queued は worker が拾えていない状態、running は worker 処理中の状態として扱い、
+         * updated_at が一定時間動かなければ「worker確認が必要な古い同期状態」と判断します。
+         */
+        if (! in_array($this->status, [self::STATUS_QUEUED, self::STATUS_RUNNING], true)) {
+            return false;
+        }
+
+        $lastUpdatedAt = $this->updatedAt ?? $this->createdAt;
+
+        return $lastUpdatedAt !== null
+            && $lastUpdatedAt->lessThan(now()->subMinutes(self::STALE_AFTER_MINUTES));
     }
 
     /**
@@ -62,6 +91,7 @@ final readonly class ApiCatalogSyncStatusDTO
             'id' => $this->id,
             'status' => $this->status,
             'isRunning' => $this->isRunning(),
+            'isStale' => $this->isStale(),
             'result' => [
                 'totalCount' => $this->result->totalCount,
                 'insertedCount' => $this->result->insertedCount,

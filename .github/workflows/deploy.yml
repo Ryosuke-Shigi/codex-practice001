@@ -34,7 +34,14 @@ jobs:
             cd /var/www/api-discovery-hub
             docker compose run --rm npm npm run build
             docker compose exec -T php-fpm php artisan optimize:clear
-            docker compose restart php-fpm
+
+            # API catalog manual sync is queued, so deploying only php-fpm is not enough.
+            # Keep queue/scheduler containers present and restart them so they pick up
+            # the newly pulled Laravel code and the latest optimized cache state.
+            # Migrations are intentionally not executed here; production DB changes are
+            # applied by a human decision with `php artisan migrate --force`.
+            docker compose up -d queue scheduler
+            docker compose restart php-fpm queue scheduler
 
             docker compose ps
             curl -I http://127.0.0.1/

@@ -9,6 +9,8 @@ use Carbon\CarbonInterface;
 
 interface ApiCatalogSyncStatusRepositoryInterface
 {
+    public function isStorageReady(): bool;
+
     public function createQueued(): ApiCatalogSyncRun;
 
     public function markRunning(int $syncRunId, CarbonInterface $startedAt): void;

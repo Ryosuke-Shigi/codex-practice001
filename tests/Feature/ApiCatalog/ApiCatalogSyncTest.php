@@ -7,7 +7,9 @@ use App\Actions\ApiCatalog\Queries\GetApiCatalogSyncStatusAction;
 use App\DTO\ApiCatalog\Sync\ApiCatalogSyncResultDTO;
 use App\DTO\ApiCatalog\Sync\ApiCatalogSyncStatusDTO;
 use App\Jobs\ApiCatalog\SyncApiCatalogJob;
+use App\Models\ApiCatalogSyncRun;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -32,6 +34,63 @@ class ApiCatalogSyncTest extends TestCase
         Queue::assertPushed(
             SyncApiCatalogJob::class,
             fn (SyncApiCatalogJob $job) => $job->syncRunId === $status->id,
+        );
+    }
+
+    public function test_start_api_catalog_sync_action_keeps_dispatching_when_status_storage_is_not_ready(): void
+    {
+        Queue::fake();
+        $this->app->instance(ApiCatalogSyncStatusRepositoryInterface::class, new class implements ApiCatalogSyncStatusRepositoryInterface
+        {
+            public function isStorageReady(): bool
+            {
+                return false;
+            }
+
+            public function createQueued(): ApiCatalogSyncRun
+            {
+                throw new \RuntimeException('Storage should not be used.');
+            }
+
+            public function markRunning(int $syncRunId, CarbonInterface $startedAt): void
+            {
+                //
+            }
+
+            public function markCompleted(
+                int $syncRunId,
+                ApiCatalogSyncResultDTO $result,
+                CarbonInterface $finishedAt,
+            ): void {
+                //
+            }
+
+            public function markFailed(
+                int $syncRunId,
+                string $errorMessage,
+                CarbonInterface $finishedAt,
+                int $failedCount,
+            ): void {
+                //
+            }
+
+            public function findStatusById(int $syncRunId): ?ApiCatalogSyncStatusDTO
+            {
+                return null;
+            }
+
+            public function findLatestStatus(): ?ApiCatalogSyncStatusDTO
+            {
+                return null;
+            }
+        });
+
+        $status = app(StartApiCatalogSyncAction::class)->execute();
+
+        $this->assertNull($status);
+        Queue::assertPushed(
+            SyncApiCatalogJob::class,
+            fn (SyncApiCatalogJob $job) => $job->syncRunId === null,
         );
     }
 
@@ -106,6 +165,29 @@ class ApiCatalogSyncTest extends TestCase
         $this->assertTrue($status->isRunning());
     }
 
+    public function test_old_running_sync_status_is_reported_as_stale(): void
+    {
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+        $repository->markRunning((int) $syncRun->getKey(), now()->subMinutes(30));
+        ApiCatalogSyncRun::query()
+            ->whereKey($syncRun->getKey())
+            ->update(['updated_at' => now()->subMinutes(30)]);
+
+        $status = app(GetApiCatalogSyncStatusAction::class)->execute((int) $syncRun->getKey());
+
+        $this->assertNotNull($status);
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_RUNNING, $status->status);
+        $this->assertFalse($status->isRunning());
+        $this->assertTrue($status->isStale());
+
+        $this
+            ->getJson('/api-catalog/sync/status?sync_id='.$syncRun->getKey())
+            ->assertOk()
+            ->assertJsonPath('syncStatus.isRunning', false)
+            ->assertJsonPath('syncStatus.isStale', true);
+    }
+
     public function test_completed_api_catalog_sync_status_returns_result_counts(): void
     {
         $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
@@ -149,6 +231,31 @@ class ApiCatalogSyncTest extends TestCase
         $this->assertFalse($status->isRunning());
         $this->assertSame(1, $status->result->failedCount);
         $this->assertSame('APIs.guru unavailable.', $status->errorMessage);
+    }
+
+    public function test_sync_job_failed_hook_marks_sync_status_as_failed(): void
+    {
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+        $job = new SyncApiCatalogJob((int) $syncRun->getKey());
+
+        $job->failed(new \RuntimeException('Worker timeout.'));
+
+        $status = app(GetApiCatalogSyncStatusAction::class)->execute((int) $syncRun->getKey());
+
+        $this->assertNotNull($status);
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_FAILED, $status->status);
+        $this->assertSame(1, $status->result->failedCount);
+        $this->assertSame('Worker timeout.', $status->errorMessage);
+    }
+
+    public function test_sync_job_has_explicit_timeout_for_catalog_sync(): void
+    {
+        $job = new SyncApiCatalogJob();
+
+        $this->assertSame(1, $job->tries);
+        $this->assertSame(900, $job->timeout);
+        $this->assertTrue($job->failOnTimeout);
     }
 
     public function test_api_catalog_sync_status_route_returns_current_status(): void
