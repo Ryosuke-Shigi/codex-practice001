@@ -18,7 +18,7 @@ API Discovery Hub は AWS Lightsail での外部公開を前提にしていま�
 
 ## 公開URL
 
-公開URL: 確認後に記載
+- http://43.206.39.254/
 
 ローカル確認 URL は次のとおりです。
 
@@ -50,6 +50,8 @@ React 画面は、同期 Job の登録と同期ステータス確認の導線を
 短時間で見る場合は、まず `/` から全体の入口を確認し、次に `/lab` から実験画面と本番画面の関係を見ると流れを追いやすいです。
 
 - `/`: ポートフォリオ入口。アプリ全体の起点として見る画面です。
+- <img width="975" height="959" alt="image" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
+
 - `/lab`: 実験・機能一覧。API Preview と API Discovery Hub への導線をまとめています。
 - `/api-preview`: 外部API確認用画面。APIs.guru の実取得、成功モック、エラーモックの入口です。
 - `/api-catalog`: API Discovery Hub の本番一覧。公開APIカタログの検索、絞り込み、並び替え、同期開始を確認できます。
