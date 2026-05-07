@@ -2,7 +2,7 @@
 
 API Discovery Hub は、APIs.guru の公開APIカタログ `list.json` を同期キャッシュとして取り込み、公開APIを検索・保存・調査するためのポートフォリオアプリです。
 
-- 公開URL: 確認後に記載
+- 公開URL: http://43.206.39.254/
 - できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認
 - 技術スタック: Laravel 11, Docker, Inertia, React, TypeScript, MySQL, Redis
 - 設計上の見どころ: ADRパターン、レイヤードアーキテクチャ、DTO、Repository、Service、Action、Responder、Queue
@@ -14,11 +14,11 @@ API Discovery Hub は、APIs.guru の公開APIカタログ `list.json` を同期
 
 公開APIを調べるときは、API 名、提供元、OpenAPI 定義 URL、更新日、関連検索を行き来することが多くなります。このアプリでは、その調査の入口として、公開APIカタログの検索、絞り込み、詳細確認、調査メモ保存までを小さく確認できるようにしています。
 
-API Discovery Hub は AWS Lightsail での外部公開を前提にしています。ただし、現在この README と設定ファイルから公開URLを確認できなかったため、公開URLは確認後に記載します。
+API Discovery Hub は AWS Lightsail で外部公開しています。
 
 ## 公開URL
 
-公開URL: 確認後に記載
+- http://43.206.39.254/
 
 ローカル確認 URL は次のとおりです。
 
@@ -185,7 +185,6 @@ docker compose run --rm artisan api-catalog:sync --queue
 
 ## 今後予定
 
-- 公開URLの README 反映
 - 同期履歴表示と同期失敗ログ
 - ポーリングなどによる同期状態表示の改善
 - 詳細画面を開いたタイミングで OpenAPI 定義本文を取得する別導線
@@ -200,8 +199,6 @@ docker compose run --rm artisan api-catalog:sync --queue
 
 この README は、現在実装済みの範囲に合わせています。API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的にしたアプリであり、API の価値や注目度を断定するものではありません。
 
-公開URLは、この README と設定ファイルからは確認できなかったため未記載です。確認後、`公開URL` と `GitHub About 設定案` の Website に反映します。
-
 ## GitHub About 設定案
 
 GitHub 右側の About には、次の内容を設定する想定です。GitHub の About 設定そのものは、この README では変更していません。
@@ -215,7 +212,7 @@ Laravel 11 + Docker + Inertia + React で作成した、公開APIを検索・保
 Website:
 
 ```text
-公開URLは確認後に設定
+http://43.206.39.254/
 ```
 
 Topics:
