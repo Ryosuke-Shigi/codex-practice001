@@ -45,22 +45,22 @@ API Discovery Hub は AWS Lightsail で外部公開しています。
 
 React 画面は、同期 Job の登録と同期ステータス確認の導線を持っています。同期失敗ログや同期履歴表示としての整理は、今後追加予定です。
 
-## 画面導線
+## 画面導線とスクリーンショット
 
 短時間で見る場合は、まず `/` から全体の入口を確認し、次に `/lab` から実験画面と本番画面の関係を見ると流れを追いやすいです。
 
 - `/`: ポートフォリオ入口。アプリ全体の起点として見る画面です。
- <img width="975" height="959" alt="image" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
+ <img width="975" height="959" alt="Welcome画面" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
 - `/lab`: 実験・機能一覧。API Preview と API Discovery Hub への導線をまとめています。
- <img width="955" height="891" alt="image" src="https://github.com/user-attachments/assets/facd87a9-7f27-4f65-a5fe-c81d155ac4ac" />
+ <img width="955" height="891" alt="Lab画面" src="https://github.com/user-attachments/assets/facd87a9-7f27-4f65-a5fe-c81d155ac4ac" />
 - `/api-preview`: 外部API確認用画面。APIs.guru の実取得、成功モック、エラーモックの入口です。
- <img width="961" height="961" alt="image" src="https://github.com/user-attachments/assets/269f445f-b15c-4a44-be2b-cc395a656432" />
+ <img width="961" height="961" alt="API Preview画面" src="https://github.com/user-attachments/assets/269f445f-b15c-4a44-be2b-cc395a656432" />
 - `/api-catalog`: API Discovery Hub の本番一覧。公開APIカタログの検索、絞り込み、並び替え、同期開始を確認できます。
- <img width="955" height="957" alt="image" src="https://github.com/user-attachments/assets/4b5a1f7f-f2f7-4600-9f67-306b6633b1a9" />
+ <img width="955" height="957" alt="API Catalog一覧画面" src="https://github.com/user-attachments/assets/4b5a1f7f-f2f7-4600-9f67-306b6633b1a9" />
 - `/api-catalog/{apiKey}`: API詳細。提供元、preferred version、OpenAPI URL、更新日時、調査メモの保存・更新・削除を確認できます。
- <img width="955" height="953" alt="image" src="https://github.com/user-attachments/assets/b7a93dbb-b29c-4fba-8b33-ff1b50d37645" />
+ <img width="955" height="953" alt="API Catalog詳細画面" src="https://github.com/user-attachments/assets/b7a93dbb-b29c-4fba-8b33-ff1b50d37645" />
 - `/api-catalog/mock`: UI確認用モック一覧。外部APIや同期キャッシュに依存せず、一覧UIの見た目と導線を確認できます。
- <img width="957" height="515" alt="image" src="https://github.com/user-attachments/assets/cef2175f-5788-47d5-911b-357312d7a4e1" />
+ <img width="957" height="515" alt="API Catalogモック画面" src="https://github.com/user-attachments/assets/cef2175f-5788-47d5-911b-357312d7a4e1" />
 補助的なルートとして、`/api-preview/apis-guru`、`/api-preview/apis-guru/mock`、`/api-preview/apis-guru/mock-error`、`/api-catalog/sync`、`/api-catalog/sync/status`、`/api-catalog/mock/{apiKey}`、`/api-catalog/{apiKey}/notes` があります。
 
 ## 技術スタック
