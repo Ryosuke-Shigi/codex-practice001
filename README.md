@@ -203,34 +203,3 @@ docker compose run --rm artisan api-catalog:sync --queue
 ## 注意事項
 
 この README は、現在実装済みの範囲に合わせています。API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的にしたアプリであり、API の価値や注目度を断定するものではありません。
-
-## GitHub About 設定案
-
-GitHub 右側の About には、次の内容を設定する想定です。GitHub の About 設定そのものは、この README では変更していません。
-
-Description:
-
-```text
-Laravel 11 + Docker + Inertia + React で作成した、公開APIを検索・保存・調査できる API Discovery Hub。ADRパターンとレイヤードアーキテクチャを使ったAI駆動開発ポートフォリオ。
-```
-
-Website:
-
-```text
-http://43.206.39.254/
-```
-
-Topics:
-
-```text
-laravel
-docker
-inertia
-react
-typescript
-portfolio
-api-catalog
-adr
-layered-architecture
-ai-driven-development
-```
