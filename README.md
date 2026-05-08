@@ -2,7 +2,7 @@
 
 API Discovery Hub は、APIs.guru の公開APIカタログ `list.json` を同期キャッシュとして取り込み、公開APIを検索・保存・調査するためのポートフォリオアプリです。
 
-- 公開URL: http://43.206.39.254/
+- 公開URL: https://ada-works.dev
 - できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認
 - 技術スタック: Laravel 11, Docker, Inertia, React, TypeScript, MySQL, Redis
 - 設計上の見どころ: ADRパターン、レイヤードアーキテクチャ、DTO、Repository、Service、Action、Responder、Queue
@@ -14,11 +14,11 @@ API Discovery Hub は、APIs.guru の公開APIカタログ `list.json` を同期
 
 公開APIを調べるときは、API 名、提供元、OpenAPI 定義 URL、更新日、関連検索を行き来することが多くなります。このアプリでは、その調査の入口として、公開APIカタログの検索、絞り込み、詳細確認、調査メモ保存までを小さく確認できるようにしています。
 
-API Discovery Hub は AWS Lightsail で外部公開しています。
+API Discovery Hub は AWS Lightsail で外部公開し、Cloudflareで取得した正式ドメイン `https://ada-works.dev` を導入済みです。
 
 ## 公開URL
 
-- http://43.206.39.254/
+- https://ada-works.dev
 
 ローカル確認 URL は次のとおりです。
 
@@ -211,13 +211,13 @@ GitHub 右側の About には、次の内容を設定する想定です。GitHub
 Description:
 
 ```text
-Laravel 11 + Docker + Inertia + React で作成した、公開APIを検索・保存・調査できる API Discovery Hub。ADRパターンとレイヤードアーキテクチャを使ったAI駆動開発ポートフォリオ。
+Laravel 11 + Docker + Inertia + React + TypeScript で作成した、公開APIを検索・保存・調査できる API Discovery Hub。ADRパターンとレイヤードアーキテクチャを使ったAI駆動・仕様駆動開発ポートフォリオ。
 ```
 
 Website:
 
 ```text
-http://43.206.39.254/
+https://ada-works.dev
 ```
 
 Topics:
