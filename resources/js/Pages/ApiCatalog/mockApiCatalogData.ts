@@ -1,6 +1,13 @@
+import type { ApiCatalogNoteItem } from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
+
 export type ApiCatalogProvider = {
     providerKey: string;
     domain: string;
+};
+
+type MockApiCatalogSavedNoteSource = {
+    title: string | null;
+    body: string;
 };
 
 export type ApiCatalogListItemSource = {
@@ -10,13 +17,15 @@ export type ApiCatalogListItemSource = {
     serviceKey: string;
     domain: string;
     description: string;
-    savedNoteBodies: string[];
+    savedNotes: MockApiCatalogSavedNoteSource[];
     preferredVersion: string;
     openapiVersion: string;
     sourceLatestUpdatedAt: string;
 };
 
-export type ApiCatalogListItem = ApiCatalogListItemSource;
+export type ApiCatalogListItem = Omit<ApiCatalogListItemSource, 'savedNotes'> & {
+    savedNotes: ApiCatalogNoteItem[];
+};
 
 export function matchesMockApiCatalogKeyword(item: ApiCatalogListItem, keyword: string): boolean {
     const normalizedKeyword = keyword.trim().toLowerCase();
@@ -30,15 +39,38 @@ export function matchesMockApiCatalogKeyword(item: ApiCatalogListItem, keyword: 
      * mock の domain カラムは表示確認用カテゴリで、本番DBには同名カラムを持っていません。
      * そのため keyword 検索は title / description / providerKey / serviceKey / 保存メモ本文に限定し、
      * domain select の絞り込みは MockIndex 側で providerKey の末尾抽出として別に扱います。
-     * savedNoteBodies は saved_api_notes.body の mock 相当で、本文だけに一致するAPIも一覧へ残すための入力です。
+     * savedNotes は saved_api_notes の mock 相当で、本文だけに一致するAPIも一覧へ残すための入力です。
      */
     return [
         item.title,
         item.description,
         item.providerKey,
         item.serviceKey,
-        ...item.savedNoteBodies,
+        ...item.savedNotes.map((note) => note.body),
     ].some((target) => target.toLowerCase().includes(normalizedKeyword));
+}
+
+function createMockSavedNotes(
+    itemIndex: number,
+    savedNotes: MockApiCatalogSavedNoteSource[],
+): ApiCatalogNoteItem[] {
+    /*
+     * mock でも本番 Detail props と同じ note 形状を持たせます。
+     * ここで固定IDと固定日時を生成しておくと、一覧カード・詳細パネル・検索判定が
+     * DBの有無だけに依存せず、同じ props 契約で表示確認できます。
+     */
+    return savedNotes.map((note, noteIndex) => {
+        const day = String(Math.min(28, itemIndex + 1)).padStart(2, '0');
+        const hour = String(9 + (noteIndex % 8)).padStart(2, '0');
+
+        return {
+            id: (itemIndex + 1) * 100 + noteIndex + 1,
+            title: note.title,
+            body: note.body,
+            createdAt: `2026-04-${day} ${hour}:00:00`,
+            updatedAt: `2026-04-${day} ${hour}:30:00`,
+        };
+    });
 }
 
 /*
@@ -55,7 +87,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'payments',
         description:
             'Online payment processing APIs for cards, wallets, subscriptions, invoicing, checkout, and connected accounts.',
-        savedNoteBodies: ['Check settlement edge cases before using this for marketplace payouts.'],
+        savedNotes: [
+            {
+                title: 'Marketplace payout check',
+                body: 'Check settlement edge cases before using this for marketplace payouts.',
+            },
+        ],
         preferredVersion: '2025-02-24',
         openapiVersion: '3.0.3',
         sourceLatestUpdatedAt: '2026-04-18',
@@ -68,7 +105,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'developer-tools',
         description:
             'Repository, issue, pull request, workflow, user, organization, and package operations for GitHub integrations.',
-        savedNoteBodies: ['GraphQL parity needs separate review for repository automation notes.'],
+        savedNotes: [
+            {
+                title: 'Automation parity',
+                body: 'GraphQL parity needs separate review for repository automation notes.',
+            },
+        ],
         preferredVersion: '2022-11-28',
         openapiVersion: '3.0.1',
         sourceLatestUpdatedAt: '2026-04-09',
@@ -81,7 +123,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'productivity',
         description:
             'Calendar events, availability, reminders, conference data, and calendar list management for Google Workspace.',
-        savedNoteBodies: ['Confirm room availability behavior for shared calendar booking flows.'],
+        savedNotes: [
+            {
+                title: 'Room booking',
+                body: 'Confirm room availability behavior for shared calendar booking flows.',
+            },
+        ],
         preferredVersion: 'v3',
         openapiVersion: '3.0.0',
         sourceLatestUpdatedAt: '2026-03-30',
@@ -94,7 +141,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'communication',
         description:
             'Workspace messaging, channel management, user lookup, files, reactions, and app workflow endpoints for Slack.',
-        savedNoteBodies: ['Review rate limit notes before bulk channel synchronization.'],
+        savedNotes: [
+            {
+                title: 'Rate limits',
+                body: 'Review rate limit notes before bulk channel synchronization.',
+            },
+        ],
         preferredVersion: 'v1',
         openapiVersion: '3.0.0',
         sourceLatestUpdatedAt: '2026-04-22',
@@ -107,7 +159,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'productivity',
         description:
             'Database, page, block, comment, user, and search endpoints for building workspace automation around Notion.',
-        savedNoteBodies: ['Useful candidate for knowledge capture memo workflows.'],
+        savedNotes: [
+            {
+                title: 'Knowledge capture',
+                body: 'Useful candidate for knowledge capture memo workflows.',
+            },
+        ],
         preferredVersion: '2022-06-28',
         openapiVersion: '3.1.0',
         sourceLatestUpdatedAt: '2026-04-02',
@@ -120,7 +177,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'ai',
         description:
             'Model inference, responses, embeddings, files, vector stores, realtime, and tool calling APIs for AI products.',
-        savedNoteBodies: ['Track vector store migration notes for catalog research experiments.'],
+        savedNotes: [
+            {
+                title: 'Vector store research',
+                body: 'Track vector store migration notes for catalog research experiments.',
+            },
+        ],
         preferredVersion: 'v1',
         openapiVersion: '3.1.0',
         sourceLatestUpdatedAt: '2026-04-26',
@@ -133,7 +195,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'communication',
         description:
             'SMS, MMS, WhatsApp, sender, conversation, delivery status, and phone number messaging workflows.',
-        savedNoteBodies: ['Messaging compliance checklist belongs with saved notes.'],
+        savedNotes: [
+            {
+                title: 'Compliance checklist',
+                body: 'Messaging compliance checklist belongs with saved notes.',
+            },
+        ],
         preferredVersion: '2010-04-01',
         openapiVersion: '3.0.1',
         sourceLatestUpdatedAt: '2026-03-16',
@@ -146,7 +213,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'communication',
         description:
             'Transactional email, dynamic templates, suppressions, sender authentication, and marketing contact APIs.',
-        savedNoteBodies: ['Suppression list handling needs follow-up before email rollout.'],
+        savedNotes: [
+            {
+                title: 'Suppression handling',
+                body: 'Suppression list handling needs follow-up before email rollout.',
+            },
+        ],
         preferredVersion: 'v3',
         openapiVersion: '3.0.0',
         sourceLatestUpdatedAt: '2026-02-28',
@@ -159,7 +231,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'commerce',
         description:
             'Store admin resources for products, inventory, orders, fulfillments, customers, discounts, and app workflows.',
-        savedNoteBodies: ['Inventory delta sync is the main implementation memo for this API.'],
+        savedNotes: [
+            {
+                title: 'Inventory sync',
+                body: 'Inventory delta sync is the main implementation memo for this API.',
+            },
+        ],
         preferredVersion: '2026-01',
         openapiVersion: '3.1.0',
         sourceLatestUpdatedAt: '2026-04-12',
@@ -172,7 +249,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'data',
         description:
             'Astronomy picture, Mars rover photos, imagery, patents, near earth objects, and public NASA data endpoints.',
-        savedNoteBodies: ['Open data examples are good for demo seed content.'],
+        savedNotes: [
+            {
+                title: 'Demo content',
+                body: 'Open data examples are good for demo seed content.',
+            },
+        ],
         preferredVersion: 'v1',
         openapiVersion: '3.0.0',
         sourceLatestUpdatedAt: '2026-01-24',
@@ -185,7 +267,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'weather',
         description:
             'Current weather, forecasts, geocoding, historical weather, alerts, air pollution, and climate data services.',
-        savedNoteBodies: ['Forecast granularity should be compared with alert coverage.'],
+        savedNotes: [
+            {
+                title: 'Forecast coverage',
+                body: 'Forecast granularity should be compared with alert coverage.',
+            },
+        ],
         preferredVersion: '2.5',
         openapiVersion: '3.0.2',
         sourceLatestUpdatedAt: '2026-03-08',
@@ -198,7 +285,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'media',
         description:
             'Catalog, album, artist, track, playlist, playback, user library, search, and recommendation endpoints.',
-        savedNoteBodies: ['Playback scope permissions need a saved investigation note.'],
+        savedNotes: [
+            {
+                title: 'Playback scopes',
+                body: 'Playback scope permissions need a saved investigation note.',
+            },
+        ],
         preferredVersion: 'v1',
         openapiVersion: '3.0.0',
         sourceLatestUpdatedAt: '2026-04-06',
@@ -211,7 +303,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'infrastructure',
         description:
             'DNS, zone, worker, firewall, cache, tunnel, access, account, analytics, and edge infrastructure APIs.',
-        savedNoteBodies: ['Edge worker migration memo is attached to this provider.'],
+        savedNotes: [
+            {
+                title: 'Worker migration',
+                body: 'Edge worker migration memo is attached to this provider.',
+            },
+        ],
         preferredVersion: 'v4',
         openapiVersion: '3.0.3',
         sourceLatestUpdatedAt: '2026-04-20',
@@ -224,7 +321,12 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'identity',
         description:
             'Tenant, user, organization, client, connection, role, permission, log, and identity provider management.',
-        savedNoteBodies: ['Role migration audit notes should surface in catalog search.'],
+        savedNotes: [
+            {
+                title: 'Role migration',
+                body: 'Role migration audit notes should surface in catalog search.',
+            },
+        ],
         preferredVersion: 'v2',
         openapiVersion: '3.0.0',
         sourceLatestUpdatedAt: '2026-03-25',
@@ -237,14 +339,24 @@ const mockApiCatalogItemSources: ApiCatalogListItemSource[] = [
         domain: 'productivity',
         description:
             'Unified Microsoft 365 data APIs for mail, calendar, files, users, groups, Teams, security, and identity.',
-        savedNoteBodies: ['Tenant-wide consent memo is important for admin onboarding.'],
+        savedNotes: [
+            {
+                title: 'Consent memo',
+                body: 'Tenant-wide consent memo is important for admin onboarding.',
+            },
+        ],
         preferredVersion: 'v1.0',
         openapiVersion: '3.0.1',
         sourceLatestUpdatedAt: '2026-04-15',
     },
 ];
 
-export const mockApiCatalogItems: ApiCatalogListItem[] = mockApiCatalogItemSources;
+export const mockApiCatalogItems: ApiCatalogListItem[] = mockApiCatalogItemSources.map(
+    (source, itemIndex) => ({
+        ...source,
+        savedNotes: createMockSavedNotes(itemIndex, source.savedNotes),
+    }),
+);
 
 export const mockProviders: ApiCatalogProvider[] = Array.from(
     /*

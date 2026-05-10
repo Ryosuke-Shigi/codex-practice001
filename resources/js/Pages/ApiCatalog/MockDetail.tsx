@@ -146,7 +146,9 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                     title={item.title}
                     description={item.description}
                     technicalRows={technicalRows}
-                    notesPanel={<ApiCatalogNotesPanel isPersistable={false} />}
+                    notesPanel={
+                        <ApiCatalogNotesPanel notes={item.savedNotes} isPersistable={false} />
+                    }
                     isTechnicalCollapsible={true}
                     defaultTechnicalOpen={false}
                 />

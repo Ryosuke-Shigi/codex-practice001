@@ -26,10 +26,11 @@ type ApiCatalogNotesPanelProps = {
 
 type ApiCatalogNoteField = keyof Pick<EditableApiCatalogNote, 'title' | 'body'>;
 
+const EMPTY_NOTES: ApiCatalogNoteItem[] = [];
+
 function createDraftNote(): EditableApiCatalogNote {
     /*
      * 未保存メモはDB IDを持たないため、React描画用の一時IDだけを持たせます。
-     * persistable=false のモックも同じdraft構造で扱い、保存URLは呼びません。
      */
     return {
         id: `api-catalog-note-draft-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -70,29 +71,36 @@ function normalizePayload(note: EditableApiCatalogNote) {
 }
 
 export default function ApiCatalogNotesPanel({
-    notes = [],
+    notes = EMPTY_NOTES,
     isPersistable,
     storeUrl,
     updateUrl,
     deleteUrl,
 }: ApiCatalogNotesPanelProps) {
+    /*
+     * props の notes は本番ではDB保存済みメモ、mockでは固定データです。
+     * どちらも同じ editable state に変換して描画しますが、永続化ボタンと router 呼び出しは
+     * isPersistable=true のときだけ有効にし、mock では「保存済み表示だけ」を検証できるようにします。
+     */
     const [editableNotes, setEditableNotes] = useState<EditableApiCatalogNote[]>(() =>
-        isPersistable ? notes.map(toEditableNote) : [createDraftNote()],
+        notes.map(toEditableNote),
     );
     const [processingNoteId, setProcessingNoteId] = useState<number | string | null>(null);
     const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
     useEffect(() => {
         /*
-         * 本番詳細では保存後のリダイレクトで最新 props が返るため、DBの状態に同期します。
-         * モックは画面内 state のまま確認したいので、props同期で入力中メモを消しません。
+         * 本番詳細では保存後のリダイレクトで最新 props が返ります。
+         * モック詳細でも固定の保存済みメモを props と同じ形で受け、画面表示だけを同期します。
          */
-        if (isPersistable) {
-            setEditableNotes(notes.map(toEditableNote));
-        }
-    }, [isPersistable, notes]);
+        setEditableNotes(notes.map(toEditableNote));
+    }, [notes]);
 
     const addNote = () => {
+        if (!isPersistable) {
+            return;
+        }
+
         setEditableNotes((currentNotes) => [...currentNotes, createDraftNote()]);
         setStatusMessage(null);
     };
@@ -190,16 +198,18 @@ export default function ApiCatalogNotesPanel({
                     <p className="mt-1 text-xs font-semibold text-cyan-100/64">
                         {isPersistable
                             ? '保存できます。本文を入力して保存してください。'
-                            : 'このメモは画面内の一時入力です。モックのため保存されません。'}
+                            : '固定の保存済みメモを表示しています。モックのため保存されません。'}
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={addNote}
-                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                >
-                    + メモ追加
-                </button>
+                {isPersistable && (
+                    <button
+                        type="button"
+                        onClick={addNote}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
+                    >
+                        + メモ追加
+                    </button>
+                )}
             </div>
 
             {statusMessage && (
@@ -226,14 +236,16 @@ export default function ApiCatalogNotesPanel({
                                 <span className="rounded-full border border-cyan-100/30 bg-cyan-50/12 px-3 py-1 text-xs font-semibold text-cyan-50/86">
                                     No.{index + 1}
                                 </span>
-                                <button
-                                    type="button"
-                                    onClick={() => deleteNote(note)}
-                                    disabled={isProcessing}
-                                    className="inline-flex min-h-8 items-center justify-center rounded-lg border border-rose-100/25 bg-rose-100/8 px-3 text-xs font-semibold text-rose-50/86 transition hover:bg-rose-100/16 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100/20 disabled:cursor-wait disabled:opacity-55"
-                                >
-                                    削除
-                                </button>
+                                {isPersistable && (
+                                    <button
+                                        type="button"
+                                        onClick={() => deleteNote(note)}
+                                        disabled={isProcessing}
+                                        className="inline-flex min-h-8 items-center justify-center rounded-lg border border-rose-100/25 bg-rose-100/8 px-3 text-xs font-semibold text-rose-50/86 transition hover:bg-rose-100/16 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-100/20 disabled:cursor-wait disabled:opacity-55"
+                                    >
+                                        削除
+                                    </button>
+                                )}
                             </div>
 
                             <label className="mt-4 grid gap-2 text-sm font-semibold text-cyan-50">
@@ -244,8 +256,9 @@ export default function ApiCatalogNotesPanel({
                                     onChange={(event) =>
                                         updateNoteField(note.id, 'title', event.target.value)
                                     }
+                                    readOnly={!isPersistable}
                                     placeholder="メモタイトル"
-                                    className="h-10 w-full max-w-md rounded-xl border border-white/30 bg-white/14 px-3 text-sm text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
+                                    className="h-10 w-full max-w-md rounded-xl border border-white/30 bg-white/14 px-3 text-sm text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24 read-only:cursor-default"
                                 />
                             </label>
 
@@ -256,8 +269,9 @@ export default function ApiCatalogNotesPanel({
                                     onChange={(event) =>
                                         updateNoteField(note.id, 'body', event.target.value)
                                     }
+                                    readOnly={!isPersistable}
                                     placeholder="このAPIについての調査メモを書く"
-                                    className="min-h-[120px] w-full resize-y rounded-xl border border-white/30 bg-white/14 p-3 text-sm leading-7 text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24"
+                                    className="min-h-[120px] w-full resize-y rounded-xl border border-white/30 bg-white/14 p-3 text-sm leading-7 text-white outline-none backdrop-blur-xl placeholder:text-cyan-50/50 focus:border-cyan-100/75 focus:ring-4 focus:ring-cyan-100/24 read-only:cursor-default"
                                 />
                             </label>
 
@@ -279,7 +293,9 @@ export default function ApiCatalogNotesPanel({
 
                 {editableNotes.length === 0 && (
                     <div className="rounded-2xl border border-white/24 bg-white/8 p-5 text-center text-sm font-semibold text-cyan-50/76 backdrop-blur-xl">
-                        メモはありません。+ メモ追加から追加できます。
+                        {isPersistable
+                            ? 'メモはありません。+ メモ追加から追加できます。'
+                            : '保存済みメモはありません。'}
                     </div>
                 )}
             </div>

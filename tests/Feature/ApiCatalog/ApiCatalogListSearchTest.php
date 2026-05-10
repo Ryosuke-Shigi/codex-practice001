@@ -129,6 +129,9 @@ class ApiCatalogListSearchTest extends TestCase
                 ->component('ApiCatalog/Index', false)
                 ->where('pagination.totalItems', 1)
                 ->where('apiCatalogItems.0.apiKey', 'multi-note.example.test')
+                ->has('apiCatalogItems.0.notes', 2)
+                ->where('apiCatalogItems.0.notes.0.title', 'Second note')
+                ->where('apiCatalogItems.0.notes.0.body', 'Second note contains MultipleMemoNeedle for search.')
             );
     }
 

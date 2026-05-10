@@ -55,6 +55,16 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
     public function paginateActiveList(ApiCatalogListQueryDTO $query): LengthAwarePaginator
     {
         $builder = ApiCatalogCache::query()
+            ->with(['notes' => function ($noteBuilder): void {
+                /*
+                 * 一覧カードでも保存メモ本文を表示するため、ページ内のAPIだけ notes を先読みします。
+                 * 並び順は詳細画面の noteRepository と揃え、mock / 本番のカードと詳細で
+                 * 「最初に見える保存メモ」が変わらないようにします。
+                 */
+                $noteBuilder
+                    ->orderByDesc('updated_at')
+                    ->orderByDesc('id');
+            }])
             ->where('is_active', true);
 
         if ($query->keyword !== null) {

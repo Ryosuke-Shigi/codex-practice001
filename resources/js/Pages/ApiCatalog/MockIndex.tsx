@@ -122,6 +122,7 @@ function toApiCatalogListItem(
         serviceKey: item.serviceKey,
         preferredVersion: item.preferredVersion,
         openapiVersion: item.openapiVersion,
+        notes: item.savedNotes,
         detailHref: buildMockDetailHref(item.apiKey, returnUrl),
     };
 }

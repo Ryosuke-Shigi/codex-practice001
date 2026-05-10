@@ -14,6 +14,7 @@ import {
 } from '@/Components/ApiCatalog/apiCatalogSort';
 import useSwipeNavigation from '@/Hooks/useSwipeNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+import type { ApiCatalogNoteItem } from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
 
 /*
  * 本番 API 一覧の戻るボタンは、ブラウザ履歴や直前画面には依存しません。
@@ -38,6 +39,7 @@ type ApiCatalogItem = {
     serviceKey: string | null;
     preferredVersion: string | null;
     openapiVersion: string | null;
+    notes?: ApiCatalogNoteItem[];
     isActive: boolean;
 };
 
@@ -159,6 +161,7 @@ function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatal
         serviceKey: item.serviceKey,
         preferredVersion: item.preferredVersion,
         openapiVersion: item.openapiVersion,
+        notes: item.notes ?? [],
         detailHref: buildDetailHref(item.apiKey, returnUrl),
     };
 }
