@@ -52,6 +52,62 @@ type ApiCatalogPagination = {
     to: number | null;
 };
 
+function isApiCatalogPagination(value: unknown): value is ApiCatalogPagination {
+    /*
+     * Inertia の onSuccess では page.props が unknown に近い境界になります。
+     * 画面状態へ反映する前に最低限の形を確認し、pagination 以外の partial reload が来ても壊れないようにします。
+     */
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+
+    const candidate = value as Partial<ApiCatalogPagination>;
+
+    return (
+        typeof candidate.currentPage === 'number' &&
+        typeof candidate.totalPages === 'number' &&
+        typeof candidate.totalItems === 'number' &&
+        typeof candidate.perPage === 'number' &&
+        (typeof candidate.from === 'number' || candidate.from === null) &&
+        (typeof candidate.to === 'number' || candidate.to === null)
+    );
+}
+
+function buildOptimisticPagination(
+    pagination: ApiCatalogPagination,
+    nextPage: number,
+): ApiCatalogPagination {
+    /*
+     * ページ移動ボタンや左右キーを押した瞬間にもページ表示を進めるための暫定値です。
+     * 最終的な値は Inertia レスポンスの pagination で必ず上書きします。
+     */
+    const totalItems = Math.max(0, Math.floor(pagination.totalItems));
+    const totalPages = Math.max(1, Math.floor(pagination.totalPages));
+    const currentPage = Math.min(Math.max(1, Math.floor(nextPage)), totalPages);
+
+    if (totalItems === 0) {
+        return {
+            ...pagination,
+            currentPage: 1,
+            totalPages,
+            from: null,
+            to: null,
+        };
+    }
+
+    const perPage = Math.max(1, Math.floor(pagination.perPage));
+    const from = (currentPage - 1) * perPage + 1;
+
+    return {
+        ...pagination,
+        currentPage,
+        totalPages,
+        perPage,
+        from,
+        to: Math.min(totalItems, from + perPage - 1),
+    };
+}
+
 type ApiCatalogSyncResult = {
     totalCount: number;
     insertedCount: number;
@@ -232,9 +288,10 @@ export default function Index({
     const [syncStatus, setSyncStatus] = useState<ApiCatalogSyncStatus | null>(initialSyncStatus);
     const [isStartingSync, setIsStartingSync] = useState(false);
     const [syncPollingError, setSyncPollingError] = useState<string | null>(null);
+    const [visiblePagination, setVisiblePagination] = useState<ApiCatalogPagination>(pagination);
 
-    const canMovePrevious = pagination.currentPage > 1;
-    const canMoveNext = pagination.currentPage < pagination.totalPages;
+    const canMovePrevious = visiblePagination.currentPage > 1;
+    const canMoveNext = visiblePagination.currentPage < visiblePagination.totalPages;
     const hasActiveFilters = keyword.trim() !== '' || providerKey !== '' || domain !== '';
     const returnUrl = currentListUrl();
     const domainFilterOptions = domains.length > 0 ? domains : createProviderDomainOptions(providers);
@@ -254,7 +311,15 @@ export default function Index({
              * 検索・ページ送りは Inertia GET で再訪問します。
              * sort と page も URL に含めることで、詳細画面から return_url で戻った時にも一覧状態を復元できます。
              * only を指定して、候補リストを毎回取り直さない将来構成を先に画面へ反映しています。
+             *
+             * preserveState のまま partial reload すると、カード props が先に切り替わって見えても
+             * pagination 表示だけ古い props を参照しているように見える瞬間がありました。
+             * そのため遷移開始時に表示用 pagination を暫定更新し、成功時にサーバー計算済みの pagination で確定します。
              */
+            setVisiblePagination((currentPagination) =>
+                buildOptimisticPagination(currentPagination, nextPage),
+            );
+
             router.get(
                 '/api-catalog',
                 buildQueryParams(nextKeyword, nextProviderKey, nextDomain, nextSortKey, nextPage),
@@ -263,6 +328,13 @@ export default function Index({
                     preserveScroll: true,
                     replace: true,
                     only: ['filters', 'apiCatalogItems', 'pagination'],
+                    onSuccess: (page) => {
+                        const nextPagination = page.props.pagination;
+
+                        if (isApiCatalogPagination(nextPagination)) {
+                            setVisiblePagination(nextPagination);
+                        }
+                    },
                 },
             );
         },
@@ -317,14 +389,14 @@ export default function Index({
             return;
         }
 
-        visitList(keyword, providerKey, domain, sortKey, pagination.currentPage - 1);
+        visitList(keyword, providerKey, domain, sortKey, visiblePagination.currentPage - 1);
     }, [
         canMovePrevious,
         domain,
         keyword,
-        pagination.currentPage,
         providerKey,
         sortKey,
+        visiblePagination.currentPage,
         visitList,
     ]);
 
@@ -333,8 +405,16 @@ export default function Index({
             return;
         }
 
-        visitList(keyword, providerKey, domain, sortKey, pagination.currentPage + 1);
-    }, [canMoveNext, domain, keyword, pagination.currentPage, providerKey, sortKey, visitList]);
+        visitList(keyword, providerKey, domain, sortKey, visiblePagination.currentPage + 1);
+    }, [
+        canMoveNext,
+        domain,
+        keyword,
+        providerKey,
+        sortKey,
+        visiblePagination.currentPage,
+        visitList,
+    ]);
 
     useSwipeNavigation({
         // Left swipe means the finger moves left, so the list advances to the next page.
@@ -423,6 +503,13 @@ export default function Index({
                     if (!nextStatus.isRunning) {
                         router.reload({
                             only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
+                            onSuccess: (page) => {
+                                const nextPagination = page.props.pagination;
+
+                                if (isApiCatalogPagination(nextPagination)) {
+                                    setVisiblePagination(nextPagination);
+                                }
+                            },
                         });
 
                         return;
@@ -451,12 +538,16 @@ export default function Index({
     }, [syncStatus?.id, syncStatus?.isRunning]);
 
     useEffect(() => {
-        // Inertia の戻る/進むや部分更新後も、フォーム表示を最新 props と同期します。
+        /*
+         * Inertia の戻る/進むや部分更新後も、フォーム表示とページ表示を最新 props と同期します。
+         * visiblePagination はクリック直後に暫定更新するため、サーバー確定値を受けたタイミングで必ず戻します。
+         */
         setKeyword(filters.keyword ?? '');
         setProviderKey(filters.providerKey ?? '');
         setDomain(filters.domain ?? '');
         setSortKey(normalizeApiCatalogSortKey(filters.sortKey));
-    }, [filters.keyword, filters.providerKey, filters.domain, filters.sortKey]);
+        setVisiblePagination(pagination);
+    }, [filters.keyword, filters.providerKey, filters.domain, filters.sortKey, pagination]);
 
     useEffect(() => {
         // 一覧画面全体の操作として、左右矢印キーでもページ移動できるようにします。
@@ -577,7 +668,7 @@ export default function Index({
                 />
 
                 <ApiCatalogPagination
-                    pagination={pagination}
+                    pagination={visiblePagination}
                     onPrevious={moveToPreviousPage}
                     onNext={moveToNextPage}
                 />
