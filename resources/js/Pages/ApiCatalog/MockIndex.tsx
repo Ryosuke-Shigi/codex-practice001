@@ -3,9 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
-import ApiCatalogPagination, {
-    type ApiCatalogPaginationState,
-} from '@/Components/ApiCatalog/ApiCatalogPagination';
+import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
 import {
     createProviderDomainOptions,
     extractProviderDomain,
@@ -37,8 +35,8 @@ type ApiCatalogPagination = {
     totalPages: number;
     totalItems: number;
     perPage: number;
-    startItem: number;
-    endItem: number;
+    from: number | null;
+    to: number | null;
 };
 
 const defaultFilters: ApiCatalogFilters = {
@@ -63,33 +61,26 @@ function buildPagination(totalItems: number, currentPage: number): ApiCatalogPag
     /*
      * モックでも本番と同じ考え方に寄せます。
      * 先に検索・並び替えを適用した件数を総件数として受け取り、その件数だけでページ数を計算します。
+     *
+     * 重要なのは、mock 全件数ではなく filtered/sorted 後の件数だけを totalItems に渡すことです。
+     * ここを全件数基準にすると、検索結果が1ページ分しかないのに「2ページ目がある」ような表示になります。
      */
     const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
     const clampedPage = Math.min(Math.max(1, currentPage), totalPages);
-    const startItem = totalItems === 0 ? 0 : (clampedPage - 1) * ITEMS_PER_PAGE + 1;
-    const endItem = Math.min(totalItems, clampedPage * ITEMS_PER_PAGE);
+    /*
+     * 本番の Laravel paginator は0件時に firstItem()/lastItem() が null になります。
+     * mock も同じ from/to 表現に揃え、共通 Pagination がデータ元を分岐せずに表示できるようにします。
+     */
+    const from = totalItems === 0 ? null : (clampedPage - 1) * ITEMS_PER_PAGE + 1;
+    const to = totalItems === 0 ? null : Math.min(totalItems, clampedPage * ITEMS_PER_PAGE);
 
     return {
         currentPage: clampedPage,
         totalPages,
         totalItems,
         perPage: ITEMS_PER_PAGE,
-        startItem,
-        endItem,
-    };
-}
-
-function toApiCatalogPaginationState(pagination: ApiCatalogPagination): ApiCatalogPaginationState {
-    /*
-     * モック内部の startItem / endItem を、本番 props と同じ from / to へ変換します。
-     * ここで差を吸収することで、ページネーション表示 Component は本番/モックを意識しません。
-     */
-    return {
-        currentPage: pagination.currentPage,
-        totalPages: pagination.totalPages,
-        totalItems: pagination.totalItems,
-        from: pagination.startItem,
-        to: pagination.endItem,
+        from,
+        to,
     };
 }
 
@@ -177,6 +168,7 @@ export default function MockIndex() {
         /*
          * apiCatalogItems は将来 Responder から渡す主更新対象です。
          * ここでは固定データをページ単位に slice して同じ形の UI を確認します。
+         * slice は必ず検索・抽出・sort の後に行い、ページ表示の total/from/to と表示カードの母集団を一致させます。
          */
         return sortedItems.slice(startIndex, startIndex + pagination.perPage);
     }, [sortedItems, pagination.currentPage, pagination.perPage]);
@@ -208,11 +200,19 @@ export default function MockIndex() {
     };
 
     const moveToPreviousPage = () => {
-        setPage((currentPage) => Math.max(1, currentPage - 1));
+        /*
+         * page state ではなく、抽出後件数で補正済みの pagination.currentPage を基準にします。
+         * 条件変更で page が範囲外になった直後でも、表示上の現在ページと操作結果がズレません。
+         */
+        setPage(Math.max(1, pagination.currentPage - 1));
     };
 
     const moveToNextPage = () => {
-        setPage((currentPage) => Math.min(pagination.totalPages, currentPage + 1));
+        /*
+         * 次ページも抽出後 lastPage である pagination.totalPages を上限にします。
+         * mock 側でだけ存在しないページへ進める状態を作らないための境界です。
+         */
+        setPage(Math.min(pagination.totalPages, pagination.currentPage + 1));
     };
 
     useEffect(() => {
@@ -237,7 +237,7 @@ export default function MockIndex() {
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [canMoveNext, canMovePrevious, pagination.totalPages]);
+    }, [canMoveNext, canMovePrevious, pagination.currentPage, pagination.totalPages]);
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -312,7 +312,7 @@ export default function MockIndex() {
                 />
 
                 <ApiCatalogPagination
-                    pagination={toApiCatalogPaginationState(pagination)}
+                    pagination={pagination}
                     onPrevious={moveToPreviousPage}
                     onNext={moveToNextPage}
                 />

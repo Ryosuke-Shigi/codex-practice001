@@ -9,13 +9,15 @@ type ApiCatalogListProps = {
     isLoading?: boolean;
     loadingMessage?: string;
     emptyMessage?: string;
+    emptyHelpMessage?: string;
 };
 
 export default function ApiCatalogList({
     items,
     isLoading = false,
     loadingMessage = 'APIを読み込んでいます',
-    emptyMessage = '条件に一致するAPIはありません',
+    emptyMessage = '該当するAPIはありません',
+    emptyHelpMessage = '条件を変更して再検索してください',
 }: ApiCatalogListProps) {
     return (
         <section className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -32,8 +34,13 @@ export default function ApiCatalogList({
                 ))}
 
             {!isLoading && items.length === 0 && (
-                <div className="col-span-full flex min-h-[220px] items-center justify-center rounded-2xl border border-white/30 bg-slate-950/32 p-8 text-center text-sm font-semibold text-cyan-50/82 backdrop-blur-2xl">
-                    {emptyMessage}
+                <div className="col-span-full flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-white/30 bg-slate-950/32 p-8 text-center text-sm font-semibold text-cyan-50/82 backdrop-blur-2xl">
+                    {/*
+                        0件時は pagination footer を表示しないため、ここが唯一の空状態表示になります。
+                        主文と補助文を分けて、検索・抽出の結果が空であることと次の操作を同時に伝えます。
+                    */}
+                    <p className="text-base font-bold text-white">{emptyMessage}</p>
+                    <p className="mt-2">{emptyHelpMessage}</p>
                 </div>
             )}
         </section>

@@ -1,10 +1,9 @@
-export type ApiCatalogPaginationState = {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    from: number | null;
-    to: number | null;
-};
+import ApiCatalogPaginationSummary, {
+    toApiCatalogPaginationDisplayState,
+    type ApiCatalogPaginationState,
+} from './ApiCatalogPaginationSummary';
+
+export type { ApiCatalogPaginationState };
 
 type ApiCatalogPaginationProps = {
     pagination: ApiCatalogPaginationState;
@@ -12,36 +11,32 @@ type ApiCatalogPaginationProps = {
     onNext: () => void;
 };
 
-function normalizePage(value: number) {
-    /*
-     * 表示 Component は API から受けたページ番号を信用しすぎず、
-     * 小数や 0 以下の値が混ざっても UI が崩れない最低限の正規化だけを行います。
-     */
-    return Math.max(1, Math.floor(value));
-}
-
 export default function ApiCatalogPagination({
     pagination,
     onPrevious,
     onNext,
 }: ApiCatalogPaginationProps) {
     /*
-     * 0件時は「1 / 1」と見せると存在しないページがあるように見えるため、
-     * 表示上は 0 / 0 にし、前後移動も必ず無効にします。
+     * 0件時の案内は一覧の empty state へ任せます。
+     * ページ footer 自体を出さないことで「1 / 0 ページ」「1〜0件目」のような壊れた表記を避けます。
+     * 前後移動ボタンも同時に消えるため、空結果から存在しないページへ進む操作も発生しません。
      */
-    const hasItems = pagination.totalItems > 0;
-    const totalPages = hasItems ? normalizePage(pagination.totalPages) : 0;
-    const currentPage = hasItems ? Math.min(normalizePage(pagination.currentPage), totalPages) : 0;
-    const canMovePrevious = hasItems && currentPage > 1;
-    const canMoveNext = hasItems && currentPage < totalPages;
-    const from = hasItems ? pagination.from ?? 0 : 0;
-    const to = hasItems ? pagination.to ?? 0 : 0;
+    const display = toApiCatalogPaginationDisplayState(pagination);
+
+    if (!display.hasItems) {
+        return null;
+    }
+
+    const canMovePrevious = display.currentPage > 1;
+    const canMoveNext = display.currentPage < display.totalPages;
 
     return (
         <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
-            <p>
-                {from}-{to} / {pagination.totalItems}
-            </p>
+            {/*
+                件数 summary は mock / 本番で完全共通にします。
+                ページ送りボタン側では同じ display state だけを参照し、別々の page 計算を増やさないようにします。
+            */}
+            <ApiCatalogPaginationSummary pagination={pagination} />
 
             <div className="flex items-center gap-3">
                 <button
@@ -55,7 +50,7 @@ export default function ApiCatalogPagination({
                 </button>
 
                 <p className="min-w-[6.5rem] text-center text-sm font-semibold text-white">
-                    {currentPage} / {totalPages}
+                    {display.currentPage} / {display.totalPages}
                 </p>
 
                 <button

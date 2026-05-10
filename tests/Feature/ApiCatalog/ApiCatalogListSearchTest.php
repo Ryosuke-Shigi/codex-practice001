@@ -135,6 +135,136 @@ class ApiCatalogListSearchTest extends TestCase
             );
     }
 
+    public function test_api_catalog_list_pagination_props_show_current_page_and_range(): void
+    {
+        /*
+         * 初期件数が1ページを超えるケースです。
+         * Responder へ渡る pagination が「現在ページ」「総ページ数」「表示範囲」を持つことを確認します。
+         */
+        for ($index = 1; $index <= 8; $index++) {
+            $this->createApiCatalogCache([
+                'api_key' => sprintf('catalog-%02d.example.test', $index),
+                'title' => sprintf('Catalog %02d API', $index),
+                'provider_key' => sprintf('catalog-%02d.example.test', $index),
+            ]);
+        }
+
+        $this
+            ->get('/api-catalog?sort=name_asc&page=2')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Index', false)
+                ->where('pagination.currentPage', 2)
+                ->where('pagination.totalPages', 2)
+                ->where('pagination.totalItems', 8)
+                ->where('pagination.perPage', 6)
+                ->where('pagination.from', 7)
+                ->where('pagination.to', 8)
+                ->has('apiCatalogItems', 2)
+                ->where('apiCatalogItems.0.apiKey', 'catalog-07.example.test')
+            );
+    }
+
+    public function test_api_catalog_list_search_clamps_current_page_to_filtered_last_page(): void
+    {
+        /*
+         * 検索前に深い page を見ていた状態で検索すると、抽出後には存在しないページを指すことがあります。
+         * Action が抽出後 lastPage へ補正し、空ページではなく実在する検索結果を返すことを守ります。
+         */
+        for ($index = 1; $index <= 8; $index++) {
+            $this->createApiCatalogCache([
+                'api_key' => sprintf('noise-%02d.example.test', $index),
+                'title' => sprintf('Noise %02d API', $index),
+                'provider_key' => sprintf('noise-%02d.example.test', $index),
+            ]);
+        }
+
+        $this->createApiCatalogCache([
+            'api_key' => 'needle.example.test',
+            'title' => 'OnlyNeedle API',
+            'provider_key' => 'needle.example.test',
+        ]);
+
+        $this
+            ->get('/api-catalog?keyword=OnlyNeedle&page=5')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Index', false)
+                ->where('filters.keyword', 'OnlyNeedle')
+                ->where('pagination.currentPage', 1)
+                ->where('pagination.totalPages', 1)
+                ->where('pagination.totalItems', 1)
+                ->where('pagination.from', 1)
+                ->where('pagination.to', 1)
+                ->where('apiCatalogItems.0.apiKey', 'needle.example.test')
+            );
+    }
+
+    public function test_api_catalog_list_domain_filter_pagination_uses_filtered_count(): void
+    {
+        /*
+         * domain 抽出は provider_key の末尾条件として Repository で適用します。
+         * totalPages / totalItems / from / to が抽出前の全件数ではなく、domain 抽出後の件数になることを確認します。
+         */
+        for ($index = 1; $index <= 7; $index++) {
+            $this->createApiCatalogCache([
+                'api_key' => sprintf('dev-%02d.example.test', $index),
+                'title' => sprintf('Dev %02d API', $index),
+                'provider_key' => sprintf('provider-%02d.example.dev', $index),
+            ]);
+        }
+
+        for ($index = 1; $index <= 3; $index++) {
+            $this->createApiCatalogCache([
+                'api_key' => sprintf('com-%02d.example.test', $index),
+                'title' => sprintf('Com %02d API', $index),
+                'provider_key' => sprintf('provider-%02d.example.com', $index),
+            ]);
+        }
+
+        $this
+            ->get('/api-catalog?domain=dev&sort=name_asc&page=2')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Index', false)
+                ->where('filters.domain', 'dev')
+                ->where('pagination.currentPage', 2)
+                ->where('pagination.totalPages', 2)
+                ->where('pagination.totalItems', 7)
+                ->where('pagination.from', 7)
+                ->where('pagination.to', 7)
+                ->has('apiCatalogItems', 1)
+                ->where('apiCatalogItems.0.apiKey', 'dev-07.example.test')
+            );
+    }
+
+    public function test_api_catalog_list_empty_search_returns_null_range(): void
+    {
+        /*
+         * 0件時は React 側でページ summary を出さず、empty state だけを表示します。
+         * その前提として、サーバー props の from/to は null のまま渡されることを確認します。
+         */
+        $this->createApiCatalogCache([
+            'api_key' => 'visible.example.test',
+            'title' => 'Visible API',
+            'provider_key' => 'visible.example.test',
+        ]);
+
+        $this
+            ->get('/api-catalog?keyword=NoSuchApi&page=3')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Index', false)
+                ->where('filters.keyword', 'NoSuchApi')
+                ->where('pagination.currentPage', 1)
+                ->where('pagination.totalPages', 1)
+                ->where('pagination.totalItems', 0)
+                ->where('pagination.from', null)
+                ->where('pagination.to', null)
+                ->has('apiCatalogItems', 0)
+            );
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      */
