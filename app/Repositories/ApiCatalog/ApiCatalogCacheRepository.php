@@ -65,7 +65,15 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
                     ->where('title', 'like', $keyword)
                     ->orWhere('description', 'like', $keyword)
                     ->orWhere('provider_key', 'like', $keyword)
-                    ->orWhere('service_key', 'like', $keyword);
+                    ->orWhere('service_key', 'like', $keyword)
+                    ->orWhereHas('notes', function (Builder $noteBuilder) use ($keyword) {
+                        /*
+                         * 保存メモ本文も一覧検索の対象にします。
+                         * saved_api_notes は api_catalog_cache の行に紐づくため、未保存APIはここには一致しません。
+                         * whereHas に閉じることで、複数メモのどれか1件に一致すれば表示しつつ、JOIN による一覧重複は避けます。
+                         */
+                        $noteBuilder->where('body', 'like', $keyword);
+                    });
             });
         }
 

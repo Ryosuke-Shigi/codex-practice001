@@ -16,7 +16,11 @@ import {
     sortApiCatalogItems,
 } from '@/Components/ApiCatalog/apiCatalogSort';
 import PublicLayout from '@/Layouts/PublicLayout';
-import { mockApiCatalogItems, mockProviders } from './mockApiCatalogData';
+import {
+    matchesMockApiCatalogKeyword,
+    mockApiCatalogItems,
+    mockProviders,
+} from './mockApiCatalogData';
 
 const ITEMS_PER_PAGE = 6;
 const ALL_PROVIDERS = '';
@@ -136,16 +140,13 @@ export default function MockIndex() {
 
         /*
          * 本実装では検索条件を Query Action / Repository へ渡す想定です。
-         * モックでは同じ検索対象に寄せるため、title / description / provider / service をReact内で絞り込み、
+         * モックでは同じ検索対象に寄せるため、keyword の本質的な判定を mock data 側へ寄せます。
+         * React page 側には provider/domain/page という一覧状態の組み立てだけを残し、
+         * 本番用と mock 用の検索ロジックが表示コンポーネントへ散らばらないようにします。
          * domain は本番と同じく provider_key の末尾から抽出して判定します。
          */
         return mockApiCatalogItems.filter((item) => {
-            const matchesKeyword =
-                keyword.length === 0 ||
-                item.title.toLowerCase().includes(keyword) ||
-                item.description.toLowerCase().includes(keyword) ||
-                item.providerKey.toLowerCase().includes(keyword) ||
-                item.serviceKey.toLowerCase().includes(keyword);
+            const matchesKeyword = matchesMockApiCatalogKeyword(item, keyword);
             const matchesProvider =
                 filters.providerKey === ALL_PROVIDERS || item.providerKey === filters.providerKey;
             const matchesDomain =
