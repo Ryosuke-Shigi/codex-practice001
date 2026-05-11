@@ -33,8 +33,8 @@ const mapPadding = {
 
 function formatPinTime(value: string) {
     /*
-     * Atom entry の updatedAt / publishedAt 由来の時刻を、地図上でも短く見せます。
-     * ピンはまだ仮座標・震度未解析なので、時刻だけでも最新 entry が差し替わったことを確認できます。
+     * 個別 XML から取れた発生時刻を、表示順を読むための短い補助ラベルへ変換します。
+     * ピン中央の数字は震度ではなく「最新順の連番」にするため、時刻は下の小さなバッジへ逃がします。
      */
     const date = new Date(value);
 
@@ -48,35 +48,56 @@ function formatPinTime(value: string) {
     }).format(date);
 }
 
+function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt'>) {
+    /*
+     * MAP 上のピン番号は「表示順」を表します。
+     * 最新の地震ほど小さい番号になるよう、occurredAt の降順で並べ替えるための比較値を作ります。
+     */
+    const timestamp = new Date(pin.occurredAt).getTime();
+
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function displayOrderClassName(displayOrder: number) {
+    if (displayOrder >= 100) {
+        return 'text-[8px]';
+    }
+
+    if (displayOrder >= 10) {
+        return 'text-[9px]';
+    }
+
+    return 'text-[11px]';
+}
+
 function pinVisual(pin: EarthquakeMapPin) {
     /*
-     * 個別 XML 解析前は maxIntensity が ? のままなので、震度だけで色を決めると
-     * 最新 entry が変わっても MAP 上のピン・波紋が同じ見た目に見えてしまいます。
-     * そこで Preview 段階では title/headline の語句も見て、地震系なら「震」、津波系なら「津」を表示します。
+     * ピン中央の数字は震度ではなく表示順です。
+     * ここでは震度や title/headline の語句から、色・波紋数・ラベル文言だけを決めます。
      */
     const text = `${pin.title} ${pin.headline} ${pin.areaName}`;
 
     if (pin.maxIntensity !== '?') {
         if (pin.maxIntensity.startsWith('7') || pin.maxIntensity.startsWith('6')) {
-            return { color: '#ef4444', label: pin.maxIntensity, ringCount: 4, rippleSize: 124, kind: `震度${pin.maxIntensity}` };
+            return { color: '#ef4444', ringCount: 4, rippleSize: 124, kind: `震度${pin.maxIntensity}` };
         }
 
         if (pin.maxIntensity.startsWith('5')) {
-            return { color: '#a855f7', label: pin.maxIntensity, ringCount: 3, rippleSize: 112, kind: `震度${pin.maxIntensity}` };
+            return { color: '#a855f7', ringCount: 3, rippleSize: 112, kind: `震度${pin.maxIntensity}` };
         }
 
-        return { color: '#38bdf8', label: pin.maxIntensity, ringCount: 2, rippleSize: 104, kind: `震度${pin.maxIntensity}` };
+        return { color: '#38bdf8', ringCount: 2, rippleSize: 104, kind: `震度${pin.maxIntensity}` };
     }
 
     if (text.includes('津波')) {
-        return { color: '#38bdf8', label: '津', ringCount: 3, rippleSize: 118, kind: '津波' };
+        return { color: '#38bdf8', ringCount: 3, rippleSize: 118, kind: '津波' };
     }
 
     if (text.includes('震源') || text.includes('震度') || text.includes('地震')) {
-        return { color: '#ef4444', label: '震', ringCount: 4, rippleSize: 124, kind: '地震' };
+        return { color: '#ef4444', ringCount: 4, rippleSize: 124, kind: '地震' };
     }
 
-    return { color: '#38bdf8', label: '?', ringCount: 3, rippleSize: 104, kind: '未解析' };
+    return { color: '#38bdf8', ringCount: 3, rippleSize: 104, kind: '未解析' };
 }
 
 /*
@@ -141,14 +162,17 @@ function projectPinToMap(pin: Pick<EarthquakeMapPin, 'latitude' | 'longitude'>):
 export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
     /*
      * pin layer は SVG と同じ viewBox 比率で absolute 配置します。
-     * 今回の latest entry pin は仮座標ですが、将来の実ピンも latitude/longitude を
-     * 同じ projectPinToMap() に通せば、波紋と marker を同じ位置へ重ねられます。
+     * 個別 XML から取れた latitude/longitude を projectPinToMap() に通し、
+     * 最新順に並べた表示番号を marker の中央へ重ねます。
      */
-    const pinPlacements = pins.map((pin) => ({
-        eventId: pin.eventId,
-        pin,
-        ...projectPinToMap(pin),
-    }));
+    const pinPlacements = [...pins]
+        .sort((left, right) => pinTimestamp(right) - pinTimestamp(left))
+        .map((pin, index) => ({
+            displayOrder: index + 1,
+            eventId: pin.eventId,
+            pin,
+            ...projectPinToMap(pin),
+        }));
 
     return (
         <div className="relative flex h-full min-h-[472px] items-center justify-center">
@@ -227,7 +251,7 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                         `}
                     </style>
 
-                    {pinPlacements.map(({ eventId, pin, x, y }) => {
+                    {pinPlacements.map(({ displayOrder, eventId, pin, x, y }) => {
                         const visual = pinVisual(pin);
                         const latestTimeLabel = formatPinTime(pin.occurredAt);
 
@@ -269,13 +293,13 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                                         }}
                                         aria-hidden="true"
                                     />
-                                    <span className="relative text-[11px] font-bold leading-none text-slate-950">
-                                        {visual.label}
+                                    <span className={`relative font-bold leading-none text-slate-950 ${displayOrderClassName(displayOrder)}`}>
+                                        {displayOrder}
                                     </span>
                                 </span>
 
                                 <span className="absolute left-1/2 top-5 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/50 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
-                                    {latestTimeLabel ? `最新 ${latestTimeLabel} ${visual.kind}` : `最新 ${visual.kind}`}
+                                    {latestTimeLabel ? `#${displayOrder} ${latestTimeLabel} ${visual.kind}` : `#${displayOrder} ${visual.kind}`}
                                 </span>
                             </div>
                         );
