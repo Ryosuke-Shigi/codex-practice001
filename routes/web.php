@@ -7,9 +7,7 @@ use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
 use App\Http\Controllers\QuakeWavePreviewMapController;
 use App\Http\Controllers\QuakeWavePreviewXmlController;
-use App\DTO\Earthquake\Preview\EarthquakePinPreviewDTO;
-use App\DTO\Earthquake\Preview\EarthquakeRipplePreviewDTO;
-use App\DTO\Earthquake\Preview\EarthquakeVisualPreviewDTO;
+use App\Factories\Earthquake\EarthquakeVisualPreviewFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -53,7 +51,7 @@ Route::get('/lab', function () {
     ]);
 })->name('lab.index');
 
-Route::get('/quakewave-preview', function () {
+Route::get('/quakewave-preview', function (EarthquakeVisualPreviewFactory $visualPreviewFactory) {
     $mocks = [
         [
             // MAP 表示は地震API接続前に、水背景と日本地図の見え方だけを確認するモックです。
@@ -73,25 +71,13 @@ Route::get('/quakewave-preview', function () {
         ],
     ];
 
-    $visualPreview = new EarthquakeVisualPreviewDTO(
-        pins: [
-            // ピン表示カードで震度ごとのサイズ・色の印象だけを確認するための固定プレビューです。
-            new EarthquakePinPreviewDTO(label: '震度7', maxIntensity: '7', color: '#ef4444', sizeLabel: 'large'),
-            new EarthquakePinPreviewDTO(label: '震度6強', maxIntensity: '6+', color: '#f43f5e', sizeLabel: 'large'),
-            new EarthquakePinPreviewDTO(label: '震度5強', maxIntensity: '5+', color: '#a855f7', sizeLabel: 'medium'),
-            new EarthquakePinPreviewDTO(label: '震度4', maxIntensity: '4', color: '#38bdf8', sizeLabel: 'small'),
-        ],
-        ripples: [
-            // 波紋レイヤーカードでリング数・大きさ・色の印象だけを確認するための固定プレビューです。
-            new EarthquakeRipplePreviewDTO(label: '強い波紋', maxIntensity: '7', color: '#ef4444', size: 112, duration: '1.6s', ringCount: 4),
-            new EarthquakeRipplePreviewDTO(label: '中間波紋', maxIntensity: '5+', color: '#a855f7', size: 92, duration: '2.2s', ringCount: 3),
-            new EarthquakeRipplePreviewDTO(label: '弱い波紋', maxIntensity: '4', color: '#38bdf8', size: 76, duration: '2.8s', ringCount: 2),
-        ],
-    );
-
     return Inertia::render('QuakeWavePreview/Index', [
         'mocks' => $mocks,
-        'visualPreview' => $visualPreview->toArray(),
+        /*
+         * visualPreview DTO の組み立ては Factory に任せます。
+         * Route は Inertia props を渡す入口に留め、Preview の見本データ生成をここへ戻さない方針です。
+         */
+        'visualPreview' => $visualPreviewFactory->makeDefault()->toArray(),
     ]);
 })->name('quakewave-preview.index');
 

@@ -27,6 +27,7 @@ class EarthquakeXmlPreviewService
 
     public function __construct(
         private readonly EarthquakeXmlRepositoryInterface $repository,
+        private readonly EarthquakeEntryExtractService $entryExtractService,
     ) {
     }
 
@@ -34,6 +35,14 @@ class EarthquakeXmlPreviewService
      * @return array<string, mixed>
      */
     public function fetchHighFrequencyFeedPreview(): array
+    {
+        return $this->fetchParsedFeedPreview()['preview'];
+    }
+
+    /**
+     * @return array{preview: array<string, mixed>, feed: EarthquakeXmlFeedPreviewDTO|null}
+     */
+    private function fetchParsedFeedPreview(): array
     {
         /*
          * Service は Repository から受け取った transport result を読み、
@@ -43,24 +52,33 @@ class EarthquakeXmlPreviewService
         $transport = $this->repository->fetchHighFrequencyFeed();
 
         if (! ($transport['success'] ?? false)) {
-            return $this->failurePreview($transport, $this->safeErrorMessage($transport['error_message'] ?? null));
+            return [
+                'preview' => $this->failurePreview($transport, $this->safeErrorMessage($transport['error_message'] ?? null)),
+                'feed' => null,
+            ];
         }
 
         try {
             $feed = $this->parseAtomFeed((string) ($transport['body'] ?? ''));
         } catch (Throwable) {
-            return $this->failurePreview($transport, 'JMA earthquake XML feed could not be parsed.');
+            return [
+                'preview' => $this->failurePreview($transport, 'JMA earthquake XML feed could not be parsed.'),
+                'feed' => null,
+            ];
         }
 
         return [
-            'endpoint' => $transport['endpoint'],
-            'method' => $transport['method'],
-            'success' => true,
-            'statusCode' => $transport['status_code'],
-            'fetchedAt' => $transport['fetched_at'],
-            'responseTimeMs' => $transport['response_time_ms'],
-            'error' => null,
-            'feed' => $feed->toArray(),
+            'preview' => [
+                'endpoint' => $transport['endpoint'],
+                'method' => $transport['method'],
+                'success' => true,
+                'statusCode' => $transport['status_code'],
+                'fetchedAt' => $transport['fetched_at'],
+                'responseTimeMs' => $transport['response_time_ms'],
+                'error' => null,
+                'feed' => $feed->toArray(),
+            ],
+            'feed' => $feed,
         ];
     }
 
@@ -71,13 +89,16 @@ class EarthquakeXmlPreviewService
     {
         /*
          * MAP 表示用には Atom feed 全件を React へ渡しません。
-         * 画面を開いた時点の feed から最新 entry だけを選び、将来の map pin 変換前に
-         * 「どの情報を見ているか」を確認できる props へ絞ります。
+         * parse 済み DTO を EarthquakeEntryExtractService に渡して地震系 entry だけへ絞り、
+         * その中の最新 1 件だけを props 化します。
          */
-        $preview = $this->fetchHighFrequencyFeedPreview();
-        $feed = $preview['feed'] ?? null;
-        $entries = is_array($feed) ? ($feed['entries']['items'] ?? []) : [];
-        $latestEntry = is_array($entries) ? $this->latestEntryFromItems($entries) : null;
+        $result = $this->fetchParsedFeedPreview();
+        $preview = $result['preview'];
+        $feed = $result['feed'];
+        $extractedEntries = $feed instanceof EarthquakeXmlFeedPreviewDTO
+            ? $this->entryExtractService->extractAll($feed->entries)
+            : null;
+        $latestEntry = $extractedEntries?->latest();
 
         return [
             'success' => $preview['success'],
@@ -85,10 +106,10 @@ class EarthquakeXmlPreviewService
             'fetchedAt' => $preview['fetchedAt'],
             'responseTimeMs' => $preview['responseTimeMs'],
             'error' => $preview['error'],
-            'feedTitle' => is_array($feed) ? ($feed['feedTitle'] ?? null) : null,
-            'feedUpdatedAt' => is_array($feed) ? ($feed['feedUpdatedAt'] ?? null) : null,
-            'entryCount' => is_array($feed) ? ($feed['entries']['count'] ?? 0) : 0,
-            'entry' => $latestEntry,
+            'feedTitle' => $feed?->feedTitle,
+            'feedUpdatedAt' => $feed?->feedUpdatedAt,
+            'entryCount' => $extractedEntries?->count() ?? 0,
+            'entry' => $latestEntry?->toArray(),
         ];
     }
 
@@ -245,34 +266,6 @@ class EarthquakeXmlPreviewService
         $author = $entry->author->children(self::ATOM_NAMESPACE);
 
         return $this->nullableText($author->name) ?? $this->nullableText($entry->author);
-    }
-
-    /**
-     * @param  array<int, mixed>  $items
-     * @return array<string, string|null>|null
-     */
-    private function latestEntryFromItems(array $items): ?array
-    {
-        /*
-         * JMA feed は通常新しい順ですが、Preview の「最新」表示は updated/published を見て選びます。
-         * ここでは個別 XML 本文までは読まず、Atom entry の表層時刻だけで一件へ絞ります。
-         */
-        $entries = array_values(array_filter($items, fn (mixed $item): bool => is_array($item)));
-
-        usort($entries, fn (array $left, array $right): int => $this->entryTimestamp($right) <=> $this->entryTimestamp($left));
-
-        return $entries[0] ?? null;
-    }
-
-    /**
-     * @param  array<string, mixed>  $entry
-     */
-    private function entryTimestamp(array $entry): int
-    {
-        $value = $entry['updatedAt'] ?? $entry['publishedAt'] ?? null;
-        $timestamp = is_string($value) ? strtotime($value) : false;
-
-        return $timestamp === false ? 0 : $timestamp;
     }
 
     private function text(SimpleXMLElement|string|null $value): string
