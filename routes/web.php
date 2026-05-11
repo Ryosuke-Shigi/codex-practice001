@@ -33,12 +33,48 @@ Route::get('/lab', function () {
             'status' => 'Preview',
             'href' => '/api-catalog',
         ],
+        [
+            // QuakeWave Preview は地震波可視化系 UI モックの入口です。
+            'id' => 'quakewave-preview',
+            'title' => 'QuakeWave Preview',
+            'summary' => '地震波可視化の UI モックを、本実装や API 接続前に画面単位で確認する入口です。',
+            'status' => 'Mock',
+            'href' => '/quakewave-preview',
+        ],
     ];
 
     return Inertia::render('Lab/Index', [
         'experiments' => $experiments,
     ]);
 })->name('lab.index');
+
+Route::get('/quakewave-preview', function () {
+    $mocks = [
+        [
+            // MAP 表示は地震API接続前に、水背景と日本地図の見え方だけを確認するモックです。
+            'id' => 'map-display',
+            'title' => 'MAP表示',
+            'summary' => '水背景の上に日本地図を重ね、後で地震ピンと波紋を配置する土台を確認します。',
+            'status' => 'Ready',
+            'href' => '/quakewave-preview/map',
+        ],
+    ];
+
+    return Inertia::render('QuakeWavePreview/Index', [
+        'mocks' => $mocks,
+    ]);
+})->name('quakewave-preview.index');
+
+Route::get('/quakewave-preview/map', function () {
+    /*
+     * 第1段階では地震API接続やDB取得を行わず、空配列だけを React に渡します。
+     * 将来は Laravel 側で EarthquakeMapPinDTO / EarthquakeMapPinListDTO を作り、
+     * ここから pins props として渡す想定です。
+     */
+    return Inertia::render('QuakeWavePreview/Map', [
+        'pins' => [],
+    ]);
+})->name('quakewave-preview.map');
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 
