@@ -5,9 +5,11 @@ use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
+use App\Http\Controllers\QuakeWavePreviewController;
+use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
+use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewMapController;
 use App\Http\Controllers\QuakeWavePreviewXmlController;
-use App\Factories\Earthquake\EarthquakeVisualPreviewFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -51,41 +53,19 @@ Route::get('/lab', function () {
     ]);
 })->name('lab.index');
 
-Route::get('/quakewave-preview', function (EarthquakeVisualPreviewFactory $visualPreviewFactory) {
-    $mocks = [
-        [
-            // MAP 表示は地震API接続前に、水背景と日本地図の見え方だけを確認するモックです。
-            'id' => 'map-display',
-            'title' => 'MAP表示',
-            'summary' => '水背景の上に日本地図を重ね、後で地震ピンと波紋を配置する土台を確認します。',
-            'status' => 'Ready',
-            'href' => '/quakewave-preview/map',
-        ],
-        [
-            // XML取得プレビューは地図表示へ接続せず、JMA Atom feed の entry 確認だけを行います。
-            'id' => 'xml-preview',
-            'title' => 'XML取得プレビュー',
-            'summary' => '気象庁の地震火山情報 Atom フィードを取得し、entry の title / updated / link を確認します。',
-            'status' => 'Ready',
-            'href' => '/quakewave-preview/xml',
-        ],
-    ];
-
-    return Inertia::render('QuakeWavePreview/Index', [
-        'mocks' => $mocks,
-        /*
-         * visualPreview DTO の組み立ては Factory に任せます。
-         * Route は Inertia props を渡す入口に留め、Preview の見本データ生成をここへ戻さない方針です。
-         */
-        'visualPreview' => $visualPreviewFactory->makeDefault()->toArray(),
-    ]);
-})->name('quakewave-preview.index');
+Route::get('/quakewave-preview', QuakeWavePreviewController::class)
+    ->name('quakewave-preview.index');
 
 Route::get('/quakewave-preview/map', QuakeWavePreviewMapController::class)
     ->name('quakewave-preview.map');
 
 Route::get('/quakewave-preview/xml', QuakeWavePreviewXmlController::class)
     ->name('quakewave-preview.xml');
+
+Route::post('/quakewave-preview/feed-entries/sync', QuakeWavePreviewFeedEntrySyncController::class)
+    ->name('quakewave-preview.feed-entries.sync');
+Route::get('/quakewave-preview/feed-entries/sync/status', QuakeWavePreviewFeedEntrySyncStatusController::class)
+    ->name('quakewave-preview.feed-entries.sync.status');
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 

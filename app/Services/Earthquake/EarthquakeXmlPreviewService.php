@@ -42,6 +42,15 @@ class EarthquakeXmlPreviewService
         return $this->fetchParsedFeedPreview()['preview'];
     }
 
+    public function parseHighFrequencyFeedBody(string $body): EarthquakeXmlFeedPreviewDTO
+    {
+        /*
+         * Feed entry 同期でも Preview と同じ Atom parsing を使います。
+         * XML 取得や DB 保存は呼び出し側 Service の責務に残し、ここでは feed DTO 化だけを再利用します。
+         */
+        return $this->parseAtomFeed($body);
+    }
+
     /**
      * @return array{preview: array<string, mixed>, feed: EarthquakeXmlFeedPreviewDTO|null}
      */

@@ -4,12 +4,15 @@ namespace Tests\Feature\QuakeWavePreview;
 
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
 use Illuminate\Http\Client\Request;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class QuakeWavePreviewXmlPreviewTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_quakewave_preview_index_lists_map_and_xml_preview_cards(): void
     {
         Http::preventStrayRequests();
@@ -38,6 +41,9 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
                 ->where('visualPreview.ripples.0.size', 112)
                 ->where('visualPreview.ripples.0.duration', '1.6s')
                 ->where('visualPreview.ripples.0.ringCount', 4)
+                ->has('savedFeedEntries', 0)
+                ->where('feedEntrySyncStatus', null)
+                ->has('feedEntrySyncRuns', 0)
             );
 
         Http::assertNothingSent();
