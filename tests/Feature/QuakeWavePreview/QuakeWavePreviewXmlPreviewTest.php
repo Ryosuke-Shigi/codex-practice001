@@ -26,6 +26,18 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
                 ->where('mocks.1.id', 'xml-preview')
                 ->where('mocks.1.title', 'XML取得プレビュー')
                 ->where('mocks.1.href', '/quakewave-preview/xml')
+                ->has('visualPreview.pins', 4)
+                ->where('visualPreview.pins.0.label', '震度7')
+                ->where('visualPreview.pins.0.maxIntensity', '7')
+                ->where('visualPreview.pins.0.color', '#ef4444')
+                ->where('visualPreview.pins.0.sizeLabel', 'large')
+                ->has('visualPreview.ripples', 3)
+                ->where('visualPreview.ripples.0.label', '強い波紋')
+                ->where('visualPreview.ripples.0.maxIntensity', '7')
+                ->where('visualPreview.ripples.0.color', '#ef4444')
+                ->where('visualPreview.ripples.0.size', 112)
+                ->where('visualPreview.ripples.0.duration', '1.6s')
+                ->where('visualPreview.ripples.0.ringCount', 4)
             );
 
         Http::assertNothingSent();
@@ -60,6 +72,45 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
                 ->where('result.feed.entries.items.0.rawAuthor', '気象庁')
             );
 
+        Http::assertSent(fn (Request $request) => $request->url() === JmaEarthquakeXmlRepository::FEED_URL
+            && $request->method() === 'GET'
+            && $request->hasHeader('Accept', 'application/atom+xml, application/xml;q=0.9, text/xml;q=0.8'));
+    }
+
+    public function test_map_preview_fetches_latest_jma_atom_entry_once(): void
+    {
+        Http::fake([
+            JmaEarthquakeXmlRepository::FEED_URL => Http::response($this->atomFeedWithNewerSecondEntry(), 200, [
+                'Content-Type' => 'application/atom+xml',
+            ]),
+        ]);
+
+        $response = $this->get('/quakewave-preview/map');
+
+        $response
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('QuakeWavePreview/Map', false)
+                ->has('pins', 1)
+                ->where('pins.0.eventId', 'urn:jma:example:newer')
+                ->where('pins.0.title', '震源・震度に関する最新情報')
+                ->where('pins.0.latitude', 36.2048)
+                ->where('pins.0.longitude', 138.2529)
+                ->where('pins.0.maxIntensity', '?')
+                ->where('pins.0.areaName', '震源位置未解析')
+                ->where('latestFeedEntryPreview.success', true)
+                ->where('latestFeedEntryPreview.statusCode', 200)
+                ->where('latestFeedEntryPreview.error', null)
+                ->where('latestFeedEntryPreview.feedTitle', 'JMA Earthquake and Volcano Feed')
+                ->where('latestFeedEntryPreview.feedUpdatedAt', '2026-05-11T09:10:00+09:00')
+                ->where('latestFeedEntryPreview.entryCount', 2)
+                ->where('latestFeedEntryPreview.entry.id', 'urn:jma:example:newer')
+                ->where('latestFeedEntryPreview.entry.title', '震源・震度に関する最新情報')
+                ->where('latestFeedEntryPreview.entry.updatedAt', '2026-05-11T09:05:00+09:00')
+                ->where('latestFeedEntryPreview.entry.xmlUrl', 'https://www.data.jma.go.jp/developer/xml/data/20260511090500_0.xml')
+            );
+
+        Http::assertSentCount(1);
         Http::assertSent(fn (Request $request) => $request->url() === JmaEarthquakeXmlRepository::FEED_URL
             && $request->method() === 'GET'
             && $request->hasHeader('Accept', 'application/atom+xml, application/xml;q=0.9, text/xml;q=0.8'));
@@ -109,6 +160,39 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
     <updated>2026-05-11T08:15:00+09:00</updated>
     <published>2026-05-11T08:10:00+09:00</published>
     <link rel="alternate" type="application/xml" href="https://www.data.jma.go.jp/developer/xml/data/20260511081500_0.xml" />
+    <author>
+      <name>気象庁</name>
+    </author>
+  </entry>
+</feed>
+XML;
+    }
+
+    private function atomFeedWithNewerSecondEntry(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>JMA Earthquake and Volcano Feed</title>
+  <updated>2026-05-11T09:10:00+09:00</updated>
+  <entry>
+    <id>urn:jma:example:older</id>
+    <title>震源・震度に関する古い情報</title>
+    <updated>2026-05-11T08:45:00+09:00</updated>
+    <published>2026-05-11T08:40:00+09:00</published>
+    <link rel="alternate" type="application/xml" href="https://www.data.jma.go.jp/developer/xml/data/20260511084500_0.xml" />
+    <category term="地震火山関連" label="地震情報" />
+    <author>
+      <name>気象庁</name>
+    </author>
+  </entry>
+  <entry>
+    <id>urn:jma:example:newer</id>
+    <title>震源・震度に関する最新情報</title>
+    <updated>2026-05-11T09:05:00+09:00</updated>
+    <published>2026-05-11T09:00:00+09:00</published>
+    <link rel="alternate" type="application/xml" href="https://www.data.jma.go.jp/developer/xml/data/20260511090500_0.xml" />
+    <category term="地震火山関連" label="地震情報" />
     <author>
       <name>気象庁</name>
     </author>

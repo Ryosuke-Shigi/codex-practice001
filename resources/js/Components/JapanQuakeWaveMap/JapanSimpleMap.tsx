@@ -31,6 +31,22 @@ const mapPadding = {
     y: 22,
 };
 
+function pinColor(maxIntensity: string) {
+    /*
+     * Preview では震度の見た目だけをざっくり確認します。
+     * 個別 XML 解析前の ? は弱めの青に寄せ、本番震度が来たら赤/紫/青へ自然に分岐します。
+     */
+    if (maxIntensity.startsWith('7') || maxIntensity.startsWith('6')) {
+        return '#ef4444';
+    }
+
+    if (maxIntensity.startsWith('5')) {
+        return '#a855f7';
+    }
+
+    return '#38bdf8';
+}
+
 /*
  * Natural Earth / DataHub の Japan feature を、UI モック用に軽量化した
  * SVG path です。背景は塗らず、WaterBackground が透ける地図レイヤーにします。
@@ -92,12 +108,13 @@ function projectPinToMap(pin: Pick<EarthquakeMapPin, 'latitude' | 'longitude'>):
 
 export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
     /*
-     * 第1段階では pin を画面に出しませんが、座標計算だけ先に同じ場所へ置きます。
-     * 次段階で absolute レイヤーへ marker / ripple を追加するときに、
-     * 地図 SVG と同じ viewBox 上の x/y をそのまま使えます。
+     * pin layer は SVG と同じ viewBox 比率で absolute 配置します。
+     * 今回の latest entry pin は仮座標ですが、将来の実ピンも latitude/longitude を
+     * 同じ projectPinToMap() に通せば、波紋と marker を同じ位置へ重ねられます。
      */
     const pinPlacements = pins.map((pin) => ({
         eventId: pin.eventId,
+        pin,
         ...projectPinToMap(pin),
     }));
 
@@ -138,13 +155,97 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                 <div
                     /*
                      * pin layer は SVG と同じ表示領域に重ねます。
-                     * 今は空のレイヤーですが、将来はここに震源 pin、波紋、hover hit-area を
-                     * absolute 配置で追加する想定です。
+                     * latest preview では一件だけですが、将来はここに複数の震源 pin、
+                     * 波紋、hover hit-area を absolute 配置で追加していきます。
                      */
                     className="pointer-events-none absolute inset-0"
                     data-pin-layer
                     data-pin-count={pinPlacements.length}
-                />
+                >
+                    <style>
+                        {`
+                            /*
+                             * 波紋は中心から広がって消えるだけの軽い preview animation です。
+                             * 実装段階では震度・経過時間・表示上限に応じて duration や ring 数を調整します。
+                             */
+                            @keyframes quake-map-preview-ripple {
+                                0% {
+                                    opacity: 0;
+                                    transform: translate(-50%, -50%) scale(0.18);
+                                }
+                                12% {
+                                    opacity: 0.7;
+                                }
+                                72% {
+                                    opacity: 0.24;
+                                }
+                                100% {
+                                    opacity: 0;
+                                    transform: translate(-50%, -50%) scale(1);
+                                }
+                            }
+
+                            @media (prefers-reduced-motion: reduce) {
+                                .quake-map-preview-ripple {
+                                    animation: none !important;
+                                    opacity: 0.38 !important;
+                                    transform: translate(-50%, -50%) scale(0.76) !important;
+                                }
+                            }
+                        `}
+                    </style>
+
+                    {pinPlacements.map(({ eventId, pin, x, y }) => {
+                        const color = pinColor(pin.maxIntensity);
+
+                        return (
+                            <div
+                                key={eventId}
+                                className="absolute"
+                                style={{
+                                    /*
+                                     * SVG viewBox の x/y を percentage に変換して、absolute layer に重ねます。
+                                     * こうしておくと地図が responsive に拡縮しても pin と波紋が同じ地点に残ります。
+                                     */
+                                    left: `${(x / mapViewBox.width) * 100}%`,
+                                    top: `${(y / mapViewBox.height) * 100}%`,
+                                }}
+                            >
+                                {[0, 1, 2].map((index) => (
+                                    <span
+                                        key={`${eventId}-ripple-${index}`}
+                                        className="quake-map-preview-ripple absolute left-1/2 top-1/2 h-24 w-24 rounded-full border"
+                                        style={{
+                                            animation: 'quake-map-preview-ripple 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite',
+                                            animationDelay: `${index * -0.8}s`,
+                                            borderColor: color,
+                                            boxShadow: `0 0 26px ${color}55`,
+                                        }}
+                                    />
+                                ))}
+
+                                <span className="absolute left-1/2 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+                                    <span
+                                        className="absolute h-6 w-6 rotate-45 border border-white/80"
+                                        style={{
+                                            backgroundColor: color,
+                                            borderRadius: '50% 50% 50% 0',
+                                            boxShadow: `0 0 22px ${color}88`,
+                                        }}
+                                        aria-hidden="true"
+                                    />
+                                    <span className="relative text-[10px] font-bold leading-none text-slate-950">
+                                        {pin.maxIntensity}
+                                    </span>
+                                </span>
+
+                                <span className="absolute left-1/2 top-5 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/50 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
+                                    最新
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );

@@ -2,11 +2,13 @@ import { Head, Link } from '@inertiajs/react';
 
 import JapanQuakeWaveMapMock, {
     type EarthquakeMapPin,
+    type LatestFeedEntryPreview,
 } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMapMock';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type MapProps = {
     pins: EarthquakeMapPin[];
+    latestFeedEntryPreview: LatestFeedEntryPreview;
 };
 
 /*
@@ -14,10 +16,11 @@ type MapProps = {
  * ここでは PublicLayout とページ導線だけを担当し、地図の見た目は
  * JapanQuakeWaveMapMock / JapanSimpleMap 側へ分けます。
  *
- * pins は第1段階では空配列ですが、将来 Laravel 側 DTO から渡される
- * 地震ピンデータをそのまま受け取れる props として残しています。
+ * pins は最新 Atom entry から作るサンプルピンです。
+ * 個別 XML 解析前なので実震源ではありませんが、Laravel 側から Inertia props として渡し、
+ * React の地図レイヤーがピン・波紋を描けるかを先に確認します。
  */
-export default function Map({ pins }: MapProps) {
+export default function Map({ pins, latestFeedEntryPreview }: MapProps) {
     return (
         <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
             <Head title="QuakeWave MAP表示" />
@@ -35,7 +38,7 @@ export default function Map({ pins }: MapProps) {
                     </span>
                 </header>
 
-                <JapanQuakeWaveMapMock pins={pins} />
+                <JapanQuakeWaveMapMock pins={pins} latestFeedEntryPreview={latestFeedEntryPreview} />
             </div>
         </PublicLayout>
     );

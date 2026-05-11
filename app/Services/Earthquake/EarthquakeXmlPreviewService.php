@@ -64,6 +64,85 @@ class EarthquakeXmlPreviewService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function fetchLatestHighFrequencyEntryPreview(): array
+    {
+        /*
+         * MAP 表示用には Atom feed 全件を React へ渡しません。
+         * 画面を開いた時点の feed から最新 entry だけを選び、将来の map pin 変換前に
+         * 「どの情報を見ているか」を確認できる props へ絞ります。
+         */
+        $preview = $this->fetchHighFrequencyFeedPreview();
+        $feed = $preview['feed'] ?? null;
+        $entries = is_array($feed) ? ($feed['entries']['items'] ?? []) : [];
+        $latestEntry = is_array($entries) ? $this->latestEntryFromItems($entries) : null;
+
+        return [
+            'success' => $preview['success'],
+            'statusCode' => $preview['statusCode'],
+            'fetchedAt' => $preview['fetchedAt'],
+            'responseTimeMs' => $preview['responseTimeMs'],
+            'error' => $preview['error'],
+            'feedTitle' => is_array($feed) ? ($feed['feedTitle'] ?? null) : null,
+            'feedUpdatedAt' => is_array($feed) ? ($feed['feedUpdatedAt'] ?? null) : null,
+            'entryCount' => is_array($feed) ? ($feed['entries']['count'] ?? 0) : 0,
+            'entry' => $latestEntry,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $latestFeedEntryPreview
+     * @return array<int, array<string, mixed>>
+     */
+    public function previewPinsFromLatestEntryPreview(array $latestFeedEntryPreview): array
+    {
+        /*
+         * Atom feed の entry だけでは震源緯度経度や最大震度をまだ取得できません。
+         * そのため MAP 表示では最新 entry と連動した「仮ピン」を一件だけ作り、
+         * 個別 XML 解析前でもピン・波紋レイヤーの見え方を確認できるようにします。
+         */
+        $entry = $latestFeedEntryPreview['entry'] ?? null;
+
+        if (! ($latestFeedEntryPreview['success'] ?? false) || ! is_array($entry)) {
+            return [];
+        }
+
+        $occurredAt = $entry['updatedAt']
+            ?? $entry['publishedAt']
+            ?? $latestFeedEntryPreview['feedUpdatedAt']
+            ?? $latestFeedEntryPreview['fetchedAt'];
+
+        return [
+            [
+                /*
+                 * React 側の地図レイヤーは EarthquakeMapPin 形の props だけを見ます。
+                 * この時点では Atom entry 由来の id/title/time だけが事実データで、
+                 * 緯度経度・震度・深さ・マグニチュードは個別 XML 解析前のサンプル値です。
+                 */
+                'eventId' => (string) ($entry['id'] ?? 'jma-latest-preview'),
+                'title' => (string) ($entry['title'] ?? 'JMA 最新情報'),
+                /*
+                 * 日本中央付近に置く仮座標です。
+                 * JMA 個別 XML の Body から震源緯度経度を読むまでは、MAP 表示の見た目確認に限定します。
+                 */
+                'latitude' => 36.2048,
+                'longitude' => 138.2529,
+                'occurredAt' => $occurredAt,
+                /*
+                 * 最大震度も Atom feed entry には含まれません。
+                 * 「未解析」を画面上でも分かるように、数字ではなく ? を渡します。
+                 */
+                'maxIntensity' => '?',
+                'magnitude' => null,
+                'depthKm' => null,
+                'areaName' => '震源位置未解析',
+                'headline' => 'Atom feed の最新 entry から作った MAP 表示確認用ピンです。',
+            ],
+        ];
+    }
+
     private function parseAtomFeed(string $body): EarthquakeXmlFeedPreviewDTO
     {
         /*
@@ -166,6 +245,34 @@ class EarthquakeXmlPreviewService
         $author = $entry->author->children(self::ATOM_NAMESPACE);
 
         return $this->nullableText($author->name) ?? $this->nullableText($entry->author);
+    }
+
+    /**
+     * @param  array<int, mixed>  $items
+     * @return array<string, string|null>|null
+     */
+    private function latestEntryFromItems(array $items): ?array
+    {
+        /*
+         * JMA feed は通常新しい順ですが、Preview の「最新」表示は updated/published を見て選びます。
+         * ここでは個別 XML 本文までは読まず、Atom entry の表層時刻だけで一件へ絞ります。
+         */
+        $entries = array_values(array_filter($items, fn (mixed $item): bool => is_array($item)));
+
+        usort($entries, fn (array $left, array $right): int => $this->entryTimestamp($right) <=> $this->entryTimestamp($left));
+
+        return $entries[0] ?? null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $entry
+     */
+    private function entryTimestamp(array $entry): int
+    {
+        $value = $entry['updatedAt'] ?? $entry['publishedAt'] ?? null;
+        $timestamp = is_string($value) ? strtotime($value) : false;
+
+        return $timestamp === false ? 0 : $timestamp;
     }
 
     private function text(SimpleXMLElement|string|null $value): string

@@ -1,5 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 
+import EarthquakePin, { type EarthquakePinPreview } from '@/Components/JapanQuakeWaveMap/EarthquakePin';
+import EarthquakeRipple, { type EarthquakeRipplePreview } from '@/Components/JapanQuakeWaveMap/EarthquakeRipple';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type QuakeWavePreviewMock = {
@@ -12,6 +14,10 @@ type QuakeWavePreviewMock = {
 
 type IndexProps = {
     mocks: QuakeWavePreviewMock[];
+    visualPreview: {
+        pins: EarthquakePinPreview[];
+        ripples: EarthquakeRipplePreview[];
+    };
 };
 
 function statusClassName(status: string) {
@@ -20,7 +26,7 @@ function statusClassName(status: string) {
         : 'border-amber-300/50 bg-amber-300/15 text-amber-50';
 }
 
-export default function Index({ mocks }: IndexProps) {
+export default function Index({ mocks, visualPreview }: IndexProps) {
     /*
      * QuakeWave Preview は API Preview と同じく「本実装前の確認入口」です。
      * 今回は MAP 表示だけが実際に開けるモックなので、route props から対象を拾い、
@@ -119,46 +125,42 @@ export default function Index({ mocks }: IndexProps) {
                         </Link>
                     )}
 
-                    <article className="flex min-h-[144px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-3 xl:col-span-5">
+                    <article className="flex min-h-[220px] flex-col rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-3 xl:col-span-5">
                         <div>
                             <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
-                                Planned
+                                DTO Preview
                             </span>
                             <h3 className="mt-3 text-lg font-semibold text-white">
                                 ピン表示
                             </h3>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-200/75">
-                            Laravel 側 DTO から渡す pins を地図上へ重ねる予定です。
+                            Laravel 側 DTO から渡した震度別のピン見本です。地図上への配置はまだ行いません。
                         </p>
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                            {visualPreview.pins.map((pin) => (
+                                <EarthquakePin key={`${pin.label}-${pin.sizeLabel}`} pin={pin} />
+                            ))}
+                        </div>
                     </article>
 
-                    <article className="flex min-h-[144px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-3 xl:col-span-5">
+                    <article className="flex min-h-[220px] flex-col rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-3 xl:col-span-5">
                         <div>
                             <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
-                                Planned
+                                DTO Preview
                             </span>
                             <h3 className="mt-3 text-lg font-semibold text-white">
                                 波紋レイヤー
                             </h3>
                         </div>
                         <p className="mt-4 text-sm leading-6 text-slate-200/75">
-                            震源や強度に応じたアニメーションを重ねる区画です。
+                            Laravel 側 DTO から渡した波紋見本です。XML 取得結果や MAP 表示にはまだ接続しません。
                         </p>
-                    </article>
-
-                    <article className="flex min-h-[160px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-2 xl:col-span-4">
-                        <div>
-                            <span className="inline-flex rounded-md border border-sky-200/35 bg-sky-200/10 px-2.5 py-1 text-xs font-semibold text-sky-50">
-                                Props
-                            </span>
-                            <h3 className="mt-3 text-lg font-semibold text-white">
-                                pins
-                            </h3>
+                        <div className="mt-5 grid gap-5">
+                            {visualPreview.ripples.map((ripple) => (
+                                <EarthquakeRipple key={`${ripple.label}-${ripple.ringCount}`} ripple={ripple} />
+                            ))}
                         </div>
-                        <p className="mt-4 font-mono text-xs leading-5 text-cyan-50/80">
-                            EarthquakeMapPin[]
-                        </p>
                     </article>
 
                     <article className="flex min-h-[160px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-2 xl:col-span-4">
