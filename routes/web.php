@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
+use App\Http\Controllers\QuakeWavePreviewXmlController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -58,6 +59,14 @@ Route::get('/quakewave-preview', function () {
             'status' => 'Ready',
             'href' => '/quakewave-preview/map',
         ],
+        [
+            // XML取得プレビューは地図表示へ接続せず、JMA Atom feed の entry 確認だけを行います。
+            'id' => 'xml-preview',
+            'title' => 'XML取得プレビュー',
+            'summary' => '気象庁の地震火山情報 Atom フィードを取得し、entry の title / updated / link を確認します。',
+            'status' => 'Ready',
+            'href' => '/quakewave-preview/xml',
+        ],
     ];
 
     return Inertia::render('QuakeWavePreview/Index', [
@@ -75,6 +84,9 @@ Route::get('/quakewave-preview/map', function () {
         'pins' => [],
     ]);
 })->name('quakewave-preview.map');
+
+Route::get('/quakewave-preview/xml', QuakeWavePreviewXmlController::class)
+    ->name('quakewave-preview.xml');
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 

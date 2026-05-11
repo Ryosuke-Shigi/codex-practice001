@@ -12,6 +12,8 @@ use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepository;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
+use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +37,12 @@ class AppServiceProvider extends ServiceProvider
          * Action は Interface に依存し、実 HTTP 通信は ApisGuruPreviewRepository が担当します。
          */
         $this->app->bind(ApisGuruPreviewRepositoryInterface::class, ApisGuruPreviewRepository::class);
+
+        /*
+         * QuakeWave Preview 側の XML 取得依存です。
+         * 地図表示や DB 保存とは切り離し、JMA Atom feed の HTTP 取得だけを Repository に任せます。
+         */
+        $this->app->bind(EarthquakeXmlRepositoryInterface::class, JmaEarthquakeXmlRepository::class);
     }
 
     /**

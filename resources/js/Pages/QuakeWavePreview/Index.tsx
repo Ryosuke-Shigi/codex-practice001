@@ -27,6 +27,11 @@ export default function Index({ mocks }: IndexProps) {
      * OBENTO 構造のいちばん大きい区画に配置します。
      */
     const mapMock = mocks.find((mock) => mock.id === 'map-display') ?? mocks[0];
+    /*
+     * XML取得プレビューは MAP 表示とは独立した確認入口です。
+     * JMA Atom feed を読めることだけを検証し、ここから map pin や波紋へはまだ接続しません。
+     */
+    const xmlMock = mocks.find((mock) => mock.id === 'xml-preview');
 
     return (
         <PublicLayout effect="none" className="bg-slate-950/55 px-4 py-6 sm:px-6 lg:px-8">
@@ -83,6 +88,33 @@ export default function Index({ mocks }: IndexProps) {
                             </div>
                             <span className="mt-8 text-sm font-bold text-cyan-100 transition group-hover:text-white">
                                 モックを開く
+                            </span>
+                        </Link>
+                    )}
+
+                    {xmlMock && (
+                        <Link
+                            href={xmlMock.href}
+                            className="group flex min-h-[144px] flex-col justify-between rounded-lg border border-emerald-200/30 bg-emerald-200/10 p-4 transition hover:border-emerald-100/60 hover:bg-emerald-200/14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-100 md:col-span-3 xl:col-span-5"
+                        >
+                            <div>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <span className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-semibold ${statusClassName(xmlMock.status)}`}>
+                                        {xmlMock.status}
+                                    </span>
+                                    <span className="rounded-md border border-emerald-100/30 bg-slate-950/50 px-2.5 py-1 text-xs font-semibold text-emerald-50">
+                                        Atom feed
+                                    </span>
+                                </div>
+                                <h3 className="mt-3 text-lg font-semibold text-white">
+                                    {xmlMock.title}
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-slate-200/80">
+                                    {xmlMock.summary}
+                                </p>
+                            </div>
+                            <span className="mt-4 text-sm font-bold text-emerald-100 transition group-hover:text-white">
+                                取得画面を開く
                             </span>
                         </Link>
                     )}
