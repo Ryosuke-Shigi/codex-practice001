@@ -167,3 +167,106 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、外�
 ```bash
 docker compose run --rm artisan test
 docker compose run --rm npm run build
+
+```
+
+## データ保存方針
+
+### API Discovery Hub
+
+- `api_catalog_cache` は同期キャッシュ用テーブルとして扱う
+- `raw_payload` は保存しない
+- OpenAPI 定義本文、paths、schemas、parameters、responses は最初から保存しない
+- Google 検索リンクは DB に保存しない
+- Google 検索リンクは表示時に API 名などから生成する
+- `domain` は DB カラムとして追加せず、`provider_key` から表示・絞り込み用に扱う
+- softDeletes は使わない
+
+### QuakeWave Preview
+
+- 気象庁 Atom feed の entry は `earthquake_feed_entries` に保存する
+- entry_id を一意な識別子として扱う
+- 同じ entry_id のデータは insert / update / skip に分けて扱う
+- 個別 XML の本文そのものは保存対象にせず、地図表示に必要な情報へ変換して扱う
+- 地図表示用 pin は、個別 XML 解析後の結果として保存する
+- feed entry 取込と map pin 生成は別処理として分ける
+
+## Docker構成
+
+Docker 構成は Laravel アプリケーション本体の一階層上にあります。このリポジトリは Docker Compose から `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
+
+Docker コマンドは、一階層上のプロジェクトルートで実行する前提です。
+
+主な構成要素:
+
+- `nginx`: Laravel の入口
+- `php-fpm`: Laravel アプリ実行
+- `php-cli`: PHP CLI 実行用
+- `artisan`: `php artisan` 実行用
+- `composer`: Composer 実行用
+- `npm`: npm / Vite 実行用
+- `queue`: Queue worker
+- `scheduler`: Laravel Scheduler
+- `mysql`: API カタログキャッシュ、保存メモ、地震情報のDB
+- `redis`: Queue / Cache 用
+- `mailpit`: メール確認用
+- `adminer`: DB確認用
+
+ローカル開発の基本コマンド:
+
+```bash
+docker compose build
+docker compose up -d nginx php-fpm queue scheduler mysql redis mailpit adminer
+docker compose run --rm composer install
+docker compose run --rm npm install
+docker compose run --rm artisan migrate
+docker compose run --rm npm run build
+```
+
+同期処理の手動確認:
+
+```bash
+docker compose run --rm artisan api-catalog:sync
+docker compose run --rm artisan api-catalog:sync --queue
+```
+
+## ディレクトリ構成
+
+主な配置は次のとおりです。
+
+- `app/Http/Controllers`: HTTP 入口
+- `app/Http/Requests`: 入力バリデーション
+- `app/Actions`: ユースケース手順
+- `app/Services`: 業務ルール、状態判断
+- `app/Repositories`: DB / 外部API境界
+- `app/DTO`: レイヤー間データ
+- `app/Responders`: Inertia props などの出力整形
+- `app/Factories`: DTO や Strategy などの生成・選択
+- `app/Strategies`: 処理差分
+- `app/Events`, `app/Jobs`: 副作用や非同期処理
+- `resources/js/Pages`: Inertia / React の画面
+- `resources/js/Components`: React コンポーネント
+- `routes/web.php`: 画面ルート
+- `tests/Feature`: Feature テスト
+
+## 今後予定
+
+- 同期履歴表示と同期失敗ログ
+- ポーリングなどによる同期状態表示の改善
+- 詳細画面を開いたタイミングで OpenAPI 定義本文を取得する別導線
+- paths、schemas、parameters、responses の扱い方の検討
+- 保存メモ周辺の表示・入力体験の改善
+- API Discovery Hub 一覧・詳細の追加テスト
+- QuakeWave Preview のスクリーンショット追加
+- 気象庁XML解析範囲の整理
+- Service / Action / Repository の Unit テスト拡充
+- Factory / Strategy の使いどころの検証
+- Lightsail 運用手順の整理
+
+## 注意事項
+
+この README は、現在実装済みの範囲に合わせています。
+
+API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的にした機能であり、API の価値や注目度を断定するものではありません。
+
+QuakeWave Preview は気象庁XMLを利用した地震情報の取得・保存・地図可視化の検証機能であり、防災情報としての正確性や速報性を保証するものではありません。
