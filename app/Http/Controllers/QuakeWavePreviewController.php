@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Factories\Earthquake\EarthquakeVisualPreviewFactory;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,6 +16,8 @@ class QuakeWavePreviewController extends Controller
         EarthquakeVisualPreviewFactory $visualPreviewFactory,
         EarthquakeFeedEntryRepositoryInterface $feedEntryRepository,
         EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,
+        EarthquakeMapPinRepositoryInterface $mapPinRepository,
+        EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
     ): Response {
         $mocks = [
             [
@@ -32,6 +36,7 @@ class QuakeWavePreviewController extends Controller
             ],
         ];
         $syncRuns = $syncRunRepository->latest(10);
+        $mapPinSyncRuns = $mapPinSyncRunRepository->latest(10);
 
         return Inertia::render('QuakeWavePreview/Index', [
             'mocks' => $mocks,
@@ -41,6 +46,12 @@ class QuakeWavePreviewController extends Controller
             'feedEntrySyncRuns' => array_map(
                 fn ($syncRun): array => $syncRun->toArray(),
                 $syncRuns,
+            ),
+            'savedMapPins' => $mapPinRepository->latest(20),
+            'mapPinSyncStatus' => isset($mapPinSyncRuns[0]) ? $mapPinSyncRuns[0]->toArray() : null,
+            'mapPinSyncRuns' => array_map(
+                fn ($syncRun): array => $syncRun->toArray(),
+                $mapPinSyncRuns,
             ),
         ]);
     }

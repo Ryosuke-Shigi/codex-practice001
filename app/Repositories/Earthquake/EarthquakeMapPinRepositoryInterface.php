@@ -2,9 +2,9 @@
 
 namespace App\Repositories\Earthquake;
 
-use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
+use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 
-interface EarthquakeFeedEntryRepositoryInterface
+interface EarthquakeMapPinRepositoryInterface
 {
     public function isStorageReady(): bool;
 
@@ -17,15 +17,10 @@ interface EarthquakeFeedEntryRepositoryInterface
      *     failedCount: int
      * }
      */
-    public function upsertFromExtractedEntries(EarthquakeExtractedEntryListDTO $entries): array;
+    public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array;
 
     /**
      * @return array<int, array<string, mixed>>
      */
     public function latest(int $limit = 20): array;
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function entriesForMapPinBuild(int $limit = 100): array;
 }

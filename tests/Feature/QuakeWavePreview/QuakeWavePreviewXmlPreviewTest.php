@@ -44,6 +44,9 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
                 ->has('savedFeedEntries', 0)
                 ->where('feedEntrySyncStatus', null)
                 ->has('feedEntrySyncRuns', 0)
+                ->has('savedMapPins', 0)
+                ->where('mapPinSyncStatus', null)
+                ->has('mapPinSyncRuns', 0)
             );
 
         Http::assertNothingSent();

@@ -16,7 +16,13 @@ use App\Repositories\Earthquake\EarthquakeFeedEntryRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeMapPinRepository;
+use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepository;
+use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
+use App\Repositories\Earthquake\JmaEarthquakeDetailXmlRepository;
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -49,6 +55,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EarthquakeXmlRepositoryInterface::class, JmaEarthquakeXmlRepository::class);
         $this->app->bind(EarthquakeFeedEntryRepositoryInterface::class, EarthquakeFeedEntryRepository::class);
         $this->app->bind(EarthquakeFeedEntrySyncRunRepositoryInterface::class, EarthquakeFeedEntrySyncRunRepository::class);
+        $this->app->bind(EarthquakeDetailXmlRepositoryInterface::class, JmaEarthquakeDetailXmlRepository::class);
+        $this->app->bind(EarthquakeMapPinRepositoryInterface::class, EarthquakeMapPinRepository::class);
+        $this->app->bind(EarthquakeMapPinSyncRunRepositoryInterface::class, EarthquakeMapPinSyncRunRepository::class);
     }
 
     /**

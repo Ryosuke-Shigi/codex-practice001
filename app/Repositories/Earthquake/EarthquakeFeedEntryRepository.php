@@ -112,6 +112,32 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function entriesForMapPinBuild(int $limit = 100): array
+    {
+        if (! $this->isStorageReady()) {
+            return [];
+        }
+
+        /*
+         * map pin 生成の入力になる feed entry だけを返します。
+         * 「個別XMLを解析して pin を作れるか」は Service 側の責務なので、Repository では
+         * xml_url を持つ保存済み entry の取得条件だけに留めます。
+         */
+        return EarthquakeFeedEntry::query()
+            ->whereNotNull('xml_url')
+            ->where('xml_url', '<>', '')
+            ->orderByRaw('updated_at_from_feed IS NULL')
+            ->orderByDesc('updated_at_from_feed')
+            ->orderByDesc('id')
+            ->limit(max(1, min($limit, 500)))
+            ->get()
+            ->map(fn (EarthquakeFeedEntry $entry): array => $this->entryToArray($entry))
+            ->all();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function attributesFromEntry(EarthquakeExtractedEntryDTO $entry, CarbonInterface $fetchedAt): array

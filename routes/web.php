@@ -9,6 +9,8 @@ use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewMapController;
+use App\Http\Controllers\QuakeWavePreviewMapPinSyncController;
+use App\Http\Controllers\QuakeWavePreviewMapPinSyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewXmlController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +68,11 @@ Route::post('/quakewave-preview/feed-entries/sync', QuakeWavePreviewFeedEntrySyn
     ->name('quakewave-preview.feed-entries.sync');
 Route::get('/quakewave-preview/feed-entries/sync/status', QuakeWavePreviewFeedEntrySyncStatusController::class)
     ->name('quakewave-preview.feed-entries.sync.status');
+
+Route::post('/quakewave-preview/map-pins/sync', QuakeWavePreviewMapPinSyncController::class)
+    ->name('quakewave-preview.map-pins.sync');
+Route::get('/quakewave-preview/map-pins/sync/status', QuakeWavePreviewMapPinSyncStatusController::class)
+    ->name('quakewave-preview.map-pins.sync.status');
 
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 
