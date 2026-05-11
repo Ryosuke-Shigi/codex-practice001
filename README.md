@@ -3,7 +3,7 @@
 API Discovery Hub は、APIs.guru の公開APIカタログ `list.json` を同期キャッシュとして取り込み、公開APIを検索・保存・調査するためのポートフォリオアプリです。
 
 - 公開URL: https://ada-works.dev
-- できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認
+- できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認、気象庁XMLの取得・保存・地図可視化
 - 技術スタック: Laravel 11, Docker, Inertia, React, TypeScript, MySQL, Redis
 - 設計上の見どころ: ADRパターン、レイヤードアーキテクチャ、DTO、Repository、Service、Action、Responder、Queue
 - AI駆動開発の位置づけ: 仕様決定や完成判定は人間が行い、ChatGPT / CodexApp は設計整理・レビュー観点整理・既存コード確認・差分作成の補助として使う
@@ -42,6 +42,19 @@ API Discovery Hub は AWS Lightsail で外部公開し、Cloudflareで取得し�
 - Scheduler による定期同期 Job 投入
 - API Preview での外部 API 疎通確認
 - モック画面での UI 確認
+
+### QuakeWave Preview
+
+- 気象庁の地震火山情報 Atom feed を取得
+- 地震情報 entry の抽出
+- `earthquake_feed_entries` への保存
+- entry_id を基準にした insert / update / skip の差分同期
+- 保存済み feed entry から個別 XML を取得
+- 個別 XML から震源座標・最大震度・マグニチュード・深さを抽出
+- 地図表示用 pin の生成・保存
+- Queue による地震 feed 取込と map pin 生成
+- 同期ステータスのポーリング表示
+- 水面上に日本地図と地震ピンを表示する UI モック
 
 React 画面は、同期 Job の登録と同期ステータス確認の導線を持っています。同期失敗ログや同期履歴表示としての整理は、今後追加予定です。
 
