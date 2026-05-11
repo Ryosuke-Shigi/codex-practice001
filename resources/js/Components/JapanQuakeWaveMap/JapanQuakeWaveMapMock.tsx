@@ -113,7 +113,10 @@ function LatestFeedEntryPanel({
                 </span>
                 <span className="flex items-center gap-2">
                     <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50/80">
-                        {latestFeedEntryPreview.entryCount} entries
+                        {entry ? '最新1件' : '最新0件'}
+                    </span>
+                    <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50/80">
+                        抽出{latestFeedEntryPreview.entryCount}件
                     </span>
                     <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50/80 transition group-open:rotate-180">
                         v

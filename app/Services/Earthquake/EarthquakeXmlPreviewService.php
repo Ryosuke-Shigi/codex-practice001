@@ -12,9 +12,9 @@ use Throwable;
 /*
  * JMA Atom feed を「Preview 画面で読める形」に変換する Service です。
  *
- * Repository が返した XML body を読み、Atom feed / entry の表層項目だけを DTO に詰めます。
- * 今回は取得確認が目的なので、entry が指す個別 XML 電文の Report / Control / Head / Body 解析、
- * EventID 重複判定、EarthquakeMapPinDTO 変換、DB 保存はここでは行いません。
+ * Repository が返した XML body を読み、Atom feed / entry の表層項目を DTO に詰めます。
+ * MAP Preview では entry が指す個別 XML 電文から座標・最大震度などの最小項目だけ読みますが、
+ * DB 保存、Queue/Scheduler、EarthquakeMapPinDTO への本格変換はここでは行いません。
  */
 class EarthquakeXmlPreviewService
 {
@@ -24,6 +24,9 @@ class EarthquakeXmlPreviewService
      * namespace URI を定数化して parse 処理の意図を残します。
      */
     private const ATOM_NAMESPACE = 'http://www.w3.org/2005/Atom';
+    private const JMAXML_INFORMATION_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/informationBasis1/';
+    private const JMAXML_SEISMOLOGY_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/body/seismology1/';
+    private const JMAXML_ELEMENT_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/elementBasis1/';
 
     public function __construct(
         private readonly EarthquakeXmlRepositoryInterface $repository,
@@ -99,6 +102,9 @@ class EarthquakeXmlPreviewService
             ? $this->entryExtractService->extractAll($feed->entries)
             : null;
         $latestEntry = $extractedEntries?->latest();
+        $earthquakeReport = $latestEntry?->xmlUrl === null
+            ? null
+            : $this->fetchEarthquakeReportPreview($latestEntry->xmlUrl);
 
         return [
             'success' => $preview['success'],
@@ -110,6 +116,8 @@ class EarthquakeXmlPreviewService
             'feedUpdatedAt' => $feed?->feedUpdatedAt,
             'entryCount' => $extractedEntries?->count() ?? 0,
             'entry' => $latestEntry?->toArray(),
+            'earthquake' => $earthquakeReport['earthquake'] ?? null,
+            'earthquakeError' => $earthquakeReport['error'] ?? null,
         ];
     }
 
@@ -119,48 +127,158 @@ class EarthquakeXmlPreviewService
      */
     public function previewPinsFromLatestEntryPreview(array $latestFeedEntryPreview): array
     {
-        /*
-         * Atom feed の entry だけでは震源緯度経度や最大震度をまだ取得できません。
-         * そのため MAP 表示では最新 entry と連動した「仮ピン」を一件だけ作り、
-         * 個別 XML 解析前でもピン・波紋レイヤーの見え方を確認できるようにします。
-         */
         $entry = $latestFeedEntryPreview['entry'] ?? null;
 
         if (! ($latestFeedEntryPreview['success'] ?? false) || ! is_array($entry)) {
             return [];
         }
 
+        $earthquake = $latestFeedEntryPreview['earthquake'] ?? null;
         $occurredAt = $entry['updatedAt']
             ?? $entry['publishedAt']
             ?? $latestFeedEntryPreview['feedUpdatedAt']
             ?? $latestFeedEntryPreview['fetchedAt'];
+        $latitude = is_array($earthquake) && is_numeric($earthquake['latitude'] ?? null)
+            ? (float) $earthquake['latitude']
+            : 36.2048;
+        $longitude = is_array($earthquake) && is_numeric($earthquake['longitude'] ?? null)
+            ? (float) $earthquake['longitude']
+            : 138.2529;
 
         return [
             [
                 /*
                  * React 側の地図レイヤーは EarthquakeMapPin 形の props だけを見ます。
-                 * この時点では Atom entry 由来の id/title/time だけが事実データで、
-                 * 緯度経度・震度・深さ・マグニチュードは個別 XML 解析前のサンプル値です。
+                 * 個別 XML が読めた場合は EventID / 震源座標 / 最大震度も事実データとして使い、
+                 * 読めない場合だけ Atom entry 由来の情報と仮座標に戻します。
                  */
-                'eventId' => (string) ($entry['id'] ?? 'jma-latest-preview'),
+                'eventId' => (string) ($earthquake['eventId'] ?? $entry['id'] ?? 'jma-latest-preview'),
                 'title' => (string) ($entry['title'] ?? 'JMA 最新情報'),
                 /*
-                 * 日本中央付近に置く仮座標です。
-                 * JMA 個別 XML の Body から震源緯度経度を読むまでは、MAP 表示の見た目確認に限定します。
+                 * 個別 XML の Coordinate は +41.0+142.5-50000/ のような形式です。
+                 * 解析できたら青森県東方沖など実際の震央に置き、失敗時のみ仮座標へ戻します。
                  */
-                'latitude' => 36.2048,
-                'longitude' => 138.2529,
-                'occurredAt' => $occurredAt,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'occurredAt' => $earthquake['originTime'] ?? $occurredAt,
                 /*
-                 * 最大震度も Atom feed entry には含まれません。
-                 * 「未解析」を画面上でも分かるように、数字ではなく ? を渡します。
+                 * 最大震度は Atom feed entry ではなく個別 XML の Intensity/Observation/MaxInt にあります。
+                 * 読めた場合は 1, 2, 3, 4, 5-, 5+ などをそのまま渡します。
                  */
-                'maxIntensity' => '?',
-                'magnitude' => null,
-                'depthKm' => null,
-                'areaName' => '震源位置未解析',
-                'headline' => 'Atom feed の最新 entry から作った MAP 表示確認用ピンです。',
+                'maxIntensity' => (string) ($earthquake['maxIntensity'] ?? '?'),
+                'magnitude' => $earthquake['magnitude'] ?? null,
+                'depthKm' => $earthquake['depthKm'] ?? null,
+                'areaName' => (string) ($earthquake['areaName'] ?? '震源位置未解析'),
+                'headline' => (string) ($earthquake['headline'] ?? 'Atom feed の最新 entry から作った MAP 表示確認用ピンです。'),
             ],
+        ];
+    }
+
+    /**
+     * @return array{earthquake: array<string, mixed>|null, error: array<string, mixed>|null}
+     */
+    private function fetchEarthquakeReportPreview(string $xmlUrl): array
+    {
+        /*
+         * MAP Preview で位置と震度が仮表示のままだと、最新 entry が反映されたか判断しづらくなります。
+         * ここでは個別 XML を一度だけ取得し、地図表示に必要な最小項目だけを読みます。
+         */
+        $transport = $this->repository->fetchXmlDocument($xmlUrl);
+
+        if (! ($transport['success'] ?? false)) {
+            return [
+                'earthquake' => null,
+                'error' => [
+                    'status' => $transport['status_code'],
+                    'message' => $this->safeErrorMessage($transport['error_message'] ?? null),
+                ],
+            ];
+        }
+
+        try {
+            return [
+                'earthquake' => $this->parseEarthquakeReport((string) ($transport['body'] ?? '')),
+                'error' => null,
+            ];
+        } catch (Throwable) {
+            return [
+                'earthquake' => null,
+                'error' => [
+                    'status' => $transport['status_code'],
+                    'message' => 'JMA earthquake XML document could not be parsed.',
+                ],
+            ];
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseEarthquakeReport(string $body): array
+    {
+        /*
+         * 個別 XML は Report / Control / Head / Body がそれぞれ namespace を持ちます。
+         * SimpleXML では namespace ごとに children() を切り替え、座標や M は jmx_eb 側から読みます。
+         */
+        $previous = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            $xml = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
+
+            if (! $xml instanceof SimpleXMLElement) {
+                throw new \RuntimeException('JMA earthquake report XML parse failed.');
+            }
+
+            $head = $xml->children(self::JMAXML_INFORMATION_NAMESPACE)->Head;
+            $bodyNode = $xml->children(self::JMAXML_SEISMOLOGY_NAMESPACE)->Body;
+            $earthquake = $bodyNode->Earthquake;
+            $hypocenterArea = $earthquake->Hypocenter->Area;
+            $elementChildren = $hypocenterArea->children(self::JMAXML_ELEMENT_NAMESPACE);
+            $coordinateNode = $elementChildren->Coordinate;
+            $coordinate = $this->parseJmaCoordinate($this->nullableText($coordinateNode));
+            $magnitude = $earthquake->children(self::JMAXML_ELEMENT_NAMESPACE)->Magnitude;
+
+            return [
+                'eventId' => $this->nullableText($head->EventID),
+                'reportTitle' => $this->nullableText($head->Title),
+                'originTime' => $this->nullableText($earthquake->OriginTime),
+                'areaName' => $this->nullableText($hypocenterArea->Name),
+                'latitude' => $coordinate['latitude'],
+                'longitude' => $coordinate['longitude'],
+                'depthKm' => $coordinate['depthKm'],
+                'coordinateDescription' => $this->nullableText($coordinateNode->attributes()['description'] ?? null),
+                'magnitude' => $this->nullableFloat($magnitude),
+                'maxIntensity' => $this->nullableText($bodyNode->Intensity->Observation->MaxInt),
+                'headline' => $this->nullableText($head->Headline->Text),
+            ];
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    /**
+     * @return array{latitude: float|null, longitude: float|null, depthKm: float|null}
+     */
+    private function parseJmaCoordinate(?string $rawCoordinate): array
+    {
+        /*
+         * JMA の震源座標は +41.0+142.5-50000/ のように
+         * 緯度・経度・深さ(m) が符号付き数値で連結されています。
+         */
+        if ($rawCoordinate === null || ! preg_match('/^([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?\//', $rawCoordinate, $matches)) {
+            return [
+                'latitude' => null,
+                'longitude' => null,
+                'depthKm' => null,
+            ];
+        }
+
+        return [
+            'latitude' => (float) $matches[1],
+            'longitude' => (float) $matches[2],
+            'depthKm' => isset($matches[3]) ? abs((float) $matches[3]) / 1000 : null,
         ];
     }
 
@@ -278,6 +396,13 @@ class EarthquakeXmlPreviewService
         $text = $this->text($value);
 
         return $text === '' ? null : $text;
+    }
+
+    private function nullableFloat(SimpleXMLElement|string|null $value): ?float
+    {
+        $text = $this->nullableText($value);
+
+        return is_numeric($text) ? (float) $text : null;
     }
 
     /**

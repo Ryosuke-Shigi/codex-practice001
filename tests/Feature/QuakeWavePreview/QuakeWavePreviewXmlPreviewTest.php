@@ -83,6 +83,9 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
             JmaEarthquakeXmlRepository::FEED_URL => Http::response($this->atomFeedWithNewerSecondEntry(), 200, [
                 'Content-Type' => 'application/atom+xml',
             ]),
+            'https://www.data.jma.go.jp/developer/xml/data/20260511090500_0.xml' => Http::response($this->earthquakeReportXml(), 200, [
+                'Content-Type' => 'application/xml',
+            ]),
         ]);
 
         $response = $this->get('/quakewave-preview/map');
@@ -92,12 +95,14 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('QuakeWavePreview/Map', false)
                 ->has('pins', 1)
-                ->where('pins.0.eventId', 'urn:jma:example:newer')
+                ->where('pins.0.eventId', '20260511112751')
                 ->where('pins.0.title', '震源・震度に関する最新情報')
-                ->where('pins.0.latitude', 36.2048)
-                ->where('pins.0.longitude', 138.2529)
-                ->where('pins.0.maxIntensity', '?')
-                ->where('pins.0.areaName', '震源位置未解析')
+                ->where('pins.0.latitude', 41)
+                ->where('pins.0.longitude', 142.5)
+                ->where('pins.0.maxIntensity', '1')
+                ->where('pins.0.magnitude', 4)
+                ->where('pins.0.depthKm', 50)
+                ->where('pins.0.areaName', '青森県東方沖')
                 ->where('latestFeedEntryPreview.success', true)
                 ->where('latestFeedEntryPreview.statusCode', 200)
                 ->where('latestFeedEntryPreview.error', null)
@@ -108,10 +113,17 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
                 ->where('latestFeedEntryPreview.entry.title', '震源・震度に関する最新情報')
                 ->where('latestFeedEntryPreview.entry.updatedAt', '2026-05-11T09:05:00+09:00')
                 ->where('latestFeedEntryPreview.entry.xmlUrl', 'https://www.data.jma.go.jp/developer/xml/data/20260511090500_0.xml')
+                ->where('latestFeedEntryPreview.earthquake.eventId', '20260511112751')
+                ->where('latestFeedEntryPreview.earthquake.latitude', 41)
+                ->where('latestFeedEntryPreview.earthquake.longitude', 142.5)
+                ->where('latestFeedEntryPreview.earthquake.maxIntensity', '1')
             );
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         Http::assertSent(fn (Request $request) => $request->url() === JmaEarthquakeXmlRepository::FEED_URL
+            && $request->method() === 'GET'
+            && $request->hasHeader('Accept', 'application/atom+xml, application/xml;q=0.9, text/xml;q=0.8'));
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://www.data.jma.go.jp/developer/xml/data/20260511090500_0.xml'
             && $request->method() === 'GET'
             && $request->hasHeader('Accept', 'application/atom+xml, application/xml;q=0.9, text/xml;q=0.8'));
     }
@@ -198,6 +210,54 @@ XML;
     </author>
   </entry>
 </feed>
+XML;
+    }
+
+    private function earthquakeReportXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://xml.kishou.go.jp/jmaxml1/" xmlns:jmx="http://xml.kishou.go.jp/jmaxml1/">
+  <Control>
+    <Title>震源・震度に関する情報</Title>
+    <DateTime>2026-05-11T02:31:20Z</DateTime>
+    <Status>通常</Status>
+    <EditorialOffice>気象庁本庁</EditorialOffice>
+    <PublishingOffice>気象庁</PublishingOffice>
+  </Control>
+  <Head xmlns="http://xml.kishou.go.jp/jmaxml1/informationBasis1/">
+    <Title>震源・震度情報</Title>
+    <ReportDateTime>2026-05-11T11:31:00+09:00</ReportDateTime>
+    <TargetDateTime>2026-05-11T11:31:00+09:00</TargetDateTime>
+    <EventID>20260511112751</EventID>
+    <InfoType>発表</InfoType>
+    <Serial>1</Serial>
+    <InfoKind>地震情報</InfoKind>
+    <InfoKindVersion>1.0_1</InfoKindVersion>
+    <Headline>
+      <Text>１１日１１時２７分ころ、地震がありました。</Text>
+    </Headline>
+  </Head>
+  <Body xmlns="http://xml.kishou.go.jp/jmaxml1/body/seismology1/" xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/elementBasis1/">
+    <Earthquake>
+      <OriginTime>2026-05-11T11:27:00+09:00</OriginTime>
+      <ArrivalTime>2026-05-11T11:27:00+09:00</ArrivalTime>
+      <Hypocenter>
+        <Area>
+          <Name>青森県東方沖</Name>
+          <Code type="震央地名">285</Code>
+          <jmx_eb:Coordinate description="北緯４１．０度　東経１４２．５度　深さ　５０ｋｍ">+41.0+142.5-50000/</jmx_eb:Coordinate>
+        </Area>
+      </Hypocenter>
+      <jmx_eb:Magnitude type="Mj" description="Ｍ４．０">4.0</jmx_eb:Magnitude>
+    </Earthquake>
+    <Intensity>
+      <Observation>
+        <MaxInt>1</MaxInt>
+      </Observation>
+    </Intensity>
+  </Body>
+</Report>
 XML;
     }
 }

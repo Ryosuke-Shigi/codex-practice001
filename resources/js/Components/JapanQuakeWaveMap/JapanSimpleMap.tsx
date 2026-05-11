@@ -31,20 +31,52 @@ const mapPadding = {
     y: 22,
 };
 
-function pinColor(maxIntensity: string) {
+function formatPinTime(value: string) {
     /*
-     * Preview では震度の見た目だけをざっくり確認します。
-     * 個別 XML 解析前の ? は弱めの青に寄せ、本番震度が来たら赤/紫/青へ自然に分岐します。
+     * Atom entry の updatedAt / publishedAt 由来の時刻を、地図上でも短く見せます。
+     * ピンはまだ仮座標・震度未解析なので、時刻だけでも最新 entry が差し替わったことを確認できます。
      */
-    if (maxIntensity.startsWith('7') || maxIntensity.startsWith('6')) {
-        return '#ef4444';
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
     }
 
-    if (maxIntensity.startsWith('5')) {
-        return '#a855f7';
+    return new Intl.DateTimeFormat('ja-JP', {
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(date);
+}
+
+function pinVisual(pin: EarthquakeMapPin) {
+    /*
+     * 個別 XML 解析前は maxIntensity が ? のままなので、震度だけで色を決めると
+     * 最新 entry が変わっても MAP 上のピン・波紋が同じ見た目に見えてしまいます。
+     * そこで Preview 段階では title/headline の語句も見て、地震系なら「震」、津波系なら「津」を表示します。
+     */
+    const text = `${pin.title} ${pin.headline} ${pin.areaName}`;
+
+    if (pin.maxIntensity !== '?') {
+        if (pin.maxIntensity.startsWith('7') || pin.maxIntensity.startsWith('6')) {
+            return { color: '#ef4444', label: pin.maxIntensity, ringCount: 4, rippleSize: 124, kind: `震度${pin.maxIntensity}` };
+        }
+
+        if (pin.maxIntensity.startsWith('5')) {
+            return { color: '#a855f7', label: pin.maxIntensity, ringCount: 3, rippleSize: 112, kind: `震度${pin.maxIntensity}` };
+        }
+
+        return { color: '#38bdf8', label: pin.maxIntensity, ringCount: 2, rippleSize: 104, kind: `震度${pin.maxIntensity}` };
     }
 
-    return '#38bdf8';
+    if (text.includes('津波')) {
+        return { color: '#38bdf8', label: '津', ringCount: 3, rippleSize: 118, kind: '津波' };
+    }
+
+    if (text.includes('震源') || text.includes('震度') || text.includes('地震')) {
+        return { color: '#ef4444', label: '震', ringCount: 4, rippleSize: 124, kind: '地震' };
+    }
+
+    return { color: '#38bdf8', label: '?', ringCount: 3, rippleSize: 104, kind: '未解析' };
 }
 
 /*
@@ -196,7 +228,8 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                     </style>
 
                     {pinPlacements.map(({ eventId, pin, x, y }) => {
-                        const color = pinColor(pin.maxIntensity);
+                        const visual = pinVisual(pin);
+                        const latestTimeLabel = formatPinTime(pin.occurredAt);
 
                         return (
                             <div
@@ -211,15 +244,17 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                                     top: `${(y / mapViewBox.height) * 100}%`,
                                 }}
                             >
-                                {[0, 1, 2].map((index) => (
+                                {Array.from({ length: visual.ringCount }).map((_, index) => (
                                     <span
                                         key={`${eventId}-ripple-${index}`}
-                                        className="quake-map-preview-ripple absolute left-1/2 top-1/2 h-24 w-24 rounded-full border"
+                                        className="quake-map-preview-ripple absolute left-1/2 top-1/2 rounded-full border"
                                         style={{
                                             animation: 'quake-map-preview-ripple 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite',
-                                            animationDelay: `${index * -0.8}s`,
-                                            borderColor: color,
-                                            boxShadow: `0 0 26px ${color}55`,
+                                            animationDelay: `${index * -(2.4 / visual.ringCount)}s`,
+                                            borderColor: visual.color,
+                                            boxShadow: `0 0 26px ${visual.color}55`,
+                                            height: visual.rippleSize,
+                                            width: visual.rippleSize,
                                         }}
                                     />
                                 ))}
@@ -228,19 +263,19 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                                     <span
                                         className="absolute h-6 w-6 rotate-45 border border-white/80"
                                         style={{
-                                            backgroundColor: color,
+                                            backgroundColor: visual.color,
                                             borderRadius: '50% 50% 50% 0',
-                                            boxShadow: `0 0 22px ${color}88`,
+                                            boxShadow: `0 0 22px ${visual.color}88`,
                                         }}
                                         aria-hidden="true"
                                     />
-                                    <span className="relative text-[10px] font-bold leading-none text-slate-950">
-                                        {pin.maxIntensity}
+                                    <span className="relative text-[11px] font-bold leading-none text-slate-950">
+                                        {visual.label}
                                     </span>
                                 </span>
 
                                 <span className="absolute left-1/2 top-5 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/50 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
-                                    最新
+                                    {latestTimeLabel ? `最新 ${latestTimeLabel} ${visual.kind}` : `最新 ${visual.kind}`}
                                 </span>
                             </div>
                         );
