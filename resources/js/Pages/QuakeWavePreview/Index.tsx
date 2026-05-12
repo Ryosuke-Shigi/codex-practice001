@@ -792,9 +792,8 @@ export default function Index({
                 </section>
 
                 {/*
-                    OBENTO 構造は「主役の大きい区画」と「将来追加する小区画」を
-                    先に見せるための入口レイアウトです。Planned の区画はまだ画面遷移を
-                    持たせず、ピン、波紋、詳細パネル、凡例の責務だけを予告します。
+                    OBENTO 構造は「主役の大きい区画」と部品確認を同じ入口で見せるための
+                    開発用レイアウトです。予定だけのカードは置かず、今確認できるものだけを並べます。
                 */}
                 <section className="grid grid-cols-1 gap-3 md:grid-cols-6 xl:grid-cols-12">
                     {mapMock && (
@@ -889,33 +888,6 @@ export default function Index({
                         </div>
                     </article>
 
-                    <article className="flex min-h-[160px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-2 xl:col-span-4">
-                        <div>
-                            <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
-                                Planned
-                            </span>
-                            <h3 className="mt-3 text-lg font-semibold text-white">
-                                詳細パネル
-                            </h3>
-                        </div>
-                        <p className="mt-4 text-sm leading-6 text-slate-200/75">
-                            地震イベント選択後の表示領域として残します。
-                        </p>
-                    </article>
-
-                    <article className="flex min-h-[160px] flex-col justify-between rounded-lg border border-white/15 bg-slate-950/62 p-4 md:col-span-2 xl:col-span-4">
-                        <div>
-                            <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
-                                Planned
-                            </span>
-                            <h3 className="mt-3 text-lg font-semibold text-white">
-                                凡例
-                            </h3>
-                        </div>
-                        <p className="mt-4 text-sm leading-6 text-slate-200/75">
-                            色、震度、マグニチュードの読み取り補助を置く予定です。
-                        </p>
-                    </article>
                 </section>
             </div>
         </PublicLayout>

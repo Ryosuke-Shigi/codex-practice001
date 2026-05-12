@@ -9,6 +9,8 @@ use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewMapController;
+use App\Http\Controllers\QuakeWavePreviewMapMockController;
+use App\Http\Controllers\QuakeWavePreviewMapRefreshController;
 use App\Http\Controllers\QuakeWavePreviewMapPinSyncController;
 use App\Http\Controllers\QuakeWavePreviewMapPinSyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewXmlController;
@@ -25,14 +27,6 @@ Route::get('/lab', function () {
     // Lab では現在触れる検証入口だけを表示し、未実装の仮カードはここへ戻さない方針です。
     $experiments = [
         [
-            // API Preview は本体同期とは切り離した、外部API疎通確認用の入口です。
-            'id' => 'api-preview',
-            'title' => 'API Preview',
-            'summary' => '外部APIを本体実装前に叩き、成功時・失敗時のレスポンスを確認する開発補助画面です。',
-            'status' => 'Ready',
-            'href' => '/api-preview',
-        ],
-        [
             // API Discovery Hub は api_catalog_cache を使う本番一覧画面への入口です。
             'id' => 'api-discovery-hub',
             'title' => 'API Discovery Hub',
@@ -41,10 +35,28 @@ Route::get('/lab', function () {
             'href' => '/api-catalog',
         ],
         [
-            // QuakeWave Preview は地震波可視化系 UI モックの入口です。
+            // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
+            // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
             'id' => 'quakewave-preview',
+            'title' => 'QuakeWave Map',
+            'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
+            'status' => 'Preview',
+            'href' => '/quakewave-preview/map',
+        ],
+        [
+            // API Preview は本体同期とは切り離した、外部API疎通確認用のモック入口です。
+            'id' => 'api-preview',
+            'title' => 'API Preview',
+            'summary' => '外部APIを本体実装前に叩き、成功時・失敗時のレスポンスを確認する開発補助画面です。',
+            'status' => 'Mock',
+            'href' => '/api-preview',
+        ],
+        [
+            // QuakeWave Preview はモック、部品確認、XML確認、同期確認をまとめた開発確認入口です。
+            // Lab からモック確認へ行きたい場合は、個別の勝手なページではなくこの入口へ戻します。
+            'id' => 'quakewave-preview-tools',
             'title' => 'QuakeWave Preview',
-            'summary' => '地震波可視化の UI モックを、本実装や API 接続前に画面単位で確認する入口です。',
+            'summary' => '地震マップのモック、ピン・波紋の部品、XML取得、同期状態を確認する開発用入口です。',
             'status' => 'Mock',
             'href' => '/quakewave-preview',
         ],
@@ -60,6 +72,12 @@ Route::get('/quakewave-preview', QuakeWavePreviewController::class)
 
 Route::get('/quakewave-preview/map', QuakeWavePreviewMapController::class)
     ->name('quakewave-preview.map');
+
+Route::get('/quakewave-preview/map/mock', QuakeWavePreviewMapMockController::class)
+    ->name('quakewave-preview.map.mock');
+
+Route::post('/quakewave-preview/map/refresh', QuakeWavePreviewMapRefreshController::class)
+    ->name('quakewave-preview.map.refresh');
 
 Route::get('/quakewave-preview/xml', QuakeWavePreviewXmlController::class)
     ->name('quakewave-preview.xml');

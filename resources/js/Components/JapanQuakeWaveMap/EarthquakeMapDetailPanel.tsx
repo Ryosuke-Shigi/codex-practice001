@@ -1,4 +1,4 @@
-import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMapMock';
+import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
 
 type EarthquakeMapDetailPanelProps = {
     pin: EarthquakeMapPin | null;
@@ -29,7 +29,7 @@ function formatDepth(depthMeter: number | null) {
         return '-';
     }
 
-    return `${depthMeter.toLocaleString()} m`;
+    return `${Math.round(depthMeter / 1000).toLocaleString()} km`;
 }
 
 function valueOrDash(value: string | number | null) {
@@ -43,7 +43,9 @@ function valueOrDash(value: string | number | null) {
 export default function EarthquakeMapDetailPanel({ pin }: EarthquakeMapDetailPanelProps) {
     /*
      * 詳細パネルは選択中 pin の表示専用です。
-     * 地図上の選択状態は親で管理し、ここでは DB から来た項目を欠損に強い形で並べます。
+     * 研究用・学習用の読みやすさを優先し、地域名と震度を中心に置きます。
+     * rawCoordinate や sourceEntryId のような検証向け情報は地図上の主表示から外し、
+     * DB の全項目をそのまま並べるだけのパネルにしないようにします。
      */
     if (!pin) {
         return (
@@ -59,13 +61,10 @@ export default function EarthquakeMapDetailPanel({ pin }: EarthquakeMapDetailPan
     }
 
     const rows = [
-        ['area', valueOrDash(pin.areaName)],
-        ['maxIntensity', valueOrDash(pin.maxIntensity)],
         ['magnitude', valueOrDash(pin.magnitude)],
-        ['depthMeter', formatDepth(pin.depthMeter)],
-        ['occurredAt', formatDateTime(pin.occurredAt)],
-        ['reportedAt', formatDateTime(pin.reportedAt)],
-        ['rawCoordinate', valueOrDash(pin.rawCoordinate)],
+        ['depth', formatDepth(pin.depthMeter)],
+        ['occurred', formatDateTime(pin.occurredAt)],
+        ['reported', formatDateTime(pin.reportedAt)],
     ];
 
     return (
@@ -73,9 +72,16 @@ export default function EarthquakeMapDetailPanel({ pin }: EarthquakeMapDetailPan
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
                 detail
             </p>
-            <h2 className="mt-3 text-lg font-semibold leading-7 text-white">
-                {pin.title ?? '地震情報'}
+            <h2 className="mt-3 text-xl font-semibold leading-7 text-white">
+                {pin.areaName ?? pin.title ?? '地域名未取得'}
             </h2>
+
+            <div className="mt-4 inline-flex items-center gap-3 rounded-lg border border-white/18 bg-white/10 px-3 py-2">
+                <span className="text-xs font-semibold text-cyan-100/62">震度</span>
+                <span className="text-2xl font-semibold leading-none text-white">
+                    {valueOrDash(pin.maxIntensity)}
+                </span>
+            </div>
 
             <dl className="mt-4 grid gap-3 text-sm">
                 {rows.map(([label, value]) => (

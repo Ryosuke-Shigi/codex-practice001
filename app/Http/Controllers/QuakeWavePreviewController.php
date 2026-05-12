@@ -22,10 +22,10 @@ class QuakeWavePreviewController extends Controller
         $mocks = [
             [
                 'id' => 'map-display',
-                'title' => 'MAP表示',
-                'summary' => '水背景の上に日本地図を重ね、後で地震ピンと波紋を配置する土台を確認します。',
-                'status' => 'Ready',
-                'href' => '/quakewave-preview/map',
+                'title' => '地震情報MAPモック',
+                'summary' => '仮データで震源ピン・波紋・震度表示・プレート境界線の見え方を確認します。',
+                'status' => 'Mock',
+                'href' => '/quakewave-preview/map/mock',
             ],
             [
                 'id' => 'xml-preview',

@@ -18,7 +18,7 @@ class EarthquakeMapResponder
          * latitude / longitude は DB と PHP DTO では string として守り、React の投影計算に
          * 入る直前だけ Number() へ変換します。そのためここでも数値化や丸めは行いません。
          */
-        return Inertia::render('QuakeWavePreview/Map', [
+        return Inertia::render('QuakeWavePreview/QuakeWaveMapPage', [
             'pins' => $pins->toArray()['items'],
         ]);
     }
