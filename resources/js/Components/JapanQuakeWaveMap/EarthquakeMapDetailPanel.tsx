@@ -4,32 +4,12 @@ type EarthquakeMapDetailPanelProps = {
     pin: EarthquakeMapPin | null;
 };
 
-function formatDateTime(value: string | null) {
-    if (!value) {
-        return '-';
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return new Intl.DateTimeFormat('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(date);
-}
-
 function formatDepth(depthMeter: number | null) {
     if (depthMeter === null) {
         return '-';
     }
 
-    return `${Math.round(depthMeter / 1000).toLocaleString()} km`;
+    return `${Math.round(depthMeter / 1000).toLocaleString()}km`;
 }
 
 function valueOrDash(value: string | number | null) {
@@ -50,9 +30,7 @@ export default function EarthquakeMapDetailPanel({ pin }: EarthquakeMapDetailPan
     if (!pin) {
         return (
             <aside className="rounded-lg border border-white/25 bg-slate-950/34 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                    detail
-                </p>
+                <p className="text-sm font-semibold text-white">詳細</p>
                 <p className="mt-3 text-sm leading-6 text-cyan-50/78">
                     地図上のピンを選択すると、取得済み地震情報の詳細を表示します。
                 </p>
@@ -60,46 +38,33 @@ export default function EarthquakeMapDetailPanel({ pin }: EarthquakeMapDetailPan
         );
     }
 
+    const areaName = pin.areaName?.trim() || '発生場所未取得';
+    const earthquakeStatement = pin.headline?.trim() || pin.comment?.trim() || null;
     const rows = [
-        ['magnitude', valueOrDash(pin.magnitude)],
-        ['depth', formatDepth(pin.depthMeter)],
-        ['occurred', formatDateTime(pin.occurredAt)],
-        ['reported', formatDateTime(pin.reportedAt)],
+        ['マグニチュード', valueOrDash(pin.magnitude)],
+        ['最大震度', valueOrDash(pin.maxIntensity)],
+        ['深さ', formatDepth(pin.depthMeter)],
     ];
 
     return (
         <aside className="rounded-lg border border-white/25 bg-slate-950/40 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.2)] backdrop-blur-md">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                detail
-            </p>
-            <h2 className="mt-3 text-xl font-semibold leading-7 text-white">
-                {pin.areaName ?? pin.title ?? '地域名未取得'}
+            <h2 className="text-xl font-semibold leading-7 text-white">
+                {areaName}
             </h2>
 
-            <div className="mt-4 inline-flex items-center gap-3 rounded-lg border border-white/18 bg-white/10 px-3 py-2">
-                <span className="text-xs font-semibold text-cyan-100/62">震度</span>
-                <span className="text-2xl font-semibold leading-none text-white">
-                    {valueOrDash(pin.maxIntensity)}
-                </span>
-            </div>
-
-            <dl className="mt-4 grid gap-3 text-sm">
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 {rows.map(([label, value]) => (
-                    <div key={label}>
+                    <div key={label} className="rounded-md border border-white/15 bg-white/10 px-3 py-2">
                         <dt className="text-xs font-semibold text-cyan-100/62">{label}</dt>
-                        <dd className="mt-1 break-words text-cyan-50/88">{value}</dd>
+                        <dd className="mt-1 break-words text-base font-semibold text-white">{value}</dd>
                     </div>
                 ))}
             </dl>
 
-            {pin.headline && (
+            {earthquakeStatement && (
                 <p className="mt-4 border-t border-white/15 pt-4 text-sm leading-6 text-cyan-50/84">
-                    {pin.headline}
+                    {earthquakeStatement}
                 </p>
-            )}
-
-            {pin.comment && pin.comment !== pin.headline && (
-                <p className="mt-3 text-sm leading-6 text-cyan-50/72">{pin.comment}</p>
             )}
         </aside>
     );

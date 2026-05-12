@@ -138,7 +138,6 @@ export default function JapanQuakeWaveMapMockPage() {
                     eyebrow="QuakeWave Mock"
                     title="地図全体モック"
                     summary="上の部品を仮データの日本地図に重ね、表示ON/OFFや詳細表示のまとまりを確認します。"
-                    sourceLabel="mock pins"
                 />
             </div>
         </PublicLayout>

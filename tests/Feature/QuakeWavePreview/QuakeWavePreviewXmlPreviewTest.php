@@ -191,6 +191,7 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $mapPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/QuakeWaveMapPage.tsx'));
         $simpleMapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanSimpleMap.tsx'));
         $controlSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapLayerControlPanel.tsx'));
+        $detailSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel.tsx'));
         $plateSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/PlateBoundaryLayer.tsx'));
         $mockPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/JapanQuakeWaveMapMockPage.tsx'));
 
@@ -198,10 +199,14 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertIsString($mapPageSource);
         $this->assertIsString($simpleMapSource);
         $this->assertIsString($controlSource);
+        $this->assertIsString($detailSource);
         $this->assertIsString($plateSource);
         $this->assertIsString($mockPageSource);
         $this->assertStringContainsString('MapLayerControlPanel', $mapSource);
-        $this->assertStringContainsString('Job & Queue', $mapSource);
+        $this->assertStringContainsString('isRefreshPanelOpen', $mapSource);
+        $this->assertStringContainsString('地図データ更新', $mapSource);
+        $this->assertStringContainsString('aria-expanded', $mapSource);
+        $this->assertStringNotContainsString('sourceLabel', $mapSource.$mapPageSource.$mockPageSource);
         $this->assertStringContainsString('/quakewave-preview/map/refresh', $mapPageSource);
         $this->assertStringContainsString('/quakewave-preview/feed-entries/sync/status', $mapPageSource);
         $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $mapPageSource);
@@ -212,10 +217,19 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertStringContainsString('EarthquakeRipple', $mockPageSource);
         $this->assertStringContainsString('Parts Mock', $mockPageSource);
         $this->assertStringContainsString('showPlateBoundaries', $simpleMapSource);
+        $this->assertStringContainsString('MAP LAYERS', $controlSource);
+        $this->assertStringContainsString('activeLayerCount', $controlSource);
+        $this->assertStringContainsString('aria-expanded', $controlSource);
         $this->assertStringContainsString('震源ピン', $controlSource);
         $this->assertStringContainsString('波紋', $controlSource);
         $this->assertStringContainsString('震度表示', $controlSource);
         $this->assertStringContainsString('プレート境界線', $controlSource);
+        $this->assertStringContainsString('マグニチュード', $detailSource);
+        $this->assertStringContainsString('最大震度', $detailSource);
+        $this->assertStringContainsString('深さ', $detailSource);
+        $this->assertStringContainsString('areaName', $detailSource);
+        $this->assertStringNotContainsString('occurred', $detailSource);
+        $this->assertStringNotContainsString('reported', $detailSource);
         $this->assertStringContainsString('stroke="#fde047"', $plateSource);
     }
 
