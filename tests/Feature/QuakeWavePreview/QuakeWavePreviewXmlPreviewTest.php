@@ -190,18 +190,28 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $mapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanQuakeWaveMap.tsx'));
         $mapPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/QuakeWaveMapPage.tsx'));
         $simpleMapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanSimpleMap.tsx'));
+        $projectionSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/mapProjection.ts'));
         $controlSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapLayerControlPanel.tsx'));
         $detailSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel.tsx'));
         $plateSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/PlateBoundaryLayer.tsx'));
         $mockPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/JapanQuakeWaveMapMockPage.tsx'));
+        $plateGeoJson = json_decode(
+            (string) file_get_contents(public_path('data/plate-boundaries.geojson')),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
 
         $this->assertIsString($mapSource);
         $this->assertIsString($mapPageSource);
         $this->assertIsString($simpleMapSource);
+        $this->assertIsString($projectionSource);
         $this->assertIsString($controlSource);
         $this->assertIsString($detailSource);
         $this->assertIsString($plateSource);
         $this->assertIsString($mockPageSource);
+        $this->assertSame('FeatureCollection', $plateGeoJson['type']);
+        $this->assertNotEmpty($plateGeoJson['features']);
         $this->assertStringContainsString('MapLayerControlPanel', $mapSource);
         $this->assertStringContainsString('isRefreshPanelOpen', $mapSource);
         $this->assertStringContainsString('地図データ更新', $mapSource);
@@ -217,6 +227,13 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertStringContainsString('EarthquakeRipple', $mockPageSource);
         $this->assertStringContainsString('Parts Mock', $mockPageSource);
         $this->assertStringContainsString('showPlateBoundaries', $simpleMapSource);
+        $this->assertStringContainsString('mapProjectionBounds', $projectionSource);
+        $this->assertStringContainsString('projectCoordinateToMap', $simpleMapSource);
+        $this->assertStringContainsString('projectCoordinateToMap', $plateSource);
+        $this->assertStringContainsString('/data/plate-boundaries.geojson', $plateSource);
+        $this->assertStringContainsString('LineString', $plateSource);
+        $this->assertStringContainsString('MultiLineString', $plateSource);
+        $this->assertStringNotContainsString('plateBoundaryPaths', $plateSource);
         $this->assertStringContainsString('MAP LAYERS', $controlSource);
         $this->assertStringContainsString('activeLayerCount', $controlSource);
         $this->assertStringContainsString('aria-expanded', $controlSource);

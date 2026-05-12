@@ -4,17 +4,16 @@ import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeM
 import EarthquakeMapPinMarker from '@/Components/JapanQuakeWaveMap/EarthquakeMapPinMarker';
 import EarthquakeMapRipple from '@/Components/JapanQuakeWaveMap/EarthquakeMapRipple';
 import type { MapLayerVisibility } from '@/Components/JapanQuakeWaveMap/MapLayerControlPanel';
+import {
+    mapViewBox,
+    projectCoordinateToMap,
+} from '@/Components/JapanQuakeWaveMap/mapProjection';
 import PlateBoundaryLayer from '@/Components/JapanQuakeWaveMap/PlateBoundaryLayer';
 import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
 
 type JapanSimpleMapProps = {
     pins: EarthquakeMapPin[];
     layers: MapLayerVisibility;
-};
-
-type MapPoint = {
-    x: number;
-    y: number;
 };
 
 type PinPlacement = {
@@ -34,28 +33,6 @@ type EarthquakeMapPinVisual = {
     ringCount: number;
     rippleSize: number;
     durationSeconds: number;
-};
-
-const mapViewBox = {
-    width: 560,
-    height: 760,
-};
-
-const mapProjectionBounds = {
-    minLongitude: 122.6,
-    maxLongitude: 146.4,
-    minLatitude: 23.6,
-    maxLatitude: 46.0,
-};
-
-/*
- * 地図と将来の pin 配置で同じ投影範囲を使うため、緯度経度の範囲を
- * コンポーネント内に明示します。厳密な GIS 操作ではなく、UI モック上で
- * 日本列島と地震 pin の位置関係を自然に見せるための簡易投影です。
- */
-const mapPadding = {
-    x: 22,
-    y: 22,
 };
 
 function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt' | 'reportedAt'>) {
@@ -182,29 +159,6 @@ function earthquakeVisual(maxIntensity: string | null): EarthquakeMapPinVisual {
     };
 }
 
-function projectPinToMap(latitude: number, longitude: number): MapPoint {
-    /*
-     * この projection は本格GISではなく、既存の簡易日本地図SVGにピンを重ねるための
-     * 線形変換です。地図SVGと同じ viewBox を基準に pixel 座標を作り、最後に percentage
-     * へ変換することで responsive に拡縮しても位置関係を保ちます。
-     */
-    const innerWidth = mapViewBox.width - mapPadding.x * 2;
-    const innerHeight = mapViewBox.height - mapPadding.y * 2;
-
-    return {
-        x:
-            ((longitude - mapProjectionBounds.minLongitude)
-                / (mapProjectionBounds.maxLongitude - mapProjectionBounds.minLongitude))
-                * innerWidth
-            + mapPadding.x,
-        y:
-            ((mapProjectionBounds.maxLatitude - latitude)
-                / (mapProjectionBounds.maxLatitude - mapProjectionBounds.minLatitude))
-                * innerHeight
-            + mapPadding.y,
-    };
-}
-
 function pinPlacement(pin: EarthquakeMapPin, displayOrder: number): PinPlacement | null {
     /*
      * DB/DTO では latitude / longitude を string のまま扱います。
@@ -218,7 +172,7 @@ function pinPlacement(pin: EarthquakeMapPin, displayOrder: number): PinPlacement
         return null;
     }
 
-    const point = projectPinToMap(latitude, longitude);
+    const point = projectCoordinateToMap({ latitude, longitude });
 
     return {
         displayOrder,
