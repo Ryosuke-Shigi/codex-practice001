@@ -316,7 +316,6 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
                     eyebrow="QuakeWave Map"
                     title="地震情報可視化"
                     summary="DBに保存済みの地震情報を日本地図上へ重ね、震源・震度・波紋を確認します。"
-                    sourceLabel="earthquake_map_pins"
                     refreshAction={{
                         buttonLabel: '地図データ更新',
                         disabledLabel: '更新中',

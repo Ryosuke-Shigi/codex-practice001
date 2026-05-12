@@ -28,7 +28,6 @@ type JapanQuakeWaveMapProps = {
     eyebrow?: string;
     title?: string;
     summary?: string;
-    sourceLabel?: string;
     refreshAction?: {
         buttonLabel: string;
         disabledLabel: string;
@@ -60,7 +59,6 @@ export default function JapanQuakeWaveMap({
     eyebrow = 'QuakeWave Preview',
     title = '地震情報可視化',
     summary = '取得済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。',
-    sourceLabel = 'earthquake_map_pins',
     refreshAction,
 }: JapanQuakeWaveMapProps) {
     /*
@@ -69,9 +67,10 @@ export default function JapanQuakeWaveMap({
      * プレート境界線を独立した表示レイヤーとして扱います。
      */
     const [layers, setLayers] = useState<MapLayerVisibility>(defaultLayerVisibility);
+    const [isRefreshPanelOpen, setIsRefreshPanelOpen] = useState(false);
 
     return (
-        <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.88fr)_minmax(420px,1.12fr)]">
+        <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(520px,1.28fr)]">
             <motion.div
                 className="max-w-2xl"
                 initial={{ opacity: 0, y: 18 }}
@@ -92,49 +91,54 @@ export default function JapanQuakeWaveMap({
                     <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                                    Job & Queue
-                                </p>
+                                <h2 className="text-base font-semibold text-white">
+                                    地図データ更新
+                                </h2>
                                 <p role="status" aria-live="polite" className="mt-2 text-sm font-semibold leading-6 text-white">
                                     {refreshAction.statusLabel}
                                 </p>
                             </div>
                             <button
                                 type="button"
-                                onClick={refreshAction.onRefresh}
-                                disabled={refreshAction.isRefreshing}
+                                aria-expanded={isRefreshPanelOpen}
+                                onClick={() => setIsRefreshPanelOpen((current) => !current)}
                                 className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
                             >
-                                {refreshAction.isRefreshing ? refreshAction.disabledLabel : refreshAction.buttonLabel}
+                                {isRefreshPanelOpen ? '閉じる' : '開く'}
                             </button>
                         </div>
-                        <p className="mt-3 text-xs leading-5 text-cyan-50/75">
-                            {refreshAction.description}
-                        </p>
-                        {refreshAction.errorMessage && (
-                            <p className="mt-3 rounded-md border border-rose-200/35 bg-rose-200/10 px-3 py-2 text-sm leading-6 text-rose-50">
-                                {refreshAction.errorMessage}
-                            </p>
+
+                        {isRefreshPanelOpen && (
+                            <div className="mt-4 border-t border-white/15 pt-4">
+                                <p className="text-sm font-semibold leading-6 text-white">
+                                    {refreshAction.statusLabel}
+                                </p>
+                                <p className="mt-2 text-xs leading-5 text-cyan-50/75">
+                                    {refreshAction.description}
+                                </p>
+                                {refreshAction.errorMessage && (
+                                    <p className="mt-3 rounded-md border border-rose-200/35 bg-rose-200/10 px-3 py-2 text-sm leading-6 text-rose-50">
+                                        {refreshAction.errorMessage}
+                                    </p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={refreshAction.onRefresh}
+                                    disabled={refreshAction.isRefreshing}
+                                    className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
+                                >
+                                    {refreshAction.isRefreshing ? refreshAction.disabledLabel : refreshAction.buttonLabel}
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
 
-                <div className="mt-8 grid max-w-xl grid-cols-2 gap-3">
-                    <div className="rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                            pins
-                        </p>
-                        <p className="mt-2 text-3xl font-semibold text-white">{pins.length}</p>
+                {pins.length === 0 && (
+                    <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+                        保存済みの地震ピンはありません。
                     </div>
-                    <div className="rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
-                            source
-                        </p>
-                        <p className="mt-2 text-sm font-semibold leading-6 text-white">
-                            {sourceLabel}
-                        </p>
-                    </div>
-                </div>
+                )}
             </motion.div>
 
             <motion.div
