@@ -25,12 +25,15 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('QuakeWavePreview/Index', false)
-                ->has('mocks', 2)
+                ->has('mocks', 3)
                 ->where('mocks.0.id', 'map-display')
                 ->where('mocks.0.href', '/quakewave-preview/map')
-                ->where('mocks.1.id', 'xml-preview')
-                ->where('mocks.1.title', 'XML取得プレビュー')
-                ->where('mocks.1.href', '/quakewave-preview/xml')
+                ->where('mocks.0.title', '地震情報MAP')
+                ->where('mocks.1.id', 'map-mock')
+                ->where('mocks.1.href', '/quakewave-preview/map/mock')
+                ->where('mocks.2.id', 'xml-preview')
+                ->where('mocks.2.title', 'XML取得プレビュー')
+                ->where('mocks.2.href', '/quakewave-preview/xml')
                 ->has('visualPreview.pins', 4)
                 ->where('visualPreview.pins.0.label', '震度7')
                 ->where('visualPreview.pins.0.maxIntensity', '7')
@@ -114,7 +117,7 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $response
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('QuakeWavePreview/Map', false)
+                ->component('QuakeWavePreview/QuakeWaveMapPage', false)
                 ->has('pins', 1)
                 ->where('pins.0.eventId', '20260511112751')
                 ->where('pins.0.sourceEntryId', $sourceEntry->getKey())
@@ -141,8 +144,47 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $response
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('QuakeWavePreview/Map', false)
+                ->component('QuakeWavePreview/QuakeWaveMapPage', false)
                 ->has('pins', 0)
+            );
+
+        Http::assertNothingSent();
+    }
+
+    public function test_map_frontend_contains_layer_controls_and_plate_boundary_layer(): void
+    {
+        $mapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanQuakeWaveMap.tsx'));
+        $simpleMapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanSimpleMap.tsx'));
+        $controlSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapLayerControlPanel.tsx'));
+        $plateSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/PlateBoundaryLayer.tsx'));
+        $mockPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/JapanQuakeWaveMapMockPage.tsx'));
+
+        $this->assertIsString($mapSource);
+        $this->assertIsString($simpleMapSource);
+        $this->assertIsString($controlSource);
+        $this->assertIsString($plateSource);
+        $this->assertIsString($mockPageSource);
+        $this->assertStringContainsString('MapLayerControlPanel', $mapSource);
+        $this->assertStringNotContainsString('function JapanQuakeWaveMapMock', $mapSource);
+        $this->assertStringContainsString('JapanQuakeWaveMapMockPage', $mockPageSource);
+        $this->assertStringContainsString('showPlateBoundaries', $simpleMapSource);
+        $this->assertStringContainsString('震源ピン', $controlSource);
+        $this->assertStringContainsString('波紋', $controlSource);
+        $this->assertStringContainsString('震度表示', $controlSource);
+        $this->assertStringContainsString('プレート境界線', $controlSource);
+        $this->assertStringContainsString('stroke="#fde047"', $plateSource);
+    }
+
+    public function test_map_mock_page_uses_mock_page_component_without_db_pins_props(): void
+    {
+        Http::preventStrayRequests();
+
+        $this
+            ->get('/quakewave-preview/map/mock')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('QuakeWavePreview/JapanQuakeWaveMapMockPage', false)
+                ->missing('pins')
             );
 
         Http::assertNothingSent();

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 
-import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMapMock';
+import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
 
 type EarthquakeMapPinMarkerVisual = {
     color: string;
@@ -16,6 +16,7 @@ type EarthquakeMapPinMarkerProps = {
     yPercent: number;
     visual: EarthquakeMapPinMarkerVisual;
     selected: boolean;
+    showIntensityLabel: boolean;
     onSelect: (pin: EarthquakeMapPin) => void;
 };
 
@@ -26,6 +27,7 @@ export default function EarthquakeMapPinMarker({
     yPercent,
     visual,
     selected,
+    showIntensityLabel,
     onSelect,
 }: EarthquakeMapPinMarkerProps) {
     /*
@@ -64,18 +66,22 @@ export default function EarthquakeMapPinMarker({
                 }}
                 aria-hidden="true"
             />
-            <span
-                className={`relative flex items-center justify-center font-bold leading-none text-slate-950 ${visual.fontClassName}`}
-                style={{
-                    height: visual.markerSize,
-                    width: visual.markerSize,
-                }}
-            >
-                {pin.maxIntensity ?? '?'}
-            </span>
-            <span className="absolute left-1/2 top-[calc(50%+18px)] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/58 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
-                #{displayOrder} {visual.label}
-            </span>
+            {showIntensityLabel && (
+                <span
+                    className={`relative flex items-center justify-center font-bold leading-none text-slate-950 ${visual.fontClassName}`}
+                    style={{
+                        height: visual.markerSize,
+                        width: visual.markerSize,
+                    }}
+                >
+                    {pin.maxIntensity ?? '?'}
+                </span>
+            )}
+            {showIntensityLabel && (
+                <span className="absolute left-1/2 top-[calc(50%+18px)] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/58 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
+                    #{displayOrder} {visual.label}
+                </span>
+            )}
         </button>
     );
 }

@@ -9,6 +9,7 @@ use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewMapController;
+use App\Http\Controllers\QuakeWavePreviewMapMockController;
 use App\Http\Controllers\QuakeWavePreviewMapPinSyncController;
 use App\Http\Controllers\QuakeWavePreviewMapPinSyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewXmlController;
@@ -41,12 +42,22 @@ Route::get('/lab', function () {
             'href' => '/api-catalog',
         ],
         [
-            // QuakeWave Preview は地震波可視化系 UI モックの入口です。
+            // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
+            // 開発確認用の /quakewave-preview は残しつつ、Lab からは地図画面へ直接入れるようにします。
             'id' => 'quakewave-preview',
-            'title' => 'QuakeWave Preview',
-            'summary' => '地震波可視化の UI モックを、本実装や API 接続前に画面単位で確認する入口です。',
+            'title' => 'QuakeWave Map',
+            'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
+            'status' => 'Preview',
+            'href' => '/quakewave-preview/map',
+        ],
+        [
+            // QuakeWave Map Mock は仮データで共通地図コンポーネントを確認する入口です。
+            // DB pins 用ページとは入口を分け、モック確認の導線も Lab から消えないようにします。
+            'id' => 'quakewave-map-mock',
+            'title' => 'QuakeWave Map Mock',
+            'summary' => '仮データで震源ピン・波紋・震度表示・プレート境界線の見え方を確認する地図モックです。',
             'status' => 'Mock',
-            'href' => '/quakewave-preview',
+            'href' => '/quakewave-preview/map/mock',
         ],
     ];
 
@@ -60,6 +71,9 @@ Route::get('/quakewave-preview', QuakeWavePreviewController::class)
 
 Route::get('/quakewave-preview/map', QuakeWavePreviewMapController::class)
     ->name('quakewave-preview.map');
+
+Route::get('/quakewave-preview/map/mock', QuakeWavePreviewMapMockController::class)
+    ->name('quakewave-preview.map.mock');
 
 Route::get('/quakewave-preview/xml', QuakeWavePreviewXmlController::class)
     ->name('quakewave-preview.xml');

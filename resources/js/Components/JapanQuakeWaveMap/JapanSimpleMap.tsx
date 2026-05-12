@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel';
 import EarthquakeMapPinMarker from '@/Components/JapanQuakeWaveMap/EarthquakeMapPinMarker';
 import EarthquakeMapRipple from '@/Components/JapanQuakeWaveMap/EarthquakeMapRipple';
-import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMapMock';
+import type { MapLayerVisibility } from '@/Components/JapanQuakeWaveMap/MapLayerControlPanel';
+import PlateBoundaryLayer from '@/Components/JapanQuakeWaveMap/PlateBoundaryLayer';
+import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
 
 type JapanSimpleMapProps = {
     pins: EarthquakeMapPin[];
+    layers: MapLayerVisibility;
 };
 
 type MapPoint = {
@@ -227,7 +230,7 @@ function pinPlacement(pin: EarthquakeMapPin, displayOrder: number): PinPlacement
     };
 }
 
-export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
+export default function JapanSimpleMap({ pins, layers }: JapanSimpleMapProps) {
     /*
      * 保存済み earthquake_map_pins を最新発表順に並べ、SVG と同じ viewBox 比率で
      * absolute 配置します。選択状態はこの地図コンポーネント内だけで管理します。
@@ -295,6 +298,8 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
                                 <path key={index} d={path} />
                             ))}
                         </g>
+
+                        <PlateBoundaryLayer visible={layers.showPlateBoundaries} />
                     </svg>
 
                     <div
@@ -333,22 +338,27 @@ export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
 
                         {pinPlacements.map(({ displayOrder, eventKey, pin, xPercent, yPercent, visual }) => (
                             <div key={eventKey}>
-                                <EarthquakeMapRipple
-                                    eventKey={eventKey}
-                                    xPercent={xPercent}
-                                    yPercent={yPercent}
-                                    visual={visual}
-                                />
-                                <EarthquakeMapPinMarker
-                                    pin={pin}
-                                    displayOrder={displayOrder}
-                                    xPercent={xPercent}
-                                    yPercent={yPercent}
-                                    visual={visual}
-                                    selected={selectedPin?.eventId === pin.eventId
-                                        && selectedPin?.sourceEntryId === pin.sourceEntryId}
-                                    onSelect={setSelectedPin}
-                                />
+                                {layers.showRipples && (
+                                    <EarthquakeMapRipple
+                                        eventKey={eventKey}
+                                        xPercent={xPercent}
+                                        yPercent={yPercent}
+                                        visual={visual}
+                                    />
+                                )}
+                                {layers.showPins && (
+                                    <EarthquakeMapPinMarker
+                                        pin={pin}
+                                        displayOrder={displayOrder}
+                                        xPercent={xPercent}
+                                        yPercent={yPercent}
+                                        visual={visual}
+                                        selected={selectedPin?.eventId === pin.eventId
+                                            && selectedPin?.sourceEntryId === pin.sourceEntryId}
+                                        showIntensityLabel={layers.showIntensityLabels}
+                                        onSelect={setSelectedPin}
+                                    />
+                                )}
                             </div>
                         ))}
                     </div>
