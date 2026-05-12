@@ -1,3 +1,8 @@
+import { useEffect, useMemo, useState } from 'react';
+
+import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel';
+import EarthquakeMapPinMarker from '@/Components/JapanQuakeWaveMap/EarthquakeMapPinMarker';
+import EarthquakeMapRipple from '@/Components/JapanQuakeWaveMap/EarthquakeMapRipple';
 import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMapMock';
 
 type JapanSimpleMapProps = {
@@ -7,6 +12,25 @@ type JapanSimpleMapProps = {
 type MapPoint = {
     x: number;
     y: number;
+};
+
+type PinPlacement = {
+    displayOrder: number;
+    eventKey: string;
+    pin: EarthquakeMapPin;
+    xPercent: number;
+    yPercent: number;
+    visual: EarthquakeMapPinVisual;
+};
+
+type EarthquakeMapPinVisual = {
+    color: string;
+    label: string;
+    markerSize: number;
+    fontClassName: string;
+    ringCount: number;
+    rippleSize: number;
+    durationSeconds: number;
 };
 
 const mapViewBox = {
@@ -31,73 +55,32 @@ const mapPadding = {
     y: 22,
 };
 
-function formatPinTime(value: string) {
-    /*
-     * 個別 XML から取れた発生時刻を、表示順を読むための短い補助ラベルへ変換します。
-     * ピン中央の数字は震度ではなく「最新順の連番」にするため、時刻は下の小さなバッジへ逃がします。
-     */
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return null;
-    }
-
-    return new Intl.DateTimeFormat('ja-JP', {
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(date);
-}
-
-function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt'>) {
-    /*
-     * MAP 上のピン番号は「表示順」を表します。
-     * 最新の地震ほど小さい番号になるよう、occurredAt の降順で並べ替えるための比較値を作ります。
-     */
-    const timestamp = new Date(pin.occurredAt).getTime();
+function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt' | 'reportedAt'>) {
+    const value = pin.reportedAt ?? pin.occurredAt;
+    const timestamp = value ? new Date(value).getTime() : Number.NaN;
 
     return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function displayOrderClassName(displayOrder: number) {
-    if (displayOrder >= 100) {
-        return 'text-[8px]';
-    }
-
-    if (displayOrder >= 10) {
-        return 'text-[9px]';
-    }
-
-    return 'text-[11px]';
-}
-
-function pinVisual(pin: EarthquakeMapPin) {
+function intensityRank(maxIntensity: string | null) {
     /*
-     * ピン中央の数字は震度ではなく表示順です。
-     * ここでは震度や title/headline の語句から、色・波紋数・ラベル文言だけを決めます。
+     * 気象庁XML由来の震度は "5-" や "5+" のような文字列もあり得ます。
+     * 今回の第1段階では細かな強弱記号までは分けず、先頭数字だけで
+     * 「5弱以上 / 3〜4 / 1〜2 / 不明」の表示カテゴリへ寄せます。
      */
-    const text = `${pin.title} ${pin.headline} ${pin.areaName}`;
+    const normalized = maxIntensity?.trim();
 
-    if (pin.maxIntensity !== '?') {
-        if (pin.maxIntensity.startsWith('7') || pin.maxIntensity.startsWith('6')) {
-            return { color: '#ef4444', ringCount: 4, rippleSize: 124, kind: `震度${pin.maxIntensity}` };
-        }
-
-        if (pin.maxIntensity.startsWith('5')) {
-            return { color: '#a855f7', ringCount: 3, rippleSize: 112, kind: `震度${pin.maxIntensity}` };
-        }
-
-        return { color: '#38bdf8', ringCount: 2, rippleSize: 104, kind: `震度${pin.maxIntensity}` };
+    if (!normalized || normalized === '?' || normalized === '不明') {
+        return null;
     }
 
-    if (text.includes('津波')) {
-        return { color: '#38bdf8', ringCount: 3, rippleSize: 118, kind: '津波' };
+    const leadingNumber = Number.parseInt(normalized.slice(0, 1), 10);
+
+    if (Number.isNaN(leadingNumber)) {
+        return null;
     }
 
-    if (text.includes('震源') || text.includes('震度') || text.includes('地震')) {
-        return { color: '#ef4444', ringCount: 4, rippleSize: 124, kind: '地震' };
-    }
-
-    return { color: '#38bdf8', ringCount: 3, rippleSize: 104, kind: '未解析' };
+    return leadingNumber;
 }
 
 /*
@@ -141,171 +124,244 @@ const japanLandPaths = [
     'M 237.8 403.3 L 235.7 402.8 L 237.3 399.9 L 238.2 403.1 Z',
 ];
 
-function projectPinToMap(pin: Pick<EarthquakeMapPin, 'latitude' | 'longitude'>): MapPoint {
+function earthquakeVisual(maxIntensity: string | null): EarthquakeMapPinVisual {
+    const rank = intensityRank(maxIntensity);
+
+    /*
+     * 地図表示の演出は React の責務です。
+     * Repository/DTO には色・サイズ・速度を保存せず、maxIntensity からこの関数で
+     * 描画用の値へ変換します。後続で時間経過やユーザー設定を加える場合もここを起点にします。
+     */
+    if (rank !== null && rank >= 5) {
+        return {
+            color: '#ef4444',
+            label: `震度${maxIntensity}`,
+            markerSize: 32,
+            fontClassName: 'text-[10px]',
+            ringCount: 4,
+            rippleSize: 156,
+            durationSeconds: 1.6,
+        };
+    }
+
+    if (rank !== null && rank >= 3) {
+        return {
+            color: '#a855f7',
+            label: `震度${maxIntensity}`,
+            markerSize: 28,
+            fontClassName: 'text-[10px]',
+            ringCount: 3,
+            rippleSize: 132,
+            durationSeconds: 2.1,
+        };
+    }
+
+    if (rank !== null && rank >= 1) {
+        return {
+            color: '#38bdf8',
+            label: `震度${maxIntensity}`,
+            markerSize: 24,
+            fontClassName: 'text-[11px]',
+            ringCount: 2,
+            rippleSize: 108,
+            durationSeconds: 2.8,
+        };
+    }
+
+    return {
+        color: '#e0faff',
+        label: '震度不明',
+        markerSize: 22,
+        fontClassName: 'text-[10px]',
+        ringCount: 2,
+        rippleSize: 96,
+        durationSeconds: 3.2,
+    };
+}
+
+function projectPinToMap(latitude: number, longitude: number): MapPoint {
+    /*
+     * この projection は本格GISではなく、既存の簡易日本地図SVGにピンを重ねるための
+     * 線形変換です。地図SVGと同じ viewBox を基準に pixel 座標を作り、最後に percentage
+     * へ変換することで responsive に拡縮しても位置関係を保ちます。
+     */
     const innerWidth = mapViewBox.width - mapPadding.x * 2;
     const innerHeight = mapViewBox.height - mapPadding.y * 2;
 
     return {
         x:
-            ((pin.longitude - mapProjectionBounds.minLongitude)
+            ((longitude - mapProjectionBounds.minLongitude)
                 / (mapProjectionBounds.maxLongitude - mapProjectionBounds.minLongitude))
                 * innerWidth
             + mapPadding.x,
         y:
-            ((mapProjectionBounds.maxLatitude - pin.latitude)
+            ((mapProjectionBounds.maxLatitude - latitude)
                 / (mapProjectionBounds.maxLatitude - mapProjectionBounds.minLatitude))
                 * innerHeight
             + mapPadding.y,
     };
 }
 
+function pinPlacement(pin: EarthquakeMapPin, displayOrder: number): PinPlacement | null {
+    /*
+     * DB/DTO では latitude / longitude を string のまま扱います。
+     * React の投影計算に入るこの境界だけで Number() に変換し、欠損や不正値の pin は
+     * 表示対象から外して画面全体が壊れないようにします。
+     */
+    const latitude = Number(pin.latitude);
+    const longitude = Number(pin.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return null;
+    }
+
+    const point = projectPinToMap(latitude, longitude);
+
+    return {
+        displayOrder,
+        eventKey: pin.eventId ?? `source-${pin.sourceEntryId}`,
+        pin,
+        xPercent: (point.x / mapViewBox.width) * 100,
+        yPercent: (point.y / mapViewBox.height) * 100,
+        visual: earthquakeVisual(pin.maxIntensity),
+    };
+}
+
 export default function JapanSimpleMap({ pins }: JapanSimpleMapProps) {
     /*
-     * pin layer は SVG と同じ viewBox 比率で absolute 配置します。
-     * 個別 XML から取れた latitude/longitude を projectPinToMap() に通し、
-     * 最新順に並べた表示番号を marker の中央へ重ねます。
+     * 保存済み earthquake_map_pins を最新発表順に並べ、SVG と同じ viewBox 比率で
+     * absolute 配置します。選択状態はこの地図コンポーネント内だけで管理します。
      */
-    const pinPlacements = [...pins]
-        .sort((left, right) => pinTimestamp(right) - pinTimestamp(left))
-        .map((pin, index) => ({
-            displayOrder: index + 1,
-            eventId: pin.eventId,
-            pin,
-            ...projectPinToMap(pin),
-        }));
+    const pinPlacements = useMemo(
+        () => [...pins]
+            .sort((left, right) => pinTimestamp(right) - pinTimestamp(left))
+            .map((pin, index) => pinPlacement(pin, index + 1))
+            .filter((placement): placement is PinPlacement => placement !== null),
+        [pins],
+    );
+    const [selectedPin, setSelectedPin] = useState<EarthquakeMapPin | null>(pinPlacements[0]?.pin ?? null);
+
+    useEffect(() => {
+        /*
+         * pins props が Inertia 再描画で差し替わった場合、選択中の pin が消えることがあります。
+         * そのまま古い詳細を残すと地図上に存在しない情報を表示してしまうため、
+         * 現在の表示対象に含まれなければ最新の1件へ戻します。
+         */
+        if (pinPlacements.length === 0) {
+            setSelectedPin(null);
+            return;
+        }
+
+        const selectedStillVisible = selectedPin
+            ? pinPlacements.some(({ pin }) => pin.eventId === selectedPin.eventId
+                && pin.sourceEntryId === selectedPin.sourceEntryId)
+            : false;
+
+        if (!selectedStillVisible) {
+            setSelectedPin(pinPlacements[0].pin);
+        }
+    }, [pinPlacements, selectedPin]);
 
     return (
-        <div className="relative flex h-full min-h-[472px] items-center justify-center">
-            <div className="relative aspect-[560/760] h-full max-h-[650px] w-full max-w-[560px]">
-                <svg
-                    className="pointer-events-none absolute inset-0 h-full w-full overflow-visible drop-shadow-[0_22px_48px_rgba(2,24,45,0.3)]"
-                    viewBox={`0 0 ${mapViewBox.width} ${mapViewBox.height}`}
-                    role="img"
-                    aria-label="日本地図"
-                >
-                    <defs>
-                        <linearGradient id="japan-map-land" x1="0" x2="1" y1="0" y2="1">
-                            <stop offset="0" stopColor="#f8feff" stopOpacity="0.98" />
-                            <stop offset="0.58" stopColor="#d9fbff" stopOpacity="0.88" />
-                            <stop offset="1" stopColor="#a8eef7" stopOpacity="0.74" />
-                        </linearGradient>
-                        <filter id="japan-map-soft-glow" x="-18%" y="-18%" width="136%" height="136%">
-                            <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#e6fdff" floodOpacity="0.22" />
-                        </filter>
-                    </defs>
-
-                    <g
-                        fill="url(#japan-map-land)"
-                        filter="url(#japan-map-soft-glow)"
-                        stroke="#ffffff"
-                        strokeLinejoin="round"
-                        strokeOpacity="0.74"
-                        strokeWidth="2.2"
+        <div className="grid h-full min-h-[472px] gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="relative flex min-h-[430px] items-center justify-center">
+                <div className="relative aspect-[560/760] h-full max-h-[650px] w-full max-w-[560px]">
+                    <svg
+                        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible drop-shadow-[0_22px_48px_rgba(2,24,45,0.3)]"
+                        viewBox={`0 0 ${mapViewBox.width} ${mapViewBox.height}`}
+                        role="img"
+                        aria-label="日本地図"
                     >
-                        {japanLandPaths.map((path, index) => (
-                            <path key={index} d={path} />
-                        ))}
-                    </g>
-                </svg>
+                        <defs>
+                            <linearGradient id="japan-map-land" x1="0" x2="1" y1="0" y2="1">
+                                <stop offset="0" stopColor="#f8feff" stopOpacity="0.98" />
+                                <stop offset="0.58" stopColor="#d9fbff" stopOpacity="0.88" />
+                                <stop offset="1" stopColor="#a8eef7" stopOpacity="0.74" />
+                            </linearGradient>
+                            <filter id="japan-map-soft-glow" x="-18%" y="-18%" width="136%" height="136%">
+                                <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#e6fdff" floodOpacity="0.22" />
+                            </filter>
+                        </defs>
 
-                <div
-                    /*
-                     * pin layer は SVG と同じ表示領域に重ねます。
-                     * latest preview では一件だけですが、将来はここに複数の震源 pin、
-                     * 波紋、hover hit-area を absolute 配置で追加していきます。
-                     */
-                    className="pointer-events-none absolute inset-0"
-                    data-pin-layer
-                    data-pin-count={pinPlacements.length}
-                >
-                    <style>
-                        {`
-                            /*
-                             * 波紋は中心から広がって消えるだけの軽い preview animation です。
-                             * 実装段階では震度・経過時間・表示上限に応じて duration や ring 数を調整します。
-                             */
-                            @keyframes quake-map-preview-ripple {
-                                0% {
-                                    opacity: 0;
-                                    transform: translate(-50%, -50%) scale(0.18);
+                        <g
+                            fill="url(#japan-map-land)"
+                            filter="url(#japan-map-soft-glow)"
+                            stroke="#ffffff"
+                            strokeLinejoin="round"
+                            strokeOpacity="0.74"
+                            strokeWidth="2.2"
+                        >
+                            {japanLandPaths.map((path, index) => (
+                                <path key={index} d={path} />
+                            ))}
+                        </g>
+                    </svg>
+
+                    <div
+                        className="pointer-events-none absolute inset-0"
+                        data-pin-layer
+                        data-pin-count={pinPlacements.length}
+                    >
+                        <style>
+                            {`
+                                @keyframes quake-map-db-ripple {
+                                    0% {
+                                        opacity: 0;
+                                        transform: translate(-50%, -50%) scale(0.18);
+                                    }
+                                    12% {
+                                        opacity: 0.72;
+                                    }
+                                    72% {
+                                        opacity: 0.24;
+                                    }
+                                    100% {
+                                        opacity: 0;
+                                        transform: translate(-50%, -50%) scale(1);
+                                    }
                                 }
-                                12% {
-                                    opacity: 0.7;
+
+                                @media (prefers-reduced-motion: reduce) {
+                                    .quake-map-db-ripple {
+                                        animation: none !important;
+                                        opacity: 0.38 !important;
+                                        transform: translate(-50%, -50%) scale(0.76) !important;
+                                    }
                                 }
-                                72% {
-                                    opacity: 0.24;
-                                }
-                                100% {
-                                    opacity: 0;
-                                    transform: translate(-50%, -50%) scale(1);
-                                }
-                            }
+                            `}
+                        </style>
 
-                            @media (prefers-reduced-motion: reduce) {
-                                .quake-map-preview-ripple {
-                                    animation: none !important;
-                                    opacity: 0.38 !important;
-                                    transform: translate(-50%, -50%) scale(0.76) !important;
-                                }
-                            }
-                        `}
-                    </style>
-
-                    {pinPlacements.map(({ displayOrder, eventId, pin, x, y }) => {
-                        const visual = pinVisual(pin);
-                        const latestTimeLabel = formatPinTime(pin.occurredAt);
-
-                        return (
-                            <div
-                                key={eventId}
-                                className="absolute"
-                                style={{
-                                    /*
-                                     * SVG viewBox の x/y を percentage に変換して、absolute layer に重ねます。
-                                     * こうしておくと地図が responsive に拡縮しても pin と波紋が同じ地点に残ります。
-                                     */
-                                    left: `${(x / mapViewBox.width) * 100}%`,
-                                    top: `${(y / mapViewBox.height) * 100}%`,
-                                }}
-                            >
-                                {Array.from({ length: visual.ringCount }).map((_, index) => (
-                                    <span
-                                        key={`${eventId}-ripple-${index}`}
-                                        className="quake-map-preview-ripple absolute left-1/2 top-1/2 rounded-full border"
-                                        style={{
-                                            animation: 'quake-map-preview-ripple 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite',
-                                            animationDelay: `${index * -(2.4 / visual.ringCount)}s`,
-                                            borderColor: visual.color,
-                                            boxShadow: `0 0 26px ${visual.color}55`,
-                                            height: visual.rippleSize,
-                                            width: visual.rippleSize,
-                                        }}
-                                    />
-                                ))}
-
-                                <span className="absolute left-1/2 top-1/2 z-10 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-                                    <span
-                                        className="absolute h-6 w-6 rotate-45 border border-white/80"
-                                        style={{
-                                            backgroundColor: visual.color,
-                                            borderRadius: '50% 50% 50% 0',
-                                            boxShadow: `0 0 22px ${visual.color}88`,
-                                        }}
-                                        aria-hidden="true"
-                                    />
-                                    <span className={`relative font-bold leading-none text-slate-950 ${displayOrderClassName(displayOrder)}`}>
-                                        {displayOrder}
-                                    </span>
-                                </span>
-
-                                <span className="absolute left-1/2 top-5 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/50 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
-                                    {latestTimeLabel ? `#${displayOrder} ${latestTimeLabel} ${visual.kind}` : `#${displayOrder} ${visual.kind}`}
-                                </span>
+                        {pinPlacements.map(({ displayOrder, eventKey, pin, xPercent, yPercent, visual }) => (
+                            <div key={eventKey}>
+                                <EarthquakeMapRipple
+                                    eventKey={eventKey}
+                                    xPercent={xPercent}
+                                    yPercent={yPercent}
+                                    visual={visual}
+                                />
+                                <EarthquakeMapPinMarker
+                                    pin={pin}
+                                    displayOrder={displayOrder}
+                                    xPercent={xPercent}
+                                    yPercent={yPercent}
+                                    visual={visual}
+                                    selected={selectedPin?.eventId === pin.eventId
+                                        && selectedPin?.sourceEntryId === pin.sourceEntryId}
+                                    onSelect={setSelectedPin}
+                                />
                             </div>
-                        );
-                    })}
+                        ))}
+                    </div>
                 </div>
+
+                {pinPlacements.length === 0 && (
+                    <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-lg border border-white/25 bg-slate-950/42 px-4 py-5 text-center text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+                        保存済みの地震ピンはありません。
+                    </div>
+                )}
             </div>
+
+            <EarthquakeMapDetailPanel pin={selectedPin} />
         </div>
     );
 }

@@ -80,20 +80,30 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function latest(int $limit = 20): array
+    public function latest(int $limit = 50): array
     {
-        if (! $this->isStorageReady()) {
-            return [];
-        }
-
-        return EarthquakeMapPin::query()
-            ->orderByRaw('reported_at IS NULL')
-            ->orderByDesc('reported_at')
-            ->orderByDesc('id')
-            ->limit(max(1, min($limit, 100)))
-            ->get()
+        /*
+         * Index 画面の「保存済み map pin 簡易一覧」向けの読み取り口です。
+         * QuakeWave MAP 本体は toMapPinListDTO() を使いますが、同じ latestModels() を
+         * 経由させることで、最新順や上限の扱いを Repository 内で一箇所に揃えます。
+         */
+        return $this->latestModels($limit)
             ->map(fn (EarthquakeMapPin $pin): array => $this->pinToArray($pin))
             ->all();
+    }
+
+    public function toMapPinListDTO(int $limit = 50): EarthquakeMapPinListDTO
+    {
+        /*
+         * MAP 表示用の読み取り境界です。
+         * Repository では DB の最新行を DTO に戻すだけにし、震度による色・波紋サイズなどの
+         * 表示演出は React 側へ残します。保存や再同期の判断もここでは行いません。
+         */
+        return new EarthquakeMapPinListDTO(
+            $this->latestModels($limit)
+                ->map(fn (EarthquakeMapPin $pin): EarthquakeMapPinDTO => $this->pinToDTO($pin))
+                ->all(),
+        );
     }
 
     private function findExisting(EarthquakeMapPinDTO $pin): ?EarthquakeMapPin
@@ -230,14 +240,74 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
             'areaName' => $pin->area_name,
             'headline' => $pin->headline,
             'rawCoordinate' => $pin->raw_coordinate,
-            'latitude' => $pin->latitude,
-            'longitude' => $pin->longitude,
+            'latitude' => $this->decimalString($pin->latitude, 7),
+            'longitude' => $this->decimalString($pin->longitude, 7),
             'depthMeter' => $pin->depth_meter,
-            'magnitude' => $pin->magnitude,
+            'magnitude' => $this->decimalString($pin->magnitude, 1),
             'maxIntensity' => $pin->max_intensity,
             'occurredAt' => $pin->occurred_at?->toIso8601String(),
             'reportedAt' => $pin->reported_at?->toIso8601String(),
             'comment' => $pin->comment,
         ];
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, EarthquakeMapPin>
+     */
+    private function latestModels(int $limit)
+    {
+        if (! $this->isStorageReady()) {
+            return collect();
+        }
+
+        /*
+         * reported_at が取れている行を優先し、同じ発表時刻では後から保存された行を上にします。
+         * ここでは「表示対象にするか」の業務判断はせず、保存済みデータの最新順読み取りだけを
+         * Eloquent クエリとして表現します。
+         */
+        return EarthquakeMapPin::query()
+            ->orderByRaw('reported_at IS NULL')
+            ->orderByDesc('reported_at')
+            ->orderByDesc('id')
+            ->limit(max(1, min($limit, 100)))
+            ->get();
+    }
+
+    private function pinToDTO(EarthquakeMapPin $pin): EarthquakeMapPinDTO
+    {
+        return new EarthquakeMapPinDTO(
+            eventId: $pin->event_id,
+            sourceEntryId: (int) $pin->source_entry_id,
+            title: $pin->title,
+            areaName: $pin->area_name,
+            headline: $pin->headline,
+            rawCoordinate: $pin->raw_coordinate,
+            latitude: $this->decimalString($pin->latitude, 7),
+            longitude: $this->decimalString($pin->longitude, 7),
+            depthMeter: $pin->depth_meter,
+            magnitude: $this->decimalString($pin->magnitude, 1),
+            maxIntensity: $pin->max_intensity,
+            occurredAt: $pin->occurred_at?->toIso8601String(),
+            reportedAt: $pin->reported_at?->toIso8601String(),
+            comment: $pin->comment,
+        );
+    }
+
+    private function decimalString(float|int|string|null $value, int $scale): ?string
+    {
+        /*
+         * latitude / longitude / magnitude は Model で float cast しない方針です。
+         * ただし SQLite などのテストDBでは DECIMAL の末尾ゼロが落ちるため、
+         * 表示 DTO へ戻す境界でだけ文字列スケールを揃えます。
+         */
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (! is_numeric($value)) {
+            return (string) $value;
+        }
+
+        return number_format((float) $value, $scale, '.', '');
     }
 }

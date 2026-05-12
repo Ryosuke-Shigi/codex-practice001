@@ -3,58 +3,35 @@ import { motion } from 'motion/react';
 import JapanSimpleMap from '@/Components/JapanQuakeWaveMap/JapanSimpleMap';
 
 export type EarthquakeMapPin = {
-    eventId: string;
-    title: string;
-    latitude: number;
-    longitude: number;
-    occurredAt: string;
-    maxIntensity: string;
-    magnitude: number | null;
-    depthKm: number | null;
-    areaName: string;
-    headline: string;
-};
-
-export type EarthquakeFeedEntryPreview = {
-    id: string;
-    title: string;
-    updatedAt: string | null;
-    publishedAt: string | null;
-    xmlUrl: string | null;
-    rawCategory: string | null;
-    rawAuthor: string | null;
-};
-
-export type LatestFeedEntryPreview = {
-    success: boolean;
-    statusCode: number | null;
-    fetchedAt: string;
-    responseTimeMs: number;
-    error: {
-        status: number | null;
-        message: string;
-    } | null;
-    feedTitle: string | null;
-    feedUpdatedAt: string | null;
-    entryCount: number;
-    entry: EarthquakeFeedEntryPreview | null;
+    eventId: string | null;
+    sourceEntryId: number;
+    title: string | null;
+    areaName: string | null;
+    headline: string | null;
+    rawCoordinate: string | null;
+    latitude: string | null;
+    longitude: string | null;
+    depthMeter: number | null;
+    magnitude: string | null;
+    maxIntensity: string | null;
+    occurredAt: string | null;
+    reportedAt: string | null;
+    comment: string | null;
 };
 
 type JapanQuakeWaveMapMockProps = {
     pins: EarthquakeMapPin[];
-    latestFeedEntryPreview: LatestFeedEntryPreview;
 };
 
 /*
- * JapanQuakeWaveMapMock は MAP 表示モックの画面構成だけを担当します。
- * タイトル、説明、最新 feed entry パネル、地図表示エリアを束ねます。
- * 地震APIの定期取得、DB保存、個別XML解析、凡例、詳細パネルはまだ持ちません。
+ * JapanQuakeWaveMapMock は MAP 表示画面の大枠だけを担当します。
+ * 保存済み earthquake_map_pins を受け取り、日本地図・ピン・波紋・詳細表示の
+ * 子コンポーネントへ渡します。DB取得や同期開始の責務は持ちません。
  *
- * pins は子コンポーネントへ渡すだけにしておくことで、
- * 「Laravel DTO -> Inertia props -> React map layer」の流れを保ちます。
- * 今はサンプルピンですが、将来の本番 pin DTO も同じ入口で差し替える想定です。
+ * まだ本番マップへの接続段階なので、文言は「取得済み地震情報」に留め、
+ * リアルタイム性や通知のような未実装の期待を出さないようにします。
  */
-export default function JapanQuakeWaveMapMock({ pins, latestFeedEntryPreview }: JapanQuakeWaveMapMockProps) {
+export default function JapanQuakeWaveMapMock({ pins }: JapanQuakeWaveMapMockProps) {
     return (
         <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.88fr)_minmax(420px,1.12fr)]">
             <motion.div
@@ -64,16 +41,31 @@ export default function JapanQuakeWaveMapMock({ pins, latestFeedEntryPreview }: 
                 transition={{ duration: 0.75, ease: 'easeOut' }}
             >
                 <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-950/70">
-                    Lab Mock
+                    QuakeWave Preview
                 </p>
                 <h1 className="mt-3 text-4xl font-semibold leading-tight text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.35)] sm:text-6xl">
-                    JapanQuakeWaveMap
+                    地震情報可視化
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-8 text-cyan-50/90 drop-shadow-[0_8px_22px_rgba(2,24,45,0.2)]">
-                    水面の上に日本列島を浮かべる、地震波可視化画面の初期モックです。
+                    DBに保存済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。
                 </p>
 
-                <LatestFeedEntryPanel latestFeedEntryPreview={latestFeedEntryPreview} />
+                <div className="mt-8 grid max-w-xl grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
+                            pins
+                        </p>
+                        <p className="mt-2 text-3xl font-semibold text-white">{pins.length}</p>
+                    </div>
+                    <div className="rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
+                            source
+                        </p>
+                        <p className="mt-2 text-sm font-semibold leading-6 text-white">
+                            earthquake_map_pins
+                        </p>
+                    </div>
+                </div>
             </motion.div>
 
             <motion.div
@@ -88,90 +80,5 @@ export default function JapanQuakeWaveMapMock({ pins, latestFeedEntryPreview }: 
                 </div>
             </motion.div>
         </section>
-    );
-}
-
-function LatestFeedEntryPanel({
-    latestFeedEntryPreview,
-}: {
-    latestFeedEntryPreview: LatestFeedEntryPreview;
-}) {
-    const entry = latestFeedEntryPreview.entry;
-
-    return (
-        /*
-         * React state を増やさず、ブラウザ標準の details/summary で折りたたみます。
-         * 最新情報は補助情報なので、地図を見たいときにユーザーがすぐ畳めるようにします。
-         */
-        <details
-            open
-            className="group mt-8 rounded-lg border border-white/25 bg-slate-950/30 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md"
-        >
-            <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100 [&::-webkit-details-marker]:hidden">
-                <span className="rounded-md border border-cyan-100/30 bg-cyan-50/15 px-2.5 py-1 text-xs font-semibold text-cyan-50">
-                    最新情報
-                </span>
-                <span className="flex items-center gap-2">
-                    <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50/80">
-                        {entry ? '最新1件' : '最新0件'}
-                    </span>
-                    <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50/80">
-                        抽出{latestFeedEntryPreview.entryCount}件
-                    </span>
-                    <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50/80 transition group-open:rotate-180">
-                        v
-                    </span>
-                </span>
-            </summary>
-
-            {entry ? (
-                <div className="mt-4 border-t border-white/15 pt-4">
-                    <h2 className="text-xl font-semibold leading-7 text-white">
-                        {entry.title}
-                    </h2>
-
-                    <dl className="mt-4 grid gap-3 text-sm text-cyan-50/85">
-                        <div>
-                            <dt className="text-xs font-semibold text-cyan-100/65">updated</dt>
-                            <dd className="mt-1 break-words">{entry.updatedAt ?? '未取得'}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs font-semibold text-cyan-100/65">published</dt>
-                            <dd className="mt-1 break-words">{entry.publishedAt ?? '未取得'}</dd>
-                        </div>
-                        {entry.rawCategory && (
-                            <div>
-                                <dt className="text-xs font-semibold text-cyan-100/65">category</dt>
-                                <dd className="mt-1 break-words">{entry.rawCategory}</dd>
-                            </div>
-                        )}
-                    </dl>
-
-                    {entry.xmlUrl && (
-                        <a
-                            href={entry.xmlUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-4 inline-flex min-h-10 items-center rounded-lg border border-cyan-100/35 bg-cyan-50/15 px-4 text-sm font-semibold text-white transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
-                        >
-                            個別XML
-                        </a>
-                    )}
-                </div>
-            ) : (
-                <div className="mt-4 border-t border-white/15 pt-4">
-                    <h2 className="text-xl font-semibold leading-7 text-white">
-                        最新情報を取得できませんでした
-                    </h2>
-                    <p className="mt-3 text-sm leading-6 text-cyan-50/78">
-                        {latestFeedEntryPreview.error?.message ?? 'JMA Atom feed entry was not available.'}
-                    </p>
-                </div>
-            )}
-
-            <p className="mt-4 text-xs leading-5 text-cyan-50/62">
-                fetched {latestFeedEntryPreview.fetchedAt}
-            </p>
-        </details>
     );
 }
