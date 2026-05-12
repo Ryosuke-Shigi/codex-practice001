@@ -1,20 +1,26 @@
-# API Discovery Hub
+# Laravel Portfolio - API Discovery Hub / QuakeWave Preview
 
-API Discovery Hub は、APIs.guru の公開APIカタログ `list.json` を同期キャッシュとして取り込み、公開APIを検索・保存・調査するためのポートフォリオアプリです。
+このリポジトリは、Laravel 11 + Docker + Inertia + React + TypeScript を使ったポートフォリオアプリです。
+
+現在は、APIs.guru の公開APIカタログを扱う `API Discovery Hub` と、気象庁XMLを取得・保存・地図可視化する `QuakeWave Preview` を実装しています。
 
 - 公開URL: https://ada-works.dev
-- できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認
+- できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認、気象庁XMLの取得・保存・地図可視化
 - 技術スタック: Laravel 11, Docker, Inertia, React, TypeScript, MySQL, Redis
 - 設計上の見どころ: ADRパターン、レイヤードアーキテクチャ、DTO、Repository、Service、Action、Responder、Queue
 - AI駆動開発の位置づけ: 仕様決定や完成判定は人間が行い、ChatGPT / CodexApp は設計整理・レビュー観点整理・既存コード確認・差分作成の補助として使う
 
 ## プロジェクト概要
 
-このリポジトリは、Laravel 11 + Docker + Inertia + React + TypeScript を使った API Discovery Hub です。AI駆動開発・仕様駆動開発の学習兼ポートフォリオとして作成しています。
+このリポジトリは、Laravel 11 + Docker + Inertia + React + TypeScript を使ったポートフォリオアプリです。AI駆動開発・仕様駆動開発の学習兼ポートフォリオとして作成しています。
 
-公開APIを調べるときは、API 名、提供元、OpenAPI 定義 URL、更新日、関連検索を行き来することが多くなります。このアプリでは、その調査の入口として、公開APIカタログの検索、絞り込み、詳細確認、調査メモ保存までを小さく確認できるようにしています。
+実装済みの主な機能は、公開APIを検索・保存・調査する `API Discovery Hub` と、気象庁XMLを取得・保存・地図可視化する `QuakeWave Preview` です。
 
-API Discovery Hub は AWS Lightsail で外部公開し、Cloudflareで取得した正式ドメイン `https://ada-works.dev` を導入済みです。
+公開APIを調べるときは、API 名、提供元、OpenAPI 定義 URL、更新日、関連検索を行き来することが多くなります。API Discovery Hub では、その調査の入口として、公開APIカタログの検索、絞り込み、詳細確認、調査メモ保存までを小さく確認できるようにしています。
+
+QuakeWave Preview では、気象庁の地震火山情報 Atom feed を取得し、地震情報 entry をDBへ保存し、個別XMLから地図表示用の pin を生成する流れを確認できます。
+
+このポートフォリオは AWS Lightsail で外部公開し、Cloudflareで取得した正式ドメイン `https://ada-works.dev` を導入済みです。
 
 ## 公開URL
 
@@ -28,6 +34,8 @@ API Discovery Hub は AWS Lightsail で外部公開し、Cloudflareで取得し�
 - Adminer: http://localhost:8081
 
 ## できること
+
+### API Discovery Hub
 
 - APIs.guru `list.json` から公開APIカタログを取得
 - `api_catalog_cache` への同期キャッシュ保存
@@ -43,6 +51,19 @@ API Discovery Hub は AWS Lightsail で外部公開し、Cloudflareで取得し�
 - API Preview での外部 API 疎通確認
 - モック画面での UI 確認
 
+### QuakeWave Preview
+
+- 気象庁の地震火山情報 Atom feed を取得
+- 地震情報 entry の抽出
+- `earthquake_feed_entries` への保存
+- entry_id を基準にした insert / update / skip の差分同期
+- 保存済み feed entry から個別 XML を取得
+- 個別 XML から震源座標・最大震度・マグニチュード・深さを抽出
+- 地図表示用 pin の生成・保存
+- Queue による地震 feed 取込と map pin 生成
+- 同期ステータスのポーリング表示
+- 水面上に日本地図と地震ピンを表示する UI モック
+
 React 画面は、同期 Job の登録と同期ステータス確認の導線を持っています。同期失敗ログや同期履歴表示としての整理は、今後追加予定です。
 
 ## 画面導線とスクリーンショット
@@ -51,7 +72,7 @@ React 画面は、同期 Job の登録と同期ステータス確認の導線を
 
 - `/`: ポートフォリオ入口。アプリ全体の起点として見る画面です。
  <img width="975" height="959" alt="Welcome画面" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
-- `/lab`: 実験・機能一覧。API Preview と API Discovery Hub への導線をまとめています。
+- `/lab`: 実験・機能一覧。API Preview、API Discovery Hub、QuakeWave Preview への導線をまとめています。
  <img width="955" height="891" alt="Lab画面" src="https://github.com/user-attachments/assets/facd87a9-7f27-4f65-a5fe-c81d155ac4ac" />
 - `/api-preview`: 外部API確認用画面。APIs.guru の実取得、成功モック、エラーモックの入口です。
  <img width="961" height="961" alt="API Preview画面" src="https://github.com/user-attachments/assets/269f445f-b15c-4a44-be2b-cc395a656432" />
@@ -61,7 +82,11 @@ React 画面は、同期 Job の登録と同期ステータス確認の導線を
  <img width="955" height="953" alt="API Catalog詳細画面" src="https://github.com/user-attachments/assets/b7a93dbb-b29c-4fba-8b33-ff1b50d37645" />
 - `/api-catalog/mock`: UI確認用モック一覧。外部APIや同期キャッシュに依存せず、一覧UIの見た目と導線を確認できます。
  <img width="957" height="515" alt="API Catalogモック画面" src="https://github.com/user-attachments/assets/cef2175f-5788-47d5-911b-357312d7a4e1" />
-補助的なルートとして、`/api-preview/apis-guru`、`/api-preview/apis-guru/mock`、`/api-preview/apis-guru/mock-error`、`/api-catalog/sync`、`/api-catalog/sync/status`、`/api-catalog/mock/{apiKey}`、`/api-catalog/{apiKey}/notes` があります。
+- `/quakewave-preview`: 気象庁XMLの取得・保存・地図表示用データ生成を確認する地震波可視化プレビュー画面です。
+- `/quakewave-preview/map`: 水面上の日本地図と地震ピン表示を確認する画面です。
+- `/quakewave-preview/xml`: 気象庁 Atom feed と個別 XML の取得・解析を確認する画面です。
+
+補助的なルートとして、`/api-preview/apis-guru`、`/api-preview/apis-guru/mock`、`/api-preview/apis-guru/mock-error`、`/api-catalog/sync`、`/api-catalog/sync/status`、`/api-catalog/mock/{apiKey}`、`/api-catalog/{apiKey}/notes`、`/quakewave-preview/feed-entries/sync`、`/quakewave-preview/feed-entries/sync/status`、`/quakewave-preview/map-pins/sync`、`/quakewave-preview/map-pins/sync/status` があります。
 
 ## 技術スタック
 
@@ -73,7 +98,7 @@ React 画面は、同期 Job の登録と同期ステータス確認の導線を
 
 ## 設計方針
 
-API Discovery Hub は、ADR パターンとレイヤードアーキテクチャを基準にしています。ここでの ADR は Action-Domain-Responder の考え方を指します。
+このポートフォリオは、ADR パターンとレイヤードアーキテクチャを基準にしています。ここでの ADR は Action-Domain-Responder の考え方を指します。
 
 - Controller は HTTP 入口に限定する
 - Request は入力バリデーションに限定する
@@ -90,6 +115,28 @@ API Discovery Hub は、ADR パターンとレイヤードアーキテクチャ�
 
 API Preview と API Discovery Hub 本体は分離しています。Preview 側の Repository / DTO / Responder は、本体側に流用しない方針です。
 
+QuakeWave Preview でも同じ設計思想を使い、外部データ取得、XML解析、DB保存、画面表示用データ生成を分離しています。これにより、異なるドメインでも ADR パターン・レイヤードアーキテクチャを再利用できることを示しています。
+
+## 設計判断
+
+### Queue を使う理由
+
+外部データの取得・同期処理をバックグラウンドで実行し、ユーザーの閲覧体験を妨げないために使用しています。
+
+### DB にキャッシュする理由
+
+外部データをその場で毎回取得するのではなく、取得済みデータをDBに保持し、一覧表示・検索・過去情報の参照に利用できるようにするためです。
+
+### 差分判定を行う理由
+
+外部データを無条件に保存し続けるとデータ量が増えすぎるため、変更がある場合のみ更新・追加する構成にしています。
+
+### 同じ設計思想で複数機能を作る理由
+
+API Discovery Hub と QuakeWave Preview は異なるドメインですが、外部データ取得、変換、保存、表示という流れは共通しています。
+
+同じ ADR パターン・レイヤードアーキテクチャを使うことで、設計が場当たりではなく、別ドメインにも再利用可能であることを示しています。
+
 ## AI駆動開発の方針
 
 このリポジトリでは、AI に仕様決定や完成判定を任せません。
@@ -103,11 +150,13 @@ API Preview と API Discovery Hub 本体は分離しています。Preview 側�
 
 ## テスト・エラー処理
 
-実装済みの Feature テストでは、API Discovery Hub と API Preview の主要導線を確認しています。
+実装済みの Feature テストでは、API Discovery Hub、API Preview、QuakeWave Preview の主要導線を確認しています。
 
 - `ApiCatalogSyncTest`: 同期 Job の Queue 投入、同期開始レスポンス、return_url の制限、同期ステータス、失敗状態の扱いを確認
 - `ApiCatalogNoteTest`: API詳細表示 props、保存メモの保存・更新・削除、別APIメモの更新防止、モック詳細で保存しないことを確認
 - `ApiPreviewTest`: API Preview 一覧、APIs.guru の実取得時 props、エラーレスポンス時 props、成功モック、エラー確認用モックを確認
+- `QuakeWavePreviewFeedEntrySyncTest`: 気象庁 Atom feed の取得、地震情報 entry の抽出、DB保存、insert / update / skip、Queue 投入、同期ステータス、失敗状態を確認
+- `QuakeWavePreviewXmlPreviewTest`: 気象庁XML取得プレビューと、XML解析結果の表示導線を確認
 
 外部API取得では、成功レスポンスだけでなく、失敗レスポンスや固定エラー表示の確認導線も用意しています。外部通信に依存しないモック画面により、UI とエラー表示を切り分けて確認できます。
 
@@ -118,9 +167,12 @@ API Preview と API Discovery Hub 本体は分離しています。Preview 側�
 ```bash
 docker compose run --rm artisan test
 docker compose run --rm npm run build
+
 ```
 
 ## データ保存方針
+
+### API Discovery Hub
 
 - `api_catalog_cache` は同期キャッシュ用テーブルとして扱う
 - `raw_payload` は保存しない
@@ -129,6 +181,15 @@ docker compose run --rm npm run build
 - Google 検索リンクは表示時に API 名などから生成する
 - `domain` は DB カラムとして追加せず、`provider_key` から表示・絞り込み用に扱う
 - softDeletes は使わない
+
+### QuakeWave Preview
+
+- 気象庁 Atom feed の entry は `earthquake_feed_entries` に保存する
+- entry_id を一意な識別子として扱う
+- 同じ entry_id のデータは insert / update / skip に分けて扱う
+- 個別 XML の本文そのものは保存対象にせず、地図表示に必要な情報へ変換して扱う
+- 地図表示用 pin は、個別 XML 解析後の結果として保存する
+- feed entry 取込と map pin 生成は別処理として分ける
 
 ## Docker構成
 
@@ -146,7 +207,7 @@ Docker コマンドは、一階層上のプロジェクトルートで実行す�
 - `npm`: npm / Vite 実行用
 - `queue`: Queue worker
 - `scheduler`: Laravel Scheduler
-- `mysql`: API カタログキャッシュと保存メモのDB
+- `mysql`: API カタログキャッシュ、保存メモ、地震情報のDB
 - `redis`: Queue / Cache 用
 - `mailpit`: メール確認用
 - `adminer`: DB確認用
@@ -196,10 +257,16 @@ docker compose run --rm artisan api-catalog:sync --queue
 - paths、schemas、parameters、responses の扱い方の検討
 - 保存メモ周辺の表示・入力体験の改善
 - API Discovery Hub 一覧・詳細の追加テスト
+- QuakeWave Preview のスクリーンショット追加
+- 気象庁XML解析範囲の整理
 - Service / Action / Repository の Unit テスト拡充
 - Factory / Strategy の使いどころの検証
 - Lightsail 運用手順の整理
 
 ## 注意事項
 
-この README は、現在実装済みの範囲に合わせています。API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的にしたアプリであり、API の価値や注目度を断定するものではありません。
+この README は、現在実装済みの範囲に合わせています。
+
+API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的にした機能であり、API の価値や注目度を断定するものではありません。
+
+QuakeWave Preview は気象庁XMLを利用した地震情報の取得・保存・地図可視化の検証機能であり、防災情報としての正確性や速報性を保証するものではありません。
