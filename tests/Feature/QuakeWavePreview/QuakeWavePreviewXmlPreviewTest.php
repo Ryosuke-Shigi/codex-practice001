@@ -4,10 +4,12 @@ namespace Tests\Feature\QuakeWavePreview;
 
 use App\Models\EarthquakeFeedEntry;
 use App\Models\EarthquakeMapPin;
+use App\Jobs\Earthquake\RefreshEarthquakeMapDataJob;
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
 use Illuminate\Http\Client\Request;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -25,15 +27,14 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('QuakeWavePreview/Index', false)
-                ->has('mocks', 3)
+                ->has('mocks', 2)
                 ->where('mocks.0.id', 'map-display')
-                ->where('mocks.0.href', '/quakewave-preview/map')
-                ->where('mocks.0.title', '地震情報MAP')
-                ->where('mocks.1.id', 'map-mock')
-                ->where('mocks.1.href', '/quakewave-preview/map/mock')
-                ->where('mocks.2.id', 'xml-preview')
-                ->where('mocks.2.title', 'XML取得プレビュー')
-                ->where('mocks.2.href', '/quakewave-preview/xml')
+                ->where('mocks.0.href', '/quakewave-preview/map/mock')
+                ->where('mocks.0.title', '地震情報MAPモック')
+                ->where('mocks.0.status', 'Mock')
+                ->where('mocks.1.id', 'xml-preview')
+                ->where('mocks.1.title', 'XML取得プレビュー')
+                ->where('mocks.1.href', '/quakewave-preview/xml')
                 ->has('visualPreview.pins', 4)
                 ->where('visualPreview.pins.0.label', '震度7')
                 ->where('visualPreview.pins.0.maxIntensity', '7')
@@ -151,22 +152,65 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_map_refresh_post_creates_feed_and_map_pin_runs_and_dispatches_queue_job(): void
+    {
+        Http::preventStrayRequests();
+        Queue::fake();
+
+        $response = $this->postJson('/quakewave-preview/map/refresh');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('feedEntrySyncRunId', 1)
+            ->assertJsonPath('mapPinSyncRunId', 1)
+            ->assertJsonPath('feedEntrySyncStatus.syncRunId', 1)
+            ->assertJsonPath('feedEntrySyncStatus.status', 'pending')
+            ->assertJsonPath('mapPinSyncStatus.syncRunId', 1)
+            ->assertJsonPath('mapPinSyncStatus.status', 'pending');
+
+        $this->assertDatabaseHas('earthquake_feed_entry_sync_runs', [
+            'id' => 1,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('earthquake_map_pin_sync_runs', [
+            'id' => 1,
+            'status' => 'pending',
+        ]);
+
+        Queue::assertPushed(
+            RefreshEarthquakeMapDataJob::class,
+            fn (RefreshEarthquakeMapDataJob $job): bool => $job->feedEntrySyncRunId === 1
+                && $job->mapPinSyncRunId === 1,
+        );
+        Http::assertNothingSent();
+    }
+
     public function test_map_frontend_contains_layer_controls_and_plate_boundary_layer(): void
     {
         $mapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanQuakeWaveMap.tsx'));
+        $mapPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/QuakeWaveMapPage.tsx'));
         $simpleMapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanSimpleMap.tsx'));
         $controlSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapLayerControlPanel.tsx'));
         $plateSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/PlateBoundaryLayer.tsx'));
         $mockPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/JapanQuakeWaveMapMockPage.tsx'));
 
         $this->assertIsString($mapSource);
+        $this->assertIsString($mapPageSource);
         $this->assertIsString($simpleMapSource);
         $this->assertIsString($controlSource);
         $this->assertIsString($plateSource);
         $this->assertIsString($mockPageSource);
         $this->assertStringContainsString('MapLayerControlPanel', $mapSource);
+        $this->assertStringContainsString('Job & Queue', $mapSource);
+        $this->assertStringContainsString('/quakewave-preview/map/refresh', $mapPageSource);
+        $this->assertStringContainsString('/quakewave-preview/feed-entries/sync/status', $mapPageSource);
+        $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $mapPageSource);
+        $this->assertStringContainsString('地図データ更新', $mapPageSource);
         $this->assertStringNotContainsString('function JapanQuakeWaveMapMock', $mapSource);
         $this->assertStringContainsString('JapanQuakeWaveMapMockPage', $mockPageSource);
+        $this->assertStringContainsString('EarthquakePin', $mockPageSource);
+        $this->assertStringContainsString('EarthquakeRipple', $mockPageSource);
+        $this->assertStringContainsString('Parts Mock', $mockPageSource);
         $this->assertStringContainsString('showPlateBoundaries', $simpleMapSource);
         $this->assertStringContainsString('震源ピン', $controlSource);
         $this->assertStringContainsString('波紋', $controlSource);

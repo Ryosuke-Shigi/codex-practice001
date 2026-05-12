@@ -1,5 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 
+import EarthquakePin, {
+    type EarthquakePinPreview,
+} from '@/Components/JapanQuakeWaveMap/EarthquakePin';
+import EarthquakeRipple, {
+    type EarthquakeRipplePreview,
+} from '@/Components/JapanQuakeWaveMap/EarthquakeRipple';
 import JapanQuakeWaveMap, {
     type EarthquakeMapPin,
 } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
@@ -56,6 +62,19 @@ const mockPins: EarthquakeMapPin[] = [
     },
 ];
 
+const mockPinParts: EarthquakePinPreview[] = [
+    { label: '震度7', maxIntensity: '7', color: '#ef4444', sizeLabel: 'large' },
+    { label: '震度6強', maxIntensity: '6+', color: '#f43f5e', sizeLabel: 'large' },
+    { label: '震度5強', maxIntensity: '5+', color: '#a855f7', sizeLabel: 'medium' },
+    { label: '震度4', maxIntensity: '4', color: '#38bdf8', sizeLabel: 'small' },
+];
+
+const mockRippleParts: EarthquakeRipplePreview[] = [
+    { label: '強い波紋', maxIntensity: '7', color: '#ef4444', size: 112, duration: '1.6s', ringCount: 4 },
+    { label: '中間波紋', maxIntensity: '5+', color: '#a855f7', size: 92, duration: '2.2s', ringCount: 3 },
+    { label: '弱い波紋', maxIntensity: '4', color: '#38bdf8', size: 76, duration: '2.8s', ringCount: 2 },
+];
+
 /*
  * モック用のページ入口です。
  * このページだけが仮データを作り、共通表示コンポーネントの JapanQuakeWaveMap に渡します。
@@ -82,11 +101,43 @@ export default function JapanQuakeWaveMapMockPage() {
                     </Link>
                 </header>
 
+                <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <article className="rounded-lg border border-white/20 bg-slate-950/52 p-5 text-white shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+                        <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
+                            Parts Mock
+                        </span>
+                        <h1 className="mt-3 text-2xl font-semibold">ピン表示</h1>
+                        <p className="mt-3 text-sm leading-6 text-cyan-50/76">
+                            地図に載せる前の震源ピン部品を、震度別のサイズと色で確認します。
+                        </p>
+                        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                            {mockPinParts.map((pin) => (
+                                <EarthquakePin key={`${pin.label}-${pin.sizeLabel}`} pin={pin} />
+                            ))}
+                        </div>
+                    </article>
+
+                    <article className="rounded-lg border border-white/20 bg-slate-950/52 p-5 text-white shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+                        <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
+                            Parts Mock
+                        </span>
+                        <h2 className="mt-3 text-2xl font-semibold">波紋レイヤー</h2>
+                        <p className="mt-3 text-sm leading-6 text-cyan-50/76">
+                            地図に載せる前の波紋部品を、震度別の大きさ・速度・リング数で確認します。
+                        </p>
+                        <div className="mt-5 grid gap-5">
+                            {mockRippleParts.map((ripple) => (
+                                <EarthquakeRipple key={`${ripple.label}-${ripple.ringCount}`} ripple={ripple} />
+                            ))}
+                        </div>
+                    </article>
+                </section>
+
                 <JapanQuakeWaveMap
                     pins={mockPins}
                     eyebrow="QuakeWave Mock"
-                    title="地震情報可視化 Mock"
-                    summary="仮データを使って、震源ピン・波紋・詳細表示・プレート境界線の見え方を確認します。"
+                    title="地図全体モック"
+                    summary="上の部品を仮データの日本地図に重ね、表示ON/OFFや詳細表示のまとまりを確認します。"
                     sourceLabel="mock pins"
                 />
             </div>

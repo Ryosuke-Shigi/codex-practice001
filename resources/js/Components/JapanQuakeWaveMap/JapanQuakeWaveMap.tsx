@@ -29,6 +29,15 @@ type JapanQuakeWaveMapProps = {
     title?: string;
     summary?: string;
     sourceLabel?: string;
+    refreshAction?: {
+        buttonLabel: string;
+        disabledLabel: string;
+        statusLabel: string;
+        description: string;
+        isRefreshing: boolean;
+        errorMessage: string | null;
+        onRefresh: () => void;
+    };
 };
 
 const defaultLayerVisibility: MapLayerVisibility = {
@@ -52,6 +61,7 @@ export default function JapanQuakeWaveMap({
     title = '地震情報可視化',
     summary = '取得済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。',
     sourceLabel = 'earthquake_map_pins',
+    refreshAction,
 }: JapanQuakeWaveMapProps) {
     /*
      * レイヤー表示状態は画面表示だけの状態として、このコンポーネント内に閉じます。
@@ -77,6 +87,37 @@ export default function JapanQuakeWaveMap({
                 <p className="mt-5 max-w-xl text-base leading-8 text-cyan-50/90 drop-shadow-[0_8px_22px_rgba(2,24,45,0.2)]">
                     {summary}
                 </p>
+
+                {refreshAction && (
+                    <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/65">
+                                    Job & Queue
+                                </p>
+                                <p role="status" aria-live="polite" className="mt-2 text-sm font-semibold leading-6 text-white">
+                                    {refreshAction.statusLabel}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={refreshAction.onRefresh}
+                                disabled={refreshAction.isRefreshing}
+                                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
+                            >
+                                {refreshAction.isRefreshing ? refreshAction.disabledLabel : refreshAction.buttonLabel}
+                            </button>
+                        </div>
+                        <p className="mt-3 text-xs leading-5 text-cyan-50/75">
+                            {refreshAction.description}
+                        </p>
+                        {refreshAction.errorMessage && (
+                            <p className="mt-3 rounded-md border border-rose-200/35 bg-rose-200/10 px-3 py-2 text-sm leading-6 text-rose-50">
+                                {refreshAction.errorMessage}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 <div className="mt-8 grid max-w-xl grid-cols-2 gap-3">
                     <div className="rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
