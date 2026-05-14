@@ -1,10 +1,13 @@
 import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import JapanQuakeWaveMap, {
     type EarthquakeMapPin,
 } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
+import PinDisplayLimitSlider, {
+    PIN_DISPLAY_LIMIT_INITIAL,
+} from '@/Components/JapanQuakeWaveMap/PinDisplayLimitSlider';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type QuakeWaveMapPageProps = {
@@ -100,6 +103,19 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
     const [mapPinSyncStatus, setMapPinSyncStatus] = useState<EarthquakeSyncStatus | null>(null);
     const [isStartingRefresh, setIsStartingRefresh] = useState(false);
     const [refreshPollingError, setRefreshPollingError] = useState<string | null>(null);
+    const [pinDisplayLimit, setPinDisplayLimit] = useState(PIN_DISPLAY_LIMIT_INITIAL);
+    const visiblePins = useMemo(
+        /*
+         * 表示件数スライダーは、DB取得条件ではなく地図上の見え方を調整するためのUIです。
+         * pins は Controller -> QueryAction -> Repository -> Responder で取得済みの配列を受け取り、
+         * ここではその既存順のまま先頭N件だけを JapanQuakeWaveMap へ渡します。
+         *
+         * Repository 側の orderBy、同期Job、地図ピン生成処理には触れないことで、表示確認用の操作が
+         * 保存済みデータや本番系の取得境界に影響しないようにしています。
+         */
+        () => pins.slice(0, pinDisplayLimit),
+        [pins, pinDisplayLimit],
+    );
 
     const isRefreshing = isStartingRefresh
         || (feedEntrySyncStatus?.isRunning ?? false)
@@ -312,10 +328,16 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
                 </header>
 
                 <JapanQuakeWaveMap
-                    pins={pins}
+                    pins={visiblePins}
                     eyebrow="QuakeWave Map"
                     title="地震情報可視化"
                     summary="DBに保存済みの地震情報を日本地図上へ重ね、震源・震度・波紋を確認します。"
+                    mapOverlay={(
+                        <PinDisplayLimitSlider
+                            value={pinDisplayLimit}
+                            onChange={setPinDisplayLimit}
+                        />
+                    )}
                     refreshAction={{
                         buttonLabel: '地図データ更新',
                         disabledLabel: '更新中',

@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
 import EarthquakePin, {
     type EarthquakePinPreview,
@@ -9,58 +10,111 @@ import EarthquakeRipple, {
 import JapanQuakeWaveMap, {
     type EarthquakeMapPin,
 } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
+import PinDisplayLimitSlider, {
+    PIN_DISPLAY_LIMIT_INITIAL,
+} from '@/Components/JapanQuakeWaveMap/PinDisplayLimitSlider';
 import PublicLayout from '@/Layouts/PublicLayout';
 
-const mockPins: EarthquakeMapPin[] = [
+type MockPinSeed = {
+    areaName: string;
+    latitude: number;
+    longitude: number;
+    depthMeter: number;
+    magnitude: string;
+    maxIntensity: string;
+};
+
+const mockPinSeeds: MockPinSeed[] = [
     {
-        eventId: 'mock-001',
-        sourceEntryId: 1,
-        title: '震源・震度情報',
         areaName: '青森県東方沖',
-        headline: '仮データによる地震情報表示です。',
-        rawCoordinate: '+41.0+142.5-50000/',
-        latitude: '41.0000000',
-        longitude: '142.5000000',
+        latitude: 41.0,
+        longitude: 142.5,
         depthMeter: 50000,
         magnitude: '4.0',
         maxIntensity: '2',
-        occurredAt: '2026-05-11T11:27:00+09:00',
-        reportedAt: '2026-05-11T11:31:00+09:00',
-        comment: 'モック用の表示確認データです。',
     },
     {
-        eventId: 'mock-002',
-        sourceEntryId: 2,
-        title: '震源・震度情報',
         areaName: '紀伊水道',
-        headline: '仮データによる地震情報表示です。',
-        rawCoordinate: '+33.8+135.1-30000/',
-        latitude: '33.8000000',
-        longitude: '135.1000000',
+        latitude: 33.8,
+        longitude: 135.1,
         depthMeter: 30000,
         magnitude: '5.1',
         maxIntensity: '4',
-        occurredAt: '2026-05-11T10:42:00+09:00',
-        reportedAt: '2026-05-11T10:46:00+09:00',
-        comment: 'モック用の表示確認データです。',
     },
     {
-        eventId: 'mock-003',
-        sourceEntryId: 3,
-        title: '震源・震度情報',
         areaName: '日向灘',
-        headline: '仮データによる地震情報表示です。',
-        rawCoordinate: '+32.1+132.1-20000/',
-        latitude: '32.1000000',
-        longitude: '132.1000000',
+        latitude: 32.1,
+        longitude: 132.1,
         depthMeter: 20000,
         magnitude: '6.0',
         maxIntensity: '5-',
-        occurredAt: '2026-05-11T09:12:00+09:00',
-        reportedAt: '2026-05-11T09:16:00+09:00',
-        comment: 'モック用の表示確認データです。',
     },
+    { areaName: '釧路沖', latitude: 42.9, longitude: 145.2, depthMeter: 60000, magnitude: '4.8', maxIntensity: '3' },
+    { areaName: '浦河沖', latitude: 42.1, longitude: 142.8, depthMeter: 70000, magnitude: '5.2', maxIntensity: '4' },
+    { areaName: '岩手県沖', latitude: 39.6, longitude: 142.1, depthMeter: 50000, magnitude: '4.5', maxIntensity: '3' },
+    { areaName: '宮城県沖', latitude: 38.3, longitude: 142.0, depthMeter: 40000, magnitude: '5.4', maxIntensity: '4' },
+    { areaName: '福島県沖', latitude: 37.4, longitude: 141.8, depthMeter: 50000, magnitude: '5.8', maxIntensity: '5-' },
+    { areaName: '茨城県沖', latitude: 36.4, longitude: 141.1, depthMeter: 40000, magnitude: '4.9', maxIntensity: '3' },
+    { areaName: '千葉県東方沖', latitude: 35.5, longitude: 141.2, depthMeter: 30000, magnitude: '4.6', maxIntensity: '3' },
+    { areaName: '東京湾', latitude: 35.5, longitude: 139.8, depthMeter: 70000, magnitude: '3.8', maxIntensity: '2' },
+    { areaName: '伊豆大島近海', latitude: 34.8, longitude: 139.4, depthMeter: 10000, magnitude: '4.2', maxIntensity: '3' },
+    { areaName: '駿河湾', latitude: 34.8, longitude: 138.5, depthMeter: 20000, magnitude: '4.4', maxIntensity: '3' },
+    { areaName: '長野県中部', latitude: 36.2, longitude: 137.8, depthMeter: 10000, magnitude: '3.6', maxIntensity: '2' },
+    { areaName: '新潟県中越地方', latitude: 37.3, longitude: 138.8, depthMeter: 12000, magnitude: '4.1', maxIntensity: '3' },
+    { areaName: '能登半島沖', latitude: 37.5, longitude: 137.1, depthMeter: 15000, magnitude: '4.7', maxIntensity: '4' },
+    { areaName: '富山湾', latitude: 37.0, longitude: 137.3, depthMeter: 18000, magnitude: '3.5', maxIntensity: '2' },
+    { areaName: '福井県嶺北', latitude: 36.1, longitude: 136.2, depthMeter: 9000, magnitude: '3.9', maxIntensity: '2' },
+    { areaName: '大阪湾', latitude: 34.5, longitude: 135.0, depthMeter: 12000, magnitude: '4.0', maxIntensity: '3' },
+    { areaName: '兵庫県南東部', latitude: 34.8, longitude: 135.2, depthMeter: 15000, magnitude: '4.3', maxIntensity: '3' },
+    { areaName: '鳥取県中部', latitude: 35.4, longitude: 133.8, depthMeter: 11000, magnitude: '4.2', maxIntensity: '4' },
+    { areaName: '島根県東部', latitude: 35.2, longitude: 133.2, depthMeter: 10000, magnitude: '3.7', maxIntensity: '2' },
+    { areaName: '広島県北部', latitude: 34.8, longitude: 132.8, depthMeter: 12000, magnitude: '3.8', maxIntensity: '2' },
+    { areaName: '伊予灘', latitude: 33.7, longitude: 132.3, depthMeter: 50000, magnitude: '4.6', maxIntensity: '3' },
+    { areaName: '豊後水道', latitude: 33.2, longitude: 132.0, depthMeter: 40000, magnitude: '5.0', maxIntensity: '4' },
+    { areaName: '高知県沖', latitude: 32.8, longitude: 133.5, depthMeter: 30000, magnitude: '4.5', maxIntensity: '3' },
+    { areaName: '熊本県熊本地方', latitude: 32.7, longitude: 130.7, depthMeter: 12000, magnitude: '4.4', maxIntensity: '4' },
+    { areaName: '鹿児島湾', latitude: 31.4, longitude: 130.6, depthMeter: 10000, magnitude: '4.0', maxIntensity: '3' },
+    { areaName: '奄美大島近海', latitude: 28.2, longitude: 129.3, depthMeter: 30000, magnitude: '5.1', maxIntensity: '4' },
+    { areaName: '沖縄本島近海', latitude: 26.5, longitude: 128.4, depthMeter: 40000, magnitude: '4.8', maxIntensity: '3' },
+    { areaName: '宮古島近海', latitude: 24.8, longitude: 125.4, depthMeter: 50000, magnitude: '5.3', maxIntensity: '4' },
+    { areaName: '石垣島近海', latitude: 24.3, longitude: 124.3, depthMeter: 30000, magnitude: '5.0', maxIntensity: '3' },
+    { areaName: '三陸沖', latitude: 39.2, longitude: 143.5, depthMeter: 10000, magnitude: '5.6', maxIntensity: '4' },
+    { areaName: '父島近海', latitude: 27.1, longitude: 142.0, depthMeter: 60000, magnitude: '5.2', maxIntensity: '3' },
+    { areaName: '薩摩半島西方沖', latitude: 31.2, longitude: 129.8, depthMeter: 20000, magnitude: '4.6', maxIntensity: '3' },
 ];
+
+function pad(value: number) {
+    return String(value).padStart(2, '0');
+}
+
+function mockDateTime(index: number, offsetMinutes: number) {
+    const totalMinutes = (22 * 60 + 50) - index * 20 - offsetMinutes;
+    const hour = Math.floor(totalMinutes / 60);
+    const minute = totalMinutes % 60;
+
+    return `2026-05-11T${pad(hour)}:${pad(minute)}:00+09:00`;
+}
+
+function coordinatePart(value: number) {
+    return `${value >= 0 ? '+' : '-'}${Math.abs(value).toFixed(1)}`;
+}
+
+const mockPins: EarthquakeMapPin[] = mockPinSeeds.map((seed, index) => ({
+    eventId: `mock-${String(index + 1).padStart(3, '0')}`,
+    sourceEntryId: index + 1,
+    title: '震源・震度情報',
+    areaName: seed.areaName,
+    headline: '仮データによる地震情報表示です。',
+    rawCoordinate: `${coordinatePart(seed.latitude)}${coordinatePart(seed.longitude)}-${seed.depthMeter}/`,
+    latitude: seed.latitude.toFixed(7),
+    longitude: seed.longitude.toFixed(7),
+    depthMeter: seed.depthMeter,
+    magnitude: seed.magnitude,
+    maxIntensity: seed.maxIntensity,
+    occurredAt: mockDateTime(index, 4),
+    reportedAt: mockDateTime(index, 0),
+    comment: 'モック用の表示確認データです。',
+}));
 
 const mockPinParts: EarthquakePinPreview[] = [
     { label: '震度7', maxIntensity: '7', color: '#ef4444', sizeLabel: 'large' },
@@ -81,6 +135,18 @@ const mockRippleParts: EarthquakeRipplePreview[] = [
  * 地図表示コンポーネント名には Mock を含めず、Mock はページとデータ作成側に限定します。
  */
 export default function JapanQuakeWaveMapMockPage() {
+    const [pinDisplayLimit, setPinDisplayLimit] = useState(PIN_DISPLAY_LIMIT_INITIAL);
+    const visibleMockPins = useMemo(
+        /*
+         * モックでは35件分の固定データを用意し、スライダー値に応じて先頭N件だけを
+         * 共通地図コンポーネントへ渡します。ピンの座標投影、震度ごとの色・サイズ変換、
+         * 詳細パネル選択は JapanQuakeWaveMap / JapanSimpleMap 側の既存処理をそのまま使い、
+         * このページでは「表示件数を変えた時の見え方」を確認することに限定します。
+         */
+        () => mockPins.slice(0, pinDisplayLimit),
+        [pinDisplayLimit],
+    );
+
     return (
         <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
             <Head title="QuakeWave Map Mock" />
@@ -134,10 +200,16 @@ export default function JapanQuakeWaveMapMockPage() {
                 </section>
 
                 <JapanQuakeWaveMap
-                    pins={mockPins}
+                    pins={visibleMockPins}
                     eyebrow="QuakeWave Mock"
                     title="地図全体モック"
                     summary="上の部品を仮データの日本地図に重ね、表示ON/OFFや詳細表示のまとまりを確認します。"
+                    mapOverlay={(
+                        <PinDisplayLimitSlider
+                            value={pinDisplayLimit}
+                            onChange={setPinDisplayLimit}
+                        />
+                    )}
                 />
             </div>
         </PublicLayout>

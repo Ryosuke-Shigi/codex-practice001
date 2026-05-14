@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 
 import JapanSimpleMap from '@/Components/JapanQuakeWaveMap/JapanSimpleMap';
@@ -28,6 +28,7 @@ type JapanQuakeWaveMapProps = {
     eyebrow?: string;
     title?: string;
     summary?: string;
+    mapOverlay?: ReactNode;
     refreshAction?: {
         buttonLabel: string;
         disabledLabel: string;
@@ -59,6 +60,7 @@ export default function JapanQuakeWaveMap({
     eyebrow = 'QuakeWave Preview',
     title = '地震情報可視化',
     summary = '取得済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。',
+    mapOverlay,
     refreshAction,
 }: JapanQuakeWaveMapProps) {
     /*
@@ -149,6 +151,12 @@ export default function JapanQuakeWaveMap({
             >
                 <div className="relative overflow-hidden rounded-lg border border-white/30 bg-slate-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_26px_70px_rgba(2,24,45,0.25)] backdrop-blur-sm">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/18 to-transparent" />
+                    {/*
+                        mapOverlay は、地図コンテナ基準で重ねる操作UIの差し込み口です。
+                        JapanQuakeWaveMap 自体は DB pins の取得条件や件数制限を持たないため、
+                        表示件数スライダーの state と絞り込み処理は呼び出し元ページに置きます。
+                    */}
+                    {mapOverlay}
                     <div className="relative h-full min-h-[520px] p-4 sm:p-6">
                         <JapanSimpleMap pins={pins} layers={layers} />
                     </div>
