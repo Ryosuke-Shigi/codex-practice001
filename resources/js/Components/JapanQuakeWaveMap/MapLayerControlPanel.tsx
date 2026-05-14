@@ -46,12 +46,12 @@ export default function MapLayerControlPanel({ layers, onChange }: MapLayerContr
     const activeLayerCount = layerOptions.filter((option) => layers[option.key]).length;
 
     return (
-        <section className="rounded-lg border border-white/25 bg-slate-950/28 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+        <section className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/28 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-100/72">
                     MAP LAYERS
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-md border border-cyan-100/35 bg-cyan-100/12 px-2.5 py-1 text-xs font-semibold text-cyan-50">
                         ON {activeLayerCount}件
                     </span>

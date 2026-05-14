@@ -1,10 +1,14 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 
+import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel';
 import JapanSimpleMap from '@/Components/JapanQuakeWaveMap/JapanSimpleMap';
 import MapLayerControlPanel, {
     type MapLayerVisibility,
 } from '@/Components/JapanQuakeWaveMap/MapLayerControlPanel';
+import MapRefreshPanel, {
+    type MapRefreshAction,
+} from '@/Components/JapanQuakeWaveMap/MapRefreshPanel';
 
 export type EarthquakeMapPin = {
     eventId: string | null;
@@ -29,15 +33,14 @@ type JapanQuakeWaveMapProps = {
     title?: string;
     summary?: string;
     mapOverlay?: ReactNode;
-    refreshAction?: {
-        buttonLabel: string;
-        disabledLabel: string;
-        statusLabel: string;
-        description: string;
-        isRefreshing: boolean;
-        errorMessage: string | null;
-        onRefresh: () => void;
-    };
+    mapTopContent?: ReactNode;
+    controlPanelsBeforeLayers?: ReactNode;
+    controlPanelsAfterLayers?: ReactNode;
+    refreshAction?: MapRefreshAction;
+    refreshPanelPlacement?: 'description' | 'controls';
+    detailPanelPlacement?: 'side' | 'below';
+    detailPanelCollapsible?: boolean;
+    detailPanelDefaultOpen?: boolean;
 };
 
 const defaultLayerVisibility: MapLayerVisibility = {
@@ -46,6 +49,14 @@ const defaultLayerVisibility: MapLayerVisibility = {
     showIntensityLabels: true,
     showPlateBoundaries: true,
 };
+
+function pinIdentity(pin: EarthquakeMapPin | null) {
+    if (!pin) {
+        return 'none';
+    }
+
+    return `${pin.eventId ?? 'no-event'}:${pin.sourceEntryId}`;
+}
 
 /*
  * JapanQuakeWaveMap は QuakeWave の共通地図表示コンポーネントです。
@@ -61,7 +72,14 @@ export default function JapanQuakeWaveMap({
     title = '地震情報可視化',
     summary = '取得済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。',
     mapOverlay,
+    mapTopContent,
+    controlPanelsBeforeLayers,
+    controlPanelsAfterLayers,
     refreshAction,
+    refreshPanelPlacement = 'description',
+    detailPanelPlacement = 'side',
+    detailPanelCollapsible = false,
+    detailPanelDefaultOpen = true,
 }: JapanQuakeWaveMapProps) {
     /*
      * レイヤー表示状態は画面表示だけの状態として、このコンポーネント内に閉じます。
@@ -69,12 +87,41 @@ export default function JapanQuakeWaveMap({
      * プレート境界線を独立した表示レイヤーとして扱います。
      */
     const [layers, setLayers] = useState<MapLayerVisibility>(defaultLayerVisibility);
-    const [isRefreshPanelOpen, setIsRefreshPanelOpen] = useState(false);
+    const [selectedPin, setSelectedPin] = useState<EarthquakeMapPin | null>(pins[0] ?? null);
+
+    useEffect(() => {
+        if (pins.length === 0) {
+            setSelectedPin(null);
+            return;
+        }
+
+        const selectedKey = pinIdentity(selectedPin);
+        const selectedStillVisible = pins.some((pin) => pinIdentity(pin) === selectedKey);
+
+        if (!selectedStillVisible) {
+            setSelectedPin(pins[0]);
+        }
+    }, [pins, selectedPin]);
+
+    /*
+     * モバイル幅では、Grid/Flex の子要素が自身の内容幅を優先して親を押し広げることがあります。
+     * 地図・詳細・コントロールはどれもカード内に収まるべき表示部品なので、共通ラッパー側で
+     * w-full / min-w-0 を徹底し、震度フィルターや日付入力の内容幅がページ全体の横スクロールに
+     * つながらないようにします。
+     */
+    const mapAndDetailClassName = detailPanelPlacement === 'below'
+        ? 'grid h-full min-h-[430px] w-full min-w-0 gap-4 sm:min-h-[472px]'
+        : 'grid h-full min-h-[430px] w-full min-w-0 gap-4 sm:min-h-[472px] lg:grid-cols-[minmax(0,1fr)_280px]';
 
     return (
-        <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(520px,1.28fr)]">
+        /*
+         * 右カラムに固定の最小幅を置くとスマホ表示で必ずはみ出すため、右側も minmax(0, ...)
+         * にして親幅へ収縮できるようにします。実際の余白や視認性は内側のカード padding と
+         * min-height で調整します。
+         */
+        <section className="grid w-full min-w-0 flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
             <motion.div
-                className="max-w-2xl"
+                className="w-full max-w-2xl min-w-0"
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.75, ease: 'easeOut' }}
@@ -89,50 +136,9 @@ export default function JapanQuakeWaveMap({
                     {summary}
                 </p>
 
-                {refreshAction && (
-                    <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h2 className="text-base font-semibold text-white">
-                                    地図データ更新
-                                </h2>
-                                <p role="status" aria-live="polite" className="mt-2 text-sm font-semibold leading-6 text-white">
-                                    {refreshAction.statusLabel}
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                aria-expanded={isRefreshPanelOpen}
-                                onClick={() => setIsRefreshPanelOpen((current) => !current)}
-                                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
-                            >
-                                {isRefreshPanelOpen ? '閉じる' : '開く'}
-                            </button>
-                        </div>
-
-                        {isRefreshPanelOpen && (
-                            <div className="mt-4 border-t border-white/15 pt-4">
-                                <p className="text-sm font-semibold leading-6 text-white">
-                                    {refreshAction.statusLabel}
-                                </p>
-                                <p className="mt-2 text-xs leading-5 text-cyan-50/75">
-                                    {refreshAction.description}
-                                </p>
-                                {refreshAction.errorMessage && (
-                                    <p className="mt-3 rounded-md border border-rose-200/35 bg-rose-200/10 px-3 py-2 text-sm leading-6 text-rose-50">
-                                        {refreshAction.errorMessage}
-                                    </p>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={refreshAction.onRefresh}
-                                    disabled={refreshAction.isRefreshing}
-                                    className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
-                                >
-                                    {refreshAction.isRefreshing ? refreshAction.disabledLabel : refreshAction.buttonLabel}
-                                </button>
-                            </div>
-                        )}
+                {refreshAction && refreshPanelPlacement === 'description' && (
+                    <div className="mt-6 max-w-xl">
+                        <MapRefreshPanel action={refreshAction} />
                     </div>
                 )}
 
@@ -144,12 +150,14 @@ export default function JapanQuakeWaveMap({
             </motion.div>
 
             <motion.div
-                className="relative flex min-h-[520px] flex-col gap-4"
+                className="relative flex min-h-[430px] w-full min-w-0 flex-col gap-4 sm:min-h-[520px]"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.12, duration: 0.8, ease: 'easeOut' }}
             >
-                <div className="relative overflow-hidden rounded-lg border border-white/30 bg-slate-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_26px_70px_rgba(2,24,45,0.25)] backdrop-blur-sm">
+                {mapTopContent}
+
+                <div className="relative w-full min-w-0 overflow-hidden rounded-lg border border-white/30 bg-slate-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_26px_70px_rgba(2,24,45,0.25)] backdrop-blur-sm">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/18 to-transparent" />
                     {/*
                         mapOverlay は、地図コンテナ基準で重ねる操作UIの差し込み口です。
@@ -157,12 +165,35 @@ export default function JapanQuakeWaveMap({
                         表示件数スライダーの state と絞り込み処理は呼び出し元ページに置きます。
                     */}
                     {mapOverlay}
-                    <div className="relative h-full min-h-[520px] p-4 sm:p-6">
-                        <JapanSimpleMap pins={pins} layers={layers} />
+                    {/*
+                        地図は主役なのでスマホでも高さを確保しますが、520px固定だと下の操作パネルが
+                        遠くなりすぎます。小さい画面だけ430pxへ落とし、sm以上では従来の余白感を保ちます。
+                    */}
+                    <div className="relative h-full min-h-[430px] w-full min-w-0 p-3 sm:min-h-[520px] sm:p-6">
+                        <div className={mapAndDetailClassName}>
+                            <JapanSimpleMap
+                                pins={pins}
+                                layers={layers}
+                                selectedPin={selectedPin}
+                                onSelectPin={setSelectedPin}
+                            />
+                            <EarthquakeMapDetailPanel
+                                pin={selectedPin}
+                                collapsible={detailPanelCollapsible}
+                                defaultOpen={detailPanelDefaultOpen}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <MapLayerControlPanel layers={layers} onChange={setLayers} />
+                <div className="flex w-full min-w-0 flex-col gap-4">
+                    {controlPanelsBeforeLayers}
+                    <MapLayerControlPanel layers={layers} onChange={setLayers} />
+                    {refreshAction && refreshPanelPlacement === 'controls' && (
+                        <MapRefreshPanel action={refreshAction} />
+                    )}
+                    {controlPanelsAfterLayers}
+                </div>
             </motion.div>
         </section>
     );

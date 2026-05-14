@@ -3,6 +3,7 @@
 namespace App\Repositories\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
+use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 
 interface EarthquakeMapPinRepositoryInterface
 {
@@ -31,5 +32,5 @@ interface EarthquakeMapPinRepositoryInterface
      * /quakewave-preview/map の表示用 DTO を組み立てます。
      * DB境界から出る latitude / longitude は string のまま維持します。
      */
-    public function toMapPinListDTO(int $limit = 50): EarthquakeMapPinListDTO;
+    public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO;
 }

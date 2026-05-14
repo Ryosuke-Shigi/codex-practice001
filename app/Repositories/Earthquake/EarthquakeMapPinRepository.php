@@ -4,9 +4,11 @@ namespace App\Repositories\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
+use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\Models\EarthquakeMapPin;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -87,20 +89,21 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
          * QuakeWave MAP 本体は toMapPinListDTO() を使いますが、同じ latestModels() を
          * 経由させることで、最新順や上限の扱いを Repository 内で一箇所に揃えます。
          */
-        return $this->latestModels($limit)
+        return $this->latestModels(EarthquakeMapPinListQueryDTO::forLatest($limit))
             ->map(fn (EarthquakeMapPin $pin): array => $this->pinToArray($pin))
             ->all();
     }
 
-    public function toMapPinListDTO(int $limit = 50): EarthquakeMapPinListDTO
+    public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
     {
         /*
          * MAP 表示用の読み取り境界です。
          * Repository では DB の最新行を DTO に戻すだけにし、震度による色・波紋サイズなどの
          * 表示演出は React 側へ残します。保存や再同期の判断もここでは行いません。
+         * 日付範囲は Inertia 再取得時の読み取り条件としてだけ扱います。
          */
         return new EarthquakeMapPinListDTO(
-            $this->latestModels($limit)
+            $this->latestModels($query)
                 ->map(fn (EarthquakeMapPin $pin): EarthquakeMapPinDTO => $this->pinToDTO($pin))
                 ->all(),
         );
@@ -254,7 +257,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
     /**
      * @return \Illuminate\Support\Collection<int, EarthquakeMapPin>
      */
-    private function latestModels(int $limit)
+    private function latestModels(EarthquakeMapPinListQueryDTO $query)
     {
         if (! $this->isStorageReady()) {
             return collect();
@@ -265,12 +268,65 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
          * ここでは「表示対象にするか」の業務判断はせず、保存済みデータの最新順読み取りだけを
          * Eloquent クエリとして表現します。
          */
-        return EarthquakeMapPin::query()
+        $builder = EarthquakeMapPin::query();
+        $this->applyDateRange($builder, $query);
+
+        return $builder
             ->orderByRaw('reported_at IS NULL')
             ->orderByDesc('reported_at')
             ->orderByDesc('id')
-            ->limit(max(1, min($limit, 100)))
+            ->limit(max(1, min($query->limit, 100)))
             ->get();
+    }
+
+    private function applyDateRange(Builder $builder, EarthquakeMapPinListQueryDTO $query): void
+    {
+        $timezone = config('app.timezone', 'UTC');
+        $startAt = $this->parseDateBoundary($query->startDate, $timezone, true);
+        $endAt = $this->parseDateBoundary($query->endDate, $timezone, false);
+
+        if ($startAt !== null) {
+            $builder->where(function (Builder $dateQuery) use ($startAt): void {
+                $dateQuery
+                    ->where('reported_at', '>=', $startAt->toDateTimeString())
+                    ->orWhere(function (Builder $fallbackQuery) use ($startAt): void {
+                        $fallbackQuery
+                            ->whereNull('reported_at')
+                            ->where('occurred_at', '>=', $startAt->toDateTimeString());
+                    });
+            });
+        }
+
+        if ($endAt !== null) {
+            $builder->where(function (Builder $dateQuery) use ($endAt): void {
+                $dateQuery
+                    ->where('reported_at', '<=', $endAt->toDateTimeString())
+                    ->orWhere(function (Builder $fallbackQuery) use ($endAt): void {
+                        $fallbackQuery
+                            ->whereNull('reported_at')
+                            ->where('occurred_at', '<=', $endAt->toDateTimeString());
+                    });
+            });
+        }
+    }
+
+    private function parseDateBoundary(?string $date, string $timezone, bool $startOfDay): ?CarbonImmutable
+    {
+        if ($date === null || trim($date) === '') {
+            return null;
+        }
+
+        try {
+            $parsedDate = CarbonImmutable::createFromFormat('Y-m-d', $date, $timezone);
+
+            if (! $parsedDate instanceof CarbonImmutable) {
+                return null;
+            }
+
+            return ($startOfDay ? $parsedDate->startOfDay() : $parsedDate->endOfDay())->utc();
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     private function pinToDTO(EarthquakeMapPin $pin): EarthquakeMapPinDTO

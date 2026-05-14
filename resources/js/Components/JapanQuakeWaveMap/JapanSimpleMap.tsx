@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel';
 import EarthquakeMapPinMarker from '@/Components/JapanQuakeWaveMap/EarthquakeMapPinMarker';
 import EarthquakeMapRipple from '@/Components/JapanQuakeWaveMap/EarthquakeMapRipple';
 import type { MapLayerVisibility } from '@/Components/JapanQuakeWaveMap/MapLayerControlPanel';
@@ -14,6 +13,8 @@ import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuake
 type JapanSimpleMapProps = {
     pins: EarthquakeMapPin[];
     layers: MapLayerVisibility;
+    selectedPin: EarthquakeMapPin | null;
+    onSelectPin: (pin: EarthquakeMapPin) => void;
 };
 
 type PinPlacement = {
@@ -34,13 +35,6 @@ type EarthquakeMapPinVisual = {
     rippleSize: number;
     durationSeconds: number;
 };
-
-function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt' | 'reportedAt'>) {
-    const value = pin.reportedAt ?? pin.occurredAt;
-    const timestamp = value ? new Date(value).getTime() : Number.NaN;
-
-    return Number.isNaN(timestamp) ? 0 : timestamp;
-}
 
 function intensityRank(maxIntensity: string | null) {
     /*
@@ -184,85 +178,70 @@ function pinPlacement(pin: EarthquakeMapPin, displayOrder: number): PinPlacement
     };
 }
 
-export default function JapanSimpleMap({ pins, layers }: JapanSimpleMapProps) {
+export default function JapanSimpleMap({
+    pins,
+    layers,
+    selectedPin,
+    onSelectPin,
+}: JapanSimpleMapProps) {
     /*
-     * 保存済み earthquake_map_pins を最新発表順に並べ、SVG と同じ viewBox 比率で
-     * absolute 配置します。選択状態はこの地図コンポーネント内だけで管理します。
+     * JapanSimpleMap は渡された pins を、SVG と同じ viewBox 比率で absolute 配置します。
+     * 表示件数、震度フィルター、日付範囲、詳細パネルは親コンポーネント側の責務です。
+     *
+     * ここでは地図そのものの横幅を親幅に収めることだけを保証します。
+     * 波紋やピンは absolute / overflow-visible の見た目を使うため、外側ラッパーで overflow-hidden と
+     * min-w-0 を持たせ、演出の広がりがスマホの横スクロール幅として計算されないようにしています。
      */
     const pinPlacements = useMemo(
-        () => [...pins]
-            .sort((left, right) => pinTimestamp(right) - pinTimestamp(left))
+        () => pins
             .map((pin, index) => pinPlacement(pin, index + 1))
             .filter((placement): placement is PinPlacement => placement !== null),
         [pins],
     );
-    const [selectedPin, setSelectedPin] = useState<EarthquakeMapPin | null>(pinPlacements[0]?.pin ?? null);
-
-    useEffect(() => {
-        /*
-         * pins props が Inertia 再描画で差し替わった場合、選択中の pin が消えることがあります。
-         * そのまま古い詳細を残すと地図上に存在しない情報を表示してしまうため、
-         * 現在の表示対象に含まれなければ最新の1件へ戻します。
-         */
-        if (pinPlacements.length === 0) {
-            setSelectedPin(null);
-            return;
-        }
-
-        const selectedStillVisible = selectedPin
-            ? pinPlacements.some(({ pin }) => pin.eventId === selectedPin.eventId
-                && pin.sourceEntryId === selectedPin.sourceEntryId)
-            : false;
-
-        if (!selectedStillVisible) {
-            setSelectedPin(pinPlacements[0].pin);
-        }
-    }, [pinPlacements, selectedPin]);
 
     return (
-        <div className="grid h-full min-h-[472px] gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="relative flex min-h-[430px] items-center justify-center">
-                <div className="relative aspect-[560/760] h-full max-h-[650px] w-full max-w-[560px]">
-                    <svg
-                        className="pointer-events-none absolute inset-0 h-full w-full overflow-visible drop-shadow-[0_22px_48px_rgba(2,24,45,0.3)]"
-                        viewBox={`0 0 ${mapViewBox.width} ${mapViewBox.height}`}
-                        role="img"
-                        aria-label="日本地図"
+        <div className="relative flex min-h-[430px] w-full min-w-0 items-center justify-center overflow-hidden">
+            <div className="relative aspect-[560/760] h-full max-h-[650px] w-full min-w-0 max-w-[560px]">
+                <svg
+                    className="pointer-events-none absolute inset-0 h-full w-full overflow-visible drop-shadow-[0_22px_48px_rgba(2,24,45,0.3)]"
+                    viewBox={`0 0 ${mapViewBox.width} ${mapViewBox.height}`}
+                    role="img"
+                    aria-label="日本地図"
+                >
+                    <defs>
+                        <linearGradient id="japan-map-land" x1="0" x2="1" y1="0" y2="1">
+                            <stop offset="0" stopColor="#f8feff" stopOpacity="0.98" />
+                            <stop offset="0.58" stopColor="#d9fbff" stopOpacity="0.88" />
+                            <stop offset="1" stopColor="#a8eef7" stopOpacity="0.74" />
+                        </linearGradient>
+                        <filter id="japan-map-soft-glow" x="-18%" y="-18%" width="136%" height="136%">
+                            <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#e6fdff" floodOpacity="0.22" />
+                        </filter>
+                    </defs>
+
+                    <g
+                        fill="url(#japan-map-land)"
+                        filter="url(#japan-map-soft-glow)"
+                        stroke="#ffffff"
+                        strokeLinejoin="round"
+                        strokeOpacity="0.74"
+                        strokeWidth="2.2"
                     >
-                        <defs>
-                            <linearGradient id="japan-map-land" x1="0" x2="1" y1="0" y2="1">
-                                <stop offset="0" stopColor="#f8feff" stopOpacity="0.98" />
-                                <stop offset="0.58" stopColor="#d9fbff" stopOpacity="0.88" />
-                                <stop offset="1" stopColor="#a8eef7" stopOpacity="0.74" />
-                            </linearGradient>
-                            <filter id="japan-map-soft-glow" x="-18%" y="-18%" width="136%" height="136%">
-                                <feDropShadow dx="0" dy="0" stdDeviation="10" floodColor="#e6fdff" floodOpacity="0.22" />
-                            </filter>
-                        </defs>
+                        {japanLandPaths.map((path, index) => (
+                            <path key={index} d={path} />
+                        ))}
+                    </g>
 
-                        <g
-                            fill="url(#japan-map-land)"
-                            filter="url(#japan-map-soft-glow)"
-                            stroke="#ffffff"
-                            strokeLinejoin="round"
-                            strokeOpacity="0.74"
-                            strokeWidth="2.2"
-                        >
-                            {japanLandPaths.map((path, index) => (
-                                <path key={index} d={path} />
-                            ))}
-                        </g>
+                    <PlateBoundaryLayer visible={layers.showPlateBoundaries} />
+                </svg>
 
-                        <PlateBoundaryLayer visible={layers.showPlateBoundaries} />
-                    </svg>
-
-                    <div
-                        className="pointer-events-none absolute inset-0"
-                        data-pin-layer
-                        data-pin-count={pinPlacements.length}
-                    >
-                        <style>
-                            {`
+                <div
+                    className="pointer-events-none absolute inset-0"
+                    data-pin-layer
+                    data-pin-count={pinPlacements.length}
+                >
+                    <style>
+                        {`
                                 @keyframes quake-map-db-ripple {
                                     0% {
                                         opacity: 0;
@@ -288,44 +267,41 @@ export default function JapanSimpleMap({ pins, layers }: JapanSimpleMapProps) {
                                     }
                                 }
                             `}
-                        </style>
+                    </style>
 
-                        {pinPlacements.map(({ displayOrder, eventKey, pin, xPercent, yPercent, visual }) => (
-                            <div key={eventKey}>
-                                {layers.showRipples && (
-                                    <EarthquakeMapRipple
-                                        eventKey={eventKey}
-                                        xPercent={xPercent}
-                                        yPercent={yPercent}
-                                        visual={visual}
-                                    />
-                                )}
-                                {layers.showPins && (
-                                    <EarthquakeMapPinMarker
-                                        pin={pin}
-                                        displayOrder={displayOrder}
-                                        xPercent={xPercent}
-                                        yPercent={yPercent}
-                                        visual={visual}
-                                        selected={selectedPin?.eventId === pin.eventId
-                                            && selectedPin?.sourceEntryId === pin.sourceEntryId}
-                                        showIntensityLabel={layers.showIntensityLabels}
-                                        onSelect={setSelectedPin}
-                                    />
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                    {pinPlacements.map(({ displayOrder, eventKey, pin, xPercent, yPercent, visual }) => (
+                        <div key={eventKey}>
+                            {layers.showRipples && (
+                                <EarthquakeMapRipple
+                                    eventKey={eventKey}
+                                    xPercent={xPercent}
+                                    yPercent={yPercent}
+                                    visual={visual}
+                                />
+                            )}
+                            {layers.showPins && (
+                                <EarthquakeMapPinMarker
+                                    pin={pin}
+                                    displayOrder={displayOrder}
+                                    xPercent={xPercent}
+                                    yPercent={yPercent}
+                                    visual={visual}
+                                    selected={selectedPin?.eventId === pin.eventId
+                                        && selectedPin?.sourceEntryId === pin.sourceEntryId}
+                                    showIntensityLabel={layers.showIntensityLabels}
+                                    onSelect={onSelectPin}
+                                />
+                            )}
+                        </div>
+                    ))}
                 </div>
-
-                {pinPlacements.length === 0 && (
-                    <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-lg border border-white/25 bg-slate-950/42 px-4 py-5 text-center text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
-                        保存済みの地震ピンはありません。
-                    </div>
-                )}
             </div>
 
-            <EarthquakeMapDetailPanel pin={selectedPin} />
+            {pinPlacements.length === 0 && (
+                <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-lg border border-white/25 bg-slate-950/42 px-4 py-5 text-center text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+                    保存済みの地震ピンはありません。
+                </div>
+            )}
         </div>
     );
 }

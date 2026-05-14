@@ -3,12 +3,13 @@
 namespace App\Responders\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
+use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EarthquakeMapResponder
 {
-    public function __invoke(EarthquakeMapPinListDTO $pins): Response
+    public function __invoke(EarthquakeMapPinListDTO $pins, EarthquakeMapPinListQueryDTO $query): Response
     {
         /*
          * Responder は Inertia props の形だけを決めます。
@@ -20,6 +21,7 @@ class EarthquakeMapResponder
          */
         return Inertia::render('QuakeWavePreview/QuakeWaveMapPage', [
             'pins' => $pins->toArray()['items'],
+            'filters' => $query->filtersToArray(),
         ]);
     }
 }
