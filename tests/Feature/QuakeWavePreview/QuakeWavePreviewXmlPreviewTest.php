@@ -207,6 +207,8 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
     {
         $mapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanQuakeWaveMap.tsx'));
         $mapPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/QuakeWaveMapPage.tsx'));
+        $visiblePinsHookSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/hooks/useVisibleEarthquakePins.ts'));
+        $refreshHookSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/hooks/useQuakeMapRefresh.ts'));
         $simpleMapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanSimpleMap.tsx'));
         $projectionSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/mapProjection.ts'));
         $controlSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapLayerControlPanel.tsx'));
@@ -227,6 +229,8 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
 
         $this->assertIsString($mapSource);
         $this->assertIsString($mapPageSource);
+        $this->assertIsString($visiblePinsHookSource);
+        $this->assertIsString($refreshHookSource);
         $this->assertIsString($simpleMapSource);
         $this->assertIsString($projectionSource);
         $this->assertIsString($controlSource);
@@ -246,11 +250,19 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertStringContainsString('地図データ更新', $refreshSource);
         $this->assertStringContainsString('aria-expanded', $refreshSource);
         $this->assertStringNotContainsString('sourceLabel', $mapSource.$mapPageSource.$mockPageSource);
-        $this->assertStringContainsString('/quakewave-preview/map/refresh', $mapPageSource);
-        $this->assertStringContainsString('/quakewave-preview/map', $mapPageSource);
-        $this->assertStringContainsString('/quakewave-preview/feed-entries/sync/status', $mapPageSource);
-        $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $mapPageSource);
-        $this->assertStringContainsString('地図データ更新', $mapPageSource);
+        $this->assertStringContainsString('useVisibleEarthquakePins', $mapPageSource);
+        $this->assertStringContainsString('useQuakeMapRefresh', $mapPageSource);
+        $this->assertStringNotContainsString('function pickVisiblePins', $mapPageSource);
+        $this->assertStringNotContainsString('axios.', $mapPageSource);
+        $this->assertStringContainsString('pickVisiblePins', $visiblePinsHookSource);
+        $this->assertStringContainsString('comparePinsForDisplay', $visiblePinsHookSource);
+        $this->assertStringContainsString('pinTimestamp', $visiblePinsHookSource);
+        $this->assertStringContainsString('pinKey', $visiblePinsHookSource);
+        $this->assertStringContainsString('/quakewave-preview/map/refresh', $refreshHookSource);
+        $this->assertStringContainsString('/quakewave-preview/map', $refreshHookSource);
+        $this->assertStringContainsString('/quakewave-preview/feed-entries/sync/status', $refreshHookSource);
+        $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $refreshHookSource);
+        $this->assertStringContainsString('地図データ更新', $refreshHookSource);
         $this->assertStringContainsString('QuakeDateRangeFilter', $mapPageSource);
         $this->assertStringContainsString('QuakeIntensitySwitchFilter', $mapPageSource);
         $this->assertStringContainsString("only: ['pins', 'filters']", $mapPageSource);
