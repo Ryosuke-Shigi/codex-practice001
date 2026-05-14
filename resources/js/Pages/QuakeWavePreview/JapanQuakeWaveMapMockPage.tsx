@@ -339,24 +339,28 @@ export default function JapanQuakeWaveMapMockPage() {
         <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
             <Head title="QuakeWave Map Mock" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 pb-12 pt-4 sm:pt-8">
-                <header className="flex items-center justify-between gap-4">
+            <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-7xl flex-col gap-8 pb-12 pt-4 sm:pt-8">
+                {/*
+                    モック画面はスマホ実機で操作感を見る場所なので、ヘッダーリンクも固定左右配置にしません。
+                    flex-wrap と min-w-0 を持たせ、リンク文言や端末幅の差でページ全体が横に広がらないようにします。
+                */}
+                <header className="flex w-full min-w-0 flex-wrap items-center justify-between gap-4">
                     <Link
                         href="/quakewave-preview"
-                        className="rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                        className="max-w-full rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
                     >
                         QuakeWave Preview
                     </Link>
                     <Link
                         href="/quakewave-preview/map"
-                        className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-950/70 backdrop-blur-xl transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                        className="max-w-full rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-950/70 backdrop-blur-xl transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
                     >
                         DB Map
                     </Link>
                 </header>
 
-                <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <article className="rounded-lg border border-white/20 bg-slate-950/52 p-5 text-white shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+                <section className="grid w-full min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
+                    <article className="min-w-0 rounded-lg border border-white/20 bg-slate-950/52 p-5 text-white shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
                         <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
                             Parts Mock
                         </span>
@@ -371,7 +375,7 @@ export default function JapanQuakeWaveMapMockPage() {
                         </div>
                     </article>
 
-                    <article className="rounded-lg border border-white/20 bg-slate-950/52 p-5 text-white shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+                    <article className="min-w-0 rounded-lg border border-white/20 bg-slate-950/52 p-5 text-white shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
                         <span className="inline-flex rounded-md border border-amber-300/50 bg-amber-300/15 px-2.5 py-1 text-xs font-semibold text-amber-50">
                             Parts Mock
                         </span>

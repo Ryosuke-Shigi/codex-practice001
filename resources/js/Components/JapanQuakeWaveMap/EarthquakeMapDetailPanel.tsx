@@ -51,7 +51,7 @@ export default function EarthquakeMapDetailPanel({
 
     if (!pin) {
         return (
-            <aside className="rounded-lg border border-white/25 bg-slate-950/34 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
+            <aside className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/34 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
                 <p className="text-sm font-semibold text-white">詳細</p>
                 <p className="mt-3 text-sm leading-6 text-cyan-50/78">
                     地図上のピンを選択すると、取得済み地震情報の詳細を表示します。
@@ -69,9 +69,9 @@ export default function EarthquakeMapDetailPanel({
     ];
 
     return (
-        <aside className="rounded-lg border border-white/25 bg-slate-950/40 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.2)] backdrop-blur-md">
+        <aside className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/40 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.2)] backdrop-blur-md">
             <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/64">
                         SELECTED
                     </p>

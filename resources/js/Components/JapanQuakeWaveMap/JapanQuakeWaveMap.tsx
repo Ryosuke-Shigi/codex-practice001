@@ -103,14 +103,25 @@ export default function JapanQuakeWaveMap({
         }
     }, [pins, selectedPin]);
 
+    /*
+     * モバイル幅では、Grid/Flex の子要素が自身の内容幅を優先して親を押し広げることがあります。
+     * 地図・詳細・コントロールはどれもカード内に収まるべき表示部品なので、共通ラッパー側で
+     * w-full / min-w-0 を徹底し、震度フィルターや日付入力の内容幅がページ全体の横スクロールに
+     * つながらないようにします。
+     */
     const mapAndDetailClassName = detailPanelPlacement === 'below'
-        ? 'grid h-full min-h-[472px] gap-4'
-        : 'grid h-full min-h-[472px] gap-4 lg:grid-cols-[minmax(0,1fr)_280px]';
+        ? 'grid h-full min-h-[430px] w-full min-w-0 gap-4 sm:min-h-[472px]'
+        : 'grid h-full min-h-[430px] w-full min-w-0 gap-4 sm:min-h-[472px] lg:grid-cols-[minmax(0,1fr)_280px]';
 
     return (
-        <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(520px,1.28fr)]">
+        /*
+         * 右カラムに固定の最小幅を置くとスマホ表示で必ずはみ出すため、右側も minmax(0, ...)
+         * にして親幅へ収縮できるようにします。実際の余白や視認性は内側のカード padding と
+         * min-height で調整します。
+         */
+        <section className="grid w-full min-w-0 flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
             <motion.div
-                className="max-w-2xl"
+                className="w-full max-w-2xl min-w-0"
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.75, ease: 'easeOut' }}
@@ -139,14 +150,14 @@ export default function JapanQuakeWaveMap({
             </motion.div>
 
             <motion.div
-                className="relative flex min-h-[520px] flex-col gap-4"
+                className="relative flex min-h-[430px] w-full min-w-0 flex-col gap-4 sm:min-h-[520px]"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.12, duration: 0.8, ease: 'easeOut' }}
             >
                 {mapTopContent}
 
-                <div className="relative overflow-hidden rounded-lg border border-white/30 bg-slate-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_26px_70px_rgba(2,24,45,0.25)] backdrop-blur-sm">
+                <div className="relative w-full min-w-0 overflow-hidden rounded-lg border border-white/30 bg-slate-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_26px_70px_rgba(2,24,45,0.25)] backdrop-blur-sm">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/18 to-transparent" />
                     {/*
                         mapOverlay は、地図コンテナ基準で重ねる操作UIの差し込み口です。
@@ -154,7 +165,11 @@ export default function JapanQuakeWaveMap({
                         表示件数スライダーの state と絞り込み処理は呼び出し元ページに置きます。
                     */}
                     {mapOverlay}
-                    <div className="relative h-full min-h-[520px] p-4 sm:p-6">
+                    {/*
+                        地図は主役なのでスマホでも高さを確保しますが、520px固定だと下の操作パネルが
+                        遠くなりすぎます。小さい画面だけ430pxへ落とし、sm以上では従来の余白感を保ちます。
+                    */}
+                    <div className="relative h-full min-h-[430px] w-full min-w-0 p-3 sm:min-h-[520px] sm:p-6">
                         <div className={mapAndDetailClassName}>
                             <JapanSimpleMap
                                 pins={pins}
@@ -171,7 +186,7 @@ export default function JapanQuakeWaveMap({
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex w-full min-w-0 flex-col gap-4">
                     {controlPanelsBeforeLayers}
                     <MapLayerControlPanel layers={layers} onChange={setLayers} />
                     {refreshAction && refreshPanelPlacement === 'controls' && (

@@ -98,25 +98,28 @@ export default function QuakeIntensitySwitchFilter({
     };
 
     return (
-        <section className="rounded-lg border border-white/25 bg-slate-950/30 px-4 py-3 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+        <section className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/30 px-4 py-3 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold tracking-[0.08em] text-cyan-100/82">
                     震度フィルター
                 </h2>
             </div>
 
-            <div className="mt-2 overflow-x-auto pb-1">
-                <div className="grid min-w-[520px] grid-cols-10 items-start justify-items-center gap-2">
-                    {quakeIntensityOptions.map((option) => (
-                        <VerticalIntensitySwitch
-                            key={option.key}
-                            label={option.label}
-                            tone={option.tone}
-                            checked={selectedSet.has(option.key)}
-                            onChange={(checked) => toggleIntensity(option.key, checked)}
-                        />
-                    ))}
-                </div>
+            {/*
+                震度スイッチは10個すべてが同じ重要度の操作なので、スマホでも横スクロールには逃がさず
+                画面内で全体を見渡せる配置にします。5列 x 2段なら iPhone 幅でも各スイッチのタップ領域を
+                確保しつつ、「左から強い震度順」という読み方を崩さずに済みます。
+            */}
+            <div className="mt-2 grid grid-cols-5 items-start justify-items-center gap-x-2 gap-y-3 sm:grid-cols-10">
+                {quakeIntensityOptions.map((option) => (
+                    <VerticalIntensitySwitch
+                        key={option.key}
+                        label={option.label}
+                        tone={option.tone}
+                        checked={selectedSet.has(option.key)}
+                        onChange={(checked) => toggleIntensity(option.key, checked)}
+                    />
+                ))}
             </div>
         </section>
     );

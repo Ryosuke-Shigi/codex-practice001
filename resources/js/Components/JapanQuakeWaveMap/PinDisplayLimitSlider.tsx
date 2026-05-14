@@ -21,6 +21,10 @@ export default function PinDisplayLimitSlider({
      *
      * currentValue を min/max に丸めているのは、親から範囲外の値が渡っても UI 表示だけで破綻しない
      * ようにするためです。実際の表示件数制限は親側の slice で行います。
+     *
+     * スライダーは地図の上に重なるため、スマホ幅ではPCと同じ高さ・幅にしません。
+     * left/top、パネル幅、縦レール長をひと回り小さくし、地図の視認性を残したまま件数変更だけは
+     * 片手でも操作できるサイズにしています。sm以上は従来に近い大きさへ戻します。
      */
     const effectiveMax = Math.min(
         PIN_DISPLAY_LIMIT_MAX,
@@ -29,7 +33,7 @@ export default function PinDisplayLimitSlider({
     const currentValue = Math.min(effectiveMax, Math.max(PIN_DISPLAY_LIMIT_MIN, value));
 
     return (
-        <div className="absolute left-3 top-5 z-30 flex min-h-[396px] w-20 flex-col items-center gap-4 rounded-lg border border-white/35 bg-slate-950/72 px-2.5 py-4 text-white shadow-[0_18px_44px_rgba(2,24,45,0.28)] backdrop-blur-md sm:left-4 sm:top-6">
+        <div className="absolute left-2 top-3 z-30 flex min-h-[300px] w-16 flex-col items-center gap-3 rounded-lg border border-white/35 bg-slate-950/72 px-2 py-3 text-white shadow-[0_18px_44px_rgba(2,24,45,0.28)] backdrop-blur-md sm:left-4 sm:top-6 sm:min-h-[396px] sm:w-20 sm:gap-4 sm:px-2.5 sm:py-4">
             <style>
                 {`
                     .pin-display-limit-slider {
@@ -76,16 +80,16 @@ export default function PinDisplayLimitSlider({
             </style>
 
             <div className="text-center">
-                <span className="block text-[11px] font-semibold leading-4 text-cyan-100/80">
+                <span className="block text-[10px] font-semibold leading-4 text-cyan-100/80 sm:text-[11px]">
                     表示件数
                 </span>
-                <output className="mt-1 block text-2xl font-bold leading-none text-white">
+                <output className="mt-1 block text-xl font-bold leading-none text-white sm:text-2xl">
                     {currentValue}件
                 </output>
             </div>
 
             <div className="flex items-center gap-1.5">
-                <div className="relative flex h-72 w-11 items-center justify-center">
+                <div className="relative flex h-56 w-9 items-center justify-center sm:h-72 sm:w-11">
                     <input
                         type="range"
                         min={PIN_DISPLAY_LIMIT_MIN}
@@ -95,10 +99,10 @@ export default function PinDisplayLimitSlider({
                         aria-label="地震ピン表示件数"
                         aria-orientation="vertical"
                         onChange={(event) => onChange(Number(event.currentTarget.value))}
-                        className="pin-display-limit-slider absolute h-10 w-72 -rotate-90 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                        className="pin-display-limit-slider absolute h-10 w-56 -rotate-90 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:w-72"
                     />
                 </div>
-                <div className="flex h-72 flex-col justify-between py-1 text-[10px] font-bold leading-none text-cyan-50/78" aria-hidden="true">
+                <div className="flex h-56 flex-col justify-between py-1 text-[10px] font-bold leading-none text-cyan-50/78 sm:h-72" aria-hidden="true">
                     <span>{effectiveMax}</span>
                     <span>{PIN_DISPLAY_LIMIT_MIN}</span>
                 </div>

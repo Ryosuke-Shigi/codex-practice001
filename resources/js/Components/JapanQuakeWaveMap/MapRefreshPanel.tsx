@@ -22,9 +22,9 @@ export default function MapRefreshPanel({
     const [isRefreshPanelOpen, setIsRefreshPanelOpen] = useState(defaultOpen);
 
     return (
-        <section className="rounded-lg border border-white/25 bg-slate-950/28 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+        <section className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/28 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h2 className="text-base font-semibold text-white">
                         地図データ更新
                     </h2>
