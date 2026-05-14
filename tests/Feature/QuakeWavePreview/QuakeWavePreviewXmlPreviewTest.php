@@ -112,14 +112,32 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
             'reported_at' => '2026-05-11 02:31:00',
             'comment' => '保存済み地震情報です。',
         ]);
+        EarthquakeMapPin::query()->create([
+            'event_id' => '20260510000100',
+            'source_entry_id' => $sourceEntry->getKey(),
+            'title' => '震源・震度情報',
+            'area_name' => '期間外',
+            'headline' => '期間外の保存済み地震情報です。',
+            'raw_coordinate' => '+40.0+142.0-30000/',
+            'latitude' => '40.0000000',
+            'longitude' => '142.0000000',
+            'depth_meter' => 30000,
+            'magnitude' => '3.5',
+            'max_intensity' => '2',
+            'occurred_at' => '2026-05-10 14:00:00',
+            'reported_at' => '2026-05-10 14:00:00',
+            'comment' => '日付範囲外です。',
+        ]);
 
-        $response = $this->get('/quakewave-preview/map');
+        $response = $this->get('/quakewave-preview/map?startDate=2026-05-11&endDate=2026-05-11');
 
         $response
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('QuakeWavePreview/QuakeWaveMapPage', false)
                 ->has('pins', 1)
+                ->where('filters.startDate', '2026-05-11')
+                ->where('filters.endDate', '2026-05-11')
                 ->where('pins.0.eventId', '20260511112751')
                 ->where('pins.0.sourceEntryId', $sourceEntry->getKey())
                 ->where('pins.0.title', '震源・震度情報')
@@ -192,7 +210,12 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $simpleMapSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/JapanSimpleMap.tsx'));
         $projectionSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/mapProjection.ts'));
         $controlSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapLayerControlPanel.tsx'));
+        $refreshSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/MapRefreshPanel.tsx'));
         $detailSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel.tsx'));
+        $dateRangeSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/QuakeDateRangeFilter.tsx'));
+        $intensitySource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/QuakeIntensitySwitchFilter.tsx'));
+        $verticalSwitchSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/VerticalIntensitySwitch.tsx'));
+        $sliderSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/PinDisplayLimitSlider.tsx'));
         $plateSource = file_get_contents(resource_path('js/Components/JapanQuakeWaveMap/PlateBoundaryLayer.tsx'));
         $mockPageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/JapanQuakeWaveMapMockPage.tsx'));
         $plateGeoJson = json_decode(
@@ -207,26 +230,41 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertIsString($simpleMapSource);
         $this->assertIsString($projectionSource);
         $this->assertIsString($controlSource);
+        $this->assertIsString($refreshSource);
         $this->assertIsString($detailSource);
+        $this->assertIsString($dateRangeSource);
+        $this->assertIsString($intensitySource);
+        $this->assertIsString($verticalSwitchSource);
+        $this->assertIsString($sliderSource);
         $this->assertIsString($plateSource);
         $this->assertIsString($mockPageSource);
         $this->assertSame('FeatureCollection', $plateGeoJson['type']);
         $this->assertNotEmpty($plateGeoJson['features']);
         $this->assertStringContainsString('MapLayerControlPanel', $mapSource);
-        $this->assertStringContainsString('isRefreshPanelOpen', $mapSource);
-        $this->assertStringContainsString('地図データ更新', $mapSource);
-        $this->assertStringContainsString('aria-expanded', $mapSource);
+        $this->assertStringContainsString('MapRefreshPanel', $mapSource);
+        $this->assertStringContainsString('isRefreshPanelOpen', $refreshSource);
+        $this->assertStringContainsString('地図データ更新', $refreshSource);
+        $this->assertStringContainsString('aria-expanded', $refreshSource);
         $this->assertStringNotContainsString('sourceLabel', $mapSource.$mapPageSource.$mockPageSource);
         $this->assertStringContainsString('/quakewave-preview/map/refresh', $mapPageSource);
+        $this->assertStringContainsString('/quakewave-preview/map', $mapPageSource);
         $this->assertStringContainsString('/quakewave-preview/feed-entries/sync/status', $mapPageSource);
         $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $mapPageSource);
         $this->assertStringContainsString('地図データ更新', $mapPageSource);
+        $this->assertStringContainsString('QuakeDateRangeFilter', $mapPageSource);
+        $this->assertStringContainsString('QuakeIntensitySwitchFilter', $mapPageSource);
+        $this->assertStringContainsString("only: ['pins', 'filters']", $mapPageSource);
         $this->assertStringNotContainsString('function JapanQuakeWaveMapMock', $mapSource);
         $this->assertStringContainsString('JapanQuakeWaveMapMockPage', $mockPageSource);
         $this->assertStringContainsString('EarthquakePin', $mockPageSource);
         $this->assertStringContainsString('EarthquakeRipple', $mockPageSource);
         $this->assertStringContainsString('Parts Mock', $mockPageSource);
+        $this->assertStringContainsString('QuakeDateRangeFilter', $mockPageSource);
+        $this->assertStringContainsString('QuakeIntensitySwitchFilter', $mockPageSource);
+        $this->assertStringContainsString('selectedIntensities', $mockPageSource);
+        $this->assertStringContainsString('quakeIntensitySortRank', $mockPageSource);
         $this->assertStringContainsString('showPlateBoundaries', $simpleMapSource);
+        $this->assertStringNotContainsString('EarthquakeMapDetailPanel', $simpleMapSource);
         $this->assertStringContainsString('mapProjectionBounds', $projectionSource);
         $this->assertStringContainsString('projectCoordinateToMap', $simpleMapSource);
         $this->assertStringContainsString('projectCoordinateToMap', $plateSource);
@@ -245,6 +283,21 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertStringContainsString('最大震度', $detailSource);
         $this->assertStringContainsString('深さ', $detailSource);
         $this->assertStringContainsString('areaName', $detailSource);
+        $this->assertStringContainsString('詳細を開く', $detailSource);
+        $this->assertStringContainsString('詳細を閉じる', $detailSource);
+        $this->assertStringContainsString('日付範囲', $dateRangeSource);
+        $this->assertStringContainsString('開始日', $dateRangeSource);
+        $this->assertStringContainsString('終了日', $dateRangeSource);
+        $this->assertStringNotContainsString('適用', $dateRangeSource);
+        $this->assertStringNotContainsString('DATE RANGE', $dateRangeSource);
+        $this->assertStringContainsString('震度フィルター', $intensitySource);
+        $this->assertStringContainsString('6強', $intensitySource);
+        $this->assertStringContainsString('6弱', $intensitySource);
+        $this->assertStringContainsString('不明', $intensitySource);
+        $this->assertStringNotContainsString('INTENSITY FILTER', $intensitySource);
+        $this->assertStringNotContainsString('ON {selectedIntensities.length}件', $intensitySource);
+        $this->assertStringContainsString('role="switch"', $verticalSwitchSource);
+        $this->assertStringContainsString('PIN_DISPLAY_LIMIT_MAX = 45', $sliderSource);
         $this->assertStringNotContainsString('occurred', $detailSource);
         $this->assertStringNotContainsString('reported', $detailSource);
         $this->assertStringContainsString('stroke="#fde047"', $plateSource);

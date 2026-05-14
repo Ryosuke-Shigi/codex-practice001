@@ -3,6 +3,7 @@
 namespace App\Actions\Earthquake\Queries;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
+use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 
 class GetEarthquakeMapPinsAction
@@ -12,7 +13,7 @@ class GetEarthquakeMapPinsAction
     ) {
     }
 
-    public function execute(int $limit = 50): EarthquakeMapPinListDTO
+    public function execute(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
     {
         /*
          * Query Action は /quakewave-preview/map の表示に必要な読み取り手順だけを持ちます。
@@ -23,6 +24,6 @@ class GetEarthquakeMapPinsAction
          * といった読み取り手順を Controller に漏らさず追加できます。第1段階では最新順の
          * 取得だけに留め、feed entry 取込や map pin 生成 Job へは一切接続しません。
          */
-        return $this->mapPinRepository->toMapPinListDTO($limit);
+        return $this->mapPinRepository->toMapPinListDTO($query);
     }
 }

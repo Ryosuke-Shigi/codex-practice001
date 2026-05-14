@@ -13,6 +13,15 @@ import JapanQuakeWaveMap, {
 import PinDisplayLimitSlider, {
     PIN_DISPLAY_LIMIT_INITIAL,
 } from '@/Components/JapanQuakeWaveMap/PinDisplayLimitSlider';
+import QuakeDateRangeFilter, {
+    type QuakeDateRange,
+} from '@/Components/JapanQuakeWaveMap/QuakeDateRangeFilter';
+import QuakeIntensitySwitchFilter, {
+    quakeIntensityKey,
+    quakeIntensityKeys,
+    quakeIntensitySortRank,
+    type QuakeIntensityKey,
+} from '@/Components/JapanQuakeWaveMap/QuakeIntensitySwitchFilter';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type MockPinSeed = {
@@ -21,10 +30,90 @@ type MockPinSeed = {
     longitude: number;
     depthMeter: number;
     magnitude: string;
-    maxIntensity: string;
+    maxIntensity: string | null;
 };
 
 const mockPinSeeds: MockPinSeed[] = [
+    {
+        areaName: '北海道東方沖',
+        latitude: 43.4,
+        longitude: 145.8,
+        depthMeter: 40000,
+        magnitude: '7.1',
+        maxIntensity: '7',
+    },
+    {
+        areaName: '十勝沖',
+        latitude: 41.9,
+        longitude: 143.7,
+        depthMeter: 50000,
+        magnitude: '6.8',
+        maxIntensity: '6+',
+    },
+    {
+        areaName: '根室半島南東沖',
+        latitude: 43.0,
+        longitude: 145.2,
+        depthMeter: 30000,
+        magnitude: '6.5',
+        maxIntensity: '6-',
+    },
+    {
+        areaName: '相模湾',
+        latitude: 35.1,
+        longitude: 139.4,
+        depthMeter: 20000,
+        magnitude: '5.9',
+        maxIntensity: '5+',
+    },
+    {
+        areaName: '四国沖',
+        latitude: 32.4,
+        longitude: 134.7,
+        depthMeter: 30000,
+        magnitude: '6.2',
+        maxIntensity: '6-',
+    },
+    {
+        areaName: '北海道南西沖',
+        latitude: 42.0,
+        longitude: 139.5,
+        depthMeter: 18000,
+        magnitude: '5.7',
+        maxIntensity: '5+',
+    },
+    {
+        areaName: '静岡県西部',
+        latitude: 34.8,
+        longitude: 137.9,
+        depthMeter: 12000,
+        magnitude: '3.1',
+        maxIntensity: '1',
+    },
+    {
+        areaName: '内浦湾',
+        latitude: 42.3,
+        longitude: 140.7,
+        depthMeter: 11000,
+        magnitude: '3.4',
+        maxIntensity: '1',
+    },
+    {
+        areaName: '震度未判定海域',
+        latitude: 35.9,
+        longitude: 140.4,
+        depthMeter: 45000,
+        magnitude: '4.2',
+        maxIntensity: null,
+    },
+    {
+        areaName: '詳細不明震源',
+        latitude: 34.0,
+        longitude: 136.0,
+        depthMeter: 30000,
+        magnitude: '4.0',
+        maxIntensity: '不明',
+    },
     {
         areaName: '青森県東方沖',
         latitude: 41.0,
@@ -95,6 +184,78 @@ function mockDateTime(index: number, offsetMinutes: number) {
     return `2026-05-11T${pad(hour)}:${pad(minute)}:00+09:00`;
 }
 
+function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt' | 'reportedAt'>) {
+    const value = pin.reportedAt ?? pin.occurredAt;
+    const timestamp = value ? new Date(value).getTime() : Number.NaN;
+
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function pinKey(pin: EarthquakeMapPin) {
+    return `${pin.eventId ?? 'no-event'}:${pin.sourceEntryId}`;
+}
+
+function comparePinsForMockDisplay(left: EarthquakeMapPin, right: EarthquakeMapPin) {
+    const intensityDifference = quakeIntensitySortRank(right.maxIntensity)
+        - quakeIntensitySortRank(left.maxIntensity);
+
+    if (intensityDifference !== 0) {
+        return intensityDifference;
+    }
+
+    return pinTimestamp(right) - pinTimestamp(left);
+}
+
+function pickVisibleMockPins(
+    filteredPins: EarthquakeMapPin[],
+    selectedIntensities: QuakeIntensityKey[],
+    limit: number,
+) {
+    const sortedPins = [...filteredPins].sort(comparePinsForMockDisplay);
+
+    if (
+        selectedIntensities.length === 0
+        || selectedIntensities.length === quakeIntensityKeys.length
+    ) {
+        return sortedPins.slice(0, limit);
+    }
+
+    /*
+     * モックではフィルター操作感を優先し、少数の震度だけをONにしたときは
+     * ONにした震度が表示上限の手前で丸ごと落ちないようにします。
+     * そのうえで最終表示順は、震度が大きい順、同じ震度なら新しい順へ戻します。
+     */
+    const pickedPins: EarthquakeMapPin[] = [];
+    const pickedKeys = new Set<string>();
+
+    for (const intensity of selectedIntensities) {
+        if (pickedPins.length >= limit) {
+            break;
+        }
+
+        const pin = sortedPins.find((candidate) => quakeIntensityKey(candidate.maxIntensity) === intensity
+            && !pickedKeys.has(pinKey(candidate)));
+
+        if (pin) {
+            pickedPins.push(pin);
+            pickedKeys.add(pinKey(pin));
+        }
+    }
+
+    for (const pin of sortedPins) {
+        if (pickedPins.length >= limit) {
+            break;
+        }
+
+        if (!pickedKeys.has(pinKey(pin))) {
+            pickedPins.push(pin);
+            pickedKeys.add(pinKey(pin));
+        }
+    }
+
+    return pickedPins.sort(comparePinsForMockDisplay);
+}
+
 function coordinatePart(value: number) {
     return `${value >= 0 ? '+' : '-'}${Math.abs(value).toFixed(1)}`;
 }
@@ -129,6 +290,26 @@ const mockRippleParts: EarthquakeRipplePreview[] = [
     { label: '弱い波紋', maxIntensity: '4', color: '#38bdf8', size: 76, duration: '2.8s', ringCount: 2 },
 ];
 
+function formatDateInputValue(date: Date) {
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+
+    return `${year}-${month}-${day}`;
+}
+
+function dateRangeFromToday(): QuakeDateRange {
+    const endDate = new Date();
+    const startDate = new Date(endDate);
+
+    startDate.setDate(endDate.getDate() - 3);
+
+    return {
+        startDate: formatDateInputValue(startDate),
+        endDate: formatDateInputValue(endDate),
+    };
+}
+
 /*
  * モック用のページ入口です。
  * このページだけが仮データを作り、共通表示コンポーネントの JapanQuakeWaveMap に渡します。
@@ -136,16 +317,23 @@ const mockRippleParts: EarthquakeRipplePreview[] = [
  */
 export default function JapanQuakeWaveMapMockPage() {
     const [pinDisplayLimit, setPinDisplayLimit] = useState(PIN_DISPLAY_LIMIT_INITIAL);
-    const visibleMockPins = useMemo(
+    const [selectedIntensities, setSelectedIntensities] = useState<QuakeIntensityKey[]>(quakeIntensityKeys);
+    const [dateRange, setDateRange] = useState<QuakeDateRange>(() => dateRangeFromToday());
+    const [mockRefreshCount, setMockRefreshCount] = useState(0);
+    const visibleMockPins = useMemo(() => {
         /*
-         * モックでは35件分の固定データを用意し、スライダー値に応じて先頭N件だけを
-         * 共通地図コンポーネントへ渡します。ピンの座標投影、震度ごとの色・サイズ変換、
-         * 詳細パネル選択は JapanQuakeWaveMap / JapanSimpleMap 側の既存処理をそのまま使い、
-         * このページでは「表示件数を変えた時の見え方」を確認することに限定します。
+         * モック側だけで震度フィルター、震度順ソート、同震度内の新しい順ソート、件数制限を行います。
+         * Inertia 再取得、DB条件、Repository/Service/Action には触れず、操作感確認に閉じています。
          */
-        () => mockPins.slice(0, pinDisplayLimit),
-        [pinDisplayLimit],
-    );
+        const selectedSet = new Set(selectedIntensities);
+
+        const filteredPins = mockPins.filter((pin) => selectedSet.has(quakeIntensityKey(pin.maxIntensity)));
+
+        return pickVisibleMockPins(filteredPins, selectedIntensities, pinDisplayLimit);
+    }, [pinDisplayLimit, selectedIntensities]);
+    const mockRefreshStatus = mockRefreshCount === 0
+        ? 'モック更新UIの配置確認中です'
+        : `モック更新UIを${mockRefreshCount}回操作しました`;
 
     return (
         <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
@@ -203,13 +391,39 @@ export default function JapanQuakeWaveMapMockPage() {
                     pins={visibleMockPins}
                     eyebrow="QuakeWave Mock"
                     title="地図全体モック"
-                    summary="上の部品を仮データの日本地図に重ね、表示ON/OFFや詳細表示のまとまりを確認します。"
+                    summary="仮データの日本地図に、表示件数・日付範囲・震度スイッチ・詳細折りたたみを重ねて操作感を確認します。"
                     mapOverlay={(
                         <PinDisplayLimitSlider
                             value={pinDisplayLimit}
+                            availablePinCount={mockPins.length}
                             onChange={setPinDisplayLimit}
                         />
                     )}
+                    mapTopContent={(
+                        <QuakeDateRangeFilter
+                            value={dateRange}
+                            onChange={setDateRange}
+                        />
+                    )}
+                    controlPanelsBeforeLayers={(
+                        <QuakeIntensitySwitchFilter
+                            selectedIntensities={selectedIntensities}
+                            onChange={setSelectedIntensities}
+                        />
+                    )}
+                    refreshAction={{
+                        buttonLabel: '地図データ更新',
+                        disabledLabel: '更新中',
+                        statusLabel: mockRefreshStatus,
+                        description: `モックでは再取得せず、選択中の日付範囲 ${dateRange.startDate || '未指定'} - ${dateRange.endDate || '未指定'} と配置だけを確認します。`,
+                        isRefreshing: false,
+                        errorMessage: null,
+                        onRefresh: () => setMockRefreshCount((current) => current + 1),
+                    }}
+                    refreshPanelPlacement="controls"
+                    detailPanelPlacement="below"
+                    detailPanelCollapsible
+                    detailPanelDefaultOpen={false}
                 />
             </div>
         </PublicLayout>

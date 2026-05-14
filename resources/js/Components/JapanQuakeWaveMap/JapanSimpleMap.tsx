@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel';
 import EarthquakeMapPinMarker from '@/Components/JapanQuakeWaveMap/EarthquakeMapPinMarker';
 import EarthquakeMapRipple from '@/Components/JapanQuakeWaveMap/EarthquakeMapRipple';
 import type { MapLayerVisibility } from '@/Components/JapanQuakeWaveMap/MapLayerControlPanel';
@@ -14,6 +13,8 @@ import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuake
 type JapanSimpleMapProps = {
     pins: EarthquakeMapPin[];
     layers: MapLayerVisibility;
+    selectedPin: EarthquakeMapPin | null;
+    onSelectPin: (pin: EarthquakeMapPin) => void;
 };
 
 type PinPlacement = {
@@ -34,13 +35,6 @@ type EarthquakeMapPinVisual = {
     rippleSize: number;
     durationSeconds: number;
 };
-
-function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt' | 'reportedAt'>) {
-    const value = pin.reportedAt ?? pin.occurredAt;
-    const timestamp = value ? new Date(value).getTime() : Number.NaN;
-
-    return Number.isNaN(timestamp) ? 0 : timestamp;
-}
 
 function intensityRank(maxIntensity: string | null) {
     /*
@@ -184,44 +178,25 @@ function pinPlacement(pin: EarthquakeMapPin, displayOrder: number): PinPlacement
     };
 }
 
-export default function JapanSimpleMap({ pins, layers }: JapanSimpleMapProps) {
+export default function JapanSimpleMap({
+    pins,
+    layers,
+    selectedPin,
+    onSelectPin,
+}: JapanSimpleMapProps) {
     /*
-     * 保存済み earthquake_map_pins を最新発表順に並べ、SVG と同じ viewBox 比率で
-     * absolute 配置します。選択状態はこの地図コンポーネント内だけで管理します。
+     * JapanSimpleMap は渡された pins を、SVG と同じ viewBox 比率で absolute 配置します。
+     * 表示件数、震度フィルター、日付範囲、詳細パネルは親コンポーネント側の責務です。
      */
     const pinPlacements = useMemo(
-        () => [...pins]
-            .sort((left, right) => pinTimestamp(right) - pinTimestamp(left))
+        () => pins
             .map((pin, index) => pinPlacement(pin, index + 1))
             .filter((placement): placement is PinPlacement => placement !== null),
         [pins],
     );
-    const [selectedPin, setSelectedPin] = useState<EarthquakeMapPin | null>(pinPlacements[0]?.pin ?? null);
-
-    useEffect(() => {
-        /*
-         * pins props が Inertia 再描画で差し替わった場合、選択中の pin が消えることがあります。
-         * そのまま古い詳細を残すと地図上に存在しない情報を表示してしまうため、
-         * 現在の表示対象に含まれなければ最新の1件へ戻します。
-         */
-        if (pinPlacements.length === 0) {
-            setSelectedPin(null);
-            return;
-        }
-
-        const selectedStillVisible = selectedPin
-            ? pinPlacements.some(({ pin }) => pin.eventId === selectedPin.eventId
-                && pin.sourceEntryId === selectedPin.sourceEntryId)
-            : false;
-
-        if (!selectedStillVisible) {
-            setSelectedPin(pinPlacements[0].pin);
-        }
-    }, [pinPlacements, selectedPin]);
 
     return (
-        <div className="grid h-full min-h-[472px] gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="relative flex min-h-[430px] items-center justify-center">
+        <div className="relative flex min-h-[430px] items-center justify-center">
                 <div className="relative aspect-[560/760] h-full max-h-[650px] w-full max-w-[560px]">
                     <svg
                         className="pointer-events-none absolute inset-0 h-full w-full overflow-visible drop-shadow-[0_22px_48px_rgba(2,24,45,0.3)]"
@@ -310,7 +285,7 @@ export default function JapanSimpleMap({ pins, layers }: JapanSimpleMapProps) {
                                         selected={selectedPin?.eventId === pin.eventId
                                             && selectedPin?.sourceEntryId === pin.sourceEntryId}
                                         showIntensityLabel={layers.showIntensityLabels}
-                                        onSelect={setSelectedPin}
+                                        onSelect={onSelectPin}
                                     />
                                 )}
                             </div>
@@ -323,9 +298,6 @@ export default function JapanSimpleMap({ pins, layers }: JapanSimpleMapProps) {
                         保存済みの地震ピンはありません。
                     </div>
                 )}
-            </div>
-
-            <EarthquakeMapDetailPanel pin={selectedPin} />
         </div>
     );
 }

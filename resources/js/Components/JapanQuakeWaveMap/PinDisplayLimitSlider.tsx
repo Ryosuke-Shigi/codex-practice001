@@ -1,14 +1,19 @@
 export const PIN_DISPLAY_LIMIT_MIN = 5;
-export const PIN_DISPLAY_LIMIT_MAX = 35;
+export const PIN_DISPLAY_LIMIT_MAX = 45;
 export const PIN_DISPLAY_LIMIT_INITIAL = 10;
 export const PIN_DISPLAY_LIMIT_STEP = 1;
 
 type PinDisplayLimitSliderProps = {
     value: number;
+    availablePinCount?: number;
     onChange: (value: number) => void;
 };
 
-export default function PinDisplayLimitSlider({ value, onChange }: PinDisplayLimitSliderProps) {
+export default function PinDisplayLimitSlider({
+    value,
+    availablePinCount,
+    onChange,
+}: PinDisplayLimitSliderProps) {
     /*
      * PinDisplayLimitSlider は表示件数を選ぶための UI 部品です。
      * 地震データの取得、並び順、ピン座標変換、地図への描画判断は親コンポーネント側に残し、
@@ -17,7 +22,11 @@ export default function PinDisplayLimitSlider({ value, onChange }: PinDisplayLim
      * currentValue を min/max に丸めているのは、親から範囲外の値が渡っても UI 表示だけで破綻しない
      * ようにするためです。実際の表示件数制限は親側の slice で行います。
      */
-    const currentValue = Math.min(PIN_DISPLAY_LIMIT_MAX, Math.max(PIN_DISPLAY_LIMIT_MIN, value));
+    const effectiveMax = Math.min(
+        PIN_DISPLAY_LIMIT_MAX,
+        Math.max(PIN_DISPLAY_LIMIT_MIN, availablePinCount ?? PIN_DISPLAY_LIMIT_MAX),
+    );
+    const currentValue = Math.min(effectiveMax, Math.max(PIN_DISPLAY_LIMIT_MIN, value));
 
     return (
         <div className="absolute left-3 top-5 z-30 flex min-h-[396px] w-20 flex-col items-center gap-4 rounded-lg border border-white/35 bg-slate-950/72 px-2.5 py-4 text-white shadow-[0_18px_44px_rgba(2,24,45,0.28)] backdrop-blur-md sm:left-4 sm:top-6">
@@ -80,7 +89,7 @@ export default function PinDisplayLimitSlider({ value, onChange }: PinDisplayLim
                     <input
                         type="range"
                         min={PIN_DISPLAY_LIMIT_MIN}
-                        max={PIN_DISPLAY_LIMIT_MAX}
+                        max={effectiveMax}
                         step={PIN_DISPLAY_LIMIT_STEP}
                         value={currentValue}
                         aria-label="地震ピン表示件数"
@@ -90,7 +99,7 @@ export default function PinDisplayLimitSlider({ value, onChange }: PinDisplayLim
                     />
                 </div>
                 <div className="flex h-72 flex-col justify-between py-1 text-[10px] font-bold leading-none text-cyan-50/78" aria-hidden="true">
-                    <span>{PIN_DISPLAY_LIMIT_MAX}</span>
+                    <span>{effectiveMax}</span>
                     <span>{PIN_DISPLAY_LIMIT_MIN}</span>
                 </div>
             </div>

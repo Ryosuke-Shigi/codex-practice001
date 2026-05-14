@@ -1,10 +1,14 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 
+import EarthquakeMapDetailPanel from '@/Components/JapanQuakeWaveMap/EarthquakeMapDetailPanel';
 import JapanSimpleMap from '@/Components/JapanQuakeWaveMap/JapanSimpleMap';
 import MapLayerControlPanel, {
     type MapLayerVisibility,
 } from '@/Components/JapanQuakeWaveMap/MapLayerControlPanel';
+import MapRefreshPanel, {
+    type MapRefreshAction,
+} from '@/Components/JapanQuakeWaveMap/MapRefreshPanel';
 
 export type EarthquakeMapPin = {
     eventId: string | null;
@@ -29,15 +33,14 @@ type JapanQuakeWaveMapProps = {
     title?: string;
     summary?: string;
     mapOverlay?: ReactNode;
-    refreshAction?: {
-        buttonLabel: string;
-        disabledLabel: string;
-        statusLabel: string;
-        description: string;
-        isRefreshing: boolean;
-        errorMessage: string | null;
-        onRefresh: () => void;
-    };
+    mapTopContent?: ReactNode;
+    controlPanelsBeforeLayers?: ReactNode;
+    controlPanelsAfterLayers?: ReactNode;
+    refreshAction?: MapRefreshAction;
+    refreshPanelPlacement?: 'description' | 'controls';
+    detailPanelPlacement?: 'side' | 'below';
+    detailPanelCollapsible?: boolean;
+    detailPanelDefaultOpen?: boolean;
 };
 
 const defaultLayerVisibility: MapLayerVisibility = {
@@ -46,6 +49,14 @@ const defaultLayerVisibility: MapLayerVisibility = {
     showIntensityLabels: true,
     showPlateBoundaries: true,
 };
+
+function pinIdentity(pin: EarthquakeMapPin | null) {
+    if (!pin) {
+        return 'none';
+    }
+
+    return `${pin.eventId ?? 'no-event'}:${pin.sourceEntryId}`;
+}
 
 /*
  * JapanQuakeWaveMap は QuakeWave の共通地図表示コンポーネントです。
@@ -61,7 +72,14 @@ export default function JapanQuakeWaveMap({
     title = '地震情報可視化',
     summary = '取得済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。',
     mapOverlay,
+    mapTopContent,
+    controlPanelsBeforeLayers,
+    controlPanelsAfterLayers,
     refreshAction,
+    refreshPanelPlacement = 'description',
+    detailPanelPlacement = 'side',
+    detailPanelCollapsible = false,
+    detailPanelDefaultOpen = true,
 }: JapanQuakeWaveMapProps) {
     /*
      * レイヤー表示状態は画面表示だけの状態として、このコンポーネント内に閉じます。
@@ -69,7 +87,25 @@ export default function JapanQuakeWaveMap({
      * プレート境界線を独立した表示レイヤーとして扱います。
      */
     const [layers, setLayers] = useState<MapLayerVisibility>(defaultLayerVisibility);
-    const [isRefreshPanelOpen, setIsRefreshPanelOpen] = useState(false);
+    const [selectedPin, setSelectedPin] = useState<EarthquakeMapPin | null>(pins[0] ?? null);
+
+    useEffect(() => {
+        if (pins.length === 0) {
+            setSelectedPin(null);
+            return;
+        }
+
+        const selectedKey = pinIdentity(selectedPin);
+        const selectedStillVisible = pins.some((pin) => pinIdentity(pin) === selectedKey);
+
+        if (!selectedStillVisible) {
+            setSelectedPin(pins[0]);
+        }
+    }, [pins, selectedPin]);
+
+    const mapAndDetailClassName = detailPanelPlacement === 'below'
+        ? 'grid h-full min-h-[472px] gap-4'
+        : 'grid h-full min-h-[472px] gap-4 lg:grid-cols-[minmax(0,1fr)_280px]';
 
     return (
         <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(520px,1.28fr)]">
@@ -89,50 +125,9 @@ export default function JapanQuakeWaveMap({
                     {summary}
                 </p>
 
-                {refreshAction && (
-                    <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h2 className="text-base font-semibold text-white">
-                                    地図データ更新
-                                </h2>
-                                <p role="status" aria-live="polite" className="mt-2 text-sm font-semibold leading-6 text-white">
-                                    {refreshAction.statusLabel}
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                aria-expanded={isRefreshPanelOpen}
-                                onClick={() => setIsRefreshPanelOpen((current) => !current)}
-                                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
-                            >
-                                {isRefreshPanelOpen ? '閉じる' : '開く'}
-                            </button>
-                        </div>
-
-                        {isRefreshPanelOpen && (
-                            <div className="mt-4 border-t border-white/15 pt-4">
-                                <p className="text-sm font-semibold leading-6 text-white">
-                                    {refreshAction.statusLabel}
-                                </p>
-                                <p className="mt-2 text-xs leading-5 text-cyan-50/75">
-                                    {refreshAction.description}
-                                </p>
-                                {refreshAction.errorMessage && (
-                                    <p className="mt-3 rounded-md border border-rose-200/35 bg-rose-200/10 px-3 py-2 text-sm leading-6 text-rose-50">
-                                        {refreshAction.errorMessage}
-                                    </p>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={refreshAction.onRefresh}
-                                    disabled={refreshAction.isRefreshing}
-                                    className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-cyan-100/45 bg-cyan-100/18 px-4 text-sm font-bold text-cyan-50 transition hover:bg-cyan-100/28 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
-                                >
-                                    {refreshAction.isRefreshing ? refreshAction.disabledLabel : refreshAction.buttonLabel}
-                                </button>
-                            </div>
-                        )}
+                {refreshAction && refreshPanelPlacement === 'description' && (
+                    <div className="mt-6 max-w-xl">
+                        <MapRefreshPanel action={refreshAction} />
                     </div>
                 )}
 
@@ -149,6 +144,8 @@ export default function JapanQuakeWaveMap({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.12, duration: 0.8, ease: 'easeOut' }}
             >
+                {mapTopContent}
+
                 <div className="relative overflow-hidden rounded-lg border border-white/30 bg-slate-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_26px_70px_rgba(2,24,45,0.25)] backdrop-blur-sm">
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/18 to-transparent" />
                     {/*
@@ -158,11 +155,30 @@ export default function JapanQuakeWaveMap({
                     */}
                     {mapOverlay}
                     <div className="relative h-full min-h-[520px] p-4 sm:p-6">
-                        <JapanSimpleMap pins={pins} layers={layers} />
+                        <div className={mapAndDetailClassName}>
+                            <JapanSimpleMap
+                                pins={pins}
+                                layers={layers}
+                                selectedPin={selectedPin}
+                                onSelectPin={setSelectedPin}
+                            />
+                            <EarthquakeMapDetailPanel
+                                pin={selectedPin}
+                                collapsible={detailPanelCollapsible}
+                                defaultOpen={detailPanelDefaultOpen}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <MapLayerControlPanel layers={layers} onChange={setLayers} />
+                <div className="flex flex-col gap-4">
+                    {controlPanelsBeforeLayers}
+                    <MapLayerControlPanel layers={layers} onChange={setLayers} />
+                    {refreshAction && refreshPanelPlacement === 'controls' && (
+                        <MapRefreshPanel action={refreshAction} />
+                    )}
+                    {controlPanelsAfterLayers}
+                </div>
             </motion.div>
         </section>
     );

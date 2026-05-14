@@ -8,10 +8,25 @@ import JapanQuakeWaveMap, {
 import PinDisplayLimitSlider, {
     PIN_DISPLAY_LIMIT_INITIAL,
 } from '@/Components/JapanQuakeWaveMap/PinDisplayLimitSlider';
+import QuakeDateRangeFilter, {
+    type QuakeDateRange,
+} from '@/Components/JapanQuakeWaveMap/QuakeDateRangeFilter';
+import QuakeIntensitySwitchFilter, {
+    quakeIntensityKey,
+    quakeIntensityKeys,
+    quakeIntensitySortRank,
+    type QuakeIntensityKey,
+} from '@/Components/JapanQuakeWaveMap/QuakeIntensitySwitchFilter';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+type QuakeWaveMapFilters = {
+    startDate: string | null;
+    endDate: string | null;
+};
 
 type QuakeWaveMapPageProps = {
     pins: EarthquakeMapPin[];
+    filters: QuakeWaveMapFilters;
 };
 
 const MAP_REFRESH_POLL_INTERVAL_MS = 2500;
@@ -93,28 +108,105 @@ function refreshStatusLabel(
     return 'XML取込とPIN生成を1つのJobで開始できます';
 }
 
+function dateRangeFromFilters(filters: QuakeWaveMapFilters): QuakeDateRange {
+    return {
+        startDate: filters.startDate ?? '',
+        endDate: filters.endDate ?? '',
+    };
+}
+
+function pinTimestamp(pin: Pick<EarthquakeMapPin, 'occurredAt' | 'reportedAt'>) {
+    const value = pin.reportedAt ?? pin.occurredAt;
+    const timestamp = value ? new Date(value).getTime() : Number.NaN;
+
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function pinKey(pin: EarthquakeMapPin) {
+    return `${pin.eventId ?? 'no-event'}:${pin.sourceEntryId}`;
+}
+
+function comparePinsForDisplay(left: EarthquakeMapPin, right: EarthquakeMapPin) {
+    const intensityDifference = quakeIntensitySortRank(right.maxIntensity)
+        - quakeIntensitySortRank(left.maxIntensity);
+
+    if (intensityDifference !== 0) {
+        return intensityDifference;
+    }
+
+    return pinTimestamp(right) - pinTimestamp(left);
+}
+
+function pickVisiblePins(
+    filteredPins: EarthquakeMapPin[],
+    selectedIntensities: QuakeIntensityKey[],
+    limit: number,
+) {
+    const sortedPins = [...filteredPins].sort(comparePinsForDisplay);
+
+    if (
+        selectedIntensities.length === 0
+        || selectedIntensities.length === quakeIntensityKeys.length
+    ) {
+        return sortedPins.slice(0, limit);
+    }
+
+    const pickedPins: EarthquakeMapPin[] = [];
+    const pickedKeys = new Set<string>();
+
+    for (const intensity of selectedIntensities) {
+        if (pickedPins.length >= limit) {
+            break;
+        }
+
+        const pin = sortedPins.find((candidate) => quakeIntensityKey(candidate.maxIntensity) === intensity
+            && !pickedKeys.has(pinKey(candidate)));
+
+        if (pin) {
+            pickedPins.push(pin);
+            pickedKeys.add(pinKey(pin));
+        }
+    }
+
+    for (const pin of sortedPins) {
+        if (pickedPins.length >= limit) {
+            break;
+        }
+
+        if (!pickedKeys.has(pinKey(pin))) {
+            pickedPins.push(pin);
+            pickedKeys.add(pinKey(pin));
+        }
+    }
+
+    return pickedPins.sort(comparePinsForDisplay);
+}
+
 /*
  * DB pins 用のページ入口です。
  * Controller -> QueryAction -> Repository -> Responder で組み立てた Inertia props を受け取り、
  * 共通表示コンポーネントの JapanQuakeWaveMap に渡します。ここでは仮データを作りません。
  */
-export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
+export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProps) {
     const [feedEntrySyncStatus, setFeedEntrySyncStatus] = useState<EarthquakeSyncStatus | null>(null);
     const [mapPinSyncStatus, setMapPinSyncStatus] = useState<EarthquakeSyncStatus | null>(null);
     const [isStartingRefresh, setIsStartingRefresh] = useState(false);
     const [refreshPollingError, setRefreshPollingError] = useState<string | null>(null);
     const [pinDisplayLimit, setPinDisplayLimit] = useState(PIN_DISPLAY_LIMIT_INITIAL);
+    const [selectedIntensities, setSelectedIntensities] = useState<QuakeIntensityKey[]>(quakeIntensityKeys);
+    const [dateRange, setDateRange] = useState<QuakeDateRange>(() => dateRangeFromFilters(filters));
+    const filteredPins = useMemo(() => {
+        const selectedSet = new Set(selectedIntensities);
+
+        return pins.filter((pin) => selectedSet.has(quakeIntensityKey(pin.maxIntensity)));
+    }, [pins, selectedIntensities]);
     const visiblePins = useMemo(
         /*
-         * 表示件数スライダーは、DB取得条件ではなく地図上の見え方を調整するためのUIです。
-         * pins は Controller -> QueryAction -> Repository -> Responder で取得済みの配列を受け取り、
-         * ここではその既存順のまま先頭N件だけを JapanQuakeWaveMap へ渡します。
-         *
-         * Repository 側の orderBy、同期Job、地図ピン生成処理には触れないことで、表示確認用の操作が
-         * 保存済みデータや本番系の取得境界に影響しないようにしています。
+         * 日付範囲だけは Inertia 経由で再取得します。
+         * 震度ON/OFFと表示件数は、取得済み pins の見え方を調整する画面状態に留めます。
          */
-        () => pins.slice(0, pinDisplayLimit),
-        [pins, pinDisplayLimit],
+        () => pickVisiblePins(filteredPins, selectedIntensities, pinDisplayLimit),
+        [filteredPins, pinDisplayLimit, selectedIntensities],
     );
 
     const isRefreshing = isStartingRefresh
@@ -124,6 +216,24 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
         ?? feedEntrySyncStatus?.errorMessage
         ?? mapPinSyncStatus?.errorMessage
         ?? null;
+
+    const reloadPinsByDateRange = (nextDateRange: QuakeDateRange) => {
+        setDateRange(nextDateRange);
+
+        router.get(
+            '/quakewave-preview/map',
+            {
+                startDate: nextDateRange.startDate,
+                endDate: nextDateRange.endDate,
+            },
+            {
+                only: ['pins', 'filters'],
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const startMapRefresh = async () => {
         /*
@@ -174,6 +284,10 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
             setIsStartingRefresh(false);
         }
     };
+
+    useEffect(() => {
+        setDateRange(dateRangeFromFilters(filters));
+    }, [filters.startDate, filters.endDate]);
 
     useEffect(() => {
         if (feedEntrySyncStatus === null || !feedEntrySyncStatus.isRunning) {
@@ -297,9 +411,19 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
             return;
         }
 
-        router.reload({
-            only: ['pins'],
-        });
+        router.get(
+            '/quakewave-preview/map',
+            {
+                startDate: dateRange.startDate,
+                endDate: dateRange.endDate,
+            },
+            {
+                only: ['pins', 'filters'],
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+            },
+        );
     }, [
         feedEntrySyncStatus?.isRunning,
         feedEntrySyncStatus?.finishedAt,
@@ -335,7 +459,20 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
                     mapOverlay={(
                         <PinDisplayLimitSlider
                             value={pinDisplayLimit}
+                            availablePinCount={filteredPins.length}
                             onChange={setPinDisplayLimit}
+                        />
+                    )}
+                    mapTopContent={(
+                        <QuakeDateRangeFilter
+                            value={dateRange}
+                            onChange={reloadPinsByDateRange}
+                        />
+                    )}
+                    controlPanelsBeforeLayers={(
+                        <QuakeIntensitySwitchFilter
+                            selectedIntensities={selectedIntensities}
+                            onChange={setSelectedIntensities}
                         />
                     )}
                     refreshAction={{
@@ -352,6 +489,10 @@ export default function QuakeWaveMapPage({ pins }: QuakeWaveMapPageProps) {
                         errorMessage: refreshErrorMessage,
                         onRefresh: startMapRefresh,
                     }}
+                    refreshPanelPlacement="controls"
+                    detailPanelPlacement="below"
+                    detailPanelCollapsible
+                    detailPanelDefaultOpen={false}
                 />
             </div>
         </PublicLayout>
