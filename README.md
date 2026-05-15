@@ -1,26 +1,42 @@
 # Laravel Portfolio - API Discovery Hub / QuakeWave Preview
 
-このリポジトリは、Laravel 11 + Docker + Inertia + React + TypeScript を使ったポートフォリオアプリです。
+Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフォリオアプリです。
 
-現在は、APIs.guru の公開APIカタログを扱う `API Discovery Hub` と、気象庁XMLを取得・保存・地図可視化する `QuakeWave Preview` を実装しています。
+このリポジトリでは、AI駆動開発・仕様駆動開発を前提に、人間が仕様・責務・設計境界・レビュー観点を決め、ChatGPT / CodexApp を設計整理・実装補助・差分修正・レビュー補助として利用しています。
+
+現在は、公開APIカタログを検索・保存・調査できる `API Discovery Hub` と、気象庁XMLを取得・保存・地図可視化する `QuakeWave Preview` を実装しています。
 
 - 公開URL: https://ada-works.dev
-- できること: API一覧検索、provider / domain 絞り込み、詳細確認、調査メモ保存、手動同期、外部API確認、UIモック確認、気象庁XMLの取得・保存・地図可視化
 - 技術スタック: Laravel 11, Docker, Inertia, React, TypeScript, MySQL, Redis
-- 設計上の見どころ: ADRパターン、レイヤードアーキテクチャ、DTO、Repository、Service、Action、Responder、Queue
-- AI駆動開発の位置づけ: 仕様決定や完成判定は人間が行い、ChatGPT / CodexApp は設計整理・レビュー観点整理・既存コード確認・差分作成の補助として使う
+- 設計方針: ADRパターン、レイヤードアーキテクチャ、DTO / ListDTO、Repository、Service、Action、Responder、Queue
+- 開発方針: AI丸投げではなく、人間が仕様・責務・境界を決め、AIを補助として使う
+
+## 関連ドキュメント
+
+このプロジェクトでは、README とは別に、AIエージェント向けルール・設計方針・テスト方針を Markdown として管理しています。
+
+- [AGENTS.md](./AGENTS.md): CodexApp / AIエージェントが毎回参照する作業ルール
+- [docs/architecture.md](./docs/architecture.md): ADR / レイヤード構成と各レイヤーの責務境界
+- [docs/testing.md](./docs/testing.md): テスト方針、優先順位、AI駆動開発でのテスト活用方針
+
+README は外部の人間向けの概要説明です。
+AGENTS.md は AIエージェント向けの固定ルールです。
+architecture.md は設計思想と責務境界の説明です。
+testing.md は仕様破壊検知とトークン消費削減のためのテスト方針です。
 
 ## プロジェクト概要
 
-このリポジトリは、Laravel 11 + Docker + Inertia + React + TypeScript を使ったポートフォリオアプリです。AI駆動開発・仕様駆動開発の学習兼ポートフォリオとして作成しています。
+このポートフォリオは、外部データの取得・変換・保存・表示を題材に、Laravel アプリケーションを ADR / レイヤード構成で整理することを目的としています。
 
-実装済みの主な機能は、公開APIを検索・保存・調査する `API Discovery Hub` と、気象庁XMLを取得・保存・地図可視化する `QuakeWave Preview` です。
+実装済みの主な機能は以下です。
 
-公開APIを調べるときは、API 名、提供元、OpenAPI 定義 URL、更新日、関連検索を行き来することが多くなります。API Discovery Hub では、その調査の入口として、公開APIカタログの検索、絞り込み、詳細確認、調査メモ保存までを小さく確認できるようにしています。
+- `API Discovery Hub`: APIs.guru の公開APIカタログを取得し、検索・絞り込み・詳細確認・調査メモ保存を行う
+- `QuakeWave Preview`: 気象庁XMLを取得し、地震情報 entry の保存、個別XML解析、地図表示用 pin 生成を行う
 
-QuakeWave Preview では、気象庁の地震火山情報 Atom feed を取得し、地震情報 entry をDBへ保存し、個別XMLから地図表示用の pin を生成する流れを確認できます。
+どちらも、外部データ取得、DTO化、DB保存、差分同期、画面表示用データ生成という流れを持ちます。
+異なるドメインでも同じ設計方針を適用できることを示すため、Action / Service / Repository / DTO / Responder などの責務を分離しています。
 
-このポートフォリオは AWS Lightsail で外部公開し、Cloudflareで取得した正式ドメイン `https://ada-works.dev` を導入済みです。
+このポートフォリオは AWS Lightsail で外部公開し、Cloudflare で取得した正式ドメイン `https://ada-works.dev` を導入済みです。
 
 ## 公開URL
 
@@ -33,7 +49,7 @@ QuakeWave Preview では、気象庁の地震火山情報 Atom feed を取得し
 - Mailpit: http://localhost:8025
 - Adminer: http://localhost:8081
 
-## できること
+## 主な機能
 
 ### API Discovery Hub
 
@@ -64,24 +80,36 @@ QuakeWave Preview では、気象庁の地震火山情報 Atom feed を取得し
 - 同期ステータスのポーリング表示
 - 水面上に日本地図と地震ピンを表示する UI モック
 
-React 画面は、同期 Job の登録と同期ステータス確認の導線を持っています。同期失敗ログや同期履歴表示としての整理は、今後追加予定です。
+同期失敗ログや同期履歴表示としての整理は、今後追加予定です。
 
 ## 画面導線とスクリーンショット
 
 短時間で見る場合は、まず `/` から全体の入口を確認し、次に `/lab` から実験画面と本番画面の関係を見ると流れを追いやすいです。
 
 - `/`: ポートフォリオ入口。アプリ全体の起点として見る画面です。
- <img width="975" height="959" alt="Welcome画面" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
+
+<img width="975" height="959" alt="Welcome画面" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
+
 - `/lab`: 実験・機能一覧。API Preview、API Discovery Hub、QuakeWave Preview への導線をまとめています。
- <img width="955" height="891" alt="Lab画面" src="https://github.com/user-attachments/assets/facd87a9-7f27-4f65-a5fe-c81d155ac4ac" />
+
+<img width="955" height="891" alt="Lab画面" src="https://github.com/user-attachments/assets/facd87a9-7f27-4f65-a5fe-c81d155ac4ac" />
+
 - `/api-preview`: 外部API確認用画面。APIs.guru の実取得、成功モック、エラーモックの入口です。
- <img width="961" height="961" alt="API Preview画面" src="https://github.com/user-attachments/assets/269f445f-b15c-4a44-be2b-cc395a656432" />
+
+<img width="961" height="961" alt="API Preview画面" src="https://github.com/user-attachments/assets/269f445f-b15c-4a44-be2b-cc395a656432" />
+
 - `/api-catalog`: API Discovery Hub の本番一覧。公開APIカタログの検索、絞り込み、並び替え、同期開始を確認できます。
- <img width="955" height="957" alt="API Catalog一覧画面" src="https://github.com/user-attachments/assets/4b5a1f7f-f2f7-4600-9f67-306b6633b1a9" />
+
+<img width="955" height="957" alt="API Catalog一覧画面" src="https://github.com/user-attachments/assets/4b5a1f7f-f2f7-4600-9f67-306b6633b1a9" />
+
 - `/api-catalog/{apiKey}`: API詳細。提供元、preferred version、OpenAPI URL、更新日時、調査メモの保存・更新・削除を確認できます。
- <img width="955" height="953" alt="API Catalog詳細画面" src="https://github.com/user-attachments/assets/b7a93dbb-b29c-4fba-8b33-ff1b50d37645" />
+
+<img width="955" height="953" alt="API Catalog詳細画面" src="https://github.com/user-attachments/assets/b7a93dbb-b29c-4fba-8b33-ff1b50d37645" />
+
 - `/api-catalog/mock`: UI確認用モック一覧。外部APIや同期キャッシュに依存せず、一覧UIの見た目と導線を確認できます。
- <img width="957" height="515" alt="API Catalogモック画面" src="https://github.com/user-attachments/assets/cef2175f-5788-47d5-911b-357312d7a4e1" />
+
+<img width="957" height="515" alt="API Catalogモック画面" src="https://github.com/user-attachments/assets/cef2175f-5788-47d5-911b-357312d7a4e1" />
+
 - `/quakewave-preview`: 気象庁XMLの取得・保存・地図表示用データ生成を確認する地震波可視化プレビュー画面です。
 - `/quakewave-preview/map`: 水面上の日本地図と地震ピン表示を確認する画面です。
 - `/quakewave-preview/xml`: 気象庁 Atom feed と個別 XML の取得・解析を確認する画面です。
@@ -98,7 +126,12 @@ React 画面は、同期 Job の登録と同期ステータス確認の導線を
 
 ## 設計方針
 
-このポートフォリオは、ADR パターンとレイヤードアーキテクチャを基準にしています。ここでの ADR は Action-Domain-Responder の考え方を指します。
+このポートフォリオは、ADR パターンとレイヤードアーキテクチャを基準にしています。
+ここでの ADR は Action-Domain-Responder の考え方を指します。
+
+より詳しい責務境界は [docs/architecture.md](./docs/architecture.md) にまとめています。
+
+主な責務分離は以下です。
 
 - Controller は HTTP 入口に限定する
 - Request は入力バリデーションに限定する
@@ -107,15 +140,18 @@ React 画面は、同期 Job の登録と同期ステータス確認の導線を
 - Query は一覧、詳細、検索など状態を変えない取得を扱う
 - Service は同期時の業務ルールや状態判断を担当する
 - Repository は DB 取得・保存、Eloquent クエリ、外部 API 通信の境界を担当する
-- DTO はレイヤー間のデータ受け渡しに使う
+- DTO / ListDTO はレイヤー間のデータ受け渡しに使う
+- DTO / ListDTO の `toArray()` は配列変換までに限定する
 - Responder は Inertia props など出力形式の整形を担当する
 - Factory は DTO 生成や Strategy / Responder 選択を担当する
 - Strategy は処理差分やアルゴリズム差分を担当する
 - Event / Listener は発生した事実と、その後の副作用を分けて扱う
 
-API Preview と API Discovery Hub 本体は分離しています。Preview 側の Repository / DTO / Responder は、本体側に流用しない方針です。
+API Preview と API Discovery Hub 本体は分離しています。
+Preview 側の Repository / DTO / Responder は、本体側に流用しない方針です。
 
-QuakeWave Preview でも同じ設計思想を使い、外部データ取得、XML解析、DB保存、画面表示用データ生成を分離しています。これにより、異なるドメインでも ADR パターン・レイヤードアーキテクチャを再利用できることを示しています。
+QuakeWave Preview でも同じ設計思想を使い、外部データ取得、XML解析、DB保存、画面表示用データ生成を分離しています。
+これにより、異なるドメインでも ADR パターン・レイヤードアーキテクチャを再利用できることを示しています。
 
 ## 設計判断
 
@@ -125,7 +161,7 @@ QuakeWave Preview でも同じ設計思想を使い、外部データ取得、XM
 
 ### DB にキャッシュする理由
 
-外部データをその場で毎回取得するのではなく、取得済みデータをDBに保持し、一覧表示・検索・過去情報の参照に利用できるようにするためです。
+外部データをその場で毎回取得するのではなく、取得済みデータを DB に保持し、一覧表示・検索・過去情報の参照に利用できるようにするためです。
 
 ### 差分判定を行う理由
 
@@ -148,7 +184,22 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、外�
 
 「AIが自律的に作ったアプリ」ではなく、「人間が設計判断を持ち、AIを補助として使った開発ポートフォリオ」として扱っています。
 
-## テスト・エラー処理
+AIエージェント向けの固定ルールは [AGENTS.md](./AGENTS.md) にまとめています。
+
+## テスト方針
+
+テスト方針の詳細は [docs/testing.md](./docs/testing.md) にまとめています。
+
+このプロジェクトでは、テストを以下の目的で扱います。
+
+- 既存仕様の破壊を検知する
+- CodexApp / AIエージェントへの説明量を減らす
+- 失敗したテスト結果を起点に、修正対象と影響範囲を絞る
+- ADR / レイヤード構成の責務境界を固定しやすくする
+
+テストはコードレビューの代替ではありません。
+テストで確認できるのは主に「期待する仕様が壊れていないか」です。
+責務分離が崩れていないか、設計が汚れていないかは、別途レビューで確認します。
 
 実装済みの Feature テストでは、API Discovery Hub、API Preview、QuakeWave Preview の主要導線を確認しています。
 
@@ -158,16 +209,14 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、外�
 - `QuakeWavePreviewFeedEntrySyncTest`: 気象庁 Atom feed の取得、地震情報 entry の抽出、DB保存、insert / update / skip、Queue 投入、同期ステータス、失敗状態を確認
 - `QuakeWavePreviewXmlPreviewTest`: 気象庁XML取得プレビューと、XML解析結果の表示導線を確認
 
-外部API取得では、成功レスポンスだけでなく、失敗レスポンスや固定エラー表示の確認導線も用意しています。外部通信に依存しないモック画面により、UI とエラー表示を切り分けて確認できます。
-
-今後予定として、Service / Action / Repository の Unit テスト拡充、同期失敗ログ、同期履歴表示、失敗通知の整理を追加していきます。
+外部API取得では、成功レスポンスだけでなく、失敗レスポンスや固定エラー表示の確認導線も用意しています。
+外部通信に依存しないモック画面により、UI とエラー表示を切り分けて確認できます。
 
 テスト実行コマンド:
 
 ```bash
 docker compose run --rm artisan test
 docker compose run --rm npm run build
-
 ```
 
 ## データ保存方針
@@ -193,7 +242,8 @@ docker compose run --rm npm run build
 
 ## Docker構成
 
-Docker 構成は Laravel アプリケーション本体の一階層上にあります。このリポジトリは Docker Compose から `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
+Docker 構成は Laravel アプリケーション本体の一階層上にあります。
+このリポジトリは Docker Compose から `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
 
 Docker コマンドは、一階層上のプロジェクトルートで実行する前提です。
 
@@ -207,7 +257,7 @@ Docker コマンドは、一階層上のプロジェクトルートで実行す�
 - `npm`: npm / Vite 実行用
 - `queue`: Queue worker
 - `scheduler`: Laravel Scheduler
-- `mysql`: API カタログキャッシュ、保存メモ、地震情報のDB
+- `mysql`: API カタログキャッシュ、保存メモ、地震情報の DB
 - `redis`: Queue / Cache 用
 - `mailpit`: メール確認用
 - `adminer`: DB確認用
@@ -248,6 +298,7 @@ docker compose run --rm artisan api-catalog:sync --queue
 - `resources/js/Components`: React コンポーネント
 - `routes/web.php`: 画面ルート
 - `tests/Feature`: Feature テスト
+- `docs`: 設計方針・テスト方針などの補助ドキュメント
 
 ## 今後予定
 
