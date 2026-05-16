@@ -60,12 +60,26 @@ Route::get('/lab', function () {
             'status' => 'Mock',
             'href' => '/quakewave-preview',
         ],
+        [
+            // 工事発注管理・請求システムの見た目確認用モックです。
+            // DB 接続、CSV 取込、S3 保存、PDF 生成は行わず、画面内 state のみで確認します。
+            'id' => 'construction-order-workflow-mock',
+            'title' => '工事発注管理・請求システム モック',
+            'summary' => '発注登録、画像、工程、請求、履歴の業務フローを仮データだけで確認する画面モックです。',
+            'status' => 'Mock',
+            'href' => '/lab/construction-order-workflow-mock',
+        ],
     ];
 
     return Inertia::render('Lab/Index', [
         'experiments' => $experiments,
     ]);
 })->name('lab.index');
+
+Route::get('/lab/construction-order-workflow-mock', function () {
+    // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。
+    return Inertia::render('Lab/ConstructionOrderWorkflowMock');
+})->name('lab.construction-order-workflow-mock');
 
 Route::get('/quakewave-preview', QuakeWavePreviewController::class)
     ->name('quakewave-preview.index');
