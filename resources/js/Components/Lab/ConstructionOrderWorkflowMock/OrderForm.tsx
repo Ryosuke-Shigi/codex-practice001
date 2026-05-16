@@ -48,6 +48,14 @@ export default function OrderForm({
                         onChange={(event) => onUpdate('siteName', event.target.value)}
                     />
                 </label>
+                <label className="flex flex-col gap-1.5 text-sm font-semibold text-slate-100 md:col-span-2 xl:col-span-3">
+                    現場住所
+                    <input
+                        className={inputClassName}
+                        value={orderDraft.siteAddress}
+                        onChange={(event) => onUpdate('siteAddress', event.target.value)}
+                    />
+                </label>
                 <label className="flex flex-col gap-1.5 text-sm font-semibold text-slate-100">
                     取引先
                     <input

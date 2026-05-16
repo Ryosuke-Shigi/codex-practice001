@@ -8,6 +8,7 @@ export type TabKey =
 
 export type OrderDraft = {
     siteName: string;
+    siteAddress: string;
     partner: string;
     orderDate: string;
     owner: string;
