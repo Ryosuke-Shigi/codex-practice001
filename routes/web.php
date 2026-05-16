@@ -75,12 +75,13 @@ Route::get('/lab', function () {
             'href' => '/lab/construction-order-workflow-mock',
         ],
         [
-            // 工事発注管理・請求システムの構想説明枠です。PP 本体は後続作業で実装します。
+            // 工事発注管理・請求システムの構想説明ページへの入口です。
             'id' => 'construction-order-workflow-concept',
             'title' => '工事発注管理・請求システム 構想まとめ',
             'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
-            'status' => '準備中',
+            'status' => 'PP',
             'category' => 'PP',
+            'href' => '/lab/construction-order-workflow-pp',
         ],
     ];
 
@@ -93,6 +94,11 @@ Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。
     return Inertia::render('Lab/ConstructionOrderWorkflowMock');
 })->name('lab.construction-order-workflow-mock');
+
+Route::get('/lab/construction-order-workflow-pp', function () {
+    // 非エンジニア向けの構想説明ページです。本番処理や保存処理は持たせません。
+    return Inertia::render('Lab/ConstructionOrderWorkflowPP');
+})->name('lab.construction-order-workflow-pp');
 
 Route::get('/quakewave-preview', QuakeWavePreviewController::class)
     ->name('quakewave-preview.index');

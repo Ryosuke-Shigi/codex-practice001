@@ -47,10 +47,20 @@ class LabIndexTest extends TestCase
                 ->where('experiments.4.href', '/lab/construction-order-workflow-mock')
                 ->where('experiments.5.id', 'construction-order-workflow-concept')
                 ->where('experiments.5.title', '工事発注管理・請求システム 構想まとめ')
-                ->where('experiments.5.status', '準備中')
+                ->where('experiments.5.status', 'PP')
                 ->where('experiments.5.category', 'PP')
                 ->where('experiments.5.summary', 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。')
-                ->missing('experiments.5.href')
+                ->where('experiments.5.href', '/lab/construction-order-workflow-pp')
+            );
+    }
+
+    public function test_construction_order_workflow_pp_page_is_available(): void
+    {
+        $this
+            ->get('/lab/construction-order-workflow-pp')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Lab/ConstructionOrderWorkflowPP', false)
             );
     }
 
