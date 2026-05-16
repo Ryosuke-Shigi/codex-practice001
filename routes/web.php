@@ -24,7 +24,7 @@ Route::get('/', function () {
 
 Route::get('/lab', function () {
     // 将来 DB 取得に置き換える仮データです。
-    // Lab では現在触れる検証入口だけを表示し、未実装の仮カードはここへ戻さない方針です。
+    // 未実装ページは href を持たせず、準備中の入口カードとして表示します。
     $experiments = [
         [
             // API Discovery Hub は api_catalog_cache を使う本番一覧画面への入口です。
@@ -32,15 +32,17 @@ Route::get('/lab', function () {
             'title' => 'API Discovery Hub',
             'summary' => '公開APIを検索・調査・保存していくためのAPIカタログ画面です。',
             'status' => 'Preview',
+            'category' => 'PROJECT',
             'href' => '/api-catalog',
         ],
         [
             // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
             // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
             'id' => 'quakewave-preview',
-            'title' => 'QuakeWave Map',
+            'title' => 'Japan Quake Wave Map',
             'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
             'status' => 'Preview',
+            'category' => 'PROJECT',
             'href' => '/quakewave-preview/map',
         ],
         [
@@ -49,6 +51,7 @@ Route::get('/lab', function () {
             'title' => 'API Preview',
             'summary' => '外部APIを本体実装前に叩き、成功時・失敗時のレスポンスを確認する開発補助画面です。',
             'status' => 'Mock',
+            'category' => 'MOCK',
             'href' => '/api-preview',
         ],
         [
@@ -58,6 +61,7 @@ Route::get('/lab', function () {
             'title' => 'QuakeWave Preview',
             'summary' => '地震マップのモック、ピン・波紋の部品、XML取得、同期状態を確認する開発用入口です。',
             'status' => 'Mock',
+            'category' => 'MOCK',
             'href' => '/quakewave-preview',
         ],
         [
@@ -67,7 +71,16 @@ Route::get('/lab', function () {
             'title' => '工事発注管理・請求システム モック',
             'summary' => '発注登録、画像、工程、請求、履歴の業務フローを仮データだけで確認する画面モックです。',
             'status' => 'Mock',
+            'category' => 'MOCK',
             'href' => '/lab/construction-order-workflow-mock',
+        ],
+        [
+            // 工事発注管理・請求システムの構想説明枠です。PP 本体は後続作業で実装します。
+            'id' => 'construction-order-workflow-concept',
+            'title' => '工事発注管理・請求システム 構想まとめ',
+            'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
+            'status' => '準備中',
+            'category' => 'PP',
         ],
     ];
 
