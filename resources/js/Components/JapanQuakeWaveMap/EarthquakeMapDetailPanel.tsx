@@ -32,6 +32,16 @@ function pinIdentity(pin: EarthquakeMapPin | null) {
     return `${pin.eventId ?? 'no-event'}:${pin.sourceEntryId}`;
 }
 
+function coordinateValue(value: string | null) {
+    if (value === null) {
+        return null;
+    }
+
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 export default function EarthquakeMapDetailPanel({
     pin,
     collapsible = false,
@@ -62,6 +72,12 @@ export default function EarthquakeMapDetailPanel({
 
     const areaName = pin.areaName?.trim() || '発生場所未取得';
     const earthquakeStatement = pin.headline?.trim() || pin.comment?.trim() || null;
+    const latitude = coordinateValue(pin.latitude);
+    const longitude = coordinateValue(pin.longitude);
+    const hasMapCoordinate = latitude !== null && longitude !== null;
+    const googleMapEmbedUrl = hasMapCoordinate
+        ? `https://maps.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}&z=8&output=embed`
+        : '';
     const rows = [
         ['マグニチュード', valueOrDash(pin.magnitude)],
         ['最大震度', valueOrDash(pin.maxIntensity)],
@@ -107,6 +123,35 @@ export default function EarthquakeMapDetailPanel({
                             {earthquakeStatement}
                         </p>
                     )}
+
+                    <section className="mt-4 border-t border-white/15 pt-4">
+                        <div className="flex flex-wrap items-end justify-between gap-2">
+                            <h3 className="text-sm font-semibold text-white">
+                                Google Map
+                            </h3>
+                            {hasMapCoordinate && (
+                                <p className="text-xs font-semibold text-cyan-100/62">
+                                    {latitude}, {longitude}
+                                </p>
+                            )}
+                        </div>
+
+                        {hasMapCoordinate ? (
+                            <div className="mt-3 overflow-hidden rounded-lg border border-cyan-100/25 bg-slate-950/45">
+                                <iframe
+                                    title={`${areaName}のGoogle Map`}
+                                    src={googleMapEmbedUrl}
+                                    className="h-48 w-full border-0 sm:h-56"
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                />
+                            </div>
+                        ) : (
+                            <p className="mt-3 flex min-h-28 items-center justify-center rounded-lg border border-dashed border-white/15 bg-white/8 px-3 text-center text-sm font-semibold text-cyan-50/72">
+                                座標未取得のためGoogle Mapを表示できません
+                            </p>
+                        )}
+                    </section>
                 </>
             )}
         </aside>

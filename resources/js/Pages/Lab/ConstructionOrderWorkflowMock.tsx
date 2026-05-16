@@ -44,6 +44,7 @@ export default function ConstructionOrderWorkflowMock() {
     const [outputFormat, setOutputFormat] = useState(outputFormats[0]);
     const [orderDraft, setOrderDraft] = useState<OrderDraft>({
         siteName: '青葉台レジデンス外壁改修',
+        siteAddress: '大阪府大阪市中央区大手前1-1-1',
         partner: '株式会社みなと建装',
         orderDate: '2026-05-16',
         owner: '佐藤 美咲',
