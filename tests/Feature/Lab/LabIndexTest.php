@@ -10,35 +10,47 @@ class LabIndexTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_lab_lists_production_like_entries_above_mock_preview_entries(): void
+    public function test_lab_lists_entries_with_categories_and_ready_pp_placeholders(): void
     {
+        // Lab の入口カードは表示カテゴリで絞り込むため、Inertia props の category を固定します。
         $this
             ->get('/lab')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/Index', false)
-                ->has('experiments', 5)
+                ->has('experiments', 6)
                 ->where('experiments.0.id', 'api-discovery-hub')
                 ->where('experiments.0.title', 'API Discovery Hub')
                 ->where('experiments.0.status', 'Preview')
+                ->where('experiments.0.category', 'PROJECT')
                 ->where('experiments.0.href', '/api-catalog')
                 ->where('experiments.1.id', 'quakewave-preview')
-                ->where('experiments.1.title', 'QuakeWave Map')
+                ->where('experiments.1.title', 'Japan Quake Wave Map')
                 ->where('experiments.1.status', 'Preview')
+                ->where('experiments.1.category', 'PROJECT')
                 ->where('experiments.1.href', '/quakewave-preview/map')
                 ->where('experiments.1.summary', '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。')
                 ->where('experiments.2.id', 'api-preview')
                 ->where('experiments.2.title', 'API Preview')
                 ->where('experiments.2.status', 'Mock')
+                ->where('experiments.2.category', 'MOCK')
                 ->where('experiments.2.href', '/api-preview')
                 ->where('experiments.3.id', 'quakewave-preview-tools')
                 ->where('experiments.3.title', 'QuakeWave Preview')
                 ->where('experiments.3.status', 'Mock')
+                ->where('experiments.3.category', 'MOCK')
                 ->where('experiments.3.href', '/quakewave-preview')
                 ->where('experiments.4.id', 'construction-order-workflow-mock')
                 ->where('experiments.4.title', '工事発注管理・請求システム モック')
                 ->where('experiments.4.status', 'Mock')
+                ->where('experiments.4.category', 'MOCK')
                 ->where('experiments.4.href', '/lab/construction-order-workflow-mock')
+                ->where('experiments.5.id', 'construction-order-workflow-concept')
+                ->where('experiments.5.title', '工事発注管理・請求システム 構想まとめ')
+                ->where('experiments.5.status', '準備中')
+                ->where('experiments.5.category', 'PP')
+                ->where('experiments.5.summary', 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。')
+                ->missing('experiments.5.href')
             );
     }
 
