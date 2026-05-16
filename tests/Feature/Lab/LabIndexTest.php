@@ -17,7 +17,7 @@ class LabIndexTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/Index', false)
-                ->has('experiments', 4)
+                ->has('experiments', 5)
                 ->where('experiments.0.id', 'api-discovery-hub')
                 ->where('experiments.0.title', 'API Discovery Hub')
                 ->where('experiments.0.status', 'Preview')
@@ -35,6 +35,20 @@ class LabIndexTest extends TestCase
                 ->where('experiments.3.title', 'QuakeWave Preview')
                 ->where('experiments.3.status', 'Mock')
                 ->where('experiments.3.href', '/quakewave-preview')
+                ->where('experiments.4.id', 'construction-order-workflow-mock')
+                ->where('experiments.4.title', '工事発注管理・請求システム モック')
+                ->where('experiments.4.status', 'Mock')
+                ->where('experiments.4.href', '/lab/construction-order-workflow-mock')
+            );
+    }
+
+    public function test_construction_order_workflow_mock_page_is_available(): void
+    {
+        $this
+            ->get('/lab/construction-order-workflow-mock')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Lab/ConstructionOrderWorkflowMock', false)
             );
     }
 }
