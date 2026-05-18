@@ -28,8 +28,18 @@ jobs:
             set -e
 
             cd /var/www/api-discovery-hub/src
+            if [ -d public/build ]; then
+              rm -rf /tmp/api-discovery-hub-public-build
+              cp -a public/build /tmp/api-discovery-hub-public-build
+            fi
+
             git status --short
             git pull --ff-only origin main
+
+            if [ -d /tmp/api-discovery-hub-public-build ]; then
+              rm -rf public/build
+              cp -a /tmp/api-discovery-hub-public-build public/build
+            fi
 
             cd /var/www/api-discovery-hub
             docker compose exec -T php-fpm php artisan optimize:clear
