@@ -50,9 +50,23 @@ const labCategories: {
     },
 ];
 
+function initialCategoryFromQuery(): LabCategory {
+    if (typeof window === 'undefined') {
+        return 'PROJECT';
+    }
+
+    const category = new URLSearchParams(window.location.search).get(
+        'category',
+    );
+
+    return labCategories.some((labCategory) => labCategory.key === category)
+        ? (category as LabCategory)
+        : 'PROJECT';
+}
+
 export default function Index({ experiments }: LabIndexProps) {
     const [selectedCategory, setSelectedCategory] =
-        useState<LabCategory>('PROJECT');
+        useState<LabCategory>(() => initialCategoryFromQuery());
 
     // カテゴリごとの入口説明だけをここで持ち、カード本体の定義は Inertia prop 側に寄せます。
     const selectedCategoryDefinition =

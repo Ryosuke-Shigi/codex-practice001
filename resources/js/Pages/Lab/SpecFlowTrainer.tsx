@@ -493,6 +493,15 @@ export default function SpecFlowTrainer() {
             <Head title="SpecFlowTrainer" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-5 pb-10">
+                <nav aria-label="PPページの戻り導線">
+                    <Link
+                        href="/lab?category=PP"
+                        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/16 bg-white/10 px-4 text-sm font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                    >
+                        ← PP一覧へ戻る
+                    </Link>
+                </nav>
+
                 {/*
                     Hero はモバイルを基準に縦積みで作り、lg以上だけ横並びにします。
                     PP ページとしてまず「構想・設計中」であることを明示し、完成アプリに見えすぎないようにします。
@@ -528,12 +537,6 @@ export default function SpecFlowTrainer() {
                         </div>
 
                         <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
-                            <Link
-                                href="/lab"
-                                className="inline-flex min-h-12 items-center justify-center rounded-lg border border-cyan-100/40 bg-cyan-100 px-4 text-sm font-bold text-slate-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
-                            >
-                                Lab 一覧へ
-                            </Link>
                             <div className="rounded-lg border border-white/14 bg-white/8 p-4">
                                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/70">
                                     Core Flow
@@ -872,6 +875,15 @@ export default function SpecFlowTrainer() {
                         </CompactCard>
                     </div>
                 </Section>
+
+                <div className="flex justify-center">
+                    <Link
+                        href="/lab?category=PP"
+                        className="inline-flex min-h-12 items-center justify-center rounded-lg border border-cyan-100/40 bg-cyan-100 px-5 text-sm font-bold text-slate-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                    >
+                        PP一覧へ戻る
+                    </Link>
+                </div>
             </div>
         </PublicLayout>
     );
