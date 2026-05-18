@@ -135,6 +135,49 @@ class ApiCatalogListSearchTest extends TestCase
             );
     }
 
+    public function test_api_catalog_list_excludes_soft_deleted_notes_from_display_and_keyword_search(): void
+    {
+        $cache = $this->createApiCatalogCache([
+            'api_key' => 'soft-delete-note.example.test',
+            'title' => 'Soft Delete Note API',
+            'provider_key' => 'soft-delete-note-provider.test',
+            'service_key' => 'soft-delete-note-service',
+            'description' => 'Plain catalog description',
+        ]);
+
+        ApiCatalogNote::query()->create([
+            'api_catalog_cache_id' => $cache->getKey(),
+            'title' => 'Visible note',
+            'body' => 'VisibleMemoNeedle should still match.',
+        ]);
+        $deletedNote = ApiCatalogNote::query()->create([
+            'api_catalog_cache_id' => $cache->getKey(),
+            'title' => 'Deleted note',
+            'body' => 'HiddenMemoNeedle should not match.',
+        ]);
+        $deletedNote->delete();
+
+        $this
+            ->get('/api-catalog?keyword=HiddenMemoNeedle')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Index', false)
+                ->where('pagination.totalItems', 0)
+                ->has('apiCatalogItems', 0)
+            );
+
+        $this
+            ->get('/api-catalog?keyword=VisibleMemoNeedle')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('ApiCatalog/Index', false)
+                ->where('pagination.totalItems', 1)
+                ->where('apiCatalogItems.0.apiKey', 'soft-delete-note.example.test')
+                ->has('apiCatalogItems.0.notes', 1)
+                ->where('apiCatalogItems.0.notes.0.title', 'Visible note')
+            );
+    }
+
     public function test_api_catalog_list_pagination_props_show_current_page_and_range(): void
     {
         /*

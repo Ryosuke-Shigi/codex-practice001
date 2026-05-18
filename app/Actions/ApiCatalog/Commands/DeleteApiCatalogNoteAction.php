@@ -16,8 +16,8 @@ final readonly class DeleteApiCatalogNoteAction
     public function execute(string $apiKey, int $noteId): bool
     {
         /*
-         * 削除も更新と同じく、対象APIに属する note だけを物理削除します。
-         * soft delete は今回のDB方針に含めません。
+         * 削除も更新と同じく、対象APIに属する note だけを削除対象にします。
+         * Model の SoftDeletes により deleted_at が入ります。
          */
         $cache = $this->cacheRepository->findByApiKey($apiKey);
 

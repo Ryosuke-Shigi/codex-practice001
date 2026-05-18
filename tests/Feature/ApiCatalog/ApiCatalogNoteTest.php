@@ -30,6 +30,12 @@ class ApiCatalogNoteTest extends TestCase
             'title' => 'Second note',
             'body' => 'Newer body',
         ]);
+        $deletedNote = ApiCatalogNote::query()->create([
+            'api_catalog_cache_id' => $cache->getKey(),
+            'title' => 'Deleted note',
+            'body' => 'Soft deleted body',
+        ]);
+        $deletedNote->delete();
 
         $response = $this->get('/api-catalog/'.rawurlencode($cache->api_key));
 
@@ -112,9 +118,11 @@ class ApiCatalogNoteTest extends TestCase
             ->delete('/api-catalog/'.rawurlencode($cache->api_key).'/notes/'.$note->getKey());
 
         $deleteResponse->assertRedirect($detailUrl);
-        $this->assertDatabaseMissing('saved_api_notes', [
+        $this->assertSoftDeleted('saved_api_notes', [
             'id' => $note->getKey(),
         ]);
+        $this->assertNull(ApiCatalogNote::query()->find($note->getKey()));
+        $this->assertNotNull(ApiCatalogNote::withTrashed()->findOrFail($note->getKey())->deleted_at);
     }
 
     public function test_api_catalog_note_update_and_delete_require_matching_api(): void
