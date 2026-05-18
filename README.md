@@ -11,6 +11,14 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 - 設計方針: ADRパターン、レイヤードアーキテクチャ、DTO / ListDTO、Repository、Service、Action、Responder、Queue
 - 開発方針: AI丸投げではなく、人間が仕様・責務・境界を決め、AIを補助として使う
 
+## 技術的ポイント
+
+- Laravel 11 を使い、外部API取得・DBキャッシュ・検索・メモ保存・地図可視化を実装
+- ADR / レイヤードアーキテクチャを基準に、Controller / Action / Service / Repository / DTO / Responder の責務を分離
+- Queue / Scheduler / Redis により、外部データ同期を画面操作から分離
+- Feature Test により、同期開始・メモ保存・外部API取得・XML解析などの主要導線を確認
+- AI は実装補助として使用し、仕様決定・責務境界・レビュー・本番反映判断は人間が担当
+
 ## 関連ドキュメント
 
 このプロジェクトでは、README とは別に、AIエージェント向けルール・設計方針・テスト方針を Markdown として管理しています。
