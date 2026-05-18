@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import mermaid from 'mermaid';
 
 export type MermaidDiagramProps = {
@@ -51,8 +52,11 @@ export default function MermaidDiagram({
 }: MermaidDiagramProps) {
     const reactId = useId();
     const renderId = useMemo(() => buildRenderId(reactId), [reactId]);
+    const modalRenderId = useMemo(() => `${renderId}-modal`, [renderId]);
     const [svg, setSvg] = useState('');
+    const [modalSvg, setModalSvg] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [modalError, setModalError] = useState<string | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
@@ -90,6 +94,45 @@ export default function MermaidDiagram({
 
     useEffect(() => {
         if (!isExpanded) {
+            setModalSvg('');
+            setModalError(null);
+            return;
+        }
+
+        let isCanceled = false;
+
+        async function renderModalChart() {
+            initializeMermaidOnce();
+            setModalSvg('');
+            setModalError(null);
+
+            if (!chart.trim()) {
+                setModalError('Mermaid図の文字列が空です。');
+                return;
+            }
+
+            try {
+                const result = await mermaid.render(modalRenderId, chart);
+
+                if (!isCanceled) {
+                    setModalSvg(result.svg);
+                }
+            } catch (renderError) {
+                if (!isCanceled) {
+                    setModalError(errorMessageFrom(renderError));
+                }
+            }
+        }
+
+        void renderModalChart();
+
+        return () => {
+            isCanceled = true;
+        };
+    }, [chart, isExpanded, modalRenderId]);
+
+    useEffect(() => {
+        if (!isExpanded) {
             return;
         }
 
@@ -106,11 +149,69 @@ export default function MermaidDiagram({
         };
     }, [isExpanded]);
 
+    useEffect(() => {
+        if (!isExpanded) {
+            return;
+        }
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isExpanded]);
+
     const titleId = `${renderId}-title`;
     const modalTitleId = `${renderId}-modal-title`;
+    const expandedDiagram =
+        isExpanded && typeof document !== 'undefined'
+            ? createPortal(
+                  <div
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby={title ? modalTitleId : undefined}
+                      aria-label={title ? undefined : 'Mermaid図の拡大表示'}
+                      className="fixed inset-0 z-[9999] bg-slate-950/88 backdrop-blur-sm"
+                      onClick={() => setIsExpanded(false)}
+                  >
+                      <div className="flex h-dvh w-screen flex-col gap-4 bg-slate-950 p-4 sm:p-5">
+                          <div>
+                              {title && (
+                                  <h3
+                                      id={modalTitleId}
+                                      className="text-lg font-semibold leading-7 text-white"
+                                  >
+                                      {title}
+                                  </h3>
+                              )}
+                              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/70">
+                                  Mermaid Diagram
+                              </p>
+                          </div>
+
+                          {modalError ? (
+                              <div className="rounded-lg border border-rose-200/35 bg-rose-100/12 p-4 text-sm leading-6 text-rose-50">
+                                  {modalError}
+                              </div>
+                          ) : modalSvg ? (
+                              <div
+                                  className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-lg border border-white/14 bg-white p-4 text-slate-950 [&_svg]:block [&_svg]:!h-auto [&_svg]:!max-h-full [&_svg]:!max-w-full [&_svg]:!w-auto"
+                                  dangerouslySetInnerHTML={{ __html: modalSvg }}
+                              />
+                          ) : (
+                              <div className="rounded-lg border border-white/14 bg-white/8 p-4 text-sm leading-6 text-slate-200/78">
+                                  Mermaid図を拡大表示しています。
+                              </div>
+                          )}
+                      </div>
+                  </div>,
+                  document.body,
+              )
+            : null;
 
     return (
-        <div className={className}>
+        <div className={`min-w-0 ${className}`}>
             {title && (
                 <h3
                     id={titleId}
@@ -131,10 +232,10 @@ export default function MermaidDiagram({
                         aria-label={`${title ?? 'Mermaid図'}を拡大表示する`}
                         aria-describedby={title ? titleId : undefined}
                         onClick={() => setIsExpanded(true)}
-                        className="block w-full cursor-zoom-in rounded-lg border border-white/14 bg-white/8 p-3 text-left text-slate-950 transition hover:bg-white/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                        className="block min-w-0 w-full cursor-zoom-in overflow-hidden rounded-lg border border-white/14 bg-white/8 p-3 text-left text-slate-950 transition hover:bg-white/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
                         <span
-                            className="block w-full overflow-x-auto"
+                            className="block min-w-0 w-full overflow-x-auto [&_svg]:!h-auto [&_svg]:!max-w-full"
                             dangerouslySetInnerHTML={{ __html: svg }}
                         />
                     </button>
@@ -144,7 +245,7 @@ export default function MermaidDiagram({
                         className="rounded-lg border border-white/14 bg-white/8 p-3 text-slate-950"
                     >
                         <div
-                            className="w-full overflow-x-auto"
+                            className="min-w-0 w-full overflow-x-auto [&_svg]:!h-auto [&_svg]:!max-w-full"
                             dangerouslySetInnerHTML={{ __html: svg }}
                         />
                     </div>
@@ -155,49 +256,7 @@ export default function MermaidDiagram({
                 </div>
             )}
 
-            {isExpanded && svg && (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby={title ? modalTitleId : undefined}
-                    aria-label={title ? undefined : 'Mermaid図の拡大表示'}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/82 p-4 backdrop-blur-sm"
-                    onClick={() => setIsExpanded(false)}
-                >
-                    <div
-                        className="flex max-h-[92vh] w-full max-w-6xl flex-col gap-4 rounded-lg border border-white/18 bg-slate-950 p-4 shadow-[0_28px_80px_rgba(0,0,0,0.45)] sm:p-5"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                {title && (
-                                    <h3
-                                        id={modalTitleId}
-                                        className="text-lg font-semibold leading-7 text-white"
-                                    >
-                                        {title}
-                                    </h3>
-                                )}
-                                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/70">
-                                    Mermaid Diagram
-                                </p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setIsExpanded(false)}
-                                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/18 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
-                            >
-                                閉じる
-                            </button>
-                        </div>
-
-                        <div
-                            className="min-h-0 flex-1 overflow-auto rounded-lg border border-white/14 bg-white p-4 text-slate-950"
-                            dangerouslySetInnerHTML={{ __html: svg }}
-                        />
-                    </div>
-                </div>
-            )}
+            {expandedDiagram}
         </div>
     );
 }
