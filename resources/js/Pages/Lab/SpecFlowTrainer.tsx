@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
+import type { EChartsOption } from 'echarts';
 
 import { Head, Link } from '@inertiajs/react';
 
+import EChartsViewer from '@/Components/Common/Visualizations/Charts/EChartsViewer';
+import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 /*
@@ -83,6 +86,7 @@ const responsibilityMap = [
     ['Repository', 'DB操作'],
     ['DTO / ListDTO', 'レイヤー間のデータ契約'],
     ['Responder', '画面用データ整形'],
+    ['React Component', '画面表示'],
 ];
 
 const responsibilityChecks = [
@@ -180,6 +184,206 @@ const portfolioValues = [
     '開発プロセスそのもののツール化',
 ];
 
+const specDrivenDevelopmentFlowChart = `flowchart TD
+    spec["仕様を作る"] --> split["責務を分ける"]
+    split --> dto["DTO / ListDTO を決める"]
+    dto --> test["テスト観点を作る"]
+    test --> agent["AIエージェントへ指示する"]
+    agent --> review["生成コードをレビューする"]
+    review --> verify["テストで確認する"]
+`;
+
+const adrResponsibilityMapChart = `flowchart TD
+    controller["Controller"] --> request["Request"]
+    request --> action["Action"]
+    action --> service["Service"]
+    service --> repository["Repository"]
+    repository --> dto["DTO / ListDTO"]
+    dto --> responder["Responder"]
+    responder --> component["React Component"]
+`;
+
+const branchingDesignChart = `flowchart TD
+    spec["仕様を作る"] --> pattern["処理パターンが複数あるか確認する"]
+    pattern --> enum["Enumで選択肢を定義する"]
+    enum --> service["Serviceが業務判断を行う"]
+    service --> factory["FactoryがEnumから実装を選ぶ"]
+    factory --> strategy["Strategyが処理差分を実行する"]
+    strategy --> responder["Responderが出力差分を整形する"]
+`;
+
+const branchingDesignChecks = [
+    'Controller / Action に match 分岐を散らさない',
+    '分岐責務は Factory に集約する',
+    'Repository の Interface 解決は ServiceProvider 側の責務として別に扱う',
+];
+
+const designElementCounts = [
+    ['DTO', 4],
+    ['ListDTO', 2],
+    ['Service', 3],
+    ['Repository', 2],
+    ['Action', 4],
+    ['Responder', 2],
+    ['Factory', 2],
+    ['Strategy', 3],
+    ['Test', 8],
+] as const;
+
+const designElementChartOption: EChartsOption = {
+    backgroundColor: 'transparent',
+    color: ['#67e8f9'],
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'shadow',
+        },
+        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+        borderColor: 'rgba(103, 232, 249, 0.35)',
+        textStyle: {
+            color: '#f8fafc',
+        },
+    },
+    grid: {
+        left: 112,
+        right: 32,
+        top: 28,
+        bottom: 28,
+    },
+    xAxis: {
+        type: 'value',
+        minInterval: 1,
+        splitLine: {
+            lineStyle: {
+                color: 'rgba(226, 232, 240, 0.12)',
+            },
+        },
+        axisLabel: {
+            color: '#cbd5e1',
+        },
+    },
+    yAxis: {
+        type: 'category',
+        inverse: true,
+        data: designElementCounts.map(([label]) => label),
+        axisLabel: {
+            color: '#e2e8f0',
+            fontWeight: 700,
+        },
+        axisTick: {
+            show: false,
+        },
+        axisLine: {
+            lineStyle: {
+                color: 'rgba(226, 232, 240, 0.24)',
+            },
+        },
+    },
+    series: [
+        {
+            name: '定義数',
+            type: 'bar',
+            barMaxWidth: 18,
+            data: designElementCounts.map(([, value]) => value),
+            label: {
+                show: true,
+                position: 'right',
+                color: '#cffafe',
+                fontWeight: 700,
+            },
+            itemStyle: {
+                borderRadius: [0, 8, 8, 0],
+            },
+        },
+    ],
+};
+
+const agentInstructionProgress = [
+    ['仕様整理', 100],
+    ['責務分離', 100],
+    ['DTO設計', 88],
+    ['テスト観点', 82],
+    ['実装指示', 72],
+    ['生成コード確認', 54],
+    ['テスト確認', 38],
+    ['レビュー完了', 24],
+] as const;
+
+const agentInstructionProgressChartOption: EChartsOption = {
+    backgroundColor: 'transparent',
+    color: ['#34d399'],
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'shadow',
+        },
+        backgroundColor: 'rgba(15, 23, 42, 0.94)',
+        borderColor: 'rgba(110, 231, 183, 0.35)',
+        textStyle: {
+            color: '#f8fafc',
+        },
+    },
+    grid: {
+        left: 120,
+        right: 44,
+        top: 28,
+        bottom: 28,
+    },
+    xAxis: {
+        type: 'value',
+        max: 100,
+        axisLabel: {
+            color: '#cbd5e1',
+            formatter: '{value}%',
+        },
+        splitLine: {
+            lineStyle: {
+                color: 'rgba(226, 232, 240, 0.12)',
+            },
+        },
+    },
+    yAxis: {
+        type: 'category',
+        inverse: true,
+        data: agentInstructionProgress.map(([label]) => label),
+        axisLabel: {
+            color: '#e2e8f0',
+            fontWeight: 700,
+        },
+        axisTick: {
+            show: false,
+        },
+        axisLine: {
+            lineStyle: {
+                color: 'rgba(226, 232, 240, 0.24)',
+            },
+        },
+    },
+    series: [
+        {
+            name: '人間確認ベースの進捗',
+            type: 'bar',
+            barMaxWidth: 18,
+            showBackground: true,
+            backgroundStyle: {
+                color: 'rgba(255, 255, 255, 0.08)',
+                borderRadius: [0, 8, 8, 0],
+            },
+            data: agentInstructionProgress.map(([, value]) => value),
+            label: {
+                show: true,
+                position: 'right',
+                formatter: '{c}%',
+                color: '#d1fae5',
+                fontWeight: 700,
+            },
+            itemStyle: {
+                borderRadius: [0, 8, 8, 0],
+            },
+        },
+    ],
+};
+
 type SectionProps = {
     eyebrow: string;
     title: string;
@@ -192,14 +396,14 @@ type SectionProps = {
  */
 function Section({ eyebrow, title, children }: SectionProps) {
     return (
-        <section className="rounded-lg border border-white/18 bg-slate-950/58 p-5 backdrop-blur-2xl sm:p-6">
+        <section className="min-w-0 rounded-lg border border-white/18 bg-slate-950/58 p-5 backdrop-blur-2xl sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
                 {eyebrow}
             </p>
             <h2 className="mt-3 text-2xl font-semibold leading-tight text-white">
                 {title}
             </h2>
-            <div className="mt-5">{children}</div>
+            <div className="mt-5 min-w-0">{children}</div>
         </section>
     );
 }
@@ -223,11 +427,11 @@ function TagList({ items }: { items: string[] }) {
 // チェック項目はモバイルでは1列、sm以上で2列にし、読む順番を崩さないようにします。
 function CheckList({ items }: { items: string[] }) {
     return (
-        <ul className="grid gap-2 sm:grid-cols-2">
+        <ul className="grid min-w-0 gap-2 sm:grid-cols-2">
             {items.map((item) => (
                 <li
                     key={item}
-                    className="flex items-start gap-3 rounded-lg border border-white/12 bg-white/8 p-3 text-sm leading-6 text-slate-100/88"
+                    className="flex min-w-0 items-start gap-3 rounded-lg border border-white/12 bg-white/8 p-3 text-sm leading-6 text-slate-100/88"
                 >
                     <span className="mt-1 h-3 w-3 rounded-sm border border-cyan-100/70 bg-cyan-100/18" />
                     <span>{item}</span>
@@ -274,9 +478,9 @@ function CompactCard({
     children: ReactNode;
 }) {
     return (
-        <article className="rounded-lg border border-white/14 bg-white/8 p-4 text-white">
+        <article className="min-w-0 overflow-hidden rounded-lg border border-white/14 bg-white/8 p-4 text-white">
             <h3 className="font-semibold">{title}</h3>
-            <div className="mt-3 text-sm leading-6 text-slate-200/78">
+            <div className="mt-3 min-w-0 text-sm leading-6 text-slate-200/78">
                 {children}
             </div>
         </article>
@@ -372,6 +576,83 @@ export default function SpecFlowTrainer() {
                     title="仕様からAI指示までを一つの流れにする"
                 >
                     <FlowList items={workflowSteps} />
+                </Section>
+
+                <Section
+                    eyebrow="Visual Prototype"
+                    title="コードを書く前の通過点を図とグラフで見る"
+                >
+                    <div className="grid min-w-0 gap-5">
+                        <CompactCard title="仕様駆動開発の全体フロー">
+                            <p>
+                                SpecFlowTrainerが、実装の前に仕様・責務・DTO・テスト・AI指示・レビューを通すための場所であることを固定する。
+                            </p>
+                            <MermaidDiagram
+                                chart={specDrivenDevelopmentFlowChart}
+                                title="仕様駆動開発の全体フロー"
+                                className="mt-4 [&>button_svg]:mx-auto [&>button_svg]:block [&>button_svg]:!h-auto [&>button_svg]:!w-[min(100%,220px)]"
+                                expandable
+                            />
+                        </CompactCard>
+
+                        <CompactCard title="ADR責務マップ">
+                            <p>
+                                どの責務をどのレイヤーに置くかを、上から下へ読みやすい流れで確認する。
+                            </p>
+                            <MermaidDiagram
+                                chart={adrResponsibilityMapChart}
+                                title="ADR責務マップ"
+                                className="mt-4 [&>button_svg]:mx-auto [&>button_svg]:block [&>button_svg]:!h-auto [&>button_svg]:!w-[min(100%,200px)]"
+                                expandable
+                            />
+                            <div className="mt-4">
+                                <CheckList items={responsibilityChecks} />
+                            </div>
+                        </CompactCard>
+
+                        <CompactCard title="Enum / Factory / Strategy / Responder 分岐設計">
+                            <p>
+                                切り替え処理を Controller や Action に散らさず、選択と処理差分と出力差分を分けて見える化する。
+                            </p>
+                            <MermaidDiagram
+                                chart={branchingDesignChart}
+                                title="Enum / Factory / Strategy / Responder 分岐設計"
+                                className="mt-4 [&>button_svg]:mx-auto [&>button_svg]:block [&>button_svg]:!h-auto [&>button_svg]:!w-[min(100%,220px)]"
+                                expandable
+                            />
+                            <div className="mt-4">
+                                <CheckList items={branchingDesignChecks} />
+                            </div>
+                        </CompactCard>
+
+                        <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+                            <CompactCard title="DTO / ListDTO・テスト観点グラフ">
+                                <p>
+                                    仕様を作ったあと、どの設計要素がどれだけ定義されているかを静的サンプルで確認する。
+                                </p>
+                                <div className="mt-4 min-w-0 overflow-hidden rounded-lg border border-white/12 bg-slate-950/42 p-3">
+                                    <EChartsViewer
+                                        option={designElementChartOption}
+                                        height={380}
+                                        renderer="svg"
+                                    />
+                                </div>
+                            </CompactCard>
+
+                            <CompactCard title="AIエージェント指示ステップ進捗">
+                                <p>
+                                    AIが実行した時点ではなく、人間が確認した時点を完了として扱う考え方を進捗で見せる。
+                                </p>
+                                <div className="mt-4 min-w-0 overflow-hidden rounded-lg border border-white/12 bg-slate-950/42 p-3">
+                                    <EChartsViewer
+                                        option={agentInstructionProgressChartOption}
+                                        height={380}
+                                        renderer="svg"
+                                    />
+                                </div>
+                            </CompactCard>
+                        </div>
+                    </div>
                 </Section>
 
                 <Section
