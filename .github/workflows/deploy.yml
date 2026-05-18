@@ -32,7 +32,6 @@ jobs:
             git pull --ff-only origin main
 
             cd /var/www/api-discovery-hub
-            docker compose run --rm npm npm run build
             docker compose exec -T php-fpm php artisan optimize:clear
 
             # API catalog manual sync is queued, so deploying only php-fpm is not enough.
