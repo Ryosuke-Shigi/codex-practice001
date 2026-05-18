@@ -13,6 +13,12 @@ type LabExperiment = {
     status: string;
     category: LabCategory;
     href?: string;
+    /*
+     * actionLabel と tags は PP の説明カードを少し詳しく見せるための任意項目です。
+     * 既存 PROJECT / MOCK カードはこの値を持たないので、表示側も存在チェックに留めます。
+     */
+    actionLabel?: string;
+    tags?: string[];
 };
 
 type LabIndexProps = {
@@ -179,9 +185,31 @@ export default function Index({ experiments }: LabIndexProps) {
                                             <p className="text-sm leading-7 text-cyan-50/90">
                                                 {experiment.summary}
                                             </p>
-                                            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/70">
-                                                {experiment.href ? '開く' : '準備中'}
-                                            </p>
+                                            {/*
+                                                tags は SpecFlowTrainer など、思想や技術要素を一覧で伝えたいカードだけが使います。
+                                                flex-wrap にして、モバイル幅でも横スクロールやはみ出しを起こしにくい表示にします。
+                                            */}
+                                            {experiment.tags && (
+                                                <div className="mt-5 flex flex-wrap gap-2">
+                                                    {experiment.tags.map((tag) => (
+                                                        <span
+                                                            key={tag}
+                                                            className="rounded-md border border-cyan-100/25 bg-cyan-100/12 px-2.5 py-1 text-xs font-semibold text-cyan-50/90"
+                                                        >
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {/*
+                                                既存カードの「開く / 準備中」表示は残しつつ、
+                                                PPカードだけ「詳しく見る」のような文言に差し替えられるようにします。
+                                            */}
+                                            <span className="mt-6 inline-flex min-h-10 items-center rounded-lg border border-cyan-100/35 bg-cyan-100/16 px-4 text-xs font-semibold tracking-[0.12em] text-cyan-50 transition group-hover:bg-cyan-100 group-hover:text-slate-950">
+                                                {experiment.href
+                                                    ? experiment.actionLabel ?? '開く'
+                                                    : '準備中'}
+                                            </span>
                                         </div>
                                     </div>
                                 </motion.article>
@@ -192,7 +220,7 @@ export default function Index({ experiments }: LabIndexProps) {
                                     <Link
                                         key={experiment.id}
                                         href={experiment.href}
-                                        className="block h-full rounded-[2rem] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                                        className="group block h-full rounded-[2rem] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
                                     >
                                         {card}
                                     </Link>

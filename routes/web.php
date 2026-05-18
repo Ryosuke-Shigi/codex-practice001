@@ -27,6 +27,31 @@ Route::get('/lab', function () {
     // 未実装ページは href を持たせず、準備中の入口カードとして表示します。
     $experiments = [
         [
+            /*
+             * SpecFlowTrainer は PP セクション上部に置く、開発思想と設計方針の紹介ページです。
+             * 今回は DB や CRUD を追加せず、既存 Lab の仮データ入口へカードを1件足すだけにします。
+             * tags と actionLabel はこのカードだけが使う表示補助なので、既存カードの構造を壊さない任意項目にします。
+             */
+            'id' => 'spec-flow-trainer',
+            'title' => 'SpecFlowTrainer',
+            'summary' => 'コードを書く前の設計を、仕様・DTO / ListDTO・ADR責務・TDD・AI指示として視覚化する開発補助ツール。',
+            'status' => '構想・設計中',
+            'category' => 'PP',
+            'href' => '/lab/spec-flow-trainer',
+            'actionLabel' => '詳しく見る',
+            'tags' => [
+                '仕様駆動開発',
+                'DTO',
+                'ListDTO',
+                'ADR',
+                'レイヤードアーキテクチャ',
+                'TDD',
+                'AIエージェント',
+                'Mermaid',
+                'GPT相談用テキスト',
+            ],
+        ],
+        [
             // API Discovery Hub は api_catalog_cache を使う本番一覧画面への入口です。
             'id' => 'api-discovery-hub',
             'title' => 'API Discovery Hub',
@@ -99,6 +124,15 @@ Route::get('/lab/construction-order-workflow-pp', function () {
     // 非エンジニア向けの構想説明ページです。本番処理や保存処理は持たせません。
     return Inertia::render('Lab/ConstructionOrderWorkflowPP');
 })->name('lab.construction-order-workflow-pp');
+
+Route::get('/lab/spec-flow-trainer', function () {
+    /*
+     * SpecFlowTrainer の構想紹介ページです。
+     * 実体アプリの保存処理、Mermaid生成、React Flow編集はまだ持たせず、
+     * portfolio 上の PP として「何を作る予定か」を静的に説明する責務に限定します。
+     */
+    return Inertia::render('Lab/SpecFlowTrainer');
+})->name('lab.spec-flow-trainer');
 
 Route::get('/quakewave-preview', QuakeWavePreviewController::class)
     ->name('quakewave-preview.index');
