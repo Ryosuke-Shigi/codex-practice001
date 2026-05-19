@@ -2,9 +2,9 @@ import { Link } from '@inertiajs/react';
 
 export default function ConceptHero() {
     return (
-        <header className="rounded-lg border border-white/20 bg-slate-950/62 p-5 shadow-[0_22px_54px_rgba(2,6,23,0.24)] backdrop-blur-2xl sm:p-7">
+        <header className="min-w-0 rounded-lg border border-white/20 bg-slate-950/62 p-5 shadow-[0_22px_54px_rgba(2,6,23,0.24)] backdrop-blur-2xl sm:p-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-4xl">
+                <div className="min-w-0 max-w-4xl">
                     <div className="flex flex-wrap gap-2">
                         <span className="rounded-md border border-cyan-100/35 bg-cyan-100/14 px-2.5 py-1 text-xs font-semibold text-cyan-50">
                             PP
@@ -13,14 +13,14 @@ export default function ConceptHero() {
                             構想説明用
                         </span>
                     </div>
-                    <h1 className="mt-4 text-3xl font-semibold leading-tight text-white sm:text-5xl">
+                    <h1 className="mt-4 break-words text-3xl font-semibold leading-tight text-white sm:text-5xl">
                         工事発注管理・請求システム 構想まとめ
                     </h1>
                     <p className="mt-4 text-base leading-8 text-slate-100/88">
-                        このシステムは、工事の発注情報、現場写真、工程状況、請求書作成までを一つの流れで管理するための構想ページです。
+                        このシステムは、工事、発注、請求の状態を分けて管理し、必要な確認資料はExcelで出力できるようにする構想ページです。
                     </p>
                     <p className="mt-3 text-sm leading-7 text-slate-200/78">
-                        まずは Excel で発注情報を作成し、CSV としてシステムに取り込みます。取り込んだ情報をもとに、発注内容、現場写真、工程状況、請求書作成までをつなげて管理します。
+                        Formは入力と操作、Excelは確認・出力・既存業務との接続、Systemは状態管理と業務ルールを担当します。Excel運用を残しながら、判断の本体はシステム側に寄せる見せ方にしています。
                     </p>
                 </div>
 

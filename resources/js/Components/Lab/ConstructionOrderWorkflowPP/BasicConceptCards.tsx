@@ -1,25 +1,25 @@
 const conceptCards = [
     {
-        title: 'Excelを入口にする',
-        detail: '今ある発注Excelの運用を活かし、CSVでシステムへつなげる考え方です。',
+        title: 'Formは入力と操作',
+        detail: '工事登録、発注入力、請求入力、フィルタ、状態検索、詳細確認を画面側で扱います。',
     },
     {
-        title: '発注情報を中心にする',
-        detail: '現場名、取引先、明細、担当者を一つの発注情報として確認します。',
+        title: 'Excelは確認と出力',
+        detail: '工事一覧、業者別発注一覧、月別請求一覧など、現場が確認しやすい帳票として残します。',
     },
     {
-        title: '写真・工程・請求をつなぐ',
-        detail: '現場写真、工程ステータス、請求書作成を同じ発注の流れで追えるようにします。',
+        title: 'Systemは状態管理',
+        detail: '工事、発注、請求のステータス、DB保存、検索条件、履歴、業務ルールを担当します。',
     },
     {
-        title: '後から確認できる',
-        detail: '更新履歴を残し、いつ何を確認したかを振り返れる状態を目指します。',
+        title: 'ADRで責務を分ける',
+        detail: 'Controller、Action、Service、Repository、DTO、Responder、Componentの責務を混ぜずに作る前提です。',
     },
 ];
 
 export default function BasicConceptCards() {
     return (
-        <section className="rounded-lg border border-white/18 bg-slate-950/58 p-5 backdrop-blur-2xl sm:p-6">
+        <section className="min-w-0 rounded-lg border border-white/18 bg-slate-950/58 p-5 backdrop-blur-2xl sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
                 Concept
             </p>
@@ -27,13 +27,13 @@ export default function BasicConceptCards() {
                 基本コンセプト
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-200/80">
-                発注情報を起点に、現場写真、工程、請求、履歴をひと続きで確認できる画面構想です。
+                工事、発注、請求の流れを、入力、帳票確認、状態管理、責務分離の4つに分けて説明します。
             </p>
             <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {conceptCards.map((card) => (
                     <article
                         key={card.title}
-                        className="rounded-lg border border-white/14 bg-white/8 p-4 text-white"
+                        className="min-w-0 rounded-lg border border-white/14 bg-white/8 p-4 text-white"
                     >
                         <h3 className="font-semibold">{card.title}</h3>
                         <p className="mt-2 text-sm leading-6 text-slate-200/78">

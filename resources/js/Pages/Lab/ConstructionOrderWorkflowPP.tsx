@@ -1,11 +1,13 @@
 import { Head } from '@inertiajs/react';
 
 import BasicConceptCards from '@/Components/Lab/ConstructionOrderWorkflowPP/BasicConceptCards';
-import BusinessFlowDiagram from '@/Components/Lab/ConstructionOrderWorkflowPP/BusinessFlowDiagram';
 import ConceptHero from '@/Components/Lab/ConstructionOrderWorkflowPP/ConceptHero';
-import CsvIntegrationVisualizationSection from '@/Components/Lab/ConstructionOrderWorkflowPP/CsvIntegrationVisualizationSection';
-import DataFlowDiagram from '@/Components/Lab/ConstructionOrderWorkflowPP/DataFlowDiagram';
-import ScreenFlowDiagram from '@/Components/Lab/ConstructionOrderWorkflowPP/ScreenFlowDiagram';
+import ConstructionBillingArchitectureSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingArchitectureSection';
+import ConstructionBillingFlowSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingFlowSection';
+import ConstructionBillingFormExcelSystemSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingFormExcelSystemSection';
+import ConstructionBillingProblemSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingProblemSection';
+import ConstructionBillingScreenSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingScreenSection';
+import ConstructionBillingStatusChartSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingStatusChartSection';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function ConstructionOrderWorkflowPP() {
@@ -13,24 +15,26 @@ export default function ConstructionOrderWorkflowPP() {
         <PublicLayout className="bg-slate-950/45 px-4 py-5 sm:px-6 lg:px-8">
             <Head title="工事発注管理・請求システム 構想まとめ" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-[calc(100vw-2rem)] flex-col gap-5 break-all pb-10 sm:max-w-7xl">
+            <div className="mx-auto flex min-h-screen min-w-0 w-full max-w-full flex-col gap-5 break-words pb-10 [overflow-wrap:anywhere] sm:max-w-7xl">
                 {/*
                     PP は非エンジニア向けの構想説明ページです。
                     React のカードとステップUIに加えて、共通の Mermaid / ECharts
-                    表示コンポーネントで「何を作るのか」「どこを触ったのか」を説明します。
+                    表示コンポーネントで「何を解決するのか」「責務をどう分けるのか」を説明します。
                 */}
                 <ConceptHero />
                 <BasicConceptCards />
 
                 {/*
                     ここから下は説明用の図解です。
-                    保存処理やファイル取込はまだ実装せず、業務フロー、画面遷移、
-                    情報のつながりを読むための静的な見せ方に限定します。
+                    DB保存、CRUD、Excel出力本実装は追加せず、固定データで
+                    業務課題、役割分離、状態可視化、責務分離を読むための静的な見せ方に限定します。
                 */}
-                <BusinessFlowDiagram />
-                <ScreenFlowDiagram />
-                <DataFlowDiagram />
-                <CsvIntegrationVisualizationSection />
+                <ConstructionBillingProblemSection />
+                <ConstructionBillingFormExcelSystemSection />
+                <ConstructionBillingFlowSection />
+                <ConstructionBillingScreenSection />
+                <ConstructionBillingStatusChartSection />
+                <ConstructionBillingArchitectureSection />
             </div>
         </PublicLayout>
     );

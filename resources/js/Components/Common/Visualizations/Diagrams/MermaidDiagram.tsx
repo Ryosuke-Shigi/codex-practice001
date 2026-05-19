@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useId, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import mermaid from 'mermaid';
 
@@ -7,6 +7,13 @@ export type MermaidDiagramProps = {
     title?: string;
     className?: string;
     expandable?: boolean;
+    /*
+     * 標準表示時の最大高です。
+     * 縦長の Mermaid 図をそのまま流し込むと、説明ページの1画面を図だけが占有します。
+     * ただし標準表示で図が欠けると内容確認ができないため、下の描画部では
+     * overflow で切るのではなく、SVG 全体をこの高さに収まるように縮小します。
+     */
+    previewMaxHeight?: number | string;
 };
 
 let isMermaidInitialized = false;
@@ -49,6 +56,7 @@ export default function MermaidDiagram({
     title,
     className = '',
     expandable = true,
+    previewMaxHeight = 'calc(66vh - 2rem)',
 }: MermaidDiagramProps) {
     const reactId = useId();
     const renderId = useMemo(() => buildRenderId(reactId), [reactId]);
@@ -164,6 +172,16 @@ export default function MermaidDiagram({
 
     const titleId = `${renderId}-title`;
     const modalTitleId = `${renderId}-modal-title`;
+    /*
+     * Tailwind の任意値へ props の高さを渡すため、CSSカスタムプロパティを使います。
+     * button 自体へ max-height を置くと図がクリップされるため、
+     * 実際の上限は内側の svg に max-height として適用します。
+     */
+    const previewStyle = expandable
+        ? {
+              '--mermaid-preview-max-height': previewMaxHeight,
+          } as CSSProperties
+        : undefined;
     const expandedDiagram =
         isExpanded && typeof document !== 'undefined'
             ? createPortal(
@@ -195,8 +213,13 @@ export default function MermaidDiagram({
                                   {modalError}
                               </div>
                           ) : modalSvg ? (
+                              /*
+                               * 拡大表示では標準表示の縮小制限を外します。
+                               * 図が大きい場合はこの白い表示領域の中でスクロールし、
+                               * ページ本体は body overflow hidden で背面スクロールしないようにします。
+                               */
                               <div
-                                  className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-lg border border-white/14 bg-white p-4 text-slate-950 [&_svg]:block [&_svg]:!h-auto [&_svg]:!max-h-full [&_svg]:!max-w-full [&_svg]:!w-auto"
+                                  className="min-h-0 flex-1 overflow-auto rounded-lg border border-white/14 bg-white p-4 text-slate-950 [&_svg]:mx-auto [&_svg]:block [&_svg]:!h-auto [&_svg]:!max-w-none"
                                   dangerouslySetInnerHTML={{ __html: modalSvg }}
                               />
                           ) : (
@@ -233,9 +256,15 @@ export default function MermaidDiagram({
                         aria-describedby={title ? titleId : undefined}
                         onClick={() => setIsExpanded(true)}
                         className="block min-w-0 w-full cursor-zoom-in overflow-hidden rounded-lg border border-white/14 bg-white/8 p-3 text-left text-slate-950 transition hover:bg-white/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
+                        style={previewStyle}
                     >
+                        {/*
+                            標準表示は「概要として全体が見える」ことを優先します。
+                            overflow-hidden ははみ出し防止の保険で、実際には svg を
+                            max-height / max-width で縮小するため、図の上下左右は欠けません。
+                        */}
                         <span
-                            className="block min-w-0 w-full overflow-x-auto [&_svg]:!h-auto [&_svg]:!max-w-full"
+                            className="flex min-w-0 w-full items-center justify-center overflow-hidden [&_svg]:!h-auto [&_svg]:!max-h-[var(--mermaid-preview-max-height)] [&_svg]:!max-w-full [&_svg]:!w-auto"
                             dangerouslySetInnerHTML={{ __html: svg }}
                         />
                     </button>
