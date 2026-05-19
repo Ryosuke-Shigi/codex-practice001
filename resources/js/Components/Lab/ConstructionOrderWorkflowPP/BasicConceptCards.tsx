@@ -1,15 +1,15 @@
 const conceptCards = [
     {
-        title: 'Formは入力と操作',
-        detail: '工事登録、発注入力、請求入力、フィルタ、状態検索、詳細確認を画面側で扱います。',
+        title: 'Formは発注入力の入口',
+        detail: '画面から入力した発注情報をDTOへ変換し、System側の発注登録処理へ渡します。',
     },
     {
-        title: 'Excelは確認と出力',
-        detail: '工事一覧、業者別発注一覧、月別請求一覧など、現場が確認しやすい帳票として残します。',
+        title: 'ExcelはCSV入力元',
+        detail: '既存ExcelからCSVを出せれば、Form入力と同じ発注登録処理に乗せられます。',
     },
     {
-        title: 'Systemは状態管理',
-        detail: '工事、発注、請求のステータス、DB保存、検索条件、履歴、業務ルールを担当します。',
+        title: 'Systemは登録と状態管理',
+        detail: 'Form入力でもExcel/CSV入力でも同じDTOを受け、発注作成、DB保存、履歴管理を担当します。',
     },
     {
         title: 'ADRで責務を分ける',
@@ -27,7 +27,7 @@ export default function BasicConceptCards() {
                 基本コンセプト
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-200/80">
-                工事、発注、請求の流れを、入力、帳票確認、状態管理、責務分離の4つに分けて説明します。
+                発注登録の入口をFormとExcel/CSVの2つに分け、登録処理と状態管理はSystemへ集約して説明します。
             </p>
             <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {conceptCards.map((card) => (

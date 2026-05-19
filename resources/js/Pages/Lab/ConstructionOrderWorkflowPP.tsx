@@ -26,7 +26,7 @@ export default function ConstructionOrderWorkflowPP() {
 
                 {/*
                     ここから下は説明用の図解です。
-                    DB保存、CRUD、Excel出力本実装は追加せず、固定データで
+                    DB保存、CRUD、CSV取込本実装は追加せず、固定データで
                     業務課題、役割分離、状態可視化、責務分離を読むための静的な見せ方に限定します。
                 */}
                 <ConstructionBillingProblemSection />

@@ -15,8 +15,8 @@ export default function ConstructionBillingScreenSection() {
                 用途ごとに画面を分ける
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                一画面に全部を詰め込まず、一覧、詳細、状態確認、Excel出力確認を分けます。
-                非エンジニアが「どこで何を見るか」を追いやすい構成にします。
+                一画面に全部を詰め込まず、CSV取込確認、発注詳細、工事詳細、請求状態確認を分けます。
+                Excelを出力先として中心に置くのではなく、CSV入力から登録処理へつなぐ入口として見せます。
             </p>
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

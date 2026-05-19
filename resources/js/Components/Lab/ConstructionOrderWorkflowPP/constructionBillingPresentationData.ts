@@ -40,7 +40,7 @@ export const problemCards: TextCard[] = [
     },
     {
         title: 'Excelだけでは境界が曖昧',
-        detail: 'Excelは確認や出力には強い一方、状態管理や業務ルールまで閉じ込めると運用の見通しが悪くなります。',
+        detail: '既存Excelは入力元として活かしつつ、CSVを通じてSystemの登録処理へ渡す境界を明確にします。',
     },
 ];
 
@@ -57,7 +57,7 @@ export const problemFlowChart = `flowchart TD
     statusHard["未発注・発注済み・工事中・完了・未請求・請求済みを追いづらい"]
     excelOnly["Excelだけに状態管理を閉じ込める"]
     risk["更新漏れと属人判断が起きやすい"]
-    split["入力・Excel帳票・システム管理を分ける"]
+    split["Form入力とExcel CSV入力を同じ登録処理へ集約する"]
     endNode(["End"])
     title --> start
     start --> mixed --> viewAxis --> statusHard --> excelOnly --> risk --> split --> endNode`;
@@ -65,37 +65,36 @@ export const problemFlowChart = `flowchart TD
 export const formExcelSystemRoles: RoleColumn[] = [
     {
         title: 'Form',
-        role: '入力と操作を担当する領域',
+        role: '画面から発注情報を入力する入口',
         points: [
-            '工事登録',
-            '発注入力',
-            '請求入力',
-            '業者フィルタ',
-            '状態検索',
-            '詳細確認',
+            '画面から発注情報を入力',
+            '入力値を形式バリデーション',
+            '発注登録DTOへ変換',
+            'System側の発注登録処理へ渡す',
+            '手入力が必要な現場運用を受ける',
         ],
     },
     {
         title: 'Excel',
-        role: '確認・出力・既存業務との接続を担当する領域',
+        role: '既存ExcelからCSVを出す入力元',
         points: [
-            '工事一覧出力',
-            '業者別発注一覧',
-            '月別請求一覧',
-            '請求確認表',
-            '確認用帳票',
-            '既存Excelからの移行補助',
+            '既存業務のExcelを入口にする',
+            'ExcelからCSVを出力',
+            'CSVを読み取って発注登録DTOへ変換',
+            'Excel自体を正本にしない',
+            'Form入力と同じ登録処理へ乗せる',
         ],
     },
     {
         title: 'System',
-        role: '状態管理と業務ルールを担当する領域',
+        role: '同じDTO・同じ登録処理で発注を作成する領域',
         points: [
-            '工事ステータス管理',
-            '発注ステータス管理',
-            '請求ステータス管理',
+            '発注登録DTOを受け取る',
+            'Form入力とCSV入力を同じ処理へ集約',
+            '発注状態管理',
+            '工事状態管理',
+            '請求状態管理',
             'DB保存',
-            '検索条件管理',
             '履歴管理',
             'ADR / レイヤード構成',
         ],
@@ -103,35 +102,40 @@ export const formExcelSystemRoles: RoleColumn[] = [
 ];
 
 export const formExcelSystemFlowChart = `flowchart TD
-    title["題：Form・Excel・Systemの役割分離"]
+    title["題：Form入力とExcel CSV入力を同じ発注登録へ集約する"]
     start(["Start"])
-    user["利用者"]
-    form["Form：入力と操作"]
-    system["System：状態管理・業務ルール・DB保存"]
-    excel["Excel：確認・出力・既存業務との接続"]
-    boundary["Excelで全部管理せず見たい情報と管理すべき情報を分ける"]
+    form["Form入力"]
+    formDto["発注登録DTO"]
+    excel["既存Excel"]
+    csv["CSV出力"]
+    csvDto["発注登録DTO"]
+    register["発注登録"]
+    db["DB保存"]
+    manage["工事・発注・請求管理"]
     endNode(["End"])
     title --> start
-    start --> user --> form --> system
-    system --> excel
-    excel --> user
-    system --> boundary --> endNode`;
+    start --> form --> formDto --> register
+    start --> excel --> csv --> csvDto --> register
+    register --> db --> manage --> endNode`;
 
 export const constructionBillingFlowChart = `flowchart TD
-    title["題：工事登録から請求管理までの業務フロー"]
+    title["題：発注登録から工事・請求管理までの業務フロー"]
     start(["Start"])
-    createConstruction["工事登録"]
-    listConstruction["工事一覧表示"]
-    selectVendor["業者選択"]
-    createOrder["発注作成"]
-    progress["工事進行"]
-    complete["完了確認"]
-    createInvoice["請求作成"]
+    chooseInput["入力方法を選ぶ"]
+    formInput["Form入力"]
+    excelCsv["ExcelからCSV出力"]
+    dto["発注登録DTO"]
+    createOrder["発注登録"]
+    saveDb["DB保存"]
+    manageOrder["発注状態管理"]
+    manageConstruction["工事状態管理"]
     manageInvoice["請求状態管理"]
-    exportExcel["必要に応じてExcel出力"]
     endNode(["End"])
     title --> start
-    start --> createConstruction --> listConstruction --> selectVendor --> createOrder --> progress --> complete --> createInvoice --> manageInvoice --> exportExcel --> endNode`;
+    start --> chooseInput
+    chooseInput --> formInput --> dto
+    chooseInput --> excelCsv --> dto
+    dto --> createOrder --> saveDb --> manageOrder --> manageConstruction --> manageInvoice --> endNode`;
 
 export const screenCards: TextCard[] = [
     {
@@ -159,8 +163,8 @@ export const screenCards: TextCard[] = [
         detail: '請求内容、対象発注、入金状態、確認履歴を見ます。',
     },
     {
-        title: 'Excel出力確認',
-        detail: '帳票として確認したい範囲を選び、出力前に内容を確認します。',
+        title: 'CSV取込確認',
+        detail: '既存Excelから出したCSVを、発注登録DTOへ変換する前に確認します。',
     },
 ];
 
@@ -173,19 +177,19 @@ export const screenFlowChart = `flowchart TD
     orderDetail["発注詳細"]
     invoiceList["請求一覧"]
     invoiceDetail["請求詳細"]
-    excelConfirm["Excel出力確認"]
+    csvImport["CSV取込確認"]
     endNode(["End"])
     title --> start
     start --> constructionList
+    start --> csvImport
     constructionList --> constructionDetail
     constructionDetail --> orderList
     orderList --> orderDetail
     constructionDetail --> invoiceList
     invoiceList --> invoiceDetail
-    constructionDetail --> excelConfirm
-    orderDetail --> excelConfirm
-    invoiceDetail --> excelConfirm
-    excelConfirm --> endNode`;
+    csvImport --> orderDetail
+    orderDetail --> constructionDetail
+    invoiceDetail --> endNode`;
 
 export const architectureResponsibilities: TextCard[] = [
     {

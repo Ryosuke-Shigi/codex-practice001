@@ -30,8 +30,8 @@ export default function ConstructionBillingFormExcelSystemSection() {
                 Form / Excel / System の役割を分ける
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                Formは入力と操作、Excelは確認・出力・既存業務との接続、Systemは状態管理と業務ルールを担当します。
-                Excelで全部を管理するのではなく、Excelで見たい情報とSystemで管理すべき情報を分けます。
+                Formは画面から発注情報を入力する入口、Excelは既存業務からCSVを出す入力元です。
+                どちらの入力でも最終的に同じDTOへ変換し、System側の同じ発注登録処理へ渡します。
             </p>
 
             <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -58,11 +58,11 @@ export default function ConstructionBillingFormExcelSystemSection() {
 
             <div className="mt-5 min-w-0 rounded-lg border border-white/14 bg-white/8 p-4">
                 <p className="text-sm leading-6 text-slate-200/78">
-                    Excel依存を急にゼロにするのではなく、現場が確認しやすい帳票として残しながら、判断の本体はSystem側に寄せます。
+                    Excelは一覧を見るための正本ではありません。ExcelからCSVを出せれば、Form入力と同じ登録処理に乗せられる、という境界をPP上で見せます。
                 </p>
                 <MermaidDiagram
                     chart={formExcelSystemFlowChart}
-                    title="Form・Excel・Systemの役割分離"
+                    title="Form入力とExcel CSV入力を同じ発注登録へ集約する"
                     className={diagramClassName}
                 />
             </div>

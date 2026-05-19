@@ -17,10 +17,10 @@ export default function ConceptHero() {
                         工事発注管理・請求システム 構想まとめ
                     </h1>
                     <p className="mt-4 text-base leading-8 text-slate-100/88">
-                        このシステムは、工事、発注、請求の状態を分けて管理し、必要な確認資料はExcelで出力できるようにする構想ページです。
+                        このシステムは、Form入力と既存Excelから出したCSV入力を同じ発注登録処理に集約し、工事・発注・請求状態をSystem側で管理する構想ページです。
                     </p>
                     <p className="mt-3 text-sm leading-7 text-slate-200/78">
-                        Formは入力と操作、Excelは確認・出力・既存業務との接続、Systemは状態管理と業務ルールを担当します。Excel運用を残しながら、判断の本体はシステム側に寄せる見せ方にしています。
+                        Excelは一覧を見るための正本ではなく、CSVを通じてSystemへ渡す入力元です。Form入力でもExcel/CSV入力でも、最終的に同じDTO・同じ登録処理で発注を作成します。
                     </p>
                 </div>
 

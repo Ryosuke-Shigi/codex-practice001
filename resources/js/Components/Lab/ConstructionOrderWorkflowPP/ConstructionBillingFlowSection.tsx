@@ -12,17 +12,17 @@ export default function ConstructionBillingFlowSection() {
                 Workflow
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-white">
-                工事登録から請求管理までの流れ
+                発注登録から工事・請求管理までの流れ
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                工事を登録し、業者を選び、発注を作成して、完了確認後に請求状態を管理します。
-                Excel出力は最後に確認資料として使う位置づけです。
+                Form入力でもExcelから出したCSVでも、発注登録DTOへ変換した後は同じ登録処理を通ります。
+                発注登録後にDB保存し、工事状態、発注状態、請求状態をSystem側で管理します。
             </p>
 
             <div className="mt-5 min-w-0 rounded-lg border border-white/14 bg-white/8 p-4">
                 <MermaidDiagram
                     chart={constructionBillingFlowChart}
-                    title="工事登録から請求管理までの業務フロー"
+                    title="発注登録から工事・請求管理までの業務フロー"
                     className={diagramClassName}
                 />
             </div>
