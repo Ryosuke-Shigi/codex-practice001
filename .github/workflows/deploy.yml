@@ -10,6 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build frontend assets
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Run Vite build on GitHub runner
+        run: |
+          set -e
+          # Build on the GitHub runner, not on Lightsail. The Lightsail instance is
+          # small, so production deploy must only receive already-built assets.
+          npm ci
+          npm run build
+          tar -czf /tmp/api-discovery-hub-public-build.tar.gz -C public build
+
       - name: Deploy via SSH
         env:
           LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
@@ -24,22 +42,20 @@ jobs:
 
           ssh-keyscan -H "$LIGHTSAIL_HOST" >> ~/.ssh/known_hosts
 
+          scp -i ~/.ssh/lightsail_key \
+            /tmp/api-discovery-hub-public-build.tar.gz \
+            "$LIGHTSAIL_USER@$LIGHTSAIL_HOST:/tmp/api-discovery-hub-public-build.tar.gz"
+
           ssh -i ~/.ssh/lightsail_key "$LIGHTSAIL_USER@$LIGHTSAIL_HOST" << 'EOF'
             set -e
 
             cd /var/www/api-discovery-hub/src
-            if [ -d public/build ]; then
-              rm -rf /tmp/api-discovery-hub-public-build
-              cp -a public/build /tmp/api-discovery-hub-public-build
-            fi
-
             git status --short
             git pull --ff-only origin main
 
-            if [ -d /tmp/api-discovery-hub-public-build ]; then
-              rm -rf public/build
-              cp -a /tmp/api-discovery-hub-public-build public/build
-            fi
+            rm -rf public/build
+            mkdir -p public
+            tar -xzf /tmp/api-discovery-hub-public-build.tar.gz -C public
 
             cd /var/www/api-discovery-hub
 
