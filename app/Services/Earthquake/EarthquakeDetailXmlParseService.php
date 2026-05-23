@@ -41,6 +41,9 @@ class EarthquakeDetailXmlParseService
             $rawCoordinate = $this->nullableText($coordinateNode);
             $coordinate = $this->parseJmaCoordinate($rawCoordinate);
             $magnitude = $earthquake->children(self::JMAXML_ELEMENT_NAMESPACE)->Magnitude;
+            $maxIntensity = isset($bodyNode->Intensity->Observation->MaxInt)
+                ? $this->nullableText($bodyNode->Intensity->Observation->MaxInt)
+                : null;
 
             return new EarthquakeMapPinDTO(
                 eventId: $this->nullableText($head->EventID),
@@ -53,7 +56,7 @@ class EarthquakeDetailXmlParseService
                 longitude: $coordinate['longitude'],
                 depthMeter: $coordinate['depthMeter'],
                 magnitude: $this->normalizedDecimal($this->nullableText($magnitude), 1),
-                maxIntensity: $this->nullableText($bodyNode->Intensity->Observation->MaxInt),
+                maxIntensity: $maxIntensity,
                 occurredAt: $this->nullableText($earthquake->OriginTime)
                     ?? $this->nullableText($earthquake->ArrivalTime),
                 reportedAt: $this->nullableText($head->ReportDateTime)
@@ -72,10 +75,15 @@ class EarthquakeDetailXmlParseService
     public function isMappable(EarthquakeMapPinDTO $pin): bool
     {
         /*
-         * 第2段階では「地図に置ける」ことを latitude / longitude の有無で判断します。
-         * eventId や最大震度が欠けても、座標があれば地図ピンの候補として保存できます。
+         * 第2段階では「地図に置ける」ことを latitude / longitude と最大震度の有無で判断します。
+         * 震度のない電文は、震源座標があっても地震マップ上の震度ピンとしては保存しません。
          */
-        return $pin->latitude !== null && $pin->longitude !== null;
+        return $pin->latitude !== null
+            && trim($pin->latitude) !== ''
+            && $pin->longitude !== null
+            && trim($pin->longitude) !== ''
+            && $pin->maxIntensity !== null
+            && trim($pin->maxIntensity) !== '';
     }
 
     /**
