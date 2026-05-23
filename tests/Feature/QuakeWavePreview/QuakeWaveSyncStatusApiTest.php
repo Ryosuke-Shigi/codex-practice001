@@ -150,6 +150,98 @@ class QuakeWaveSyncStatusApiTest extends TestCase
             ]);
     }
 
+    public function test_status_apis_return_pending_status_with_running_flag_and_initial_counts(): void
+    {
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+
+        $feedResponse = $this->getJson(route('quakewave-preview.feed-entries.sync.status', [
+            'syncRunId' => $feedEntrySyncRunId,
+        ]));
+        $mapPinResponse = $this->getJson(route('quakewave-preview.map-pins.sync.status', [
+            'syncRunId' => $mapPinSyncRunId,
+        ]));
+
+        $feedResponse
+            ->assertOk()
+            ->assertJsonPath('syncStatus.syncRunId', $feedEntrySyncRunId)
+            ->assertJsonPath('syncStatus.status', EarthquakeFeedEntrySyncResultDTO::STATUS_PENDING)
+            ->assertJsonPath('syncStatus.isRunning', true)
+            ->assertJsonPath('syncStatus.totalCount', 0)
+            ->assertJsonPath('syncStatus.insertedCount', 0)
+            ->assertJsonPath('syncStatus.updatedCount', 0)
+            ->assertJsonPath('syncStatus.skippedCount', 0)
+            ->assertJsonPath('syncStatus.failedCount', 0)
+            ->assertJsonPath('syncStatus.errorMessage', null)
+            ->assertJsonPath('syncStatus.startedAt', null)
+            ->assertJsonPath('syncStatus.finishedAt', null);
+        $mapPinResponse
+            ->assertOk()
+            ->assertJsonPath('syncStatus.syncRunId', $mapPinSyncRunId)
+            ->assertJsonPath('syncStatus.status', EarthquakeMapPinSyncResultDTO::STATUS_PENDING)
+            ->assertJsonPath('syncStatus.isRunning', true)
+            ->assertJsonPath('syncStatus.totalCount', 0)
+            ->assertJsonPath('syncStatus.insertedCount', 0)
+            ->assertJsonPath('syncStatus.updatedCount', 0)
+            ->assertJsonPath('syncStatus.skippedCount', 0)
+            ->assertJsonPath('syncStatus.failedCount', 0)
+            ->assertJsonPath('syncStatus.errorMessage', null)
+            ->assertJsonPath('syncStatus.startedAt', null)
+            ->assertJsonPath('syncStatus.finishedAt', null);
+
+        $this->assertStatusJsonShape($feedResponse->json());
+        $this->assertStatusJsonShape($mapPinResponse->json());
+    }
+
+    public function test_status_apis_return_running_status_with_running_flag_and_initial_counts(): void
+    {
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+        $feedEntrySyncRunRepository->markRunning($feedEntrySyncRunId);
+        $mapPinSyncRunRepository->markRunning($mapPinSyncRunId);
+
+        $feedResponse = $this->getJson(route('quakewave-preview.feed-entries.sync.status', [
+            'syncRunId' => $feedEntrySyncRunId,
+        ]));
+        $mapPinResponse = $this->getJson(route('quakewave-preview.map-pins.sync.status', [
+            'syncRunId' => $mapPinSyncRunId,
+        ]));
+
+        $feedResponse
+            ->assertOk()
+            ->assertJsonPath('syncStatus.syncRunId', $feedEntrySyncRunId)
+            ->assertJsonPath('syncStatus.status', EarthquakeFeedEntrySyncResultDTO::STATUS_RUNNING)
+            ->assertJsonPath('syncStatus.isRunning', true)
+            ->assertJsonPath('syncStatus.totalCount', 0)
+            ->assertJsonPath('syncStatus.insertedCount', 0)
+            ->assertJsonPath('syncStatus.updatedCount', 0)
+            ->assertJsonPath('syncStatus.skippedCount', 0)
+            ->assertJsonPath('syncStatus.failedCount', 0)
+            ->assertJsonPath('syncStatus.errorMessage', null)
+            ->assertJsonPath('syncStatus.finishedAt', null);
+        $mapPinResponse
+            ->assertOk()
+            ->assertJsonPath('syncStatus.syncRunId', $mapPinSyncRunId)
+            ->assertJsonPath('syncStatus.status', EarthquakeMapPinSyncResultDTO::STATUS_RUNNING)
+            ->assertJsonPath('syncStatus.isRunning', true)
+            ->assertJsonPath('syncStatus.totalCount', 0)
+            ->assertJsonPath('syncStatus.insertedCount', 0)
+            ->assertJsonPath('syncStatus.updatedCount', 0)
+            ->assertJsonPath('syncStatus.skippedCount', 0)
+            ->assertJsonPath('syncStatus.failedCount', 0)
+            ->assertJsonPath('syncStatus.errorMessage', null)
+            ->assertJsonPath('syncStatus.finishedAt', null);
+
+        $this->assertStatusJsonShape($feedResponse->json());
+        $this->assertStatusJsonShape($mapPinResponse->json());
+        $this->assertIsString($feedResponse->json('syncStatus.startedAt'));
+        $this->assertIsString($mapPinResponse->json('syncStatus.startedAt'));
+    }
+
     /**
      * @param  array<string, mixed>  $payload
      */
