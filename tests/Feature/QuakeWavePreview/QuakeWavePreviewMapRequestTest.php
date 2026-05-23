@@ -116,6 +116,81 @@ class QuakeWavePreviewMapRequestTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_map_request_date_range_includes_day_boundaries_and_uses_occurred_at_when_reported_at_is_null(): void
+    {
+        Http::preventStrayRequests();
+        $sourceEntry = $this->createFeedEntry();
+
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'reported-before-start',
+            reportedAt: '2026-05-10 23:59:59',
+            occurredAt: '2026-05-10 23:58:59',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'reported-start-boundary',
+            reportedAt: '2026-05-11 00:00:00',
+            occurredAt: '2026-05-10 23:59:00',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'reported-end-boundary',
+            reportedAt: '2026-05-11 23:59:59',
+            occurredAt: '2026-05-11 23:58:59',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'reported-after-end',
+            reportedAt: '2026-05-12 00:00:00',
+            occurredAt: '2026-05-11 23:59:00',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'occurred-before-start',
+            reportedAt: null,
+            occurredAt: '2026-05-10 23:59:59',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'occurred-start-boundary',
+            reportedAt: null,
+            occurredAt: '2026-05-11 00:00:00',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'occurred-end-boundary',
+            reportedAt: null,
+            occurredAt: '2026-05-11 23:59:59',
+        );
+        $this->createBoundaryMapPin(
+            $sourceEntry,
+            eventId: 'occurred-after-end',
+            reportedAt: null,
+            occurredAt: '2026-05-12 00:00:00',
+        );
+
+        $response = $this->get(route('quakewave-preview.map', [
+            'startDate' => '2026-05-11',
+            'endDate' => '2026-05-11',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('QuakeWavePreview/QuakeWaveMapPage', false)
+                ->where('filters.startDate', '2026-05-11')
+                ->where('filters.endDate', '2026-05-11')
+                ->has('pins', 4)
+                ->where('pins.0.eventId', 'reported-end-boundary')
+                ->where('pins.1.eventId', 'reported-start-boundary')
+                ->where('pins.2.eventId', 'occurred-end-boundary')
+                ->where('pins.3.eventId', 'occurred-start-boundary')
+            );
+
+        Http::assertNothingSent();
+    }
+
     private function createMapPins(int $count = 1): void
     {
         $sourceEntry = $this->createFeedEntry();
@@ -141,6 +216,37 @@ class QuakeWavePreviewMapRequestTest extends TestCase
                 'comment' => '保存済み地震情報です。',
             ]);
         }
+    }
+
+    private function createBoundaryMapPin(
+        EarthquakeFeedEntry $sourceEntry,
+        string $eventId,
+        ?string $reportedAt,
+        string $occurredAt,
+    ): void {
+        EarthquakeMapPin::query()->create([
+            'event_id' => $eventId,
+            'source_entry_id' => $sourceEntry->getKey(),
+            'title' => '震源・震度情報',
+            'area_name' => '青森県東方沖',
+            'headline' => '１１日１１時２７分ころ、地震がありました。',
+            'raw_coordinate' => '+41.0+142.5-50000/',
+            'latitude' => '41.0000000',
+            'longitude' => '142.5000000',
+            'depth_meter' => 50000,
+            'magnitude' => '4.0',
+            'max_intensity' => '5-',
+            'occurred_at' => $this->dateTimeForStorage($occurredAt),
+            'reported_at' => $reportedAt === null ? null : $this->dateTimeForStorage($reportedAt),
+            'comment' => '保存済み地震情報です。',
+        ]);
+    }
+
+    private function dateTimeForStorage(string $localDateTime): string
+    {
+        return CarbonImmutable::parse($localDateTime, config('app.timezone'))
+            ->utc()
+            ->toDateTimeString();
     }
 
     private function createMapPin(): void

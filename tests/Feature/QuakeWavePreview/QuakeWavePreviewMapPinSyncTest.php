@@ -5,9 +5,11 @@ namespace Tests\Feature\QuakeWavePreview;
 use App\Actions\Earthquake\Commands\StartEarthquakeMapPinSyncAction;
 use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
+use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Models\EarthquakeFeedEntry;
+use App\Models\EarthquakeMapPin;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
@@ -227,6 +229,148 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
             'event_id' => '20260511112751',
             'area_name' => '青森県東方沖',
         ]);
+    }
+
+    public function test_map_pin_sync_job_preserves_partial_insert_when_repository_fails_after_first_pin(): void
+    {
+        $this->createFeedEntry('urn:jma:earthquake:partial-1');
+        $this->createFeedEntry('urn:jma:earthquake:partial-2');
+        $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, new class implements EarthquakeDetailXmlRepositoryInterface
+        {
+            private int $fetchCount = 0;
+
+            public function fetch(string $url): array
+            {
+                $this->fetchCount++;
+                $eventId = $this->fetchCount === 1 ? '20260511112751' : '20260511122852';
+                $areaName = $this->fetchCount === 1 ? '青森県東方沖' : '岩手県沖';
+
+                return [
+                    'endpoint' => $url,
+                    'method' => 'GET',
+                    'request_headers' => [],
+                    'success' => true,
+                    'status_code' => 200,
+                    'fetched_at' => '2026-05-11T11:32:00+09:00',
+                    'response_time_ms' => 12.3,
+                    'body' => $this->earthquakeReportXml($eventId, $areaName),
+                    'error_message' => null,
+                ];
+            }
+
+            private function earthquakeReportXml(string $eventId, string $areaName): string
+            {
+                return <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://xml.kishou.go.jp/jmaxml1/" xmlns:jmx="http://xml.kishou.go.jp/jmaxml1/">
+  <Control>
+    <Title>震源・震度に関する情報</Title>
+    <DateTime>2026-05-11T02:31:20Z</DateTime>
+    <Status>通常</Status>
+    <EditorialOffice>気象庁本庁</EditorialOffice>
+    <PublishingOffice>気象庁</PublishingOffice>
+  </Control>
+  <Head xmlns="http://xml.kishou.go.jp/jmaxml1/informationBasis1/">
+    <Title>震源・震度情報</Title>
+    <ReportDateTime>2026-05-11T11:31:00+09:00</ReportDateTime>
+    <TargetDateTime>2026-05-11T11:31:00+09:00</TargetDateTime>
+    <EventID>{$eventId}</EventID>
+    <InfoType>発表</InfoType>
+    <Serial>1</Serial>
+    <InfoKind>地震情報</InfoKind>
+    <InfoKindVersion>1.0_1</InfoKindVersion>
+    <Headline>
+      <Text>１１日１１時２７分ころ、地震がありました。</Text>
+    </Headline>
+  </Head>
+  <Body xmlns="http://xml.kishou.go.jp/jmaxml1/body/seismology1/" xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/elementBasis1/">
+    <Earthquake>
+      <OriginTime>2026-05-11T11:27:00+09:00</OriginTime>
+      <ArrivalTime>2026-05-11T11:27:00+09:00</ArrivalTime>
+      <Hypocenter>
+        <Area>
+          <Name>{$areaName}</Name>
+          <Code type="震央地名">285</Code>
+          <jmx_eb:Coordinate description="北緯４１．０度　東経１４２．５度　深さ　５０ｋｍ">+41.0+142.5-50000/</jmx_eb:Coordinate>
+        </Area>
+      </Hypocenter>
+      <jmx_eb:Magnitude type="Mj" description="Ｍ４．０">4.0</jmx_eb:Magnitude>
+    </Earthquake>
+    <Intensity>
+      <Observation>
+        <MaxInt>4</MaxInt>
+      </Observation>
+    </Intensity>
+  </Body>
+</Report>
+XML;
+            }
+        });
+
+        $innerRepository = app(EarthquakeMapPinRepositoryInterface::class);
+        $failingRepository = new class($innerRepository) implements EarthquakeMapPinRepositoryInterface
+        {
+            public function __construct(
+                private readonly EarthquakeMapPinRepositoryInterface $innerRepository,
+            ) {
+            }
+
+            public function isStorageReady(): bool
+            {
+                return $this->innerRepository->isStorageReady();
+            }
+
+            public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array
+            {
+                $this->innerRepository->upsertFromMapPins(new EarthquakeMapPinListDTO([
+                    $pins->items[0],
+                ]));
+
+                throw new RuntimeException('map pin repository interrupted after partial insert');
+            }
+
+            public function latest(int $limit = 50): array
+            {
+                return $this->innerRepository->latest($limit);
+            }
+
+            public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
+            {
+                return $this->innerRepository->toMapPinListDTO($query);
+            }
+        };
+        $buildService = new EarthquakeMapPinBuildService(
+            app(\App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface::class),
+            app(EarthquakeDetailXmlRepositoryInterface::class),
+            app(EarthquakeDetailXmlParseService::class),
+            $failingRepository,
+        );
+        $syncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $syncRunId = $syncRunRepository->createPending();
+
+        try {
+            (new SyncEarthquakeMapPinsJob($syncRunId))->handle($syncRunRepository, $buildService);
+
+            $this->fail('Repository interruption should be rethrown by the map pin sync job.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('map pin repository interrupted after partial insert', $exception->getMessage());
+        }
+
+        $status = $syncRunRepository->findResult($syncRunId);
+
+        $this->assertNotNull($status);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_FAILED, $status->status);
+        $this->assertSame(1, $status->failedCount);
+        $this->assertSame('map pin repository interrupted after partial insert', $status->errorMessage);
+        $this->assertDatabaseCount('earthquake_map_pins', 1);
+        $this->assertDatabaseHas('earthquake_map_pins', [
+            'event_id' => '20260511112751',
+            'area_name' => '青森県東方沖',
+        ]);
+        $this->assertDatabaseMissing('earthquake_map_pins', [
+            'event_id' => '20260511122852',
+        ]);
+        $this->assertSame(1, EarthquakeMapPin::query()->distinct('event_id')->count('event_id'));
     }
 
     public function test_sync_job_failed_hook_marks_map_pin_sync_run_as_failed(): void

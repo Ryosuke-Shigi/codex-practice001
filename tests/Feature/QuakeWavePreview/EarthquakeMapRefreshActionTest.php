@@ -246,6 +246,90 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $this->assertDatabaseCount('earthquake_map_pins', 1);
     }
 
+    public function test_refresh_job_failed_hook_marks_pending_and_running_runs_as_failed(): void
+    {
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+        $mapPinSyncRunRepository->markRunning($mapPinSyncRunId);
+
+        (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))
+            ->failed(new RuntimeException('worker crashed'));
+
+        $feedStatus = $feedEntrySyncRunRepository->findResult($feedEntrySyncRunId);
+        $mapStatus = $mapPinSyncRunRepository->findResult($mapPinSyncRunId);
+
+        $this->assertNotNull($feedStatus);
+        $this->assertSame(EarthquakeFeedEntrySyncResultDTO::STATUS_FAILED, $feedStatus->status);
+        $this->assertSame(1, $feedStatus->failedCount);
+        $this->assertSame('worker crashed', $feedStatus->errorMessage);
+        $this->assertNotNull($mapStatus);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_FAILED, $mapStatus->status);
+        $this->assertSame(1, $mapStatus->failedCount);
+        $this->assertSame('worker crashed', $mapStatus->errorMessage);
+    }
+
+    public function test_refresh_job_failed_hook_does_not_overwrite_completed_runs(): void
+    {
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+
+        $feedEntrySyncRunRepository->markCompleted(
+            $feedEntrySyncRunId,
+            new EarthquakeFeedEntrySyncResultDTO(
+                syncRunId: $feedEntrySyncRunId,
+                status: EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED,
+                totalCount: 2,
+                insertedCount: 1,
+                updatedCount: 1,
+                skippedCount: 0,
+                failedCount: 0,
+                errorMessage: null,
+                startedAt: now(),
+                finishedAt: now(),
+            ),
+        );
+        $mapPinSyncRunRepository->markCompleted(
+            $mapPinSyncRunId,
+            new EarthquakeMapPinSyncResultDTO(
+                syncRunId: $mapPinSyncRunId,
+                status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                totalCount: 3,
+                insertedCount: 2,
+                updatedCount: 1,
+                skippedCount: 0,
+                failedCount: 0,
+                errorMessage: null,
+                startedAt: now(),
+                finishedAt: now(),
+            ),
+        );
+
+        (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))
+            ->failed(new RuntimeException('late worker failure'));
+
+        $feedStatus = $feedEntrySyncRunRepository->findResult($feedEntrySyncRunId);
+        $mapStatus = $mapPinSyncRunRepository->findResult($mapPinSyncRunId);
+
+        $this->assertNotNull($feedStatus);
+        $this->assertSame(EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED, $feedStatus->status);
+        $this->assertSame(2, $feedStatus->totalCount);
+        $this->assertSame(1, $feedStatus->insertedCount);
+        $this->assertSame(1, $feedStatus->updatedCount);
+        $this->assertSame(0, $feedStatus->failedCount);
+        $this->assertNull($feedStatus->errorMessage);
+        $this->assertNotNull($mapStatus);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $mapStatus->status);
+        $this->assertSame(3, $mapStatus->totalCount);
+        $this->assertSame(2, $mapStatus->insertedCount);
+        $this->assertSame(1, $mapStatus->updatedCount);
+        $this->assertSame(0, $mapStatus->failedCount);
+        $this->assertNull($mapStatus->errorMessage);
+    }
+
     private function atomFeed(): string
     {
         return <<<'XML'
