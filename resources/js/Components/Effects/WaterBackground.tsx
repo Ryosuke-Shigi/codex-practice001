@@ -28,13 +28,66 @@ type RipplesElement = JQuery<HTMLElement> & {
     ripples(method: 'drop', x: number, y: number, radius: number, strength: number): JQuery<HTMLElement>;
 };
 
+export type WaterBackgroundIntensity = 'showcase' | 'subtle';
+
+type WaterBackgroundProps = {
+    intensity?: WaterBackgroundIntensity;
+};
+
+/*
+ * The water direction is shared across public pages, but the page density is
+ * not. showcase keeps the entrance screens lively; subtle keeps the same bright
+ * aqua identity while reducing opacity, ripple count, and distortion for forms,
+ * lists, and search-heavy pages.
+ */
+const waterIntensitySettings: Record<
+    WaterBackgroundIntensity,
+    {
+        layerOpacity: number;
+        firstDropDelayMs: number;
+        dropIntervalMs: number;
+        dropsPerPulse: number;
+        radiusBase: number;
+        radiusRange: number;
+        strengthBase: number;
+        strengthRange: number;
+        pluginDropRadius: number;
+        perturbance: number;
+    }
+> = {
+    showcase: {
+        layerOpacity: 0.9,
+        firstDropDelayMs: 280,
+        dropIntervalMs: 1180,
+        dropsPerPulse: 2,
+        radiusBase: 15,
+        radiusRange: 16,
+        strengthBase: 0.042,
+        strengthRange: 0.052,
+        pluginDropRadius: 18,
+        perturbance: 0.032,
+    },
+    subtle: {
+        layerOpacity: 0.72,
+        firstDropDelayMs: 620,
+        dropIntervalMs: 1540,
+        dropsPerPulse: 1,
+        radiusBase: 12,
+        radiusRange: 14,
+        strengthBase: 0.028,
+        strengthRange: 0.036,
+        pluginDropRadius: 14,
+        perturbance: 0.022,
+    },
+};
+
 /*
  * This translucent fallback is both a design baseline and a safety net. If
  * WebGL or jquery.ripples fails, the page still has a water-themed surface, and
  * ColorShiftBackground can still show through from behind.
  */
 const fallbackBackground =
-    'radial-gradient(circle at 22% 12%, rgba(236,254,255,0.48) 0%, rgba(236,254,255,0) 30%), linear-gradient(155deg, rgba(223,251,255,0.48) 0%, rgba(135,232,241,0.4) 24%, rgba(34,151,178,0.34) 48%, rgba(11,78,115,0.42) 70%, rgba(4,21,47,0.56) 100%)';
+    'radial-gradient(circle at 22% 12%, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0) 32%), radial-gradient(circle at 74% 20%, rgba(207,250,254,0.48) 0%, rgba(207,250,254,0) 30%), linear-gradient(155deg, rgba(255,255,255,0.7) 0%, rgba(207,250,254,0.62) 26%, rgba(165,243,252,0.48) 52%, rgba(103,232,249,0.32) 76%, rgba(45,212,191,0.2) 100%)';
 
 /*
  * jquery.ripples distorts an image texture. The SVG stays intentionally
@@ -45,15 +98,15 @@ const waterTexture = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="none">
   <defs>
     <linearGradient id="water" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#dffbff" stop-opacity="0.56"/>
-      <stop offset="0.28" stop-color="#83e8f0" stop-opacity="0.46"/>
-      <stop offset="0.55" stop-color="#1689aa" stop-opacity="0.34"/>
-      <stop offset="0.78" stop-color="#0a4268" stop-opacity="0.42"/>
-      <stop offset="1" stop-color="#04132d" stop-opacity="0.58"/>
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.82"/>
+      <stop offset="0.26" stop-color="#ecfeff" stop-opacity="0.68"/>
+      <stop offset="0.52" stop-color="#a5f3fc" stop-opacity="0.5"/>
+      <stop offset="0.76" stop-color="#67e8f9" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0.22"/>
     </linearGradient>
     <radialGradient id="glow" cx="26%" cy="15%" r="55%">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.74"/>
-      <stop offset="0.44" stop-color="#b9f7ff" stop-opacity="0.18"/>
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="0.44" stop-color="#ecfeff" stop-opacity="0.34"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
     <filter id="grain">
@@ -66,16 +119,25 @@ const waterTexture = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
   </defs>
   <rect width="1600" height="1000" fill="url(#water)"/>
   <rect width="1600" height="1000" fill="url(#glow)" opacity="0.72"/>
-  <g fill="none" stroke="#e8fdff" stroke-opacity="0.18" stroke-width="8">
+  <g fill="none" stroke="#f8feff" stroke-opacity="0.18" stroke-width="7">
     <path d="M-120 210 C 180 120, 420 305, 720 205 S 1230 95, 1720 245"/>
+    <path d="M-160 320 C 130 230, 420 390, 710 315 S 1200 210, 1730 330"/>
     <path d="M-180 430 C 170 560, 430 340, 760 465 S 1270 650, 1760 475"/>
+    <path d="M-150 555 C 190 470, 490 645, 820 555 S 1300 430, 1740 590"/>
     <path d="M-160 690 C 210 570, 470 780, 820 690 S 1300 520, 1740 720"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="6">
+    <ellipse cx="390" cy="285" rx="128" ry="42"/>
+    <ellipse cx="1040" cy="390" rx="168" ry="54"/>
+    <ellipse cx="705" cy="710" rx="150" ry="48"/>
   </g>
   <rect width="1600" height="1000" filter="url(#grain)" opacity="0.28"/>
 </svg>
 `)}`;
 
-export default function WaterBackground() {
+export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroundProps) {
+    const settings = waterIntensitySettings[intensity];
+
     /*
      * useRef gives jQuery one stable DOM node after React has rendered it. That
      * avoids querying body or #app, so the plugin only controls this water layer.
@@ -106,13 +168,21 @@ export default function WaterBackground() {
             }
 
             try {
-                $water.ripples(
-                    'drop',
-                    bounds.width * (0.18 + Math.random() * 0.64),
-                    bounds.height * (0.16 + Math.random() * 0.68),
-                    22 + Math.random() * 18,
-                    0.08 + Math.random() * 0.08,
-                );
+                /*
+                 * More ripples should read as "active water", not as a storm.
+                 * Use extra small drops instead of one large high-strength drop
+                 * so the surface has more motion while text and controls remain
+                 * visually stable above the background layer.
+                 */
+                for (let index = 0; index < settings.dropsPerPulse; index += 1) {
+                    $water.ripples(
+                        'drop',
+                        bounds.width * (0.14 + Math.random() * 0.72),
+                        bounds.height * (0.12 + Math.random() * 0.72),
+                        settings.radiusBase + Math.random() * settings.radiusRange,
+                        settings.strengthBase + Math.random() * settings.strengthRange,
+                    );
+                }
             } catch {
                 window.clearInterval(dropTimer);
             }
@@ -128,13 +198,13 @@ export default function WaterBackground() {
             $water.ripples({
                 imageUrl: waterTexture,
                 resolution: 512,
-                dropRadius: 20,
-                perturbance: 0.04,
+                dropRadius: settings.pluginDropRadius,
+                perturbance: settings.perturbance,
                 interactive: false,
             });
 
-            firstDropTimer = window.setTimeout(addDrop, 450);
-            dropTimer = window.setInterval(addDrop, 1800);
+            firstDropTimer = window.setTimeout(addDrop, settings.firstDropDelayMs);
+            dropTimer = window.setInterval(addDrop, settings.dropIntervalMs);
         } catch {
             element.style.backgroundImage = fallbackBackground;
         }
@@ -154,7 +224,7 @@ export default function WaterBackground() {
                 element.style.backgroundImage = fallbackBackground;
             }
         };
-    }, []);
+    }, [settings]);
 
     return (
         <div className="absolute inset-0 overflow-hidden">
@@ -165,8 +235,11 @@ export default function WaterBackground() {
             */}
             <div
                 ref={rippleRef}
-                className="absolute inset-0 bg-cover bg-center opacity-70"
-                style={{ backgroundImage: fallbackBackground }}
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                    backgroundImage: fallbackBackground,
+                    opacity: settings.layerOpacity,
+                }}
             />
         </div>
     );

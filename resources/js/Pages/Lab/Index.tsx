@@ -94,12 +94,15 @@ export default function Index({ experiments }: LabIndexProps) {
 
     return (
         /*
-            Lab uses PublicLayout for the same public background stack, but it
-            does not pass an effect prop or register key handlers. The left/right
-            switching demo belongs to Welcome only, so this list page stays
-            focused on showing experiments.
+            Lab uses PublicLayout for the same public background stack. The
+            left/right switching demo belongs to Welcome only, but PublicLayout
+            can reuse the effect selected before START so the entrance does not
+            snap back to water.
         */
-        <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
+        <PublicLayout
+            effectIntensity="showcase"
+            className="px-5 py-8 sm:px-8 lg:px-10"
+        >
             <Head title="Portfolio" />
 
             {/*

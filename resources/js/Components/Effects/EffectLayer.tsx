@@ -7,7 +7,9 @@ import CursorRippleBackground from '@/Components/Effects/CursorRippleBackground'
 import FloatingLightBackground from '@/Components/Effects/FloatingLightBackground';
 import NoneBackground from '@/Components/Effects/NoneBackground';
 import SurfaceShimmerBackground from '@/Components/Effects/SurfaceShimmerBackground';
-import WaterBackground from '@/Components/Effects/WaterBackground';
+import WaterBackground, {
+    type WaterBackgroundIntensity,
+} from '@/Components/Effects/WaterBackground';
 
 export const effectNames = [
     'water',
@@ -19,6 +21,56 @@ export const effectNames = [
 ] as const;
 
 export type EffectName = (typeof effectNames)[number];
+export type EffectIntensity = WaterBackgroundIntensity;
+
+export const defaultEffectName: EffectName = 'water';
+
+/*
+ * Welcome is the only page with explicit effect-switch controls, but START is a
+ * normal Inertia navigation. sessionStorage gives the public layout a small
+ * browser-local preference so the selected title effect can continue into Lab
+ * without adding query parameters, backend props, or page-specific effect code.
+ */
+const effectPreferenceStorageKey = 'portfolio.backgroundEffect';
+
+export function isEffectName(value: unknown): value is EffectName {
+    return typeof value === 'string' && effectNames.includes(value as EffectName);
+}
+
+export function readPreferredEffectName(): EffectName | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const storedEffect = window.sessionStorage.getItem(effectPreferenceStorageKey);
+
+        /*
+         * Stored values are outside React's type system. Validate against the
+         * canonical effectNames list so stale browser data cannot ask
+         * EffectLayer to render a component that does not exist anymore.
+         */
+        return isEffectName(storedEffect) ? storedEffect : null;
+    } catch {
+        return null;
+    }
+}
+
+export function storePreferredEffectName(effect: EffectName) {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        window.sessionStorage.setItem(effectPreferenceStorageKey, effect);
+    } catch {
+        /*
+         * The background choice is decorative. Private browsing, storage quotas,
+         * or blocked storage should only drop the preference, never block START
+         * navigation or the page's real content.
+         */
+    }
+}
 
 export const effectLabels: Record<EffectName, string> = {
     water: 'water',
@@ -40,6 +92,7 @@ const effectComponents: Record<EffectName, ComponentType> = {
 
 type EffectLayerProps = {
     effect?: EffectName;
+    effectIntensity?: EffectIntensity;
 };
 
 /*
@@ -48,7 +101,10 @@ type EffectLayerProps = {
  * render. That keeps page files focused on UI/state instead of importing every
  * visual experiment directly.
  */
-export default function EffectLayer({ effect = 'water' }: EffectLayerProps) {
+export default function EffectLayer({
+    effect = 'water',
+    effectIntensity = 'subtle',
+}: EffectLayerProps) {
     const Effect = effectComponents[effect];
     const effectZIndex = effect === 'cursorRipple' ? 'z-20' : 'z-10';
 
@@ -81,7 +137,18 @@ export default function EffectLayer({ effect = 'water' }: EffectLayerProps) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.45, ease: 'easeInOut' }}
                 >
-                    <Effect />
+                    {/*
+                        Water has strength variants because the same water
+                        direction must serve both title/entry screens and dense
+                        practical screens. Other effects currently expose only
+                        one tuned presentation, so they render through the shared
+                        effect map without extra page-level branching.
+                    */}
+                    {effect === 'water' ? (
+                        <WaterBackground intensity={effectIntensity} />
+                    ) : (
+                        <Effect />
+                    )}
                 </motion.div>
             </AnimatePresence>
 

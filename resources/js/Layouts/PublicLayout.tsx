@@ -1,10 +1,16 @@
-import type { PropsWithChildren } from 'react';
+import { useState, type PropsWithChildren } from 'react';
 
-import EffectLayer, { type EffectName } from '@/Components/Effects/EffectLayer';
+import EffectLayer, {
+    defaultEffectName,
+    type EffectIntensity,
+    type EffectName,
+    readPreferredEffectName,
+} from '@/Components/Effects/EffectLayer';
 
 type PublicLayoutProps = PropsWithChildren<{
     className?: string;
     effect?: EffectName;
+    effectIntensity?: EffectIntensity;
 }>;
 
 /*
@@ -16,15 +22,32 @@ type PublicLayoutProps = PropsWithChildren<{
  * Keeping those responsibilities separate lets the page content stay ordinary
  * React/Inertia UI while the visual experiments evolve behind it.
  */
-export default function PublicLayout({ children, className = '', effect = 'water' }: PublicLayoutProps) {
+export default function PublicLayout({
+    children,
+    className = '',
+    effect,
+    effectIntensity = 'subtle',
+}: PublicLayoutProps) {
+    /*
+     * Read the saved effect once when the layout mounts. If we read storage on
+     * every render, ordinary page state updates could unexpectedly change the
+     * background under the user. An explicit effect prop still wins for pages
+     * that intentionally choose a domain-specific or quiet background.
+     */
+    const [preferredEffect] = useState<EffectName>(
+        () => readPreferredEffectName() ?? defaultEffectName,
+    );
+    const resolvedEffect = effect ?? preferredEffect;
+
     return (
         <div className="relative min-h-screen overflow-hidden text-white">
             {/*
-                effect is a normal React prop. Welcome can pass its current state
-                here, while Lab can omit it and use the default. PublicLayout then
-                forwards the choice to EffectLayer instead of knowing effect details.
+                effect and effectIntensity are normal React props. Welcome and
+                entry pages can make water a little more present, while content
+                pages keep the same direction with a quieter supporting layer.
+                If a page omits effect, the latest Welcome selection is reused.
             */}
-            <EffectLayer effect={effect} />
+            <EffectLayer effect={resolvedEffect} effectIntensity={effectIntensity} />
 
             {/*
                 z-30 keeps links, buttons, and cards above every background layer.

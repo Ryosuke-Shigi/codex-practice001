@@ -3,7 +3,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
 import DirectionalNavigationButton from '@/Components/DirectionalNavigationButton';
-import { effectLabels, effectNames, type EffectName } from '@/Components/Effects/EffectLayer';
+import {
+    defaultEffectName,
+    effectLabels,
+    effectNames,
+    readPreferredEffectName,
+    storePreferredEffectName,
+    type EffectName,
+} from '@/Components/Effects/EffectLayer';
 import useSwipeNavigation from '@/Hooks/useSwipeNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 
@@ -22,11 +29,12 @@ function shouldIgnoreEffectKey(target: EventTarget | null) {
 
 export default function Welcome() {
     /*
-     * Welcome owns only currentEffect because the keyboard shortcut is local to
-     * this page. The effect implementations live under Components/Effects, so
-     * this page manages selection state rather than background rendering details.
+     * Welcome owns the switching interaction, while the selected effect is also
+     * saved as a shared visual preference so START can carry it into Lab.
      */
-    const [currentEffect, setCurrentEffect] = useState<EffectName>('water');
+    const [currentEffect, setCurrentEffect] = useState<EffectName>(
+        () => readPreferredEffectName() ?? defaultEffectName,
+    );
 
     const switchEffect = useCallback((direction: 1 | -1) => {
         setCurrentEffect((effect) => {
@@ -49,6 +57,15 @@ export default function Welcome() {
         onSwipeLeft: showNextEffect,
         onSwipeRight: showPreviousEffect,
     });
+
+    useEffect(() => {
+        /*
+         * Persist after React accepts the state change, not inside switchEffect.
+         * That keeps keyboard, button, and swipe changes on the same path and
+         * avoids duplicating storage writes in each interaction handler.
+         */
+        storePreferredEffectName(currentEffect);
+    }, [currentEffect]);
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -87,7 +104,11 @@ export default function Welcome() {
     }, [showNextEffect, showPreviousEffect]);
 
     return (
-        <PublicLayout effect={currentEffect} className="flex items-center justify-center px-6 py-10">
+        <PublicLayout
+            effect={currentEffect}
+            effectIntensity="showcase"
+            className="flex items-center justify-center px-6 py-10"
+        >
             <Head title="Portfolio" />
 
             <section className="flex min-h-[calc(100vh-5rem)] w-full max-w-5xl flex-col items-center justify-end pb-[15vh] text-center sm:pb-[16vh]">
