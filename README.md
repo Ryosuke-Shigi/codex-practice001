@@ -271,12 +271,17 @@ CI workflow:
 - PHP 8.3 をセットアップ
 - Node 22 をセットアップ
 - `composer install`
+- `npm ci`
+- `npm run build`
 - `.env.example` から `.env` を作成
 - `php artisan key:generate`
 - `php artisan test`
-- `npm ci`
 - `npm run test:run`
-- `npm run build`
+
+CIでは `.env.example` を元に testing 環境を作成し、Vite build 後に Laravel Feature / Unit Test と Vitest を実行します。
+Inertia 画面系Featureテストは Vite manifest を必要とするため、CIでは Laravel テストより先に `npm run build` を実行します。
+
+CI/CD確認時に発生した環境差のエラー対応は、Notionの「CI/CDエラー対応」に整理しています。
 
 Deploy workflow:
 
