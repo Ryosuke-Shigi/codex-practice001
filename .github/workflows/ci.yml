@@ -56,4 +56,7 @@ jobs:
         run: php artisan test
 
       - name: Run Vitest
+        env:
+          # Vitest resolves Vite config in CI; this bypasses Laravel's HMR-only guard for that test runner path.
+          LARAVEL_BYPASS_ENV_CHECK: 1
         run: npm run test:run
