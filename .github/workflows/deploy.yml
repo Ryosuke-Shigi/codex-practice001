@@ -59,7 +59,8 @@ jobs:
             cd /var/www/api-discovery-hub/src
             git status --short
             git fetch origin main
-            git checkout ${{ github.event.workflow_run.head_sha }}
+            git checkout main
+            git pull --ff-only origin main
 
             rm -rf public/build
             mkdir -p public
