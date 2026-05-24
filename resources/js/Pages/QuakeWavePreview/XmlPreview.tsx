@@ -56,7 +56,7 @@ export default function XmlPreview({ result }: XmlPreviewProps) {
     const entries = result.feed?.entries.items ?? [];
 
     return (
-        <PublicLayout effect="none" className="bg-slate-950/55 px-4 py-6 sm:px-6 lg:px-8">
+        <PublicLayout className="bg-slate-950/55 px-4 py-6 sm:px-6 lg:px-8">
             <Head title="XML取得プレビュー" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 py-4">

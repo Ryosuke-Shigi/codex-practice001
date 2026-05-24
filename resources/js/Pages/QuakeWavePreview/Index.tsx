@@ -528,7 +528,7 @@ export default function Index({
     }, [mapPinSyncStatus?.syncRunId, mapPinSyncStatus?.isRunning]);
 
     return (
-        <PublicLayout effect="none" className="bg-slate-950/55 px-4 py-6 sm:px-6 lg:px-8">
+        <PublicLayout className="bg-slate-950/55 px-4 py-6 sm:px-6 lg:px-8">
             <Head title="QuakeWave Preview" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 py-4">

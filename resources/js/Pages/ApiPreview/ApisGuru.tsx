@@ -123,7 +123,7 @@ export default function ApisGuru({ api, canFetch = true, hasFetched, result }: A
     };
 
     return (
-        <PublicLayout effect="none" className="bg-slate-950/60 px-4 py-6 sm:px-6 lg:px-8">
+        <PublicLayout className="bg-slate-950/60 px-4 py-6 sm:px-6 lg:px-8">
             <Head title="APIs.guru Preview" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 py-4">

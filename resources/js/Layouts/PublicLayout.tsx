@@ -5,6 +5,7 @@ import EffectLayer, {
     type EffectIntensity,
     type EffectName,
     readPreferredEffectName,
+    resolveEffectName,
 } from '@/Components/Effects/EffectLayer';
 
 type PublicLayoutProps = PropsWithChildren<{
@@ -37,10 +38,14 @@ export default function PublicLayout({
     const [preferredEffect] = useState<EffectName>(
         () => readPreferredEffectName() ?? defaultEffectName,
     );
-    const resolvedEffect = effect ?? preferredEffect;
+    const resolvedEffect = resolveEffectName(effect ?? preferredEffect);
 
     return (
-        <div className="relative min-h-screen overflow-hidden text-white">
+        /*
+         * Do not lock vertical overflow at layout level. Welcome controls its own
+         * 100dvh scene, while Lab and other public pages may need normal scroll.
+         */
+        <div className="relative min-h-dvh overflow-x-hidden text-white">
             {/*
                 effect and effectIntensity are normal React props. Welcome and
                 entry pages can make water a little more present, while content
@@ -54,7 +59,7 @@ export default function PublicLayout({
                 This is what makes the effect stack decorative rather than
                 something that competes with page interaction.
             */}
-            <main className={`relative z-30 min-h-screen ${className}`}>{children}</main>
+            <main className={`relative z-30 min-h-dvh ${className}`}>{children}</main>
         </div>
     );
 }
