@@ -47,6 +47,94 @@ class EarthquakeMapRefreshActionTest extends TestCase
         );
     }
 
+    public function test_refresh_job_marks_both_runs_completed_when_feed_and_map_pin_steps_succeed(): void
+    {
+        /*
+         * 一括更新Jobは feed entry 同期を完了してから map pin 生成へ進む手順だけを持ちます。
+         * 各Serviceの内部処理は既存テストに任せ、ここでは2つの sync_runs の成功状態を固定します。
+         */
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+        $feedEntrySyncService = new class extends EarthquakeFeedEntrySyncService
+        {
+            public function __construct()
+            {
+            }
+
+            public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
+            {
+                return new EarthquakeFeedEntrySyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 3,
+                    insertedCount: 1,
+                    updatedCount: 1,
+                    skippedCount: 1,
+                    failedCount: 0,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                );
+            }
+        };
+        $mapPinBuildService = new class extends EarthquakeMapPinBuildService
+        {
+            public function __construct()
+            {
+            }
+
+            public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
+            {
+                return new EarthquakeMapPinSyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 2,
+                    insertedCount: 1,
+                    updatedCount: 1,
+                    skippedCount: 0,
+                    failedCount: 0,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                );
+            }
+        };
+
+        (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))->handle(
+            $feedEntrySyncRunRepository,
+            $mapPinSyncRunRepository,
+            $feedEntrySyncService,
+            $mapPinBuildService,
+        );
+
+        $feedStatus = $feedEntrySyncRunRepository->findResult($feedEntrySyncRunId);
+        $mapStatus = $mapPinSyncRunRepository->findResult($mapPinSyncRunId);
+
+        $this->assertNotNull($feedStatus);
+        $this->assertSame(EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED, $feedStatus->status);
+        $this->assertSame(3, $feedStatus->totalCount);
+        $this->assertSame(1, $feedStatus->insertedCount);
+        $this->assertSame(1, $feedStatus->updatedCount);
+        $this->assertSame(1, $feedStatus->skippedCount);
+        $this->assertSame(0, $feedStatus->failedCount);
+        $this->assertNull($feedStatus->errorMessage);
+        $this->assertNotNull($feedStatus->startedAt);
+        $this->assertNotNull($feedStatus->finishedAt);
+
+        $this->assertNotNull($mapStatus);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $mapStatus->status);
+        $this->assertSame(2, $mapStatus->totalCount);
+        $this->assertSame(1, $mapStatus->insertedCount);
+        $this->assertSame(1, $mapStatus->updatedCount);
+        $this->assertSame(0, $mapStatus->skippedCount);
+        $this->assertSame(0, $mapStatus->failedCount);
+        $this->assertNull($mapStatus->errorMessage);
+        $this->assertNotNull($mapStatus->startedAt);
+        $this->assertNotNull($mapStatus->finishedAt);
+    }
+
     public function test_refresh_job_marks_both_runs_failed_when_feed_sync_fails_before_map_pin_generation(): void
     {
         $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);

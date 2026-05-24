@@ -149,6 +149,61 @@ class ApiCatalogSyncServiceTest extends TestCase
         $this->assertSame(0, $result->failedCount);
     }
 
+    public function test_sync_payload_hash_is_stable_when_payload_key_order_changes(): void
+    {
+        $payload = $this->apiPayload(title: 'Existing API');
+        $samePayloadWithDifferentKeyOrder = [
+            'versions' => $payload['versions'],
+            'preferred' => $payload['preferred'],
+        ];
+        $existing = $this->cache([
+            'payload_hash' => $this->payloadHash($payload),
+            'is_active' => true,
+        ]);
+
+        $apisGuruRepository = $this->createMock(ApisGuruRepositoryInterface::class);
+        $cacheRepository = $this->createMock(ApiCatalogCacheRepositoryInterface::class);
+
+        $apisGuruRepository
+            ->expects($this->once())
+            ->method('fetchList')
+            ->willReturn([
+                'existing.example.com:rest' => $samePayloadWithDifferentKeyOrder,
+            ]);
+
+        $cacheRepository
+            ->expects($this->once())
+            ->method('findByApiKey')
+            ->with('existing.example.com:rest')
+            ->willReturn($existing);
+
+        $cacheRepository
+            ->expects($this->never())
+            ->method('insert');
+
+        $cacheRepository
+            ->expects($this->never())
+            ->method('update');
+
+        $cacheRepository
+            ->expects($this->once())
+            ->method('markMissingAsInactive')
+            ->with(['existing.example.com:rest'], $this->isInstanceOf(CarbonInterface::class))
+            ->willReturn(0);
+
+        /*
+         * APIs.guruのJSONキー順が変わっても、同じ意味のpayloadは同じpayload_hashとして扱います。
+         * 差分判定をRepositoryへ漏らさず、Serviceのcanonicalize済みhashでskipになることを固定します。
+         */
+        $result = $this->service($apisGuruRepository, $cacheRepository)->sync();
+
+        $this->assertSame(1, $result->totalCount);
+        $this->assertSame(0, $result->insertedCount);
+        $this->assertSame(0, $result->updatedCount);
+        $this->assertSame(1, $result->skippedCount);
+        $this->assertSame(0, $result->failedCount);
+    }
+
     public function test_sync_updates_existing_api_when_payload_hash_changes(): void
     {
         $payload = $this->apiPayload(title: 'Changed API');

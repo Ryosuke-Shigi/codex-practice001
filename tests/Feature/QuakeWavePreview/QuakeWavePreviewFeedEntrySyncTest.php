@@ -119,6 +119,54 @@ class QuakeWavePreviewFeedEntrySyncTest extends TestCase
             ->assertJsonPath('syncStatus.isRunning', true);
     }
 
+    public function test_feed_entry_sync_job_marks_run_completed_with_result_counts(): void
+    {
+        /*
+         * Job は Queue が拾った事実を running として保存し、Service の結果を completed に反映します。
+         * feed取得・XML解析・upsert詳細は Service/Repository 側のテストに任せます。
+         */
+        $repository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $syncRunId = $repository->createPending();
+        $syncService = new class extends EarthquakeFeedEntrySyncService
+        {
+            public function __construct()
+            {
+            }
+
+            public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
+            {
+                return new EarthquakeFeedEntrySyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 4,
+                    insertedCount: 2,
+                    updatedCount: 1,
+                    skippedCount: 1,
+                    failedCount: 0,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                );
+            }
+        };
+
+        (new SyncEarthquakeFeedEntriesJob($syncRunId))->handle($repository, $syncService);
+
+        $status = $repository->findResult($syncRunId);
+
+        $this->assertNotNull($status);
+        $this->assertSame(EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED, $status->status);
+        $this->assertFalse($status->isRunning());
+        $this->assertSame(4, $status->totalCount);
+        $this->assertSame(2, $status->insertedCount);
+        $this->assertSame(1, $status->updatedCount);
+        $this->assertSame(1, $status->skippedCount);
+        $this->assertSame(0, $status->failedCount);
+        $this->assertNull($status->errorMessage);
+        $this->assertNotNull($status->startedAt);
+        $this->assertNotNull($status->finishedAt);
+    }
+
     public function test_feed_entry_repository_inserts_skips_and_updates_by_entry_id(): void
     {
         $repository = app(EarthquakeFeedEntryRepositoryInterface::class);

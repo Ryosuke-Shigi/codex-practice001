@@ -3,6 +3,7 @@
 namespace Tests\Feature\ApiCatalog;
 
 use App\Actions\ApiCatalog\Commands\StartApiCatalogSyncAction;
+use App\Actions\ApiCatalog\Commands\SyncApiCatalogAction;
 use App\Actions\ApiCatalog\Queries\GetApiCatalogSyncStatusAction;
 use App\DTO\ApiCatalog\Sync\ApiCatalogSyncResultDTO;
 use App\DTO\ApiCatalog\Sync\ApiCatalogSyncStatusDTO;
@@ -249,6 +250,52 @@ class ApiCatalogSyncTest extends TestCase
         $this->assertSame('Worker timeout.', $status->errorMessage);
     }
 
+    public function test_sync_job_handle_marks_sync_status_as_completed_with_result_counts(): void
+    {
+        /*
+         * Job は Queue 実行時の状態遷移だけを担当します。
+         * 同期本体の判定は SyncApiCatalogAction 側へ委譲し、ここでは running -> completed と
+         * 件数保存が api_catalog_sync_runs に反映されることだけを確認します。
+         */
+        $repository = app(ApiCatalogSyncStatusRepositoryInterface::class);
+        $syncRun = $repository->createQueued();
+        $action = new class extends SyncApiCatalogAction
+        {
+            public function __construct()
+            {
+            }
+
+            public function execute(): ApiCatalogSyncResultDTO
+            {
+                return new ApiCatalogSyncResultDTO(
+                    totalCount: 5,
+                    insertedCount: 2,
+                    updatedCount: 1,
+                    skippedCount: 1,
+                    inactiveCount: 1,
+                    failedCount: 0,
+                );
+            }
+        };
+
+        (new SyncApiCatalogJob((int) $syncRun->getKey()))->handle($action, $repository);
+
+        $status = app(GetApiCatalogSyncStatusAction::class)->execute((int) $syncRun->getKey());
+
+        $this->assertNotNull($status);
+        $this->assertSame(ApiCatalogSyncStatusDTO::STATUS_COMPLETED, $status->status);
+        $this->assertFalse($status->isRunning());
+        $this->assertSame(5, $status->result->totalCount);
+        $this->assertSame(2, $status->result->insertedCount);
+        $this->assertSame(1, $status->result->updatedCount);
+        $this->assertSame(1, $status->result->skippedCount);
+        $this->assertSame(1, $status->result->inactiveCount);
+        $this->assertSame(0, $status->result->failedCount);
+        $this->assertNull($status->errorMessage);
+        $this->assertNotNull($status->startedAt);
+        $this->assertNotNull($status->finishedAt);
+    }
+
     public function test_sync_job_has_explicit_timeout_for_catalog_sync(): void
     {
         $job = new SyncApiCatalogJob();
@@ -264,12 +311,37 @@ class ApiCatalogSyncTest extends TestCase
         $syncRun = $repository->createQueued();
         $repository->markRunning((int) $syncRun->getKey(), now());
 
-        $this
-            ->getJson('/api-catalog/sync/status?sync_id='.$syncRun->getKey())
+        $response = $this->getJson('/api-catalog/sync/status?sync_id='.$syncRun->getKey());
+
+        $response
             ->assertOk()
             ->assertJsonPath('syncStatus.id', $syncRun->getKey())
             ->assertJsonPath('syncStatus.status', ApiCatalogSyncStatusDTO::STATUS_RUNNING)
             ->assertJsonPath('syncStatus.isRunning', true);
+
+        $payload = $response->json();
+
+        $this->assertSame(['syncStatus'], array_keys($payload));
+        $this->assertSame([
+            'id',
+            'status',
+            'isRunning',
+            'isStale',
+            'result',
+            'errorMessage',
+            'startedAt',
+            'finishedAt',
+            'createdAt',
+            'updatedAt',
+        ], array_keys($payload['syncStatus']));
+        $this->assertSame([
+            'totalCount',
+            'insertedCount',
+            'updatedCount',
+            'skippedCount',
+            'inactiveCount',
+            'failedCount',
+        ], array_keys($payload['syncStatus']['result']));
     }
 
     public function test_api_catalog_frontend_disables_sync_button_while_sync_is_running(): void

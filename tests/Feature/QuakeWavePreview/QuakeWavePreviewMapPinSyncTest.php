@@ -123,6 +123,54 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
             ->assertJsonPath('syncStatus.isRunning', true);
     }
 
+    public function test_map_pin_sync_job_marks_run_completed_with_result_counts(): void
+    {
+        /*
+         * Job の責務は pending/running/completed の状態保存と Service 結果の反映です。
+         * 個別XML取得や pin 化条件は Service テスト側で固定し、ここでは Queue 境界の状態更新を見ます。
+         */
+        $repository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $syncRunId = $repository->createPending();
+        $buildService = new class extends EarthquakeMapPinBuildService
+        {
+            public function __construct()
+            {
+            }
+
+            public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
+            {
+                return new EarthquakeMapPinSyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 5,
+                    insertedCount: 2,
+                    updatedCount: 1,
+                    skippedCount: 2,
+                    failedCount: 0,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                );
+            }
+        };
+
+        (new SyncEarthquakeMapPinsJob($syncRunId))->handle($repository, $buildService);
+
+        $status = $repository->findResult($syncRunId);
+
+        $this->assertNotNull($status);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $status->status);
+        $this->assertFalse($status->isRunning());
+        $this->assertSame(5, $status->totalCount);
+        $this->assertSame(2, $status->insertedCount);
+        $this->assertSame(1, $status->updatedCount);
+        $this->assertSame(2, $status->skippedCount);
+        $this->assertSame(0, $status->failedCount);
+        $this->assertNull($status->errorMessage);
+        $this->assertNotNull($status->startedAt);
+        $this->assertNotNull($status->finishedAt);
+    }
+
     public function test_detail_xml_parse_service_extracts_map_pin_values(): void
     {
         $dto = app(EarthquakeDetailXmlParseService::class)->parse(

@@ -3,15 +3,142 @@
 namespace Tests\Feature\ApiCatalog;
 
 use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
+use App\DTO\ApiCatalog\Sync\ApiCatalogItemDTO;
 use App\Models\ApiCatalogCache;
 use App\Models\ApiCatalogNote;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ApiCatalogCacheRepositoryTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_insert_and_update_persist_sync_item_values_and_reactivate_cache(): void
+    {
+        /*
+         * 同期Serviceは insert/update/skip の判断まで、Repository はDB反映だけを担当します。
+         * ここでは ApiCatalogItemDTO から api_catalog_cache の保存値へ正しく写ることを確認します。
+         */
+        $repository = $this->repository();
+        $syncedAt = CarbonImmutable::parse('2026-05-23 12:34:56', 'UTC');
+        $sourceLatestUpdatedAt = CarbonImmutable::parse('2026-05-20 01:02:03', 'UTC');
+
+        $inserted = $repository->insert($this->item(
+            apiKey: 'github.com:rest',
+            providerKey: 'github.com',
+            serviceKey: 'rest',
+            title: 'GitHub REST API',
+            payloadHash: 'insert-payload-hash',
+            sourceLatestUpdatedAt: $sourceLatestUpdatedAt,
+        ), $syncedAt);
+
+        $this->assertDatabaseHas('api_catalog_cache', [
+            'id' => $inserted->getKey(),
+            'api_key' => 'github.com:rest',
+            'provider_key' => 'github.com',
+            'service_key' => 'rest',
+            'title' => 'GitHub REST API',
+            'description' => 'Catalog description.',
+            'preferred_version' => 'v1',
+            'openapi_json_url' => 'https://example.test/openapi.json',
+            'openapi_yaml_url' => 'https://example.test/openapi.yaml',
+            'openapi_version' => '3.0.0',
+            'source_latest_updated_at' => '2026-05-20 01:02:03',
+            'payload_hash' => 'insert-payload-hash',
+            'is_active' => true,
+            'synced_at' => '2026-05-23 12:34:56',
+        ]);
+
+        $inserted->forceFill(['is_active' => false])->save();
+
+        $updated = $repository->update($inserted, $this->item(
+            apiKey: 'github.com:rest',
+            providerKey: 'github.com',
+            serviceKey: 'rest',
+            title: 'GitHub REST API Updated',
+            payloadHash: 'updated-payload-hash',
+            sourceLatestUpdatedAt: CarbonImmutable::parse('2026-05-21 02:03:04', 'UTC'),
+        ), CarbonImmutable::parse('2026-05-24 00:00:01', 'UTC'));
+
+        $this->assertTrue($updated->is_active);
+        $this->assertDatabaseHas('api_catalog_cache', [
+            'id' => $inserted->getKey(),
+            'title' => 'GitHub REST API Updated',
+            'source_latest_updated_at' => '2026-05-21 02:03:04',
+            'payload_hash' => 'updated-payload-hash',
+            'is_active' => true,
+            'synced_at' => '2026-05-24 00:00:01',
+        ]);
+        $this->assertDatabaseCount('api_catalog_cache', 1);
+    }
+
+    public function test_mark_missing_as_inactive_only_updates_active_rows_absent_from_current_feed(): void
+    {
+        /*
+         * 非アクティブ化は「今回のAPIs.guru listに存在しない既存active行」だけに限定します。
+         * 既に inactive の行や今回も存在する行は、同期時刻も含めて更新対象にしません。
+         */
+        $this->createApiCatalogCache([
+            'api_key' => 'keep.example.test',
+            'is_active' => true,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+        $this->createApiCatalogCache([
+            'api_key' => 'missing.example.test',
+            'is_active' => true,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+        $this->createApiCatalogCache([
+            'api_key' => 'already-inactive.example.test',
+            'is_active' => false,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+
+        $updatedCount = $this->repository()->markMissingAsInactive(
+            ['keep.example.test', 'keep.example.test'],
+            CarbonImmutable::parse('2026-05-24 10:00:00', 'UTC'),
+        );
+
+        $this->assertSame(1, $updatedCount);
+        $this->assertDatabaseHas('api_catalog_cache', [
+            'api_key' => 'keep.example.test',
+            'is_active' => true,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+        $this->assertDatabaseHas('api_catalog_cache', [
+            'api_key' => 'missing.example.test',
+            'is_active' => false,
+            'synced_at' => '2026-05-24 10:00:00',
+        ]);
+        $this->assertDatabaseHas('api_catalog_cache', [
+            'api_key' => 'already-inactive.example.test',
+            'is_active' => false,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+    }
+
+    public function test_mark_missing_as_inactive_does_not_touch_rows_when_current_feed_is_empty(): void
+    {
+        $this->createApiCatalogCache([
+            'api_key' => 'active.example.test',
+            'is_active' => true,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+
+        $updatedCount = $this->repository()->markMissingAsInactive(
+            [],
+            CarbonImmutable::parse('2026-05-24 10:00:00', 'UTC'),
+        );
+
+        $this->assertSame(0, $updatedCount);
+        $this->assertDatabaseHas('api_catalog_cache', [
+            'api_key' => 'active.example.test',
+            'is_active' => true,
+            'synced_at' => '2026-05-01 00:00:00',
+        ]);
+    }
 
     public function test_paginate_active_list_keyword_matches_catalog_fields_and_saved_note_body(): void
     {
@@ -289,6 +416,29 @@ class ApiCatalogCacheRepositoryTest extends TestCase
             sortKey: $sortKey,
             page: $page,
             perPage: $perPage,
+        );
+    }
+
+    private function item(
+        string $apiKey,
+        string $providerKey,
+        ?string $serviceKey,
+        string $title,
+        string $payloadHash,
+        ?CarbonImmutable $sourceLatestUpdatedAt = null,
+    ): ApiCatalogItemDTO {
+        return new ApiCatalogItemDTO(
+            apiKey: $apiKey,
+            providerKey: $providerKey,
+            serviceKey: $serviceKey,
+            title: $title,
+            description: 'Catalog description.',
+            preferredVersion: 'v1',
+            openapiJsonUrl: 'https://example.test/openapi.json',
+            openapiYamlUrl: 'https://example.test/openapi.yaml',
+            openapiVersion: '3.0.0',
+            sourceLatestUpdatedAt: $sourceLatestUpdatedAt,
+            payloadHash: $payloadHash,
         );
     }
 
