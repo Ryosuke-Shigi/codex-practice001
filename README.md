@@ -31,6 +31,7 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 - GitHub Actions で `php artisan test` / `npm run test:run` / `npm run build` を実行する
 - CI 成功後だけ Lightsail へデプロイする
 - APIカタログと地震データという別ドメインに、同じ設計方針を適用する
+- React 側でも背景描画・選択UI・個別オーブ・移動ロジック・候補定義を分け、UI演出を安全に追加・削除・差し替えできるようにする
 - README / docs / AGENTS.md / Notion により、人間とAIが後から作業文脈を再起動できるようにする
 
 ## 実装済みドメイン
@@ -108,6 +109,33 @@ PP表示順:
 - `/lab/spec-flow-trainer`: Spec Flow Trainer の構想説明
 
 PP紹介LPでは、DB取得・同期処理・外部API通信は行わず、静的な紹介ページとして本体機能への導線を担当します。
+
+## Welcome / 背景エフェクト選択UI
+
+`/` の Welcome 画面では、背景エフェクトを円形オーブで選択できます。
+
+選択できるエフェクトは以下です。
+
+- `water`: 明るい水面と波紋
+- `caustics`: 水中の光の揺らぎ
+- `cursorRipple`: カーソル反応を含む波紋表現
+- `aquaParticles`: 水中の粒子・気泡のような浮遊表現
+- `surfaceShimmer`: 水面のきらめき
+
+`none` のような背景なし選択肢や、見た目の違いが分かりづらい `floatingLight` は候補から外しています。
+
+このUIは単なる装飾ではなく、フロント側でも責務分離を確認するための実装です。
+
+主な分離:
+
+- `EffectLayer`: 選択された背景エフェクトを描画する
+- `effectPatterns`: エフェクト候補、表示名、実コンポーネント、プレビュー情報を集約する
+- `EffectPatternSelector`: 円形オーブ一覧と選択操作を管理する
+- `EffectPatternOrb`: 1つのオーブの見た目、プレビュー、選択中状態を担当する
+- `useBouncingOrbs`: オーブの座標、速度、画面端での跳ね返り処理を担当する
+- `AquaParticlesBackground`: 水中粒子風のCSS-only背景エフェクトを担当する
+
+背景描画、選択UI、個別オーブ、移動ロジック、候補定義を分けることで、エフェクトの追加・削除・差し替えをページ全体に広げずに行えるようにしています。
 
 ## 画面導線
 
@@ -197,6 +225,9 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、ど�
 6. Responder で画面表示用データに整える
 7. React / Inertia で表示する
 8. Feature / Unit Test で仕様を固定する
+
+フロントエンド側でも、画面を一枚の大きなコンポーネントにせず、表示責務・状態管理・選択UI・演出ロジックを分ける方針です。
+Welcome の背景エフェクト選択UIでは、エフェクト候補、描画レイヤー、選択オーブ、移動ロジックを分け、見た目の試行錯誤をしてもページ全体へ影響が広がりにくい構成にしています。
 
 設計方針の詳細は [docs/architecture.md](./docs/architecture.md) にまとめています。
 
