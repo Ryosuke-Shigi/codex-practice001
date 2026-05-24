@@ -4,7 +4,7 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 
 このリポジトリでは、公開APIカタログを検索・保存・調査できる **API Discovery Hub** と、気象庁XMLを取得・保存・地図可視化する **QuakeWave Preview** を実装しています。
 
-単に画面を作るだけではなく、外部データ取得、DBキャッシュ、差分同期、Queue / Scheduler、status API、DTO / ListDTO、Repository、Service、Action、Responder、Feature / Unit Test を組み合わせ、後から読める・直せる・説明できる構成を重視しています。
+単に画面を作るだけではなく、外部データ取得、DBキャッシュ、差分同期、Queue / Scheduler、status API、DTO / ListDTO、Repository、Service、Action、Responder、Feature / Unit Test、CI/CD を組み合わせ、後から読める・直せる・説明できる構成を重視しています。
 
 - 公開URL: https://ada-works.dev
 - Repository: https://github.com/Ryosuke-Shigi/codex-practice001
@@ -13,6 +13,7 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 - Database / Queue: MySQL 8.0, Redis
 - Infrastructure: Docker Compose, nginx, php-fpm, AWS Lightsail, Cloudflare
 - Test: PHPUnit / Laravel Feature Test / Unit Test / Vitest
+- CI/CD: GitHub Actions / CI成功後のみLightsailへDeploy
 
 ## このポートフォリオで見せたいこと
 
@@ -27,8 +28,10 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 - Queue / Scheduler を使い、重い同期処理を画面操作から分離する
 - status API とポーリングで、非同期処理の進行状態を画面から確認できるようにする
 - Feature / Unit Test で仕様・境界値・失敗時の状態を固定する
+- GitHub Actions で `php artisan test` / `npm run test:run` / `npm run build` を実行する
+- CI 成功後だけ Lightsail へデプロイする
 - APIカタログと地震データという別ドメインに、同じ設計方針を適用する
-- README / docs / AGENTS.md により、人間とAIが後から作業文脈を再起動できるようにする
+- README / docs / AGENTS.md / Notion により、人間とAIが後から作業文脈を再起動できるようにする
 
 ## 実装済みドメイン
 
@@ -54,6 +57,7 @@ APIs.guru の `list.json` を取得し、公開APIカタログを検索・保存
 - Scheduler による定期同期 Job 投入
 - API Preview による外部API疎通確認
 - 外部APIに依存しないモック画面によるUI確認
+- PP紹介LPによる初見向け説明導線
 
 API Discovery Hub では、外部APIの値をそのまま画面に出すのではなく、取得・変換・保存・表示用整形を分離しています。
 
@@ -77,17 +81,42 @@ API Discovery Hub では、外部APIの値をそのまま画面に出すので�
 - 同期ステータスのポーリング表示
 - 水面上の日本地図と地震ピン表示
 - 日付範囲、表示件数、震度フィルタ、詳細パネル折りたたみを含む地図UI
+- PP紹介LPによる初見向け説明導線
 
 QuakeWave Preview では、Atom feed の取得、個別XML解析、地図表示用データ生成、画面表示を分離しています。
 
 地震情報を防災用途として保証するものではなく、外部XMLデータの取得・解析・可視化を題材にしたポートフォリオ機能です。
 
+## PP / Lab 導線
+
+`/lab` では、実装済み・構想中の機能を PP / PROJECT / MOCK に分けて確認できます。
+
+PPカテゴリは、初見の人が短時間で「何を作ったか」「どこが工夫か」「本体画面はどこか」を理解するための紹介LPです。
+
+PP表示順:
+
+1. API Discovery Hub
+2. Japan Quake Wave Map
+3. 工事発注管理・請求システム
+4. Spec Flow Trainer
+
+主なPP導線:
+
+- `/lab/api-discovery-hub-pp`: API Discovery Hub の紹介LP
+- `/lab/quake-wave-map-pp`: Japan Quake Wave Map の紹介LP
+- `/lab/construction-order-workflow-pp`: 工事発注管理・請求システムの構想説明
+- `/lab/spec-flow-trainer`: Spec Flow Trainer の構想説明
+
+PP紹介LPでは、DB取得・同期処理・外部API通信は行わず、静的な紹介ページとして本体機能への導線を担当します。
+
 ## 画面導線
 
-短時間で確認する場合は、`/` → `/lab` → `/api-catalog` または `/quakewave-preview/map` の順で見ると全体像を追いやすいです。
+短時間で確認する場合は、`/` → `/lab` → PP紹介LP → 本番機能の順で見ると全体像を追いやすいです。
 
 - `/`: ポートフォリオ入口
 - `/lab`: 実験・機能一覧
+- `/lab/api-discovery-hub-pp`: API Discovery Hub 紹介LP
+- `/lab/quake-wave-map-pp`: Japan Quake Wave Map 紹介LP
 - `/api-preview`: 外部API確認用画面
 - `/api-catalog`: API Discovery Hub の本番一覧
 - `/api-catalog/{apiKey}`: API詳細・調査メモ画面
@@ -185,6 +214,7 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、ど�
 - Responder が渡す Inertia props
 - 保存APIやメモ機能
 - 地震データ取得・保存・ピン再生成
+- PP紹介LPのルート・Inertia component・Lab表示順
 - 同期処理の結果集計
 
 テストはコードレビューの代替ではありません。
@@ -215,6 +245,12 @@ QuakeWave Preview:
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewSyncStatusTest.php`
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewMapRequestTest.php`
 
+Lab / PP:
+
+- `tests/Feature/Lab/ApiDiscoveryHubPpTest.php`
+- `tests/Feature/Lab/QuakeWaveMapPpTest.php`
+- `tests/Feature/Lab/LabIndexTest.php`
+
 テスト実行:
 
 ```bash
@@ -222,6 +258,39 @@ docker compose run --rm artisan test
 docker compose run --rm npm run test:run
 docker compose run --rm npm run build
 ```
+
+## CI/CD
+
+このリポジトリでは、GitHub Actions で CI と Deploy を分けています。
+
+CI workflow:
+
+- `.github/workflows/ci.yml`
+- `pull_request` 時に実行
+- `main` push 時に実行
+- PHP 8.3 をセットアップ
+- Node 22 をセットアップ
+- `composer install`
+- `.env.example` から `.env` を作成
+- `php artisan key:generate`
+- `php artisan test`
+- `npm ci`
+- `npm run test:run`
+- `npm run build`
+
+Deploy workflow:
+
+- `.github/workflows/deploy.yml`
+- CI workflow 成功後のみ実行
+- GitHub runner 上で Vite build を作成
+- build済み assets を Lightsail へ転送
+- Lightsail 上で `git pull --ff-only origin main`
+- `php artisan optimize:clear`
+- `queue` / `scheduler` / `php-fpm` を再起動
+
+CIが失敗した場合、Deploy job は実行されません。
+
+これにより、テストが落ちた状態のコードを本番へ反映しない構成にしています。
 
 ## AI駆動開発の方針
 
@@ -232,10 +301,10 @@ docker compose run --rm npm run build
 - CodexApp は既存コード確認、差分作成、実装補助、テスト追加、README整理に使う
 - 最終判断、仕様確定、レビュー、本番反映判断は人間が行う
 
-このプロジェクトでは、AI駆動開発を「AIに作らせること」ではなく、人間が仕様・責務・テスト・Git運用を制御したうえで、AIを実装補助として使う開発フローとして扱っています。
+このプロジェクトでは、AI駆動開発を「AIに作らせること」ではなく、人間が仕様・責務・テスト・Git運用・CI/CDを制御したうえで、AIを実装補助として使う開発フローとして扱っています。
 
 AIを信用することと、任せて放置することは別です。
-このプロジェクトでは、テスト・差分確認・責務レビューによって、AIの作業範囲を人間が制御します。
+このプロジェクトでは、テスト・CI・差分確認・責務レビューによって、AIの作業範囲を人間が制御します。
 
 AIエージェント向けの固定ルールは [AGENTS.md](./AGENTS.md) にまとめています。
 
@@ -270,6 +339,13 @@ testing.md は仕様破壊検知とトークン消費削減のためのテスト
 - 個別XML本文そのものは保存対象にせず、地図表示に必要な情報へ変換して扱う
 - 地図表示用 pin は、個別XML解析後の結果として `earthquake_map_pins` に保存する
 - feed entry 取込と map pin 生成は別処理として分ける
+
+### PP紹介LP
+
+- PP紹介LPは静的な紹介ページとして扱う
+- DB取得、外部API通信、同期開始処理は持たせない
+- 本体機能への導線と、技術的な見どころの説明を担当する
+- Lab表示順は Feature Test で固定する
 
 ## Docker / ローカル開発
 
@@ -332,6 +408,7 @@ docker compose run --rm artisan api-catalog:sync --queue
 - `routes/web.php`: 画面ルート
 - `tests/Feature`: Feature テスト
 - `tests/Unit`: Unit テスト
+- `.github/workflows`: CI / Deploy workflow
 - `docs`: 設計方針・テスト方針などの補助ドキュメント
 
 ## 注意事項
@@ -340,4 +417,4 @@ API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的に�
 
 QuakeWave Preview は気象庁XMLを利用した地震情報の取得・保存・地図可視化の検証機能であり、防災情報としての正確性や速報性を保証するものではありません。
 
-この README は、現状の API Discovery Hub と QuakeWave Preview の実装範囲に合わせたポートフォリオ概要です。
+この README は、現状の API Discovery Hub、QuakeWave Preview、PP紹介LP、テスト、CI/CD の実装範囲に合わせたポートフォリオ概要です。
