@@ -1,14 +1,19 @@
 import type { CSSProperties } from 'react';
 
 /*
- * AquaParticles is intentionally more energetic than the other water effects.
- * Water/Caustics/Shimmer read as surfaces; this one reads as illuminated matter
- * moving through the scene. The effect stays CSS-only so it remains cheap,
- * portable, and compatible with the shared decorative EffectLayer contract.
+ * AquaParticles should read as illuminated matter moving through water without
+ * becoming the most expensive background in the set. Keep the particle field
+ * sparse and CSS-only so it remains distinct from surface effects while staying
+ * compatible with the shared decorative EffectLayer contract.
  */
 export default function AquaParticlesBackground() {
     return (
         <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_18%_18%,rgba(125,211,252,0.46),rgba(255,255,255,0)_30%),linear-gradient(150deg,rgba(6,182,212,0.32)_0%,rgba(20,184,166,0.28)_34%,rgba(14,116,144,0.34)_58%,rgba(2,6,23,0.72)_100%)]">
+            {/*
+                Particle travel uses vh, not percentages. Percent transforms are
+                based on each small particle's own box, which can leave the
+                animation visually stuck near the bottom of the viewport.
+            */}
             <style>
                 {`
                     @keyframes portfolio-aqua-particle-rise {
@@ -19,23 +24,16 @@ export default function AquaParticlesBackground() {
                         12% {
                             opacity: 0.95;
                         }
+                        36% {
+                            transform: translate3d(var(--particle-sway), -34vh, 0) scale(0.9);
+                        }
                         64% {
                             opacity: 0.76;
+                            transform: translate3d(var(--particle-return-sway), -76vh, 0) scale(1.12);
                         }
                         100% {
                             opacity: 0;
-                            transform: translate3d(var(--particle-drift), -122%, 0) scale(1.34);
-                        }
-                    }
-
-                    @keyframes portfolio-aqua-particle-stream {
-                        0% {
-                            background-position: 0% 0%;
-                            transform: translate3d(-9%, 8%, 0) rotate(-11deg);
-                        }
-                        100% {
-                            background-position: 210% -140%;
-                            transform: translate3d(9%, -8%, 0) rotate(-11deg);
+                            transform: translate3d(0, -122vh, 0) scale(1.34);
                         }
                     }
 
@@ -54,32 +52,25 @@ export default function AquaParticlesBackground() {
             </style>
 
             {/*
-                The stream layer gives the effect an immediate visual signature.
-                Individual particles rise below, but this tiled diagonal field
-                makes the selected effect look different as soon as it fades in.
-            */}
-            <div
-                className="absolute inset-[-28%] opacity-80 mix-blend-screen blur-[0.2px]"
-                style={{
-                    animation: 'portfolio-aqua-particle-stream 8s linear infinite',
-                    background:
-                        'radial-gradient(circle, rgba(255,255,255,0.82) 0 2px, rgba(255,255,255,0) 3px), radial-gradient(circle, rgba(103,232,249,0.74) 0 3px, rgba(255,255,255,0) 4px), radial-gradient(circle, rgba(45,212,191,0.62) 0 2px, rgba(255,255,255,0) 3px)',
-                    backgroundPosition: '0% 0%, 16% 24%, 32% 8%',
-                    backgroundSize: '92px 92px, 128px 128px, 156px 156px',
-                }}
-            />
-
-            {/*
                 Particles use deterministic positions instead of Math.random().
                 That keeps server/client render output stable while still
-                producing a scattered, organic-looking field.
+                producing a scattered, organic-looking field. The count is kept
+                deliberately low because the glowing particle shadows are the
+                most noticeable cost in this effect.
             */}
-            {Array.from({ length: 34 }, (_, index) => {
-                const left = 4 + ((index * 13) % 92);
+            {Array.from({ length: 16 }, (_, index) => {
+                const left = 8 + ((index * 19) % 84);
                 const size = 10 + (index % 6) * 6;
-                const duration = 4.8 + (index % 7) * 0.52;
-                const delay = -(index * 0.34);
-                const drift = `${index % 2 === 0 ? '' : '-'}${18 + (index % 5) * 8}vw`;
+                const duration = 6.8 + (index % 6) * 0.72;
+                const delay = -(index * 0.56);
+                /*
+                 * Keep horizontal motion modest. The effect should feel like
+                 * particles buoyantly wavering upward, not like a full-screen
+                 * current sweeping across the title.
+                 */
+                const swayValue = 4 + (index % 4) * 1.4;
+                const sway = `${index % 2 === 0 ? '' : '-'}${swayValue}vw`;
+                const returnSway = `${index % 2 === 0 ? '-' : ''}${swayValue}vw`;
 
                 return (
                     <span
@@ -93,10 +84,11 @@ export default function AquaParticlesBackground() {
                             width: size,
                             /*
                              * A custom property lets each particle share the
-                             * same keyframes while drifting by a different
+                             * same keyframes while swaying by a small individual
                              * horizontal amount.
                              */
-                            '--particle-drift': drift,
+                            '--particle-sway': sway,
+                            '--particle-return-sway': returnSway,
                         } as CSSProperties}
                     />
                 );
@@ -107,9 +99,9 @@ export default function AquaParticlesBackground() {
                 pulse without forcing every particle to change opacity together.
             */}
             <div
-                className="absolute inset-[-12%] opacity-70 mix-blend-screen"
+                className="absolute inset-[-12%] opacity-[0.42] mix-blend-screen"
                 style={{
-                    animation: 'portfolio-aqua-particle-sheen 6.5s ease-in-out infinite',
+                    animation: 'portfolio-aqua-particle-sheen 8s ease-in-out infinite',
                     background:
                         'radial-gradient(circle at 26% 34%, rgba(255,255,255,0.62), rgba(255,255,255,0) 26%), radial-gradient(circle at 74% 24%, rgba(153,246,228,0.54), rgba(255,255,255,0) 30%), radial-gradient(circle at 54% 72%, rgba(125,211,252,0.52), rgba(255,255,255,0) 32%)',
                 }}
