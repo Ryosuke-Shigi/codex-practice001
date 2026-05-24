@@ -2,9 +2,9 @@
 
 Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフォリオアプリです。
 
-このリポジトリでは、公開APIカタログを検索・保存・調査できる `API Discovery Hub` と、気象庁XMLを取得・保存・地図可視化する `QuakeWave Preview` を実装しています。
+このリポジトリでは、公開APIカタログを検索・保存・調査できる **API Discovery Hub** と、気象庁XMLを取得・保存・地図可視化する **QuakeWave Preview** を実装しています。
 
-単に画面を作るだけではなく、外部データ取得、DBキャッシュ、差分同期、Queue / Scheduler、DTO / ListDTO、Repository、Service、Action、Responder、Feature / Unit Test を組み合わせ、後から読める・直せる・説明できる構成を目指しています。
+単に画面を作るだけではなく、外部データ取得、DBキャッシュ、差分同期、Queue / Scheduler、status API、DTO / ListDTO、Repository、Service、Action、Responder、Feature / Unit Test を組み合わせ、後から読める・直せる・説明できる構成を重視しています。
 
 - 公開URL: https://ada-works.dev
 - Repository: https://github.com/Ryosuke-Shigi/codex-practice001
@@ -22,11 +22,13 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 
 重視している点は以下です。
 
-- 外部API取得をその場限りの処理にせず、DBキャッシュと差分同期で扱う
+- 外部データ取得をその場限りの処理にせず、DBキャッシュと差分同期で扱う
 - Controller に業務処理を集めず、Action / Service / Repository / DTO / Responder に責務を分ける
 - Queue / Scheduler を使い、重い同期処理を画面操作から分離する
-- テストで仕様・境界値・失敗時の状態を固定し、AIによる変更で壊れにくくする
+- status API とポーリングで、非同期処理の進行状態を画面から確認できるようにする
+- Feature / Unit Test で仕様・境界値・失敗時の状態を固定する
 - APIカタログと地震データという別ドメインに、同じ設計方針を適用する
+- README / docs / AGENTS.md により、人間とAIが後から作業文脈を再起動できるようにする
 
 ## 実装済みドメイン
 
@@ -77,6 +79,7 @@ API Discovery Hub では、外部APIの値をそのまま画面に出すので�
 - 日付範囲、表示件数、震度フィルタ、詳細パネル折りたたみを含む地図UI
 
 QuakeWave Preview では、Atom feed の取得、個別XML解析、地図表示用データ生成、画面表示を分離しています。
+
 地震情報を防災用途として保証するものではなく、外部XMLデータの取得・解析・可視化を題材にしたポートフォリオ機能です。
 
 ## 画面導線
@@ -166,37 +169,34 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、ど�
 7. React / Inertia で表示する
 8. Feature / Unit Test で仕様を固定する
 
-## テストで固定している仕様
+設計方針の詳細は [docs/architecture.md](./docs/architecture.md) にまとめています。
+
+## テスト方針
 
 このプロジェクトでは、テストを単なる確認ではなく、AIが壊してはいけない仕様を固定するための安全柵として扱っています。
 
+テストで守る主な対象:
+
+- DTO / ListDTO の形
+- Repository の取得条件・保存条件
+- Service の判定
+- Action の処理順序
+- Job の実行結果
+- Responder が渡す Inertia props
+- 保存APIやメモ機能
+- 地震データ取得・保存・ピン再生成
+- 同期処理の結果集計
+
+テストはコードレビューの代替ではありません。
+
+テストで確認できるのは主に「期待する仕様が壊れていないか」です。
+「責務分離が崩れていないか」「設計が汚れていないか」は、別途レビューで確認します。
+
 テスト方針の詳細は [docs/testing.md](./docs/testing.md) にまとめています。
 
-### API Discovery Hub のテスト
+### 主なテスト
 
-API Discovery Hub では、同期、検索、メモ、表示補助ロジックを中心にテストしています。
-
-固定している主な仕様:
-
-- APIカタログ同期時の insert / update / skip 判定
-- `payload_hash` による差分判定
-- APIs.guru から消えたAPIの非アクティブ化
-- 同期JobのQueue投入
-- 同期開始レスポンス
-- 同期ステータスAPIの形
-- 失敗状態の扱い
-- return_url の制限
-- API一覧のキーワード検索
-- provider / domain 絞り込み
-- sort / direction / pagination の扱い
-- Inertia props の形
-- API詳細表示の props
-- 保存メモの作成・更新・削除
-- 別APIのメモを誤って更新しないこと
-- モック詳細ではDB保存しないこと
-- Google / GitHub / Docs / Sample 検索リンク生成
-
-主なテスト:
+API Discovery Hub:
 
 - `tests/Feature/ApiCatalog/ApiCatalogSyncTest.php`
 - `tests/Feature/ApiCatalog/ApiCatalogListSearchTest.php`
@@ -205,33 +205,7 @@ API Discovery Hub では、同期、検索、メモ、表示補助ロジック�
 - `tests/Unit/ApiCatalog/Services/ApiCatalogSyncServiceTest.php`
 - `resources/js/Components/ApiCatalog/apiCatalogSearchLinks.test.ts`
 
-### QuakeWave Preview のテスト
-
-QuakeWave Preview では、気象庁XML取得、feed entry 保存、map pin 生成、同期ステータス、失敗時の状態管理、Request validation を中心にテストしています。
-
-固定している主な仕様:
-
-- 気象庁 Atom feed の取得
-- 地震情報 entry の抽出
-- feed entry の保存
-- entry_id による insert / update / skip 判定
-- XML URL がない entry を map pin 生成対象から外すこと
-- 個別XMLから震源座標・最大震度・マグニチュード・深さを抽出すること
-- 緯度・経度・最大震度があるものだけ map pin 化すること
-- 震度なしデータを map pin 化しないこと
-- 座標なしデータを map pin 化しないこと
-- event_id がない場合の重複保存防止
-- reported_at がない場合に occurred_at で日付範囲判定すること
-- feed entry 取込成功後、map pin 生成だけ失敗した場合に feed 成功状態を保持すること
-- feed entry 取込に失敗した場合、map pin 生成を実行せず両方 failed にすること
-- timeout / worker停止などで failed() が呼ばれた場合、pending / running の run だけ failed に倒すこと
-- sync status API の JSON shape
-- map request の startDate / endDate validation
-- startDate / endDate 未指定時のデフォルト範囲
-- startDate が endDate より後の場合の現行挙動
-- 無効な limit query を無視し、内部上限を維持すること
-
-主なテスト:
+QuakeWave Preview:
 
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewFeedEntrySyncTest.php`
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewXmlPreviewTest.php`
@@ -241,7 +215,7 @@ QuakeWave Preview では、気象庁XML取得、feed entry 保存、map pin 生�
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewSyncStatusTest.php`
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewMapRequestTest.php`
 
-### テスト実行コマンド
+テスト実行:
 
 ```bash
 docker compose run --rm artisan test
@@ -259,17 +233,6 @@ docker compose run --rm npm run build
 - 最終判断、仕様確定、レビュー、本番反映判断は人間が行う
 
 このプロジェクトでは、AI駆動開発を「AIに作らせること」ではなく、人間が仕様・責務・テスト・Git運用を制御したうえで、AIを実装補助として使う開発フローとして扱っています。
-
-制御している主な対象:
-
-- 仕様: 何を作るか、何を作らないか、成功条件・失敗条件を先に決める
-- 責務: Action / Service / Repository / DTO / Responder / Component の境界を崩さない
-- テスト: 壊れてほしくない仕様、境界値、失敗状態、Inertia props を Feature / Unit Test で固定する
-- Git運用: main 直作業を避け、目的別ブランチ、意味のある小さな差分、commit / push の明示判断で管理する
-- レビュー: テスト結果だけでなく、責務分離・差分内容・コメント・ドキュメント更新まで確認する
-
-このため、成果物として見せたいのはコード生成速度だけではありません。
-AIを使う前提でも、仕様を固定し、責務を分け、テストで守り、Git運用で変更を管理する開発プロセスそのものを示すことを重視しています。
 
 AIを信用することと、任せて放置することは別です。
 このプロジェクトでは、テスト・差分確認・責務レビューによって、AIの作業範囲を人間が制御します。
@@ -308,7 +271,7 @@ testing.md は仕様破壊検知とトークン消費削減のためのテスト
 - 地図表示用 pin は、個別XML解析後の結果として `earthquake_map_pins` に保存する
 - feed entry 取込と map pin 生成は別処理として分ける
 
-## Docker構成
+## Docker / ローカル開発
 
 Docker 構成は Laravel アプリケーション本体の一階層上にあります。
 このリポジトリは Docker Compose から `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
