@@ -1,17 +1,24 @@
 name: Deploy to Lightsail
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Build frontend assets
         uses: actions/setup-node@v4
@@ -51,7 +58,8 @@ jobs:
 
             cd /var/www/api-discovery-hub/src
             git status --short
-            git pull --ff-only origin main
+            git fetch origin main
+            git checkout ${{ github.event.workflow_run.head_sha }}
 
             rm -rf public/build
             mkdir -p public
