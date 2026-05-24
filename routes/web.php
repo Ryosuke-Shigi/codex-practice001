@@ -23,22 +23,98 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::get('/lab', function () {
-    // 将来 DB 取得に置き換える仮データです。
-    // 未実装ページは href を持たせず、準備中の入口カードとして表示します。
+    /*
+     * Lab の入口カードは、現時点ではDB管理せず routes/web.php の固定配列として扱います。
+     * ここで守りたい仕様は「ポートフォリオで見せる順番」と「既存導線を壊さないこと」です。
+     *
+     * 特にPPカテゴリは面接・レビュー時の入口として使うため、表示順そのものが仕様になります。
+     * そのため API Discovery Hub -> Japan Quake Wave Map -> 工事発注 -> Spec Flow Trainer の順で
+     * 配列に並べ、Feature テストでも同じ順番を固定しています。
+     *
+     * この配列は紹介カード用の Inertia props だけを返します。同期処理、DB取得、外部API取得、
+     * 本体機能の状態変更はここに持たせず、既存の Controller / Action / Service / Repository 側へ
+     * 責務が戻るようにしています。
+     */
     $experiments = [
         [
             /*
-             * SpecFlowTrainer は PP セクション上部に置く、開発思想と設計方針の紹介ページです。
-             * 今回は DB や CRUD を追加せず、既存 Lab の仮データ入口へカードを1件足すだけにします。
-             * tags と actionLabel はこのカードだけが使う表示補助なので、既存カードの構造を壊さない任意項目にします。
+             * 完成済み機能の本体一覧へ直接飛ばすのではなく、まず紹介LPを挟みます。
+             * 初見の人が「何を作ったか」「裏側で何を工夫したか」を短時間で読んでから、
+             * /api-catalog や /api-catalog/mock へ進める導線にするためです。
+             */
+            'id' => 'api-discovery-hub-pp',
+            'title' => 'API Discovery Hub',
+            'summary' => '公開APIカタログを取得・検索・保存・調査できるポートフォリオ機能の紹介ページです。',
+            'status' => '完成済み',
+            'category' => 'PP',
+            'href' => '/lab/api-discovery-hub-pp',
+            'actionLabel' => '紹介LPを見る',
+            'tags' => [
+                'APIs.guru',
+                'DBキャッシュ',
+                '検索',
+                'メモ保存',
+                'DTO',
+                'Responder',
+            ],
+        ],
+        [
+            /*
+             * 地震マップも本体機能へ直接入る前に、XML取得、解析、pin生成、部分失敗管理などの
+             * 技術的な見どころを説明するLPへ案内します。防災サービスではなくポートフォリオの
+             * 可視化機能であることも、この紹介ページ側で明示します。
+             */
+            'id' => 'quake-wave-map-pp',
+            'title' => 'Japan Quake Wave Map',
+            'summary' => '気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能の紹介ページです。',
+            'status' => '完成済み',
+            'category' => 'PP',
+            'href' => '/lab/quake-wave-map-pp',
+            'actionLabel' => '紹介LPを見る',
+            'tags' => [
+                '気象庁XML',
+                '地図表示',
+                'Queue',
+                'Job',
+                'status API',
+                '部分失敗',
+            ],
+        ],
+        [
+            /*
+             * 工事発注は今回の主対象ではありませんが、PPカテゴリの並び順を固定するために
+             * API / 地震LPの後ろへ移動します。既存の /lab/construction-order-workflow-pp への
+             * 導線は残し、本体やモック側の内容には触れません。
+             */
+            'id' => 'construction-order-workflow-concept',
+            'title' => '工事発注管理・請求システム',
+            'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
+            'status' => 'PP',
+            'category' => 'PP',
+            'href' => '/lab/construction-order-workflow-pp',
+            'actionLabel' => '構想を見る',
+            'tags' => [
+                '工事発注',
+                '請求',
+                'CSV連携',
+                '画像管理',
+                '工程管理',
+                '帳票',
+            ],
+        ],
+        [
+            /*
+             * Spec Flow Trainer は構想中の開発補助ツールです。
+             * 今回はAPI / 地震LPを先頭に出す目的なので4番目へ移動しますが、
+             * 既存ページのURLと導線は維持し、仕様外の本体機能追加は行いません。
              */
             'id' => 'spec-flow-trainer',
-            'title' => 'SpecFlowTrainer',
+            'title' => 'Spec Flow Trainer',
             'summary' => 'コードを書く前の設計を、仕様・DTO / ListDTO・ADR責務・TDD・AI指示として視覚化する開発補助ツール。',
             'status' => '構想・設計中',
             'category' => 'PP',
             'href' => '/lab/spec-flow-trainer',
-            'actionLabel' => '詳しく見る',
+            'actionLabel' => '構想を見る',
             'tags' => [
                 '仕様駆動開発',
                 'DTO',
@@ -52,10 +128,13 @@ Route::get('/lab', function () {
             ],
         ],
         [
-            // API Discovery Hub は api_catalog_cache を使う本番一覧画面への入口です。
+            /*
+             * PROJECTカテゴリには、実装済み本体画面への直接導線も残します。
+             * PPカテゴリは紹介、PROJECTカテゴリは実データやDBを読む本体確認、という役割を分けます。
+             */
             'id' => 'api-discovery-hub',
-            'title' => 'API Discovery Hub',
-            'summary' => '公開APIを検索・調査・保存していくためのAPIカタログ画面です。',
+            'title' => 'API Discovery Hub 本番一覧',
+            'summary' => '公開APIを検索・調査・保存していくためのAPIカタログ本体画面です。',
             'status' => 'Preview',
             'category' => 'PROJECT',
             'href' => '/api-catalog',
@@ -64,7 +143,7 @@ Route::get('/lab', function () {
             // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
             // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
             'id' => 'quakewave-preview',
-            'title' => 'Japan Quake Wave Map',
+            'title' => 'Japan Quake Wave Map 地図表示',
             'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
             'status' => 'Preview',
             'category' => 'PROJECT',
@@ -99,21 +178,30 @@ Route::get('/lab', function () {
             'category' => 'MOCK',
             'href' => '/lab/construction-order-workflow-mock',
         ],
-        [
-            // 工事発注管理・請求システムの構想説明ページへの入口です。
-            'id' => 'construction-order-workflow-concept',
-            'title' => '工事発注管理・請求システム 構想まとめ',
-            'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
-            'status' => 'PP',
-            'category' => 'PP',
-            'href' => '/lab/construction-order-workflow-pp',
-        ],
     ];
 
     return Inertia::render('Lab/Index', [
         'experiments' => $experiments,
     ]);
 })->name('lab.index');
+
+Route::get('/lab/api-discovery-hub-pp', function () {
+    /*
+     * API Discovery Hub 本体機能の紹介LPです。
+     * ここでは Inertia ページを返すだけに限定し、DBキャッシュ取得、同期開始、
+     * status API 取得、メモ保存などの本体責務は既存ルートへ残します。
+     */
+    return Inertia::render('Lab/ApiDiscoveryHubPp');
+})->name('lab.api-discovery-hub-pp');
+
+Route::get('/lab/quake-wave-map-pp', function () {
+    /*
+     * Japan Quake Wave Map 本体機能の紹介LPです。
+     * XML取得、feed同期、map pin同期、地図props生成は既存の QuakeWave Preview 側の責務です。
+     * このルートでは紹介ページの表示だけを行い、外部APIやDBには触りません。
+     */
+    return Inertia::render('Lab/QuakeWaveMapPp');
+})->name('lab.quake-wave-map-pp');
 
 Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。

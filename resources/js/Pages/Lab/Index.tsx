@@ -30,6 +30,18 @@ const labCategories: {
     title: string;
     description: string;
 }[] = [
+    /*
+        PPをデフォルトカテゴリにします。今回のLab整理では、実装済み機能へ直接入る前に
+        「何を作ったか」を説明する紹介LPを見せることが目的なので、PROJECTより先に並べます。
+        カテゴリ順はUIのタブ順にもなるため、routes/web.php の experiments 順と合わせて
+        Featureテストで守ります。
+    */
+    {
+        key: 'PP',
+        title: 'Presentation Page',
+        description:
+            '完成済み・構想中の機能を、初見でも短時間で読める紹介ページとして並べます。',
+    },
     {
         key: 'PROJECT',
         title: '本番寄りのポートフォリオ',
@@ -42,17 +54,15 @@ const labCategories: {
         description:
             'UI、操作感、画面遷移、業務フローを仮データで確認するためのページです。',
     },
-    {
-        key: 'PP',
-        title: 'Presentation Page',
-        description:
-            '構想、設計思想、画面イメージ、システム案を説明・検討するためのページです。',
-    },
 ];
 
 function initialCategoryFromQuery(): LabCategory {
     if (typeof window === 'undefined') {
-        return 'PROJECT';
+        /*
+            SSRやテスト実行時は window がないため、ブラウザURLからカテゴリを復元できません。
+            その場合も今回の目的に合わせ、紹介LPの入口である PP を初期カテゴリにします。
+        */
+        return 'PP';
     }
 
     const category = new URLSearchParams(window.location.search).get(
@@ -61,7 +71,7 @@ function initialCategoryFromQuery(): LabCategory {
 
     return labCategories.some((labCategory) => labCategory.key === category)
         ? (category as LabCategory)
-        : 'PROJECT';
+        : 'PP';
 }
 
 export default function Index({ experiments }: LabIndexProps) {
@@ -92,8 +102,13 @@ export default function Index({ experiments }: LabIndexProps) {
         <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
             <Head title="Portfolio" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 pb-14 pt-4 sm:pt-8">
-                <header className="flex items-center justify-between gap-4">
+            {/*
+                w-full だけだと、長い日本語や英字のカード内容が min-content 幅を押し広げる場合があります。
+                モバイルでは viewport から左右padding分を引いた幅を明示し、紹介LPのカードが
+                横スクロール前提にならないようにしています。
+            */}
+            <div className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2.5rem)] max-w-6xl flex-col gap-10 pb-14 pt-4 sm:w-[calc(100vw-4rem)] sm:pt-8 lg:w-full">
+                <header className="flex flex-wrap items-center justify-between gap-4">
                     <Link
                         href="/"
                         className="rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
@@ -117,8 +132,8 @@ export default function Index({ experiments }: LabIndexProps) {
                         <h1 className="mt-3 text-4xl font-semibold text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.35)] sm:text-6xl">
                             Lab / Portfolio
                         </h1>
-                        <p className="mt-5 max-w-2xl text-sm leading-7 text-cyan-50/90 sm:text-base">
-                            本番寄りのPROJECT、見た目確認用のMOCK、構想説明用のPPを切り替えて確認できます。
+                        <p className="mt-5 max-w-2xl break-all text-sm leading-7 text-cyan-50/90 sm:text-base">
+                            機能紹介LP、完成寄りの本体画面、見た目確認用モックを切り替えて確認できます。
                         </p>
                     </motion.div>
 
@@ -168,8 +183,9 @@ export default function Index({ experiments }: LabIndexProps) {
 
                     {/*
                         experiments は routes/web.php から渡される Inertia prop です。
-                        現在は将来 DB 取得へ置き換える前提の仮データで、固定配列を
-                        完成扱いにしないため、カードUIとデータ取得元を分けて考えます。
+                        Lab一覧の責務は「入口を選ばせること」だけなので、カードクリック先や説明文は
+                        propsとして受け、一覧コンポーネント側ではカテゴリ絞り込みと表示だけを行います。
+                        本体画面のデータ取得や同期状態は、それぞれの機能ページへ入ってから扱います。
                     */}
                     <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                         {filteredExperiments.map((experiment, index) => {
@@ -196,7 +212,7 @@ export default function Index({ experiments }: LabIndexProps) {
                                         </div>
 
                                         <div>
-                                            <p className="text-sm leading-7 text-cyan-50/90">
+                                            <p className="break-all text-sm leading-7 text-cyan-50/90">
                                                 {experiment.summary}
                                             </p>
                                             {/*
