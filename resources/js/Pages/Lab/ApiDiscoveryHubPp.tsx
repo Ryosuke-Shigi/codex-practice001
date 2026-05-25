@@ -202,7 +202,7 @@ export default function ApiDiscoveryHubPp() {
             */}
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
-                    eyebrow="Portfolio Presentation"
+                    eyebrow="Idea Board"
                     title="API Discovery Hub"
                     lead="公開APIカタログを取得・検索・保存・調査できるポートフォリオ機能"
                     description="APIs.guruの公開API一覧を起点に、API調査を一覧、詳細、メモ、検索補助までつなげる機能です。紹介ページでは仕様詳細よりも、初見の人が短時間で何を作ったかを理解できることを優先します。"

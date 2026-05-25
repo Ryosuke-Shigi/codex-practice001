@@ -18,7 +18,7 @@ export default function ConstructionBillingArchitectureSection() {
                 ADR / レイヤード構成で責務分離して作る
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                このPPは本実装ではありませんが、作る前提はADRとレイヤード構成です。
+                このアイデアボードは本実装ではありませんが、作る前提はADRとレイヤード構成です。
                 Controller、Request、Action、Service、Repository、DTO、Responder、Componentの責務を混ぜない設計として説明します。
             </p>
 

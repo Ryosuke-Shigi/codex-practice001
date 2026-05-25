@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 import PublicLayout from '@/Layouts/PublicLayout';
 
-type LabCategory = 'PROJECT' | 'MOCK' | 'PP';
+type LabCategory = 'PROJECT' | 'IDEA-BOARD' | 'MOCK';
 
 type LabExperiment = {
     id: string;
@@ -14,7 +14,7 @@ type LabExperiment = {
     category: LabCategory;
     href?: string;
     /*
-     * actionLabel と tags は PP の説明カードを少し詳しく見せるための任意項目です。
+     * actionLabel と tags は IDEA-BOARD の説明カードを少し詳しく見せるための任意項目です。
      * 既存 PROJECT / MOCK カードはこの値を持たないので、表示側も存在チェックに留めます。
      */
     actionLabel?: string;
@@ -31,22 +31,21 @@ const labCategories: {
     description: string;
 }[] = [
     /*
-        PPをデフォルトカテゴリにします。今回のLab整理では、実装済み機能へ直接入る前に
-        「何を作ったか」を説明する紹介LPを見せることが目的なので、PROJECTより先に並べます。
-        カテゴリ順はUIのタブ順にもなるため、routes/web.php の experiments 順と合わせて
-        Featureテストで守ります。
+        この配列順がそのまま Lab Index のタブ順になります。
+        今回は「まず完成寄りの本体(PROJECT)、次に構想や紹介(IDEA-BOARD)、最後に見た目確認(MOCK)」
+        という読み順を仕様として扱うため、routes/web.php の experiments 配列順と合わせています。
     */
-    {
-        key: 'PP',
-        title: 'Presentation Page',
-        description:
-            '完成済み・構想中の機能を、初見でも短時間で読める紹介ページとして並べます。',
-    },
     {
         key: 'PROJECT',
         title: '本番寄りのポートフォリオ',
         description:
             '実データ、DB、API、保存処理、同期処理などを持つ完成寄りのページです。',
+    },
+    {
+        key: 'IDEA-BOARD',
+        title: 'アイデアボード',
+        description:
+            '完成済み・構想中の機能を、初見でも短時間で読める紹介ページとして並べます。',
     },
     {
         key: 'MOCK',
@@ -60,18 +59,27 @@ function initialCategoryFromQuery(): LabCategory {
     if (typeof window === 'undefined') {
         /*
             SSRやテスト実行時は window がないため、ブラウザURLからカテゴリを復元できません。
-            その場合も今回の目的に合わせ、紹介LPの入口である PP を初期カテゴリにします。
+            その場合は Lab Index の先頭カテゴリである PROJECT を初期カテゴリにします。
         */
-        return 'PP';
+        return 'PROJECT';
     }
 
     const category = new URLSearchParams(window.location.search).get(
         'category',
     );
+    /*
+        旧URLでは /lab?category=PP を戻り先として使っていました。
+        表示名は IDEA-BOARD へ変更しますが、古いリンクから来た場合も同じ紹介カテゴリを開けるよう
+        クエリだけはここで吸収します。新規に生成するリンクは IDEA-BOARD に統一します。
+    */
+    const normalizedCategory =
+        category === 'PP' ? 'IDEA-BOARD' : category;
 
-    return labCategories.some((labCategory) => labCategory.key === category)
-        ? (category as LabCategory)
-        : 'PP';
+    return labCategories.some(
+        (labCategory) => labCategory.key === normalizedCategory,
+    )
+        ? (normalizedCategory as LabCategory)
+        : 'PROJECT';
 }
 
 export default function Index({ experiments }: LabIndexProps) {
@@ -236,7 +244,7 @@ export default function Index({ experiments }: LabIndexProps) {
                                             )}
                                             {/*
                                                 既存カードの「開く / 準備中」表示は残しつつ、
-                                                PPカードだけ「詳しく見る」のような文言に差し替えられるようにします。
+                                                IDEA-BOARDカードだけ「詳しく見る」のような文言に差し替えられるようにします。
                                             */}
                                             <span className="mt-6 inline-flex min-h-10 items-center rounded-lg border border-cyan-100/35 bg-cyan-100/16 px-4 text-xs font-semibold tracking-[0.12em] text-cyan-50 transition group-hover:bg-cyan-100 group-hover:text-slate-950">
                                                 {experiment.href

@@ -8,7 +8,7 @@ import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidD
 import PublicLayout from '@/Layouts/PublicLayout';
 
 /*
- * このページは SpecFlowTrainer 本体の CRUD ではなく、PP セクション用の構想紹介です。
+ * このページは SpecFlowTrainer 本体の CRUD ではなく、アイデアボード用の構想紹介です。
  * そのため、DB スキーマ候補や Mermaid / React Flow の話も「将来の設計方針」として静的に表示します。
  * 実データ取得や保存責務を混ぜないよう、表示用の文言配列をこのページ内に閉じています。
  */
@@ -52,7 +52,7 @@ const workflowSteps = [
 
 /*
  * DTO / ListDTO はこの構想の中核なので、例示データとレイヤー間フローを分けて持ちます。
- * 実装時は DTO 定義や edges を DB に保存する想定ですが、この PP では静的な見本だけを表示します。
+ * 実装時は DTO 定義や edges を DB に保存する想定ですが、このアイデアボードでは静的な見本だけを表示します。
  */
 const dtoFields = ['API名', 'Provider', 'メモ本文', '保存日時'];
 const listDtoFields = ['SavedApiDTO[]', 'totalCount', 'currentPage'];
@@ -391,7 +391,7 @@ type SectionProps = {
 };
 
 /*
- * PP 内の各ブロックを同じ見た目にそろえるための小さな表示コンポーネントです。
+ * アイデアボード内の各ブロックを同じ見た目にそろえるための小さな表示コンポーネントです。
  * このページ専用なので共通 Components へ切り出さず、不要な抽象化を避けています。
  */
 function Section({ eyebrow, title, children }: SectionProps) {
@@ -493,25 +493,25 @@ export default function SpecFlowTrainer() {
             <Head title="SpecFlowTrainer" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-5 pb-10">
-                <nav aria-label="PPページの戻り導線">
+                <nav aria-label="アイデアボードページの戻り導線">
                     <Link
-                        href="/lab?category=PP"
+                        href="/lab?category=IDEA-BOARD"
                         className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/16 bg-white/10 px-4 text-sm font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        ← PP一覧へ戻る
+                        ← アイデアボード一覧へ戻る
                     </Link>
                 </nav>
 
                 {/*
                     Hero はモバイルを基準に縦積みで作り、lg以上だけ横並びにします。
-                    PP ページとしてまず「構想・設計中」であることを明示し、完成アプリに見えすぎないようにします。
+                    アイデアボードページとしてまず「構想・設計中」であることを明示し、完成アプリに見えすぎないようにします。
                 */}
                 <header className="rounded-lg border border-white/20 bg-slate-950/62 p-5 shadow-[0_22px_54px_rgba(2,6,23,0.24)] backdrop-blur-2xl sm:p-7">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-4xl">
                             <div className="flex flex-wrap gap-2">
                                 <span className="rounded-md border border-cyan-100/35 bg-cyan-100/14 px-2.5 py-1 text-xs font-semibold text-cyan-50">
-                                    PP
+                                    アイデアボード
                                 </span>
                                 <span className="rounded-md border border-emerald-100/30 bg-emerald-100/12 px-2.5 py-1 text-xs font-semibold text-emerald-50">
                                     構想・設計中
@@ -878,10 +878,10 @@ export default function SpecFlowTrainer() {
 
                 <div className="flex justify-center">
                     <Link
-                        href="/lab?category=PP"
+                        href="/lab?category=IDEA-BOARD"
                         className="inline-flex min-h-12 items-center justify-center rounded-lg border border-cyan-100/40 bg-cyan-100 px-5 text-sm font-bold text-slate-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        PP一覧へ戻る
+                        アイデアボード一覧へ戻る
                     </Link>
                 </div>
             </div>

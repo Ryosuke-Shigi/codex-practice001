@@ -17,7 +17,7 @@ export default function ConstructionOrderWorkflowPP() {
 
             <div className="mx-auto flex min-h-screen min-w-0 w-full max-w-full flex-col gap-5 break-words pb-10 [overflow-wrap:anywhere] sm:max-w-7xl">
                 {/*
-                    PP は非エンジニア向けの構想説明ページです。
+                    アイデアボードは非エンジニア向けの構想説明ページです。
                     React のカードとステップUIに加えて、共通の Mermaid / ECharts
                     表示コンポーネントで「何を解決するのか」「責務をどう分けるのか」を説明します。
                 */}
