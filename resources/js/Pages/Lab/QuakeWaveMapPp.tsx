@@ -207,7 +207,7 @@ export default function QuakeWaveMapPp() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
-                    eyebrow="Portfolio Presentation"
+                    eyebrow="Idea Board"
                     title="Japan Quake Wave Map"
                     lead="気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能"
                     description="Atom feedから個別XMLを取得し、地図表示に必要な地震情報を抽出してpinとして可視化します。紹介ページでは、外部データ同期、部分失敗、pin生成条件、表示導線の全体像を短く見せます。"

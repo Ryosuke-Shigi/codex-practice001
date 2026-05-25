@@ -1,8 +1,8 @@
 import type { EChartsOption } from 'echarts';
 
 /*
- * 工事発注管理・請求システムPP専用の説明データです。
- * 今回は本実装ではなく「説明用PPの見せ方強化」なので、DB・Controller・Action・Service から
+ * 工事発注管理・請求システムのアイデアボード専用説明データです。
+ * 今回は本実装ではなく「説明用アイデアボードの見せ方強化」なので、DB・Controller・Action・Service から
  * データを取得せず、固定の mock data としてこのファイルに寄せています。
  *
  * 後で本番DTOや Inertia props に置き換える場合は、各セクション側の JSX を大きく触らず、
@@ -47,7 +47,7 @@ export const problemCards: TextCard[] = [
 /*
  * Mermaid は Notion でも読みやすい pure flowchart 記法に限定します。
  * HTMLタグや装飾記法を混ぜると、Notion貼り付け時や共通コンポーネント描画時の
- * 互換性確認が増えるため、このPPでは題・Start・Endを持つ素朴な流れ図に寄せています。
+ * 互換性確認が増えるため、このアイデアボードでは題・Start・Endを持つ素朴な流れ図に寄せています。
  */
 export const problemFlowChart = `flowchart TD
     title["題：工事発注管理と請求管理の課題"]

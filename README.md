@@ -57,7 +57,7 @@ APIs.guru の `list.json` を取得し、公開APIカタログを検索・保存
 - Scheduler による定期同期 Job 投入
 - API Preview による外部API疎通確認
 - 外部APIに依存しないモック画面によるUI確認
-- PP紹介LPによる初見向け説明導線
+- アイデアボードによる初見向け説明導線
 
 API Discovery Hub では、外部APIの値をそのまま画面に出すのではなく、取得・変換・保存・表示用整形を分離しています。
 
@@ -81,42 +81,48 @@ API Discovery Hub では、外部APIの値をそのまま画面に出すので�
 - 同期ステータスのポーリング表示
 - 水面上の日本地図と地震ピン表示
 - 日付範囲、表示件数、震度フィルタ、詳細パネル折りたたみを含む地図UI
-- PP紹介LPによる初見向け説明導線
+- アイデアボードによる初見向け説明導線
 
 QuakeWave Preview では、Atom feed の取得、個別XML解析、地図表示用データ生成、画面表示を分離しています。
 
 地震情報を防災用途として保証するものではなく、外部XMLデータの取得・解析・可視化を題材にしたポートフォリオ機能です。
 
-## PP / Lab 導線
+## IDEA-BOARD / Lab 導線
 
-`/lab` では、実装済み・構想中の機能を PP / PROJECT / MOCK に分けて確認できます。
+`/lab` では、実装済み・構想中の機能を PROJECT / IDEA-BOARD / MOCK に分けて確認できます。
 
-PPカテゴリは、初見の人が短時間で「何を作ったか」「どこが工夫か」「本体画面はどこか」を理解するための紹介LPです。
+IDEA-BOARDカテゴリは、初見の人が短時間で「何を作ったか」「どこが工夫か」「本体画面はどこか」を理解するためのアイデアボードです。
 
-PP表示順:
+Lab Index 表示順:
+
+1. PROJECT
+2. IDEA-BOARD
+3. MOCK
+
+IDEA-BOARD表示順:
 
 1. API Discovery Hub
 2. Japan Quake Wave Map
 3. 工事発注管理・請求システム
 4. Spec Flow Trainer
 
-主なPP導線:
+主なIDEA-BOARD導線:
 
-- `/lab/api-discovery-hub-pp`: API Discovery Hub の紹介LP
-- `/lab/quake-wave-map-pp`: Japan Quake Wave Map の紹介LP
-- `/lab/construction-order-workflow-pp`: 工事発注管理・請求システムの構想説明
+- `/lab/api-discovery-hub-idea-board`: API Discovery Hub の紹介ページ
+- `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map の紹介ページ
+- `/lab/construction-order-workflow-idea-board`: 工事発注管理・請求システムの構想説明
 - `/lab/spec-flow-trainer`: Spec Flow Trainer の構想説明
 
-PP紹介LPでは、DB取得・同期処理・外部API通信は行わず、静的な紹介ページとして本体機能への導線を担当します。
+IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静的な紹介ページとして本体機能への導線を担当します。
 
 ## 画面導線
 
-短時間で確認する場合は、`/` → `/lab` → PP紹介LP → 本番機能の順で見ると全体像を追いやすいです。
+短時間で確認する場合は、`/` → `/lab` → IDEA-BOARD → 本番機能の順で見ると全体像を追いやすいです。
 
 - `/`: ポートフォリオ入口
 - `/lab`: 実験・機能一覧
-- `/lab/api-discovery-hub-pp`: API Discovery Hub 紹介LP
-- `/lab/quake-wave-map-pp`: Japan Quake Wave Map 紹介LP
+- `/lab/api-discovery-hub-idea-board`: API Discovery Hub 紹介ページ
+- `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map 紹介ページ
 - `/api-preview`: 外部API確認用画面
 - `/api-catalog`: API Discovery Hub の本番一覧
 - `/api-catalog/{apiKey}`: API詳細・調査メモ画面
@@ -214,7 +220,7 @@ API Discovery Hub と QuakeWave Preview は異なるドメインですが、ど�
 - Responder が渡す Inertia props
 - 保存APIやメモ機能
 - 地震データ取得・保存・ピン再生成
-- PP紹介LPのルート・Inertia component・Lab表示順
+- IDEA-BOARDのルート・Inertia component・Lab表示順
 - 同期処理の結果集計
 
 テストはコードレビューの代替ではありません。
@@ -245,7 +251,7 @@ QuakeWave Preview:
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewSyncStatusTest.php`
 - `tests/Feature/QuakeWavePreview/QuakeWavePreviewMapRequestTest.php`
 
-Lab / PP:
+Lab / IDEA-BOARD:
 
 - `tests/Feature/Lab/ApiDiscoveryHubPpTest.php`
 - `tests/Feature/Lab/QuakeWaveMapPpTest.php`
@@ -345,9 +351,9 @@ testing.md は仕様破壊検知とトークン消費削減のためのテスト
 - 地図表示用 pin は、個別XML解析後の結果として `earthquake_map_pins` に保存する
 - feed entry 取込と map pin 生成は別処理として分ける
 
-### PP紹介LP
+### IDEA-BOARD
 
-- PP紹介LPは静的な紹介ページとして扱う
+- IDEA-BOARDは静的な紹介ページとして扱う
 - DB取得、外部API通信、同期開始処理は持たせない
 - 本体機能への導線と、技術的な見どころの説明を担当する
 - Lab表示順は Feature Test で固定する
@@ -422,4 +428,4 @@ API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的に�
 
 QuakeWave Preview は気象庁XMLを利用した地震情報の取得・保存・地図可視化の検証機能であり、防災情報としての正確性や速報性を保証するものではありません。
 
-この README は、現状の API Discovery Hub、QuakeWave Preview、PP紹介LP、テスト、CI/CD の実装範囲に合わせたポートフォリオ概要です。
+この README は、現状の API Discovery Hub、QuakeWave Preview、IDEA-BOARD、テスト、CI/CD の実装範囲に合わせたポートフォリオ概要です。

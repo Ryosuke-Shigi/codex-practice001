@@ -153,7 +153,7 @@ export default function CsvIntegrationVisualizationSection() {
                 CSV連携と改修範囲の見える化
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                工事発注管理・請求システム本体の処理には触れず、PP上でCSV連携の流れ、件名番号追加時の影響範囲、説明用スコアを整理して表示します。
+                工事発注管理・請求システム本体の処理には触れず、アイデアボード上でCSV連携の流れ、件名番号追加時の影響範囲、説明用スコアを整理して表示します。
             </p>
 
             <div className="mt-5 rounded-lg border border-emerald-200/30 bg-emerald-200/10 p-4 text-emerald-50">

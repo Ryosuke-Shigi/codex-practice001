@@ -7,7 +7,7 @@ export default function ConceptHero() {
                 <div className="min-w-0 max-w-4xl">
                     <div className="flex flex-wrap gap-2">
                         <span className="rounded-md border border-cyan-100/35 bg-cyan-100/14 px-2.5 py-1 text-xs font-semibold text-cyan-50">
-                            PP
+                            アイデアボード
                         </span>
                         <span className="rounded-md border border-emerald-100/30 bg-emerald-100/12 px-2.5 py-1 text-xs font-semibold text-emerald-50">
                             構想説明用

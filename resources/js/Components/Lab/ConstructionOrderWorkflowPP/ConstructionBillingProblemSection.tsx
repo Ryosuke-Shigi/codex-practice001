@@ -16,7 +16,7 @@ export default function ConstructionBillingProblemSection() {
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
                 工事、発注、請求を同じ場所に置くだけでは、現場で見たい状態と管理すべき状態が混ざります。
-                このPPでは、Form入力とExcel/CSV入力を同じ発注登録へ集約し、状態管理をSystem側へ寄せる境界を見せます。
+                このアイデアボードでは、Form入力とExcel/CSV入力を同じ発注登録へ集約し、状態管理をSystem側へ寄せる境界を見せます。
             </p>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">

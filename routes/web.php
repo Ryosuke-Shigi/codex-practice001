@@ -27,9 +27,10 @@ Route::get('/lab', function () {
      * Lab の入口カードは、現時点ではDB管理せず routes/web.php の固定配列として扱います。
      * ここで守りたい仕様は「ポートフォリオで見せる順番」と「既存導線を壊さないこと」です。
      *
-     * 特にPPカテゴリは面接・レビュー時の入口として使うため、表示順そのものが仕様になります。
-     * そのため API Discovery Hub -> Japan Quake Wave Map -> 工事発注 -> Spec Flow Trainer の順で
-     * 配列に並べ、Feature テストでも同じ順番を固定しています。
+     * アイデアボードカテゴリは面接・レビュー時の入口として使うため、表示順そのものが仕様になります。
+     * ユーザーが指定した Lab Index の並びは PROJECT -> IDEA-BOARD -> MOCK です。
+     * ここで props の配列順も同じ順番にしておくことで、React 側のタブ順、初期表示、
+     * Feature テストで守る仕様が同じ読み方になります。
      *
      * この配列は紹介カード用の Inertia props だけを返します。同期処理、DB取得、外部API取得、
      * 本体機能の状態変更はここに持たせず、既存の Controller / Action / Service / Repository 側へ
@@ -38,16 +39,39 @@ Route::get('/lab', function () {
     $experiments = [
         [
             /*
+             * PROJECTカテゴリには、実装済み本体画面への直接導線も残します。
+             * IDEA-BOARDカテゴリは紹介、PROJECTカテゴリは実データやDBを読む本体確認、という役割を分けます。
+             */
+            'id' => 'api-discovery-hub',
+            'title' => 'API Discovery Hub 本番一覧',
+            'summary' => '公開APIを検索・調査・保存していくためのAPIカタログ本体画面です。',
+            'status' => 'Preview',
+            'category' => 'PROJECT',
+            'href' => '/api-catalog',
+        ],
+        [
+            // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
+            // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
+            'id' => 'quakewave-preview',
+            'title' => 'Japan Quake Wave Map 地図表示',
+            'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
+            'status' => 'Preview',
+            'category' => 'PROJECT',
+            'href' => '/quakewave-preview/map',
+        ],
+        [
+            /*
              * 完成済み機能の本体一覧へ直接飛ばすのではなく、まず紹介LPを挟みます。
              * 初見の人が「何を作ったか」「裏側で何を工夫したか」を短時間で読んでから、
              * /api-catalog や /api-catalog/mock へ進める導線にするためです。
+             * 旧PP表記はユーザー向けには使わず、URL / category / status を IDEA-BOARD 側へ寄せます。
              */
-            'id' => 'api-discovery-hub-pp',
+            'id' => 'api-discovery-hub-idea-board',
             'title' => 'API Discovery Hub',
             'summary' => '公開APIカタログを取得・検索・保存・調査できるポートフォリオ機能の紹介ページです。',
             'status' => '完成済み',
-            'category' => 'PP',
-            'href' => '/lab/api-discovery-hub-pp',
+            'category' => 'IDEA-BOARD',
+            'href' => '/lab/api-discovery-hub-idea-board',
             'actionLabel' => '紹介LPを見る',
             'tags' => [
                 'APIs.guru',
@@ -64,12 +88,12 @@ Route::get('/lab', function () {
              * 技術的な見どころを説明するLPへ案内します。防災サービスではなくポートフォリオの
              * 可視化機能であることも、この紹介ページ側で明示します。
              */
-            'id' => 'quake-wave-map-pp',
+            'id' => 'quake-wave-map-idea-board',
             'title' => 'Japan Quake Wave Map',
             'summary' => '気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能の紹介ページです。',
             'status' => '完成済み',
-            'category' => 'PP',
-            'href' => '/lab/quake-wave-map-pp',
+            'category' => 'IDEA-BOARD',
+            'href' => '/lab/quake-wave-map-idea-board',
             'actionLabel' => '紹介LPを見る',
             'tags' => [
                 '気象庁XML',
@@ -82,16 +106,15 @@ Route::get('/lab', function () {
         ],
         [
             /*
-             * 工事発注は今回の主対象ではありませんが、PPカテゴリの並び順を固定するために
-             * API / 地震LPの後ろへ移動します。既存の /lab/construction-order-workflow-pp への
-             * 導線は残し、本体やモック側の内容には触れません。
+             * 工事発注は今回の主対象ではありませんが、アイデアボードカテゴリの並び順を
+             * 固定するために API / 地震LPの後ろへ置きます。本体やモック側の内容には触れません。
              */
-            'id' => 'construction-order-workflow-concept',
+            'id' => 'construction-order-workflow-idea-board',
             'title' => '工事発注管理・請求システム',
             'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
-            'status' => 'PP',
-            'category' => 'PP',
-            'href' => '/lab/construction-order-workflow-pp',
+            'status' => 'アイデアボード',
+            'category' => 'IDEA-BOARD',
+            'href' => '/lab/construction-order-workflow-idea-board',
             'actionLabel' => '構想を見る',
             'tags' => [
                 '工事発注',
@@ -112,7 +135,7 @@ Route::get('/lab', function () {
             'title' => 'Spec Flow Trainer',
             'summary' => 'コードを書く前の設計を、仕様・DTO / ListDTO・ADR責務・TDD・AI指示として視覚化する開発補助ツール。',
             'status' => '構想・設計中',
-            'category' => 'PP',
+            'category' => 'IDEA-BOARD',
             'href' => '/lab/spec-flow-trainer',
             'actionLabel' => '構想を見る',
             'tags' => [
@@ -126,28 +149,6 @@ Route::get('/lab', function () {
                 'Mermaid',
                 'GPT相談用テキスト',
             ],
-        ],
-        [
-            /*
-             * PROJECTカテゴリには、実装済み本体画面への直接導線も残します。
-             * PPカテゴリは紹介、PROJECTカテゴリは実データやDBを読む本体確認、という役割を分けます。
-             */
-            'id' => 'api-discovery-hub',
-            'title' => 'API Discovery Hub 本番一覧',
-            'summary' => '公開APIを検索・調査・保存していくためのAPIカタログ本体画面です。',
-            'status' => 'Preview',
-            'category' => 'PROJECT',
-            'href' => '/api-catalog',
-        ],
-        [
-            // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
-            // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
-            'id' => 'quakewave-preview',
-            'title' => 'Japan Quake Wave Map 地図表示',
-            'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
-            'status' => 'Preview',
-            'category' => 'PROJECT',
-            'href' => '/quakewave-preview/map',
         ],
         [
             // API Preview は本体同期とは切り離した、外部API疎通確認用のモック入口です。
@@ -185,39 +186,52 @@ Route::get('/lab', function () {
     ]);
 })->name('lab.index');
 
-Route::get('/lab/api-discovery-hub-pp', function () {
+Route::get('/lab/api-discovery-hub-idea-board', function () {
     /*
      * API Discovery Hub 本体機能の紹介LPです。
      * ここでは Inertia ページを返すだけに限定し、DBキャッシュ取得、同期開始、
      * status API 取得、メモ保存などの本体責務は既存ルートへ残します。
      */
     return Inertia::render('Lab/ApiDiscoveryHubPp');
-})->name('lab.api-discovery-hub-pp');
+})->name('lab.api-discovery-hub-idea-board');
 
-Route::get('/lab/quake-wave-map-pp', function () {
+/*
+ * PP から IDEA-BOARD へ名称変更しましたが、過去に共有したURLやREADMEの古いリンクから
+ * 404へ落ちないよう旧URLは新URLへ寄せます。表示責務は新しい idea-board ルートだけに置き、
+ * 旧ルート側では Inertia component を直接返しません。
+ */
+Route::redirect('/lab/api-discovery-hub-pp', '/lab/api-discovery-hub-idea-board');
+
+Route::get('/lab/quake-wave-map-idea-board', function () {
     /*
      * Japan Quake Wave Map 本体機能の紹介LPです。
      * XML取得、feed同期、map pin同期、地図props生成は既存の QuakeWave Preview 側の責務です。
      * このルートでは紹介ページの表示だけを行い、外部APIやDBには触りません。
      */
     return Inertia::render('Lab/QuakeWaveMapPp');
-})->name('lab.quake-wave-map-pp');
+})->name('lab.quake-wave-map-idea-board');
+
+// 旧PP URLの互換導線です。実体表示は idea-board ルートへ集約します。
+Route::redirect('/lab/quake-wave-map-pp', '/lab/quake-wave-map-idea-board');
 
 Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。
     return Inertia::render('Lab/ConstructionOrderWorkflowMock');
 })->name('lab.construction-order-workflow-mock');
 
-Route::get('/lab/construction-order-workflow-pp', function () {
+Route::get('/lab/construction-order-workflow-idea-board', function () {
     // 非エンジニア向けの構想説明ページです。本番処理や保存処理は持たせません。
     return Inertia::render('Lab/ConstructionOrderWorkflowPP');
-})->name('lab.construction-order-workflow-pp');
+})->name('lab.construction-order-workflow-idea-board');
+
+// 旧PP URLの互換導線です。工事発注の説明ページも新しい名称のURLへ統一します。
+Route::redirect('/lab/construction-order-workflow-pp', '/lab/construction-order-workflow-idea-board');
 
 Route::get('/lab/spec-flow-trainer', function () {
     /*
      * SpecFlowTrainer の構想紹介ページです。
      * 実体アプリの保存処理、Mermaid生成、React Flow編集はまだ持たせず、
-     * portfolio 上の PP として「何を作る予定か」を静的に説明する責務に限定します。
+     * portfolio 上のアイデアボードとして「何を作る予定か」を静的に説明する責務に限定します。
      */
     return Inertia::render('Lab/SpecFlowTrainer');
 })->name('lab.spec-flow-trainer');

@@ -58,7 +58,7 @@ export default function ConstructionBillingFormExcelSystemSection() {
 
             <div className="mt-5 min-w-0 rounded-lg border border-white/14 bg-white/8 p-4">
                 <p className="text-sm leading-6 text-slate-200/78">
-                    Excelは一覧を見るための正本ではありません。ExcelからCSVを出せれば、Form入力と同じ登録処理に乗せられる、という境界をPP上で見せます。
+                    Excelは一覧を見るための正本ではありません。ExcelからCSVを出せれば、Form入力と同じ登録処理に乗せられる、という境界をアイデアボード上で見せます。
                 </p>
                 <MermaidDiagram
                     chart={formExcelSystemFlowChart}

@@ -10,12 +10,12 @@ class LabIndexTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_lab_lists_portfolio_pp_entries_in_display_order(): void
+    public function test_lab_lists_project_idea_board_and_mock_entries_in_display_order(): void
     {
         /*
-         * PPカテゴリの表示順は、面接時に見せる機能紹介LPの導線として固定します。
-         * 単に「カードがある」だけでは、API / 地震 / 工事発注 / Spec Flow Trainer の優先順が
-         * 崩れても検知できないため、配列indexまで明示して確認します。
+         * Lab Index は PROJECT -> IDEA-BOARD -> MOCK の順で見せます。
+         * 単に「カードがある」だけではカテゴリ順が崩れても検知できないため、
+         * 配列indexまで明示して確認します。
          */
         $this
             ->get('/lab')
@@ -23,52 +23,52 @@ class LabIndexTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/Index', false)
                 ->has('experiments', 9)
-                ->where('experiments.0.id', 'api-discovery-hub-pp')
-                ->where('experiments.0.title', 'API Discovery Hub')
-                ->where('experiments.0.status', '完成済み')
-                ->where('experiments.0.category', 'PP')
-                ->where('experiments.0.href', '/lab/api-discovery-hub-pp')
-                ->where('experiments.1.id', 'quake-wave-map-pp')
-                ->where('experiments.1.title', 'Japan Quake Wave Map')
-                ->where('experiments.1.status', '完成済み')
-                ->where('experiments.1.category', 'PP')
-                ->where('experiments.1.href', '/lab/quake-wave-map-pp')
-                ->where('experiments.2.id', 'construction-order-workflow-concept')
-                ->where('experiments.2.title', '工事発注管理・請求システム')
-                ->where('experiments.2.status', 'PP')
-                ->where('experiments.2.category', 'PP')
-                ->where('experiments.2.href', '/lab/construction-order-workflow-pp')
-                ->where('experiments.3.id', 'spec-flow-trainer')
-                ->where('experiments.3.title', 'Spec Flow Trainer')
-                ->where('experiments.3.status', '構想・設計中')
-                ->where('experiments.3.category', 'PP')
-                ->where('experiments.3.href', '/lab/spec-flow-trainer')
+                ->where('experiments.0.id', 'api-discovery-hub')
+                ->where('experiments.0.title', 'API Discovery Hub 本番一覧')
+                ->where('experiments.0.status', 'Preview')
+                ->where('experiments.0.category', 'PROJECT')
+                ->where('experiments.0.href', '/api-catalog')
+                ->where('experiments.1.id', 'quakewave-preview')
+                ->where('experiments.1.title', 'Japan Quake Wave Map 地図表示')
+                ->where('experiments.1.status', 'Preview')
+                ->where('experiments.1.category', 'PROJECT')
+                ->where('experiments.1.href', '/quakewave-preview/map')
+                ->where('experiments.2.id', 'api-discovery-hub-idea-board')
+                ->where('experiments.2.title', 'API Discovery Hub')
+                ->where('experiments.2.status', '完成済み')
+                ->where('experiments.2.category', 'IDEA-BOARD')
+                ->where('experiments.2.href', '/lab/api-discovery-hub-idea-board')
+                ->where('experiments.3.id', 'quake-wave-map-idea-board')
+                ->where('experiments.3.title', 'Japan Quake Wave Map')
+                ->where('experiments.3.status', '完成済み')
+                ->where('experiments.3.category', 'IDEA-BOARD')
+                ->where('experiments.3.href', '/lab/quake-wave-map-idea-board')
+                ->where('experiments.4.id', 'construction-order-workflow-idea-board')
+                ->where('experiments.4.title', '工事発注管理・請求システム')
+                ->where('experiments.4.status', 'アイデアボード')
+                ->where('experiments.4.category', 'IDEA-BOARD')
+                ->where('experiments.4.href', '/lab/construction-order-workflow-idea-board')
+                ->where('experiments.5.id', 'spec-flow-trainer')
+                ->where('experiments.5.title', 'Spec Flow Trainer')
+                ->where('experiments.5.status', '構想・設計中')
+                ->where('experiments.5.category', 'IDEA-BOARD')
+                ->where('experiments.5.href', '/lab/spec-flow-trainer')
+                ->where('experiments.6.category', 'MOCK')
             );
     }
 
-    public function test_lab_keeps_existing_project_and_mock_links(): void
+    public function test_lab_keeps_existing_mock_links(): void
     {
         /*
-         * 今回の主対象はPP紹介ページですが、既存のPROJECT / MOCK導線を壊さないことも仕様です。
-         * API本番一覧、地震地図、API Preview、QuakeWave Preview、工事発注モックが
-         * これまで通り開けることを、LabのInertia props上で固定します。
+         * 既存の MOCK 導線を壊さないことも仕様です。
+         * API Preview、QuakeWave Preview、工事発注モックがこれまで通り開けることを、
+         * LabのInertia props上で固定します。
          */
         $this
             ->get('/lab')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/Index', false)
-                ->where('experiments.4.id', 'api-discovery-hub')
-                ->where('experiments.4.title', 'API Discovery Hub 本番一覧')
-                ->where('experiments.4.status', 'Preview')
-                ->where('experiments.4.category', 'PROJECT')
-                ->where('experiments.4.href', '/api-catalog')
-                ->where('experiments.5.id', 'quakewave-preview')
-                ->where('experiments.5.title', 'Japan Quake Wave Map 地図表示')
-                ->where('experiments.5.status', 'Preview')
-                ->where('experiments.5.category', 'PROJECT')
-                ->where('experiments.5.href', '/quakewave-preview/map')
-                ->where('experiments.5.summary', '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。')
                 ->where('experiments.6.id', 'api-preview')
                 ->where('experiments.6.title', 'API Preview')
                 ->where('experiments.6.status', 'Mock')
@@ -87,7 +87,7 @@ class LabIndexTest extends TestCase
             );
     }
 
-    public function test_lab_keeps_existing_pp_pages_available(): void
+    public function test_lab_keeps_existing_idea_board_pages_available(): void
     {
         $this
             ->get('/lab/spec-flow-trainer')
@@ -97,10 +97,29 @@ class LabIndexTest extends TestCase
             );
     }
 
-    public function test_construction_order_workflow_pp_page_is_available(): void
+    public function test_lab_redirects_legacy_pp_urls_to_idea_board_urls(): void
     {
+        /*
+         * PPからIDEA-BOARDへ名称変更しても、過去に共有したURLは壊さない方針です。
+         * 旧URLは表示componentを直接返さず、新しいURLへ寄せることで導線名を一箇所へ統一します。
+         */
+        $this
+            ->get('/lab/api-discovery-hub-pp')
+            ->assertRedirect('/lab/api-discovery-hub-idea-board');
+
+        $this
+            ->get('/lab/quake-wave-map-pp')
+            ->assertRedirect('/lab/quake-wave-map-idea-board');
+
         $this
             ->get('/lab/construction-order-workflow-pp')
+            ->assertRedirect('/lab/construction-order-workflow-idea-board');
+    }
+
+    public function test_construction_order_workflow_idea_board_page_is_available(): void
+    {
+        $this
+            ->get('/lab/construction-order-workflow-idea-board')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/ConstructionOrderWorkflowPP', false)

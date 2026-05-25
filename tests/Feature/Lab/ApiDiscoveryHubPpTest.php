@@ -7,7 +7,7 @@ use Tests\TestCase;
 
 class ApiDiscoveryHubPpTest extends TestCase
 {
-    public function test_api_discovery_hub_pp_page_is_available(): void
+    public function test_api_discovery_hub_idea_board_page_is_available(): void
     {
         /*
          * 紹介LPはDBや外部APIを触らない静的Inertiaページです。
@@ -15,7 +15,7 @@ class ApiDiscoveryHubPpTest extends TestCase
          * ルート削除やcomponent名変更による導線破壊を検知します。
          */
         $this
-            ->get('/lab/api-discovery-hub-pp')
+            ->get('/lab/api-discovery-hub-idea-board')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/ApiDiscoveryHubPp', false)

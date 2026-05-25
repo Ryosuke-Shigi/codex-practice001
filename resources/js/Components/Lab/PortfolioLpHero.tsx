@@ -20,7 +20,7 @@ type PortfolioLpHeroProps = {
 };
 
 /*
- * PortfolioLpHero は PP 紹介ページ共通の「最初に読む領域」です。
+ * PortfolioLpHero はアイデアボード紹介ページ共通の「最初に読む領域」です。
  * ここではタイトル、短い価値説明、主要キーワード、本体機能への導線を表示するだけに限定します。
  * 本体機能の状態取得や同期開始はLPの責務ではないため、children にはリンクボタンなどの
  * 静的な表示要素だけを渡す前提です。
@@ -43,12 +43,12 @@ export default function PortfolioLpHero({
         */
         <header className="grid min-w-0 max-w-full gap-6 py-4 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1fr)_minmax(280px,420px)] lg:items-end">
             <div className="min-w-0">
-                <nav aria-label="PPページの戻り導線">
+                <nav aria-label="アイデアボードページの戻り導線">
                     <Link
-                        href="/lab?category=PP"
+                        href="/lab?category=IDEA-BOARD"
                         className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/18 bg-white/10 px-4 text-sm font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        PP一覧へ戻る
+                        アイデアボード一覧へ戻る
                     </Link>
                 </nav>
 
