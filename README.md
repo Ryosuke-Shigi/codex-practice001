@@ -15,6 +15,23 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフ�
 - Test: PHPUnit / Laravel Feature Test / Unit Test / Vitest
 - CI/CD: GitHub Actions / CI成功後のみLightsailへDeploy
 
+## 評価してほしい技術的ポイント
+
+このポートフォリオで見せたい中心は、単に「AIを使ってWebアプリを作ったこと」ではありません。
+
+**人間が仕様・責務・境界・テスト観点を決め、ChatGPT / CodexApp を使って実装速度を上げながら、テスト・レビュー・コメント・ドキュメントで後から理解を再起動できる形にする開発フロー**です。
+
+特に評価してほしい点は以下です。
+
+- AIに仕様決定や完成判定を任せず、人間が設計判断を握っていること
+- ADRパターンとレイヤードアーキテクチャで、Action / Service / Repository / DTO / Responder の責務を分けていること
+- Queue / Scheduler / status API により、重い外部データ同期を画面操作から分離していること
+- Feature / Unit Test / Vitest / GitHub Actions により、AI生成・修正後も壊してはいけない仕様を確認できること
+- README / docs / AGENTS.md / コードコメントにより、後から人間とAIが作業文脈を再取得できること
+- APIカタログと地震XML可視化という別ドメインへ、同じ設計方針を適用していること
+
+このため、このリポジトリは「完成画面の見た目」だけではなく、設計方針、テスト、CI/CD、AIエージェント向けルール、理解再起動のためのドキュメントまで含めて評価対象としています。
+
 ## このポートフォリオで見せたいこと
 
 このポートフォリオは、AIにコードを丸投げして作ったアプリではありません。
@@ -190,7 +207,7 @@ IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静�
 
 ### API Discovery Hub - 一覧
 
-<img width="955" height="957" alt="API Catalog一覧画面" src="https://github.com/user-attachments/assets/4b5a1f7f-f2f7-4600-9f67-306b6633b1a9" />
+<img width="955" height="957" alt="API Catalog一覧画面" src="https://github.com/user-attachments/assets/f2f7-4600-9f67-306b6633b1a9" />
 
 ### API Discovery Hub - 詳細
 
