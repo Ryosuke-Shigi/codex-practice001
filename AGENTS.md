@@ -11,6 +11,7 @@
 - 作業開始時に AGENTS.md を確認する
 - 設計方針・責務境界に関わる変更を行う場合は `docs/architecture.md` を確認する
 - テスト追加・更新、または仕様破壊確認が関わる変更を行う場合は `docs/testing.md` を確認する
+- プロトタイプの作成・修正・削除・本番化を行う場合は `docs/prototype-policy.md` を確認する
 - 判断に迷う場合は、実装前に `docs/architecture.md` と `docs/testing.md` の両方を確認する
 - README.md は外部向け概要説明として扱い、設計・テスト・AI作業ルールの詳細は各ドキュメントを参照する
 
