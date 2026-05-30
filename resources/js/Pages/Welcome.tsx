@@ -74,25 +74,45 @@ export default function Welcome() {
                 </div>
 
                 <motion.div
-                    className="absolute inset-x-0 bottom-[13dvh] z-30 flex justify-center px-6 sm:bottom-[14dvh]"
+                    className="absolute inset-x-0 bottom-[10dvh] z-30 flex flex-col items-center justify-center gap-4 px-6 sm:bottom-[12dvh]"
                     initial={{ opacity: 0, scale: 0.94, y: 16 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ delay: 0.25, duration: 0.8, ease: 'easeOut' }}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
                 >
-                    <Link
-                        href="/lab"
-                        className="group relative inline-flex min-h-[68px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/22 px-11 py-4 text-lg font-bold uppercase tracking-[0.26em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-18px_36px_rgba(18,99,131,0.24),0_20px_46px_rgba(2,35,63,0.34)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-white/30 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-h-[76px] sm:min-w-[232px] sm:text-xl"
+                    {/*
+                        START と設計思想は、PC幅でも横並びにしない導線です。
+                        motion の hover / tap は各ボタンに分け、親は縦積みレイアウトだけを担当します。
+                    */}
+                    <motion.div
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
                     >
-                        {/*
-                            Inertia Link keeps this as a client-side page visit
-                            instead of a full reload, so the Laravel/Inertia shell
-                            remains intact when moving from Welcome to Lab.
-                        */}
-                        <span className="absolute inset-x-5 top-2 h-5 rounded-full bg-white/35 blur-md transition duration-300 group-hover:bg-white/45" />
-                        <span className="relative">START</span>
-                    </Link>
+                        <Link
+                            href="/lab"
+                            className="group relative inline-flex min-h-[68px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/22 px-11 py-4 text-lg font-bold uppercase tracking-[0.26em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-18px_36px_rgba(18,99,131,0.24),0_20px_46px_rgba(2,35,63,0.34)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-white/30 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-h-[76px] sm:min-w-[232px] sm:text-xl"
+                        >
+                            {/*
+                                Inertia Link keeps this as a client-side page visit
+                                instead of a full reload, so the Laravel/Inertia shell
+                                remains intact when moving from Welcome to Lab.
+                            */}
+                            <span className="absolute inset-x-5 top-2 h-5 rounded-full bg-white/35 blur-md transition duration-300 group-hover:bg-white/45" />
+                            <span className="relative">START</span>
+                        </Link>
+                    </motion.div>
+
+                    <motion.div
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
+                        <Link
+                            href="/design-philosophy"
+                            className="group relative inline-flex min-h-[54px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-cyan-50/50 bg-cyan-950/24 px-9 py-3 text-base font-bold text-cyan-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.46),0_14px_34px_rgba(2,35,63,0.24)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-cyan-50/18 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-w-[232px] sm:text-lg"
+                        >
+                            <span className="absolute inset-x-5 top-2 h-4 rounded-full bg-white/20 blur-md transition duration-300 group-hover:bg-white/30" />
+                            <span className="relative">設計思想</span>
+                        </Link>
+                    </motion.div>
                 </motion.div>
             </section>
         </PublicLayout>
