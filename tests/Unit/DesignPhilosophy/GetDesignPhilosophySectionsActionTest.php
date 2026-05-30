@@ -9,6 +9,26 @@ use Tests\TestCase;
 
 class GetDesignPhilosophySectionsActionTest extends TestCase
 {
+    public function test_execute_returns_default_config_sections_in_display_order(): void
+    {
+        $sections = app(GetDesignPhilosophySectionsAction::class)->execute();
+
+        $this->assertSame([
+            'hero',
+            'human-driven',
+            'agent-guide',
+            'spec-first',
+            'dto-boundary',
+            'layered-architecture',
+            'tdd-guardrail',
+            'review-flow',
+            'understanding-reboot',
+        ], array_map(
+            fn (DesignPhilosophySectionDTO $section): string => $section->key,
+            $sections,
+        ));
+    }
+
     public function test_execute_returns_enabled_sections_sorted_by_sort_order_as_dtos(): void
     {
         Config::set('design_philosophy.sections', [

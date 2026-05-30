@@ -8,6 +8,29 @@ use Tests\TestCase;
 
 class DesignPhilosophyPageTest extends TestCase
 {
+    public function test_design_philosophy_page_renders_default_sections_from_config(): void
+    {
+        $this
+            ->get('/design-philosophy')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('DesignPhilosophy/Index', false)
+                ->has('sections', 9)
+                ->where('sections.0.key', 'hero')
+                ->where('sections.0.title', 'AIに丸投げしない。')
+                ->where('sections.1.key', 'human-driven')
+                ->where('sections.1.title', '人間が仕様・責務・判断を握る。')
+                ->where('sections.2.key', 'agent-guide')
+                ->where('sections.3.key', 'spec-first')
+                ->where('sections.4.key', 'dto-boundary')
+                ->where('sections.5.key', 'layered-architecture')
+                ->where('sections.6.key', 'tdd-guardrail')
+                ->where('sections.7.key', 'review-flow')
+                ->where('sections.8.key', 'understanding-reboot')
+                ->where('sections.8.title', '理解を再起動できる構造にする。')
+            );
+    }
+
     public function test_design_philosophy_page_renders_sorted_enabled_sections(): void
     {
         Config::set('design_philosophy.sections', [
