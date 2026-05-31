@@ -104,13 +104,15 @@ IDEA-BOARD表示順:
 
 1. API Discovery Hub
 2. Japan Quake Wave Map
-3. 工事発注管理・請求システム
-4. Spec Flow Trainer
+3. Dance Shorts Radar
+4. 工事発注管理・請求システム
+5. Spec Flow Trainer
 
 主なIDEA-BOARD導線:
 
 - `/lab/api-discovery-hub-idea-board`: API Discovery Hub の紹介ページ
 - `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map の紹介ページ
+- `/lab/dance-shorts-radar-idea-board`: Dance Shorts Radar の構想説明
 - `/lab/construction-order-workflow-idea-board`: 工事発注管理・請求システムの構想説明
 - `/lab/spec-flow-trainer`: Spec Flow Trainer の構想説明
 
@@ -151,6 +153,7 @@ IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静�
 - `/lab`: 実験・機能一覧
 - `/lab/api-discovery-hub-idea-board`: API Discovery Hub 紹介ページ
 - `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map 紹介ページ
+- `/lab/dance-shorts-radar-idea-board`: Dance Shorts Radar 構想説明
 - `/api-preview`: 外部API確認用画面
 - `/api-catalog`: API Discovery Hub の本番一覧
 - `/api-catalog/{apiKey}`: API詳細・調査メモ画面
@@ -286,6 +289,7 @@ Lab / IDEA-BOARD:
 
 - `tests/Feature/Lab/ApiDiscoveryHubPpTest.php`
 - `tests/Feature/Lab/QuakeWaveMapPpTest.php`
+- `tests/Feature/Lab/DanceShortsRadarTest.php`
 - `tests/Feature/Lab/LabIndexTest.php`
 
 テスト実行:

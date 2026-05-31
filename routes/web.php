@@ -110,6 +110,29 @@ Route::get('/lab', function () {
         ],
         [
             /*
+             * Dance Shorts Radar は、YouTube Data API を使った次のポートフォリオ候補です。
+             * まだ本体処理やDB保存は持たせず、IDEA-BOARD として API 方針、snapshot 設計、
+             * 断定しない分析UIの見せ方を整理する入口に限定します。
+             */
+            'id' => 'dance-shorts-radar-idea-board',
+            'title' => 'Dance Shorts Radar',
+            'summary' => 'YouTube Shorts のダンス候補を、公開APIの統計snapshotと差分から分析するポートフォリオ候補です。',
+            'status' => 'ポートフォリオ候補',
+            'category' => 'IDEA-BOARD',
+            'href' => '/lab/dance-shorts-radar-idea-board',
+            'actionLabel' => '構想を見る',
+            'tags' => [
+                'YouTube Data API',
+                'Shorts',
+                'Snapshot',
+                '差分計算',
+                'JP / US / KR',
+                'Scheduler',
+                'Ranking',
+            ],
+        ],
+        [
+            /*
              * 工事発注は今回の主対象ではありませんが、アイデアボードカテゴリの並び順を
              * 固定するために API / 地震LPの後ろへ置きます。本体やモック側の内容には触れません。
              */
@@ -217,6 +240,15 @@ Route::get('/lab/quake-wave-map-idea-board', function () {
 
 // 旧PP URLの互換導線です。実体表示は idea-board ルートへ集約します。
 Route::redirect('/lab/quake-wave-map-pp', '/lab/quake-wave-map-idea-board');
+
+Route::get('/lab/dance-shorts-radar-idea-board', function () {
+    /*
+     * Dance Shorts Radar の構想紹介ページです。
+     * YouTube Data API の疎通、DB保存、snapshot計算、ランキング画面はまだ持たせず、
+     * portfolio 上のアイデアボードとして「何を作る予定か」を静的に説明する責務に限定します。
+     */
+    return Inertia::render('Lab/DanceShortsRadar');
+})->name('lab.dance-shorts-radar-idea-board');
 
 Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。
