@@ -12,6 +12,8 @@ use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepository;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
+use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepository;
@@ -47,6 +49,12 @@ class AppServiceProvider extends ServiceProvider
          * Action は Interface に依存し、実 HTTP 通信は ApisGuruPreviewRepository が担当します。
          */
         $this->app->bind(ApisGuruPreviewRepositoryInterface::class, ApisGuruPreviewRepository::class);
+
+        /*
+         * DanceShortsRadar 側の YouTube カテゴリ取得依存です。
+         * 地域別カテゴリは youtube_category_id と region_code の複合条件で Repository から取得します。
+         */
+        $this->app->bind(DanceShortVideoCategoryRepositoryInterface::class, DanceShortVideoCategoryRepository::class);
 
         /*
          * QuakeWave Preview 側の XML 取得依存です。

@@ -33,19 +33,21 @@ class DanceShortVideo extends Model
         'embeddable' => 'boolean',
     ];
 
+    /*
+     * 動画本体は地域に属さない集約です。
+     * category_id には YouTube の categoryId だけを保持しますが、この値だけでは
+     * dance_short_video_categories の地域別行を一意に決められません。
+     *
+     * 例: category_id = 10 の動画に対して、JP / US / KR それぞれのカテゴリ行が存在します。
+     * そのため、地域別カテゴリ名が必要な場合は snapshot の region_id から region.code を取得し、
+     * category_id + region.code を DanceShortVideoCategoryRepository に渡して解決します。
+     */
+
     /**
      * @return HasMany<DanceShortVideoSnapshot>
      */
     public function snapshots(): HasMany
     {
         return $this->hasMany(DanceShortVideoSnapshot::class, 'video_id');
-    }
-
-    /**
-     * @return HasMany<DanceShortVideoCategory>
-     */
-    public function videoCategories(): HasMany
-    {
-        return $this->hasMany(DanceShortVideoCategory::class, 'youtube_category_id', 'category_id');
     }
 }
