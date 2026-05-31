@@ -3,10 +3,21 @@
 namespace App\Actions\DanceShortsRadar\Commands;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
+use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 
 class SyncDanceShortVideosAction
 {
+    public function __construct(
+        private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
+    ) {
+        /*
+         * 今回は Repository を DI できる接続口だけ用意します。
+         * execute() ではまだ実 API 呼び出しや DB 保存を行わず、次工程で
+         * region / keyword 取得、検索、詳細取得、保存処理を順番に接続できる形に留めます。
+         */
+    }
+
     public function execute(): DanceShortVideoSyncResultDTO
     {
         /*

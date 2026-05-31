@@ -5,6 +5,7 @@ namespace Tests\Feature\DanceShortsRadar;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
+use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -34,7 +35,7 @@ class DanceShortSyncCommandTest extends TestCase
          * Action を例外化して container に差し替え、Command が本体を直接触らない境界を守ります。
          */
         Queue::fake();
-        $this->app->instance(SyncDanceShortVideosAction::class, new class extends SyncDanceShortVideosAction {
+        $this->app->instance(SyncDanceShortVideosAction::class, new class($this->youtubeRepository()) extends SyncDanceShortVideosAction {
             public function execute(): DanceShortVideoSyncResultDTO
             {
                 throw new RuntimeException('Command should only dispatch the sync job.');
@@ -47,5 +48,10 @@ class DanceShortSyncCommandTest extends TestCase
             ->assertExitCode(0);
 
         Queue::assertPushed(SyncDanceShortVideosJob::class);
+    }
+
+    private function youtubeRepository(): YouTubeVideoApiRepositoryInterface
+    {
+        return $this->createStub(YouTubeVideoApiRepositoryInterface::class);
     }
 }

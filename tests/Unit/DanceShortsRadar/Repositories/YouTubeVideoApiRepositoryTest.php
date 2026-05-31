@@ -1,0 +1,281 @@
+<?php
+
+namespace Tests\Unit\DanceShortsRadar\Repositories;
+
+use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
+use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Tests\TestCase;
+
+class YouTubeVideoApiRepositoryTest extends TestCase
+{
+    public function test_search_videos_sends_search_query_and_maps_result_items(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/search*' => Http::response([
+                'items' => [
+                    [
+                        'id' => [
+                            'kind' => 'youtube#video',
+                            'videoId' => 'search-video-001',
+                        ],
+                        'snippet' => [
+                            'publishedAt' => '2026-05-31T12:00:00Z',
+                            'channelId' => 'channel-001',
+                            'title' => 'Dance candidate',
+                            'description' => 'Search result description.',
+                            'thumbnails' => [
+                                'default' => ['url' => 'https://example.test/default.jpg'],
+                                'medium' => ['url' => 'https://example.test/medium.jpg'],
+                                'high' => ['url' => 'https://example.test/high.jpg'],
+                            ],
+                            'channelTitle' => 'Dance Channel',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $items = $this->repository()->searchVideos($this->condition());
+
+        $this->assertCount(1, $items);
+        $this->assertInstanceOf(YouTubeVideoSearchItemDTO::class, $items[0]);
+        $this->assertSame('search-video-001', $items[0]->youtubeVideoId);
+        $this->assertSame('Dance candidate', $items[0]->title);
+        $this->assertSame('https://example.test/high.jpg', $items[0]->thumbnailUrl);
+
+        Http::assertSent(function (Request $request): bool {
+            $query = $this->queryFromRequest($request);
+
+            return str_starts_with($request->url(), 'https://www.googleapis.test/youtube/v3/search')
+                && $request->method() === 'GET'
+                && $query['key'] === 'test-youtube-api-key'
+                && $query['part'] === 'snippet'
+                && $query['type'] === 'video'
+                && $query['q'] === 'dance shorts'
+                && $query['regionCode'] === 'JP'
+                && $query['relevanceLanguage'] === 'ja'
+                && $query['maxResults'] === '25'
+                && $query['publishedAfter'] === '2026-05-24T00:00:00+00:00'
+                && $query['videoDuration'] === 'short';
+        });
+    }
+
+    public function test_fetch_video_details_sends_comma_separated_ids_and_maps_detail_items(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => Http::response([
+                'items' => [
+                    [
+                        'id' => 'detail-video-001',
+                        'snippet' => [
+                            'publishedAt' => '2026-05-31T12:00:00Z',
+                            'channelId' => 'channel-001',
+                            'title' => 'Dance detail',
+                            'description' => 'Detail description.',
+                            'thumbnails' => [
+                                'medium' => ['url' => 'https://example.test/medium.jpg'],
+                            ],
+                            'channelTitle' => 'Dance Channel',
+                            'categoryId' => '10',
+                            'tags' => ['dance', 'shorts'],
+                            'defaultLanguage' => 'ja',
+                            'defaultAudioLanguage' => 'ja',
+                            'liveBroadcastContent' => 'none',
+                        ],
+                        'contentDetails' => [
+                            'duration' => 'PT58S',
+                        ],
+                        'statistics' => [
+                            'viewCount' => '123456',
+                            'likeCount' => '7890',
+                            'commentCount' => '123',
+                        ],
+                        'status' => [
+                            'embeddable' => true,
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $items = $this->repository()->fetchVideoDetails(['detail-video-001', 'detail-video-002']);
+
+        $this->assertCount(1, $items);
+        $this->assertInstanceOf(YouTubeVideoDetailDTO::class, $items[0]);
+        $this->assertSame('detail-video-001', $items[0]->youtubeVideoId);
+        $this->assertSame('PT58S', $items[0]->duration);
+        $this->assertSame(['dance', 'shorts'], $items[0]->tags);
+        $this->assertTrue($items[0]->embeddable);
+        $this->assertSame(123456, $items[0]->viewCount);
+        $this->assertSame(7890, $items[0]->likeCount);
+        $this->assertSame(123, $items[0]->commentCount);
+        $this->assertSame('https://example.test/medium.jpg', $items[0]->thumbnailUrl);
+
+        Http::assertSent(function (Request $request): bool {
+            $query = $this->queryFromRequest($request);
+
+            return str_starts_with($request->url(), 'https://www.googleapis.test/youtube/v3/videos')
+                && $request->method() === 'GET'
+                && $query['key'] === 'test-youtube-api-key'
+                && $query['part'] === 'snippet,contentDetails,statistics,status'
+                && $query['id'] === 'detail-video-001,detail-video-002';
+        });
+    }
+
+    public function test_fetch_video_details_handles_missing_like_and_comment_counts(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => Http::response([
+                'items' => [
+                    [
+                        'id' => 'detail-video-optional-statistics',
+                        'snippet' => [
+                            'title' => 'Optional statistics video',
+                        ],
+                        'statistics' => [
+                            'viewCount' => '1000',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $items = $this->repository()->fetchVideoDetails(['detail-video-optional-statistics']);
+
+        $this->assertSame(1000, $items[0]->viewCount);
+        $this->assertNull($items[0]->likeCount);
+        $this->assertNull($items[0]->commentCount);
+    }
+
+    public function test_thumbnail_priority_uses_high_then_medium_then_default(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/search*' => Http::response([
+                'items' => [
+                    [
+                        'id' => ['videoId' => 'with-high'],
+                        'snippet' => [
+                            'thumbnails' => [
+                                'default' => ['url' => 'https://example.test/default.jpg'],
+                                'medium' => ['url' => 'https://example.test/medium.jpg'],
+                                'high' => ['url' => 'https://example.test/high.jpg'],
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => ['videoId' => 'with-medium'],
+                        'snippet' => [
+                            'thumbnails' => [
+                                'default' => ['url' => 'https://example.test/default-only.jpg'],
+                                'medium' => ['url' => 'https://example.test/medium-only.jpg'],
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => ['videoId' => 'with-default'],
+                        'snippet' => [
+                            'thumbnails' => [
+                                'default' => ['url' => 'https://example.test/default-fallback.jpg'],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $items = $this->repository()->searchVideos($this->condition());
+
+        $this->assertSame('https://example.test/high.jpg', $items[0]->thumbnailUrl);
+        $this->assertSame('https://example.test/medium-only.jpg', $items[1]->thumbnailUrl);
+        $this->assertSame('https://example.test/default-fallback.jpg', $items[2]->thumbnailUrl);
+    }
+
+    public function test_missing_api_key_throws_before_sending_http_request(): void
+    {
+        config([
+            'services.youtube.api_key' => '',
+            'services.youtube.base_url' => 'https://www.googleapis.test/youtube/v3',
+        ]);
+
+        Http::preventStrayRequests();
+
+        try {
+            $this->repository()->searchVideos($this->condition());
+            $this->fail('Expected missing YouTube API key to throw.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('YouTube Data API key is not configured.', $exception->getMessage());
+        }
+
+        Http::assertNothingSent();
+    }
+
+    public function test_api_failure_is_exposed_as_runtime_exception_without_response_body(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/search*' => Http::response([
+                'error' => [
+                    'message' => 'upstream error body should not be exposed',
+                ],
+            ], 503),
+        ]);
+
+        try {
+            $this->repository()->searchVideos($this->condition());
+            $this->fail('Expected YouTube API failure to throw.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('YouTube Data API search.list request failed. Status: 503', $exception->getMessage());
+            $this->assertStringNotContainsString('upstream error body', $exception->getMessage());
+        }
+    }
+
+    private function configureYoutubeApi(): void
+    {
+        config([
+            'services.youtube.api_key' => 'test-youtube-api-key',
+            'services.youtube.base_url' => 'https://www.googleapis.test/youtube/v3',
+        ]);
+    }
+
+    private function repository(): YouTubeVideoApiRepositoryInterface
+    {
+        return app(YouTubeVideoApiRepositoryInterface::class);
+    }
+
+    private function condition(): DanceShortSearchConditionDTO
+    {
+        return new DanceShortSearchConditionDTO(
+            keyword: 'dance shorts',
+            regionCode: 'JP',
+            relevanceLanguage: 'ja',
+            maxResults: 25,
+            publishedAfter: CarbonImmutable::parse('2026-05-24 00:00:00', 'UTC'),
+            videoDuration: 'short',
+        );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function queryFromRequest(Request $request): array
+    {
+        parse_str(parse_url($request->url(), PHP_URL_QUERY) ?: '', $query);
+
+        return $query;
+    }
+}

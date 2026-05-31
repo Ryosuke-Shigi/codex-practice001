@@ -5,6 +5,7 @@ namespace Tests\Unit\DanceShortsRadar\Jobs;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
+use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +17,7 @@ class SyncDanceShortVideosJobTest extends TestCase
          * Job の handle() は Action を呼ぶことだけを確認します。
          * YouTube API の取得・DB保存・snapshot比較は Job の責務ではないため、このテストへ持ち込みません。
          */
-        $action = new class extends SyncDanceShortVideosAction {
+        $action = new class($this->youtubeRepository()) extends SyncDanceShortVideosAction {
             public bool $called = false;
 
             public function execute(): DanceShortVideoSyncResultDTO
@@ -40,7 +41,7 @@ class SyncDanceShortVideosJobTest extends TestCase
          * API 未接続の現段階では、Action はゼロ件の同期結果DTOを返すだけにします。
          * 後続で Repository / Service を接続するときも、外側の戻り値の型を保つための土台です。
          */
-        $result = (new SyncDanceShortVideosAction())->execute();
+        $result = (new SyncDanceShortVideosAction($this->youtubeRepository()))->execute();
 
         $this->assertInstanceOf(DanceShortVideoSyncResultDTO::class, $result);
         $this->assertSame(0, $result->searchedRegionCount);
@@ -64,5 +65,10 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertSame(300, $job->timeout);
         $this->assertTrue($job->failOnTimeout);
         $this->assertTrue(method_exists($job, 'failed'));
+    }
+
+    private function youtubeRepository(): YouTubeVideoApiRepositoryInterface
+    {
+        return $this->createStub(YouTubeVideoApiRepositoryInterface::class);
     }
 }

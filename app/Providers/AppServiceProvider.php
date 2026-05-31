@@ -14,6 +14,8 @@ use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepository;
+use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepository;
@@ -51,10 +53,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ApisGuruPreviewRepositoryInterface::class, ApisGuruPreviewRepository::class);
 
         /*
-         * DanceShortsRadar 側の YouTube カテゴリ取得依存です。
+         * DanceShortsRadar 側の YouTube 関連依存です。
          * 地域別カテゴリは youtube_category_id と region_code の複合条件で Repository から取得します。
+         * YouTubeVideoApiRepository は YouTube Data API v3 への HTTP 通信と DTO 変換だけを担当し、
+         * DB保存、snapshot保存、Shorts判定、増加量計算は後続の Service / Repository に分けます。
          */
         $this->app->bind(DanceShortVideoCategoryRepositoryInterface::class, DanceShortVideoCategoryRepository::class);
+        $this->app->bind(YouTubeVideoApiRepositoryInterface::class, YouTubeVideoApiRepository::class);
 
         /*
          * QuakeWave Preview 側の XML 取得依存です。
