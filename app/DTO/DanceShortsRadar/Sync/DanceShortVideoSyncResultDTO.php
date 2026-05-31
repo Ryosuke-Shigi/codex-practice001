@@ -17,8 +17,10 @@ final readonly class DanceShortVideoSyncResultDTO
         public int $savedVideoCount = 0,
         public int $savedSnapshotCount = 0,
         public int $skippedVideoCount = 0,
+        public int $skippedSnapshotByTrackingCount = 0,
         public int $excludedByShortsCount = 0,
         public int $skippedPersistenceCount = 0,
+        public int $cleanedUpSnapshotCount = 0,
         public int $failedCount = 0,
     ) {
     }
@@ -46,8 +48,10 @@ final readonly class DanceShortVideoSyncResultDTO
             'savedVideoCount' => $this->savedVideoCount,
             'savedSnapshotCount' => $this->savedSnapshotCount,
             'skippedVideoCount' => $this->skippedVideoCount,
+            'skippedSnapshotByTrackingCount' => $this->skippedSnapshotByTrackingCount,
             'excludedByShortsCount' => $this->excludedByShortsCount,
             'skippedPersistenceCount' => $this->skippedPersistenceCount,
+            'cleanedUpSnapshotCount' => $this->cleanedUpSnapshotCount,
             'failedCount' => $this->failedCount,
         ];
     }

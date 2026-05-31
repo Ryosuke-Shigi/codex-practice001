@@ -4,6 +4,7 @@ namespace App\Repositories\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotCreateDTO;
 use App\Models\DanceShortVideoSnapshot;
+use Carbon\CarbonInterface;
 
 class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotRepositoryInterface
 {
@@ -30,5 +31,16 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
             ->orderByDesc('collected_at')
             ->orderByDesc('id')
             ->first();
+    }
+
+    public function deleteCollectedBefore(CarbonInterface $cutoffAt): int
+    {
+        /*
+         * 物理削除の対象は保持期間を超えた snapshot だけです。
+         * video / region / keyword / category はここでは削除しません。
+         */
+        return DanceShortVideoSnapshot::query()
+            ->where('collected_at', '<', $cutoffAt->toDateTimeString())
+            ->delete();
     }
 }

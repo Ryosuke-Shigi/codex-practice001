@@ -26,8 +26,10 @@ class DanceShortVideoSyncResultDTOTest extends TestCase
             savedVideoCount: 12,
             savedSnapshotCount: 10,
             skippedVideoCount: 8,
+            skippedSnapshotByTrackingCount: 6,
             excludedByShortsCount: 3,
             skippedPersistenceCount: 2,
+            cleanedUpSnapshotCount: 4,
             failedCount: 1,
         );
 
@@ -42,8 +44,10 @@ class DanceShortVideoSyncResultDTOTest extends TestCase
             'savedVideoCount' => 12,
             'savedSnapshotCount' => 10,
             'skippedVideoCount' => 8,
+            'skippedSnapshotByTrackingCount' => 6,
             'excludedByShortsCount' => 3,
             'skippedPersistenceCount' => 2,
+            'cleanedUpSnapshotCount' => 4,
             'failedCount' => 1,
         ], $dto->toArray());
     }

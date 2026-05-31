@@ -13,6 +13,7 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
+use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -24,8 +25,10 @@ class SyncDanceShortVideosAction
         private readonly DanceShortVideoRepositoryInterface $videoRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoEligibilityService $eligibilityService,
+        private readonly DanceShortVideoTrackingService $trackingService,
         private readonly DanceShortVideoSaveDTOFactory $videoSaveDTOFactory,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
+        private readonly CleanupDanceShortVideoSnapshotsAction $cleanupAction,
     ) {
     }
 
@@ -51,6 +54,7 @@ class SyncDanceShortVideosAction
         $updatedVideoCount = 0;
         $savedSnapshotCount = 0;
         $skippedVideoCount = 0;
+        $skippedSnapshotByTrackingCount = 0;
         $excludedByShortsCount = 0;
         $skippedPersistenceCount = 0;
         $failedCount = 0;
@@ -125,6 +129,17 @@ class SyncDanceShortVideosAction
                     };
 
                     $video = $saveResult['video'];
+
+                    if (! $this->trackingService->isSnapshotSaveTarget($video->tracking_status)) {
+                        /*
+                         * inactive / archived の動画本体は削除せず、状態で追跡対象外を表現します。
+                         * snapshot は active の動画だけに積み、比較や再観測に使わない履歴が
+                         * 無制限に増え続けないようここで止めます。
+                         */
+                        $skippedSnapshotByTrackingCount++;
+                        continue;
+                    }
+
                     $previousSnapshot = $this->snapshotRepository->latestForVideoAndRegion(
                         (int) $video->getKey(),
                         (int) $region->getKey(),
@@ -158,6 +173,8 @@ class SyncDanceShortVideosAction
             }
         }
 
+        $cleanupResult = $this->cleanupAction->execute($executedAt);
+
         return new DanceShortVideoSyncResultDTO(
             executedAt: $executedAt,
             searchedRegionCount: $regions->count(),
@@ -174,8 +191,10 @@ class SyncDanceShortVideosAction
             savedVideoCount: $insertedVideoCount + $updatedVideoCount,
             savedSnapshotCount: $savedSnapshotCount,
             skippedVideoCount: $skippedVideoCount,
+            skippedSnapshotByTrackingCount: $skippedSnapshotByTrackingCount,
             excludedByShortsCount: $excludedByShortsCount,
             skippedPersistenceCount: $skippedPersistenceCount,
+            cleanedUpSnapshotCount: $cleanupResult->deletedSnapshotCount,
             failedCount: $failedCount,
         );
     }

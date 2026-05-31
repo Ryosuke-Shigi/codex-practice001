@@ -62,6 +62,26 @@ class DanceShortVideoRepositoryTest extends TestCase
         $this->assertNull($this->repository()->findByYoutubeVideoId('missing-video'));
     }
 
+    public function test_find_by_youtube_video_id_and_tracking_status_returns_only_matching_status(): void
+    {
+        $activeVideo = DanceShortVideo::query()->create([
+            'youtube_video_id' => 'active-video',
+            'title' => 'Active target',
+            'tracking_status' => 'active',
+        ]);
+        DanceShortVideo::query()->create([
+            'youtube_video_id' => 'inactive-video',
+            'title' => 'Inactive target',
+            'tracking_status' => 'inactive',
+        ]);
+
+        $found = $this->repository()->findByYoutubeVideoIdAndTrackingStatus('active-video', 'active');
+
+        $this->assertNotNull($found);
+        $this->assertTrue($activeVideo->is($found));
+        $this->assertNull($this->repository()->findByYoutubeVideoIdAndTrackingStatus('inactive-video', 'active'));
+    }
+
     private function repository(): DanceShortVideoRepositoryInterface
     {
         return app(DanceShortVideoRepositoryInterface::class);

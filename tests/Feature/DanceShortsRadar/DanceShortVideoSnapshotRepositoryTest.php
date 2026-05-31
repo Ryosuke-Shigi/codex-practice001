@@ -4,7 +4,9 @@ namespace Tests\Feature\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotCreateDTO;
 use App\Models\DanceShortRegion;
+use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
+use App\Models\DanceShortVideoCategory;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use Carbon\CarbonImmutable;
@@ -76,6 +78,69 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
 
         $this->assertNotNull($found);
         $this->assertTrue($latest->is($found));
+    }
+
+    public function test_delete_collected_before_physically_deletes_only_old_snapshots(): void
+    {
+        $region = $this->region();
+        DanceShortSearchKeyword::query()->create([
+            'region_id' => $region->getKey(),
+            'keyword' => 'dance shorts',
+        ]);
+        DanceShortVideoCategory::query()->create([
+            'youtube_category_id' => '10',
+            'region_code' => $region->code,
+            'title' => 'Music',
+        ]);
+        $video = $this->video();
+
+        $oldSnapshot = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 100,
+            'collected_at' => '2026-04-26 23:59:59',
+        ]);
+        $cutoffSnapshot = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 200,
+            'collected_at' => '2026-04-27 00:00:00',
+        ]);
+        $recentSnapshot = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 300,
+            'collected_at' => '2026-05-01 00:00:00',
+        ]);
+
+        $deletedCount = $this->repository()->deleteCollectedBefore(
+            CarbonImmutable::parse('2026-04-27 00:00:00', 'UTC'),
+        );
+
+        $this->assertSame(1, $deletedCount);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'id' => $oldSnapshot->getKey(),
+        ]);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $cutoffSnapshot->getKey(),
+        ]);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $recentSnapshot->getKey(),
+        ]);
+        $this->assertDatabaseHas('dance_short_videos', [
+            'id' => $video->getKey(),
+        ]);
+        $this->assertDatabaseHas('dance_short_regions', [
+            'id' => $region->getKey(),
+        ]);
+        $this->assertDatabaseHas('dance_short_search_keywords', [
+            'region_id' => $region->getKey(),
+            'keyword' => 'dance shorts',
+        ]);
+        $this->assertDatabaseHas('dance_short_video_categories', [
+            'youtube_category_id' => '10',
+            'region_code' => $region->code,
+        ]);
     }
 
     private function repository(): DanceShortVideoSnapshotRepositoryInterface

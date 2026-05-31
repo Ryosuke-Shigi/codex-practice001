@@ -3,6 +3,7 @@
 namespace Tests\Feature\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
+use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSaveDTOFactory;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
@@ -12,6 +13,8 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
+use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
+use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -47,8 +50,10 @@ class DanceShortSyncCommandTest extends TestCase
             $this->videoRepository(),
             $this->snapshotRepository(),
             new DanceShortVideoEligibilityService(),
+            new DanceShortVideoTrackingService(),
             new DanceShortVideoSaveDTOFactory(),
             new DanceShortVideoSnapshotCreateDTOFactory(),
+            $this->cleanupAction(),
         ) extends SyncDanceShortVideosAction {
             public function execute(): DanceShortVideoSyncResultDTO
             {
@@ -82,5 +87,13 @@ class DanceShortSyncCommandTest extends TestCase
     private function snapshotRepository(): DanceShortVideoSnapshotRepositoryInterface
     {
         return $this->createStub(DanceShortVideoSnapshotRepositoryInterface::class);
+    }
+
+    private function cleanupAction(): CleanupDanceShortVideoSnapshotsAction
+    {
+        return new CleanupDanceShortVideoSnapshotsAction(
+            $this->snapshotRepository(),
+            new DanceShortSnapshotRetentionService(),
+        );
     }
 }

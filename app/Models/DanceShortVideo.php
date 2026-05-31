@@ -25,12 +25,22 @@ class DanceShortVideo extends Model
         'default_audio_language',
         'live_broadcast_content',
         'embeddable',
+        'tracking_status',
+        'tracking_disabled_at',
+        'archived_at',
+        'tracking_reason',
+    ];
+
+    protected $attributes = [
+        'tracking_status' => 'active',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'tags' => 'array',
         'embeddable' => 'boolean',
+        'tracking_disabled_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     /*

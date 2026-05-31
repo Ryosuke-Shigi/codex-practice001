@@ -21,6 +21,20 @@ class DanceShortVideoRepository implements DanceShortVideoRepositoryInterface
             ->first();
     }
 
+    public function findByYoutubeVideoIdAndTrackingStatus(
+        string $youtubeVideoId,
+        string $trackingStatus,
+    ): ?DanceShortVideo {
+        /*
+         * Repository は渡された tracking_status 条件で DB を絞るだけです。
+         * どの状態を snapshot 保存対象にするかの判断は TrackingService 側に置きます。
+         */
+        return DanceShortVideo::query()
+            ->where('youtube_video_id', $youtubeVideoId)
+            ->where('tracking_status', $trackingStatus)
+            ->first();
+    }
+
     /**
      * @return array{
      *     video: DanceShortVideo,

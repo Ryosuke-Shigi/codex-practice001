@@ -15,6 +15,11 @@ interface DanceShortVideoRepositoryInterface
 
     public function findByYoutubeVideoId(string $youtubeVideoId): ?DanceShortVideo;
 
+    public function findByYoutubeVideoIdAndTrackingStatus(
+        string $youtubeVideoId,
+        string $trackingStatus,
+    ): ?DanceShortVideo;
+
     /**
      * @return array{
      *     video: DanceShortVideo,

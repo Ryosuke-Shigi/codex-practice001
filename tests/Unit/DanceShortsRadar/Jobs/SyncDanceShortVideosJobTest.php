@@ -3,6 +3,7 @@
 namespace Tests\Unit\DanceShortsRadar\Jobs;
 
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
+use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSaveDTOFactory;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
@@ -12,6 +13,8 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
+use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
+use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\TestCase;
@@ -30,8 +33,10 @@ class SyncDanceShortVideosJobTest extends TestCase
             $this->videoRepository(),
             $this->snapshotRepository(),
             new DanceShortVideoEligibilityService(),
+            new DanceShortVideoTrackingService(),
             new DanceShortVideoSaveDTOFactory(),
             new DanceShortVideoSnapshotCreateDTOFactory(),
+            $this->cleanupAction(),
         ) extends SyncDanceShortVideosAction {
             public bool $called = false;
 
@@ -62,8 +67,10 @@ class SyncDanceShortVideosJobTest extends TestCase
             $this->videoRepository(),
             $this->snapshotRepository(),
             new DanceShortVideoEligibilityService(),
+            new DanceShortVideoTrackingService(),
             new DanceShortVideoSaveDTOFactory(),
             new DanceShortVideoSnapshotCreateDTOFactory(),
+            $this->cleanupAction(),
         ))->execute();
 
         $this->assertInstanceOf(DanceShortVideoSyncResultDTO::class, $result);
@@ -76,8 +83,10 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertSame(0, $result->savedVideoCount);
         $this->assertSame(0, $result->savedSnapshotCount);
         $this->assertSame(0, $result->skippedVideoCount);
+        $this->assertSame(0, $result->skippedSnapshotByTrackingCount);
         $this->assertSame(0, $result->excludedByShortsCount);
         $this->assertSame(0, $result->skippedPersistenceCount);
+        $this->assertSame(0, $result->cleanedUpSnapshotCount);
         $this->assertSame(0, $result->failedCount);
     }
 
@@ -116,5 +125,13 @@ class SyncDanceShortVideosJobTest extends TestCase
     private function snapshotRepository(): DanceShortVideoSnapshotRepositoryInterface
     {
         return $this->createStub(DanceShortVideoSnapshotRepositoryInterface::class);
+    }
+
+    private function cleanupAction(): CleanupDanceShortVideoSnapshotsAction
+    {
+        return new CleanupDanceShortVideoSnapshotsAction(
+            $this->snapshotRepository(),
+            new DanceShortSnapshotRetentionService(),
+        );
     }
 }

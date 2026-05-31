@@ -8,6 +8,8 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
+use App\Models\DanceShortVideo;
+use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -83,8 +85,10 @@ class SyncDanceShortVideosActionTest extends TestCase
         $this->assertSame(1, $result->savedVideoCount);
         $this->assertSame(1, $result->savedSnapshotCount);
         $this->assertSame(0, $result->skippedVideoCount);
+        $this->assertSame(0, $result->skippedSnapshotByTrackingCount);
         $this->assertSame(1, $result->excludedByShortsCount);
         $this->assertSame(0, $result->skippedPersistenceCount);
+        $this->assertSame(0, $result->cleanedUpSnapshotCount);
         $this->assertSame(0, $result->failedCount);
 
         $this->assertSame(['dance shorts', 'dance challenge'], array_map(
@@ -111,6 +115,64 @@ class SyncDanceShortVideosActionTest extends TestCase
             'like_count' => 789,
             'comment_count' => 12,
             'collected_at' => '2026-05-31 12:00:00',
+        ]);
+    }
+
+    public function test_execute_skips_snapshot_for_inactive_video_and_runs_cleanup_after_sync(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
+        config([
+            'services.youtube.discover_max_results' => 25,
+            'services.youtube.discover_published_after_days' => 7,
+            'dance_short.snapshot_retention_days' => 35,
+        ]);
+
+        $region = DanceShortRegion::query()->create([
+            'code' => 'JP',
+            'name' => '日本',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        DanceShortSearchKeyword::query()->create([
+            'region_id' => $region->getKey(),
+            'keyword' => 'dance shorts',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        $video = DanceShortVideo::query()->create([
+            'youtube_video_id' => 'short-video-001',
+            'title' => 'Inactive dance short',
+            'tracking_status' => 'inactive',
+            'tracking_disabled_at' => '2026-05-30 00:00:00',
+            'tracking_reason' => 'no longer used for observation',
+        ]);
+        DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 100,
+            'collected_at' => '2026-04-25 00:00:00',
+        ]);
+
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository());
+
+        $result = app(SyncDanceShortVideosAction::class)->execute();
+
+        $this->assertSame(0, $result->insertedVideoCount);
+        $this->assertSame(1, $result->updatedVideoCount);
+        $this->assertSame(0, $result->savedSnapshotCount);
+        $this->assertSame(1, $result->skippedSnapshotByTrackingCount);
+        $this->assertSame(1, $result->excludedByShortsCount);
+        $this->assertSame(1, $result->cleanedUpSnapshotCount);
+        $this->assertSame(0, $result->failedCount);
+
+        $this->assertDatabaseHas('dance_short_videos', [
+            'id' => $video->getKey(),
+            'youtube_video_id' => 'short-video-001',
+            'tracking_status' => 'inactive',
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
         ]);
     }
 }

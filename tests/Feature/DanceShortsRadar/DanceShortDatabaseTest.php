@@ -34,6 +34,10 @@ class DanceShortDatabaseTest extends TestCase
         $this->assertFalse(Schema::hasColumn('dance_short_videos', 'favorite_count'));
         $this->assertFalse(Schema::hasColumn('dance_short_videos', 'category_name'));
         $this->assertFalse(Schema::hasColumn('dance_short_video_snapshots', 'favorite_count'));
+        $this->assertTrue(Schema::hasColumn('dance_short_videos', 'tracking_status'));
+        $this->assertTrue(Schema::hasColumn('dance_short_videos', 'tracking_disabled_at'));
+        $this->assertTrue(Schema::hasColumn('dance_short_videos', 'archived_at'));
+        $this->assertTrue(Schema::hasColumn('dance_short_videos', 'tracking_reason'));
     }
 
     public function test_region_and_keyword_seeders_create_minimum_observation_data(): void
@@ -124,6 +128,9 @@ class DanceShortDatabaseTest extends TestCase
 
         $video->refresh();
 
+        $this->assertSame('active', $video->tracking_status);
+        $this->assertNull($video->tracking_disabled_at);
+        $this->assertNull($video->archived_at);
         $this->assertSame('10', $video->category_id);
         $this->assertSame('PT58S', $video->duration);
         $this->assertSame('Dance challenge description.', $video->description);
