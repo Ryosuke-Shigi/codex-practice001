@@ -11,9 +11,14 @@ final readonly class DanceShortVideoSyncResultDTO
         public int $searchedRegionCount = 0,
         public int $searchedKeywordCount = 0,
         public int $fetchedVideoCount = 0,
+        public int $fetchedVideoDetailCount = 0,
+        public int $insertedVideoCount = 0,
+        public int $updatedVideoCount = 0,
         public int $savedVideoCount = 0,
         public int $savedSnapshotCount = 0,
         public int $skippedVideoCount = 0,
+        public int $excludedByShortsCount = 0,
+        public int $skippedPersistenceCount = 0,
         public int $failedCount = 0,
     ) {
     }
@@ -35,9 +40,14 @@ final readonly class DanceShortVideoSyncResultDTO
             'searchedRegionCount' => $this->searchedRegionCount,
             'searchedKeywordCount' => $this->searchedKeywordCount,
             'fetchedVideoCount' => $this->fetchedVideoCount,
+            'fetchedVideoDetailCount' => $this->fetchedVideoDetailCount,
+            'insertedVideoCount' => $this->insertedVideoCount,
+            'updatedVideoCount' => $this->updatedVideoCount,
             'savedVideoCount' => $this->savedVideoCount,
             'savedSnapshotCount' => $this->savedSnapshotCount,
             'skippedVideoCount' => $this->skippedVideoCount,
+            'excludedByShortsCount' => $this->excludedByShortsCount,
+            'skippedPersistenceCount' => $this->skippedPersistenceCount,
             'failedCount' => $this->failedCount,
         ];
     }

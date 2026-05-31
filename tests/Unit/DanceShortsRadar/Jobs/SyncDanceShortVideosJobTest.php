@@ -4,9 +4,16 @@ namespace Tests\Unit\DanceShortsRadar\Jobs;
 
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
+use App\Factories\DanceShortsRadar\DanceShortVideoSaveDTOFactory;
+use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
+use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\TestCase;
 
 class SyncDanceShortVideosJobTest extends TestCase
@@ -17,7 +24,15 @@ class SyncDanceShortVideosJobTest extends TestCase
          * Job の handle() は Action を呼ぶことだけを確認します。
          * YouTube API の取得・DB保存・snapshot比較は Job の責務ではないため、このテストへ持ち込みません。
          */
-        $action = new class($this->youtubeRepository()) extends SyncDanceShortVideosAction {
+        $action = new class(
+            $this->youtubeRepository(),
+            $this->searchTargetRepository(),
+            $this->videoRepository(),
+            $this->snapshotRepository(),
+            new DanceShortVideoEligibilityService(),
+            new DanceShortVideoSaveDTOFactory(),
+            new DanceShortVideoSnapshotCreateDTOFactory(),
+        ) extends SyncDanceShortVideosAction {
             public bool $called = false;
 
             public function execute(): DanceShortVideoSyncResultDTO
@@ -41,15 +56,28 @@ class SyncDanceShortVideosJobTest extends TestCase
          * API 未接続の現段階では、Action はゼロ件の同期結果DTOを返すだけにします。
          * 後続で Repository / Service を接続するときも、外側の戻り値の型を保つための土台です。
          */
-        $result = (new SyncDanceShortVideosAction($this->youtubeRepository()))->execute();
+        $result = (new SyncDanceShortVideosAction(
+            $this->youtubeRepository(),
+            $this->searchTargetRepository(),
+            $this->videoRepository(),
+            $this->snapshotRepository(),
+            new DanceShortVideoEligibilityService(),
+            new DanceShortVideoSaveDTOFactory(),
+            new DanceShortVideoSnapshotCreateDTOFactory(),
+        ))->execute();
 
         $this->assertInstanceOf(DanceShortVideoSyncResultDTO::class, $result);
         $this->assertSame(0, $result->searchedRegionCount);
         $this->assertSame(0, $result->searchedKeywordCount);
         $this->assertSame(0, $result->fetchedVideoCount);
+        $this->assertSame(0, $result->fetchedVideoDetailCount);
+        $this->assertSame(0, $result->insertedVideoCount);
+        $this->assertSame(0, $result->updatedVideoCount);
         $this->assertSame(0, $result->savedVideoCount);
         $this->assertSame(0, $result->savedSnapshotCount);
         $this->assertSame(0, $result->skippedVideoCount);
+        $this->assertSame(0, $result->excludedByShortsCount);
+        $this->assertSame(0, $result->skippedPersistenceCount);
         $this->assertSame(0, $result->failedCount);
     }
 
@@ -70,5 +98,23 @@ class SyncDanceShortVideosJobTest extends TestCase
     private function youtubeRepository(): YouTubeVideoApiRepositoryInterface
     {
         return $this->createStub(YouTubeVideoApiRepositoryInterface::class);
+    }
+
+    private function searchTargetRepository(): DanceShortSearchTargetRepositoryInterface
+    {
+        $repository = $this->createStub(DanceShortSearchTargetRepositoryInterface::class);
+        $repository->method('activeRegions')->willReturn(new Collection());
+
+        return $repository;
+    }
+
+    private function videoRepository(): DanceShortVideoRepositoryInterface
+    {
+        return $this->createStub(DanceShortVideoRepositoryInterface::class);
+    }
+
+    private function snapshotRepository(): DanceShortVideoSnapshotRepositoryInterface
+    {
+        return $this->createStub(DanceShortVideoSnapshotRepositoryInterface::class);
     }
 }

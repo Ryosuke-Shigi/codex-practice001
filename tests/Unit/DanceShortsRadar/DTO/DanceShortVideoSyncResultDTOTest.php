@@ -20,9 +20,14 @@ class DanceShortVideoSyncResultDTOTest extends TestCase
             searchedRegionCount: 2,
             searchedKeywordCount: 5,
             fetchedVideoCount: 20,
+            fetchedVideoDetailCount: 18,
+            insertedVideoCount: 7,
+            updatedVideoCount: 5,
             savedVideoCount: 12,
             savedSnapshotCount: 10,
             skippedVideoCount: 8,
+            excludedByShortsCount: 3,
+            skippedPersistenceCount: 2,
             failedCount: 1,
         );
 
@@ -31,9 +36,14 @@ class DanceShortVideoSyncResultDTOTest extends TestCase
             'searchedRegionCount' => 2,
             'searchedKeywordCount' => 5,
             'fetchedVideoCount' => 20,
+            'fetchedVideoDetailCount' => 18,
+            'insertedVideoCount' => 7,
+            'updatedVideoCount' => 5,
             'savedVideoCount' => 12,
             'savedSnapshotCount' => 10,
             'skippedVideoCount' => 8,
+            'excludedByShortsCount' => 3,
+            'skippedPersistenceCount' => 2,
             'failedCount' => 1,
         ], $dto->toArray());
     }

@@ -12,8 +12,14 @@ use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepository;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepository;
+use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRepository;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepository;
+use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepository;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepository;
@@ -58,7 +64,10 @@ class AppServiceProvider extends ServiceProvider
          * YouTubeVideoApiRepository は YouTube Data API v3 への HTTP 通信と DTO 変換だけを担当し、
          * DB保存、snapshot保存、Shorts判定、増加量計算は後続の Service / Repository に分けます。
          */
+        $this->app->bind(DanceShortSearchTargetRepositoryInterface::class, DanceShortSearchTargetRepository::class);
         $this->app->bind(DanceShortVideoCategoryRepositoryInterface::class, DanceShortVideoCategoryRepository::class);
+        $this->app->bind(DanceShortVideoRepositoryInterface::class, DanceShortVideoRepository::class);
+        $this->app->bind(DanceShortVideoSnapshotRepositoryInterface::class, DanceShortVideoSnapshotRepository::class);
         $this->app->bind(YouTubeVideoApiRepositoryInterface::class, YouTubeVideoApiRepository::class);
 
         /*
