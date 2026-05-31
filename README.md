@@ -181,27 +181,13 @@ IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静�
 
 ### Welcome
 
-<img width="975" height="959" alt="Welcome画面" src="https://github.com/user-attachments/assets/996061ae-cb83-49a7-b4af-ab0003a9d7df" />
+<img width="663" height="701" alt="image" src="https://github.com/user-attachments/assets/46fa4fdd-c0db-40ca-9e0b-b5f84117161b" />
+
 
 ### Lab
 
-<img width="955" height="891" alt="Lab画面" src="https://github.com/user-attachments/assets/facd87a9-7f27-4f65-a5fe-c81d155ac4ac" />
+<img width="641" height="693" alt="image" src="https://github.com/user-attachments/assets/ee293559-116c-4890-85cf-3218c801a22d" />
 
-### API Preview
-
-<img width="961" height="961" alt="API Preview画面" src="https://github.com/user-attachments/assets/269f445f-b15c-4a44-be2b-cc395a656432" />
-
-### API Discovery Hub - 一覧
-
-<img width="955" height="957" alt="API Catalog一覧画面" src="https://github.com/user-attachments/assets/4b5a1f7f-f2f7-4600-9f67-306b6633b1a9" />
-
-### API Discovery Hub - 詳細
-
-<img width="955" height="953" alt="API Catalog詳細画面" src="https://github.com/user-attachments/assets/b7a93dbb-b29c-4fba-8b33-ff1b50d37645" />
-
-### API Discovery Hub - モック
-
-<img width="957" height="515" alt="API Catalogモック画面" src="https://github.com/user-attachments/assets/cef2175f-5788-47d5-911b-357312d7a4e1" />
 
 ## 設計方針
 
