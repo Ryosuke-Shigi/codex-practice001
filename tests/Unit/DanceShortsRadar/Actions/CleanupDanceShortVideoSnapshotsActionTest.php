@@ -9,6 +9,7 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface
 use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -43,6 +44,19 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
     public function latestForVideoAndRegion(int $videoId, int $regionId): ?DanceShortVideoSnapshot
     {
         throw new RuntimeException('Cleanup action should not fetch latest snapshots.');
+    }
+
+    public function latestRankingSnapshotsByRegionCode(string $regionCode, int $limit): Collection
+    {
+        throw new RuntimeException('Cleanup action should not fetch ranking snapshots.');
+    }
+
+    public function latestSnapshotAtOrBefore(
+        int $videoId,
+        int $regionId,
+        CarbonInterface $cutoffAt,
+    ): ?DanceShortVideoSnapshot {
+        throw new RuntimeException('Cleanup action should not fetch previous snapshots.');
     }
 
     public function deleteCollectedBefore(CarbonInterface $cutoffAt): int

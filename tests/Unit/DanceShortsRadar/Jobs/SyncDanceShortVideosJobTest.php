@@ -12,6 +12,7 @@ use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
 use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
@@ -33,6 +34,7 @@ class SyncDanceShortVideosJobTest extends TestCase
             $this->videoRepository(),
             $this->snapshotRepository(),
             new DanceShortVideoEligibilityService(),
+            new DanceShortSnapshotMetricService(),
             new DanceShortVideoTrackingService(),
             new DanceShortVideoSaveDTOFactory(),
             new DanceShortVideoSnapshotCreateDTOFactory(),
@@ -67,6 +69,7 @@ class SyncDanceShortVideosJobTest extends TestCase
             $this->videoRepository(),
             $this->snapshotRepository(),
             new DanceShortVideoEligibilityService(),
+            new DanceShortSnapshotMetricService(),
             new DanceShortVideoTrackingService(),
             new DanceShortVideoSaveDTOFactory(),
             new DanceShortVideoSnapshotCreateDTOFactory(),

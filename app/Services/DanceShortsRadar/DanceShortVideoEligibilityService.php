@@ -3,7 +3,6 @@
 namespace App\Services\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
-use Carbon\CarbonInterface;
 use DateInterval;
 use Throwable;
 
@@ -41,43 +40,6 @@ class DanceShortVideoEligibilityService
         return trim($detail->youtubeVideoId) !== ''
             && trim((string) $detail->title) !== ''
             && $detail->viewCount !== null;
-    }
-
-    /**
-     * @return array{
-     *     viewCountDelta: int|null,
-     *     viewGrowthRate: float|null,
-     *     viewsPerHour: float|null
-     * }
-     */
-    public function calculateSnapshotMetrics(
-        ?int $previousViewCount,
-        ?CarbonInterface $previousCollectedAt,
-        int $currentViewCount,
-        CarbonInterface $currentCollectedAt,
-    ): array {
-        /*
-         * ここで返す値はランキングや上昇候補判定に使える派生値ですが、
-         * dance_short_video_snapshots へ保存する値ではありません。
-         * snapshot テーブルには取得時点の公開指標だけを積み、差分や伸び率は
-         * 必要なタイミングで前回 snapshot と比較して再計算できる形にします。
-         */
-        if ($previousViewCount === null || $previousCollectedAt === null) {
-            return [
-                'viewCountDelta' => null,
-                'viewGrowthRate' => null,
-                'viewsPerHour' => null,
-            ];
-        }
-
-        $viewCountDelta = $currentViewCount - $previousViewCount;
-        $hours = $previousCollectedAt->diffInSeconds($currentCollectedAt, false) / 3600;
-
-        return [
-            'viewCountDelta' => $viewCountDelta,
-            'viewGrowthRate' => $previousViewCount > 0 ? $viewCountDelta / $previousViewCount : null,
-            'viewsPerHour' => $hours > 0.0 ? $viewCountDelta / $hours : null,
-        ];
     }
 
     private function durationSeconds(?string $duration): ?int

@@ -12,6 +12,7 @@ use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonImmutable;
@@ -25,6 +26,7 @@ class SyncDanceShortVideosAction
         private readonly DanceShortVideoRepositoryInterface $videoRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoEligibilityService $eligibilityService,
+        private readonly DanceShortSnapshotMetricService $snapshotMetricService,
         private readonly DanceShortVideoTrackingService $trackingService,
         private readonly DanceShortVideoSaveDTOFactory $videoSaveDTOFactory,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
@@ -157,7 +159,7 @@ class SyncDanceShortVideosAction
                          * ランキング生成までは行いません。派生値は DB カラムへ保存せず、
                          * 将来の判定 Service が参照できる計算境界だけを確認するために呼びます。
                          */
-                        $this->eligibilityService->calculateSnapshotMetrics(
+                        $this->snapshotMetricService->calculateSnapshotMetrics(
                             previousViewCount: $previousSnapshot->view_count,
                             previousCollectedAt: $previousSnapshot->collected_at,
                             currentViewCount: $snapshotDTO->view_count,
