@@ -17,28 +17,64 @@ namespace App\Actions\Lab\Queries;
 final readonly class GetDanceShortsRadarMockCandidatesAction
 {
     /**
-     * 地域タブの定義です。
+     * 画面タブ専用の選択肢です。
      *
-     * 画面ラベルは React 側へ直書きせず、候補データと同じ props として渡します。
-     * これにより、後続で region マスタや設定ファイルへ移した場合も、タブの表示責務は
-     * RegionTabs のまま維持できます。
+     * ALL は実データの region ではなく、「全地域をまとめて見る」ためだけの UI 選択値です。
+     * 候補データの region と candidatesByRegion のキーには JP / US / KR だけを使い続けます。
+     * 画面上のラベルは「まとめ」にしますが、内部値は ALL のままにしておくことで、
+     * タブ選択用の状態と YouTube / DB 実装時に保存する地域コードを混同しないようにしています。
+     *
+     * この配列は表示順も兼ねます。先頭に ALL を置くことで、初期表示を「まとめ」タブにし、
+     * 地域ごとの細かい確認へ自然に切り替えられる導線にしています。
+     *
+     * @var array<int, array{code: string, label: string, description: string}>
+     */
+    private const REGION_TABS = [
+        [
+            'code' => 'ALL',
+            'label' => 'まとめ',
+            'description' => '日本・アメリカ・韓国のダンスShorts候補',
+        ],
+        [
+            'code' => 'JP',
+            'label' => '日本',
+            'description' => '日本向けのダンスShorts候補',
+        ],
+        [
+            'code' => 'US',
+            'label' => 'アメリカ',
+            'description' => 'アメリカ向けのダンスShorts候補',
+        ],
+        [
+            'code' => 'KR',
+            'label' => '韓国',
+            'description' => '韓国・K-POP文脈のダンスShorts候補',
+        ],
+    ];
+
+    /**
+     * 実データとして扱う地域の定義です。
+     *
+     * 画面タブには ALL も含めますが、候補データの region は JP / US / KR のまま維持します。
+     * 後続で region マスタや設定ファイルへ移した場合も、ALL を保存対象地域へ混ぜないため、
+     * 表示用タブの定義とは別に実データ地域だけを持ちます。
      *
      * @var array<int, array{code: string, label: string, description: string}>
      */
     private const REGIONS = [
         [
             'code' => 'JP',
-            'label' => 'JP',
+            'label' => '日本',
             'description' => '日本向けのダンスShorts候補',
         ],
         [
             'code' => 'US',
-            'label' => 'US',
-            'description' => '英語圏向けのダンスShorts候補',
+            'label' => 'アメリカ',
+            'description' => 'アメリカ向けのダンスShorts候補',
         ],
         [
             'code' => 'KR',
-            'label' => 'KR',
+            'label' => '韓国',
             'description' => '韓国・K-POP文脈のダンスShorts候補',
         ],
     ];
@@ -185,8 +221,10 @@ final readonly class GetDanceShortsRadarMockCandidatesAction
      * Controller にモックデータの配列や表示整形が漏れないようにしています。
      *
      * @return array{
+     *     regionTabs: array<int, array{code: string, label: string, description: string}>,
      *     regions: array<int, array{code: string, label: string, description: string}>,
      *     candidatesByRegion: array<string, array<int, array<string, mixed>>>,
+     *     allCandidates: array<int, array<string, mixed>>,
      *     mockNotice: string
      * }
      */
@@ -198,15 +236,25 @@ final readonly class GetDanceShortsRadarMockCandidatesAction
             $candidatesByRegion[$region['code']] = $this->sortedCandidatesForRegion($region['code']);
         }
 
+        /*
+         * regionTabs はタブ表示用、regions は実データ地域用、allCandidates は「まとめ」表示用です。
+         * allCandidates を candidatesByRegion['ALL'] として返さないのは、ALL を保存対象の地域コードに
+         * 見せないためです。後続で API / DB 実装を入れるときも、JP / US / KR だけを region として扱えます。
+         */
         return [
+            'regionTabs' => self::REGION_TABS,
             'regions' => self::REGIONS,
             'candidatesByRegion' => $candidatesByRegion,
+            'allCandidates' => $this->sortedCandidates(self::CANDIDATES),
             'mockNotice' => 'この一覧は YouTube Data API には接続していないモックデータです。',
         ];
     }
 
     /**
      * 指定地域の候補を、今回の画面仕様に沿って表示順へ並べ替えます。
+     *
+     * 地域別タブでも「まとめ」タブでも、候補の並び順は同じ比較関数を使います。
+     * そうしておくと、地域別で見たときだけ順序が違う、といった画面上の違和感を避けられます。
      *
      * 並び替え優先度:
      * 1. views_per_hour が多い順
@@ -226,6 +274,20 @@ final readonly class GetDanceShortsRadarMockCandidatesAction
             fn (array $candidate): bool => $candidate['region'] === $region,
         ));
 
+        return $this->sortedCandidates($candidates);
+    }
+
+    /**
+     * 「まとめ」タブと地域別タブの両方で同じ比較順を使います。
+     *
+     * ALL は保存用地域コードではないため candidatesByRegion には入れず、
+     * allCandidates として全候補を別 props で渡します。
+     *
+     * @param  array<int, array<string, mixed>>  $candidates
+     * @return array<int, array<string, mixed>>
+     */
+    private function sortedCandidates(array $candidates): array
+    {
         usort($candidates, function (array $first, array $second): int {
             return ($second['views_per_hour'] <=> $first['views_per_hour'])
                 ?: ($second['view_diff'] <=> $first['view_diff'])

@@ -1,4 +1,9 @@
 export type DanceShortsRegionCode = 'JP' | 'US' | 'KR';
+/*
+ * タブ選択専用の型です。
+ * ALL は「まとめ」タブのためだけに使い、候補データや保存対象地域の型には含めません。
+ */
+export type DanceShortsRegionTabCode = 'ALL' | DanceShortsRegionCode;
 
 /*
  * Dance Shorts Radar モック画面で使う props 型です。
@@ -9,6 +14,16 @@ export type DanceShortsRegionCode = 'JP' | 'US' | 'KR';
  */
 export type DanceShortsRegion = {
     code: DanceShortsRegionCode;
+    label: string;
+    description: string;
+};
+
+export type DanceShortsRegionTab = {
+    /*
+     * ALL は画面タブ専用です。
+     * 候補データの region や candidatesByRegion のキーには使わず、全件表示の選択状態だけを表します。
+     */
+    code: DanceShortsRegionTabCode;
     label: string;
     description: string;
 };

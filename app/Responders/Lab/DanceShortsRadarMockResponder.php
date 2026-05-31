@@ -16,8 +16,10 @@ final readonly class DanceShortsRadarMockResponder
 {
     /**
      * @param  array{
+     *     regionTabs: array<int, array{code: string, label: string, description: string}>,
      *     regions: array<int, array{code: string, label: string, description: string}>,
      *     candidatesByRegion: array<string, array<int, array<string, mixed>>>,
+     *     allCandidates: array<int, array<string, mixed>>,
      *     mockNotice: string
      * }  $props
      */
