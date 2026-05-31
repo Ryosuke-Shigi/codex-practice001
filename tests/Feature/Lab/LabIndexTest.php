@@ -22,7 +22,7 @@ class LabIndexTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/Index', false)
-                ->has('experiments', 10)
+                ->has('experiments', 11)
                 ->where('experiments.0.id', 'api-discovery-hub')
                 ->where('experiments.0.title', 'API Discovery Hub 本番一覧')
                 ->where('experiments.0.status', 'Preview')
@@ -59,6 +59,11 @@ class LabIndexTest extends TestCase
                 ->where('experiments.6.category', 'IDEA-BOARD')
                 ->where('experiments.6.href', '/lab/spec-flow-trainer')
                 ->where('experiments.7.category', 'MOCK')
+                ->where('experiments.10.id', 'dance-shorts-radar-mock')
+                ->where('experiments.10.title', 'Dance Shorts Radar モック')
+                ->where('experiments.10.status', 'Mock')
+                ->where('experiments.10.category', 'MOCK')
+                ->where('experiments.10.href', '/lab/dance-shorts-radar-mock')
             );
     }
 

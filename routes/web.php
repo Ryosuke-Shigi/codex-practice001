@@ -6,6 +6,7 @@ use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
 use App\Http\Controllers\DesignPhilosophyController;
+use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
@@ -206,6 +207,26 @@ Route::get('/lab', function () {
             'category' => 'MOCK',
             'href' => '/lab/construction-order-workflow-mock',
         ],
+        [
+            /*
+             * Dance Shorts Radar の YouTube API 疎通前モックです。
+             * API接続、DB保存、snapshot保存は行わず、固定データだけで候補一覧の見え方を確認します。
+             */
+            'id' => 'dance-shorts-radar-mock',
+            'title' => 'Dance Shorts Radar モック',
+            'summary' => 'JP / US / KR の地域タブで、伸びている候補の一覧表示を仮データだけで確認する画面です。',
+            'status' => 'Mock',
+            'category' => 'MOCK',
+            'href' => '/lab/dance-shorts-radar-mock',
+            'actionLabel' => 'モックを見る',
+            'tags' => [
+                'Shorts',
+                'JP / US / KR',
+                'Mock Data',
+                '差分表示',
+                'API未接続',
+            ],
+        ],
     ];
 
     return Inertia::render('Lab/Index', [
@@ -249,6 +270,9 @@ Route::get('/lab/dance-shorts-radar-idea-board', function () {
      */
     return Inertia::render('Lab/DanceShortsRadar');
 })->name('lab.dance-shorts-radar-idea-board');
+
+Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class)
+    ->name('lab.dance-shorts-radar-mock');
 
 Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。
