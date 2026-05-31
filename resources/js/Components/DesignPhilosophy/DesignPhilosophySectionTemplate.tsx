@@ -21,27 +21,29 @@ export default function DesignPhilosophySectionTemplate({
     section,
 }: DesignPhilosophySectionTemplateProps) {
     return (
-        <section className="flex min-h-[100svh] min-w-0 items-center justify-center px-5 py-16 sm:px-8">
-            <div className="mx-auto grid w-full max-w-6xl min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end">
+        <section className="design-philosophy-section flex min-h-[100svh] min-w-0 items-center justify-center px-5 py-16 sm:px-8 [@media(orientation:landscape)_and_(max-height:520px)]:min-h-[auto] [@media(orientation:landscape)_and_(max-height:520px)]:py-10">
+            <div className="mx-auto grid w-[calc(100vw-2.5rem)] max-w-6xl min-w-0 gap-10 sm:w-full [@media(orientation:landscape)_and_(max-height:520px)]:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] lg:items-end">
                 <div className="min-w-0 break-words [overflow-wrap:anywhere]">
                     {/*
                         1画面1メッセージにするため、セクション番号や画像枠は置かず、
                         title / lead / body の読み順だけで見せます。
                         min-w-0 と overflow-wrap は、長い日本語や英語キーワードが
                         スマホ幅で横にはみ出すのを防ぐための保険です。
+                        ただし title は大きく見せる要素なので、横向きの低い viewport では
+                        文字サイズと余白を落とし、1画面固定より読みやすい縦スクロールを優先します。
                     */}
-                    <h2 className="max-w-4xl text-4xl font-semibold leading-tight text-white drop-shadow-[0_16px_34px_rgba(0,0,0,0.28)] sm:text-6xl lg:text-7xl">
+                    <h2 className="design-philosophy-title max-w-4xl text-balance text-[clamp(2.25rem,10vw,3.5rem)] font-semibold leading-[1.12] text-white drop-shadow-[0_16px_34px_rgba(0,0,0,0.28)] [overflow-wrap:normal] [word-break:normal] sm:text-[clamp(3rem,8vw,5rem)] lg:text-7xl [@media(orientation:landscape)_and_(max-height:520px)]:text-[clamp(2rem,6vw,3.25rem)] [@media(orientation:landscape)_and_(max-height:520px)]:leading-[1.15]">
                         {section.title}
                     </h2>
-                    <p className="mt-7 max-w-3xl text-2xl font-semibold leading-relaxed text-cyan-50 sm:text-3xl">
+                    <p className="mt-7 w-full max-w-[22rem] break-words text-2xl font-semibold leading-relaxed text-cyan-50 [overflow-wrap:anywhere] sm:max-w-3xl sm:text-3xl [@media(orientation:landscape)_and_(max-height:520px)]:mt-4 [@media(orientation:landscape)_and_(max-height:520px)]:text-xl">
                         {section.lead}
                     </p>
-                    <p className="mt-8 max-w-2xl text-base leading-8 text-white/78 sm:text-lg">
+                    <p className="mt-8 w-full max-w-[22rem] break-words text-base leading-8 text-white/78 [overflow-wrap:anywhere] sm:max-w-2xl sm:text-lg [@media(orientation:landscape)_and_(max-height:520px)]:mt-4 [@media(orientation:landscape)_and_(max-height:520px)]:leading-7">
                         {section.body}
                     </p>
                 </div>
 
-                <aside className="min-w-0 rounded-lg border border-white/18 bg-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:p-6">
+                <aside className="w-full max-w-[22rem] min-w-0 rounded-lg border border-white/18 bg-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.18)] backdrop-blur-xl [overflow-wrap:anywhere] sm:max-w-none sm:p-6 [@media(orientation:landscape)_and_(max-height:520px)]:p-4">
                     {/*
                         proof は本文を補足する小さな根拠カードです。
                         セクションごとの専用 Component は作らず、同じテンプレートへ
@@ -50,7 +52,7 @@ export default function DesignPhilosophySectionTemplate({
                     <p className="text-sm font-semibold text-cyan-100">
                         {section.proofLabel}
                     </p>
-                    <p className="mt-4 text-sm leading-7 text-white/76">
+                    <p className="mt-4 w-full break-words text-sm leading-7 text-white/76 [overflow-wrap:anywhere]">
                         {section.proofText}
                     </p>
                 </aside>

@@ -38,7 +38,7 @@ export default function Welcome() {
         >
             <Head title="Portfolio" />
 
-            <section className="relative h-full w-full overflow-hidden px-6 text-center">
+            <section className="relative h-full min-h-full w-full overflow-hidden px-6 text-center">
                 {/*
                     The selector sits between the background and the title. It is
                     interactive, but title/START remain higher z-index targets so
@@ -55,26 +55,26 @@ export default function Welcome() {
                     effect name is shown here rather than on the moving orb layer
                     so the selected state remains readable while the orbs drift.
                 */}
-                <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6">
+                <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 [@media(orientation:landscape)_and_(max-height:520px)]:top-[31%] [@media(orientation:landscape)_and_(max-height:520px)]:px-4">
                     <motion.div
                         initial={{ opacity: 0, y: 18 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.9, ease: 'easeOut' }}
                     >
-                        <p className="text-xs font-semibold uppercase tracking-[0.38em] text-cyan-950/65 sm:text-sm">
+                        <p className="text-xs font-semibold uppercase tracking-[0.38em] text-cyan-950/65 sm:text-sm [@media(orientation:landscape)_and_(max-height:520px)]:text-[0.68rem] [@media(orientation:landscape)_and_(max-height:520px)]:tracking-[0.24em]">
                             AI Driven Portfolio
                         </p>
-                        <h1 className="mt-3 text-7xl font-semibold leading-none text-white drop-shadow-[0_10px_34px_rgba(5,24,46,0.38)] sm:text-9xl lg:text-[10rem]">
+                        <h1 className="mx-auto mt-3 max-w-full whitespace-nowrap text-[clamp(3.5rem,15vw,4.5rem)] font-semibold leading-[0.95] text-white drop-shadow-[0_10px_34px_rgba(5,24,46,0.38)] sm:text-[clamp(5.5rem,15vw,10rem)] lg:text-[10rem] [@media(orientation:landscape)_and_(max-height:520px)]:mt-2 [@media(orientation:landscape)_and_(max-height:520px)]:text-[clamp(3.25rem,10vw,4.75rem)]">
                             Portfolio
                         </h1>
-                        <p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-cyan-50/82 drop-shadow-[0_8px_22px_rgba(2,24,45,0.28)] sm:text-sm">
+                        <p className="mx-auto mt-5 max-w-full text-xs font-bold uppercase tracking-[0.28em] text-cyan-50/82 drop-shadow-[0_8px_22px_rgba(2,24,45,0.28)] sm:text-sm [@media(orientation:landscape)_and_(max-height:520px)]:mt-3 [@media(orientation:landscape)_and_(max-height:520px)]:text-[0.68rem] [@media(orientation:landscape)_and_(max-height:520px)]:tracking-[0.2em]">
                             Effect: {effectLabels[currentEffect]}
                         </p>
                     </motion.div>
                 </div>
 
                 <motion.div
-                    className="absolute inset-x-0 bottom-[10dvh] z-30 flex flex-col items-center justify-center gap-4 px-6 sm:bottom-[12dvh]"
+                    className="absolute inset-x-0 bottom-[10dvh] z-30 flex flex-col items-center justify-center gap-4 px-6 sm:bottom-[12dvh] [@media(orientation:landscape)_and_(max-height:520px)]:bottom-4 [@media(orientation:landscape)_and_(max-height:520px)]:gap-2"
                     initial={{ opacity: 0, scale: 0.94, y: 16 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ delay: 0.25, duration: 0.8, ease: 'easeOut' }}
@@ -89,7 +89,7 @@ export default function Welcome() {
                     >
                         <Link
                             href="/lab"
-                            className="group relative inline-flex min-h-[68px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/22 px-11 py-4 text-lg font-bold uppercase tracking-[0.26em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-18px_36px_rgba(18,99,131,0.24),0_20px_46px_rgba(2,35,63,0.34)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-white/30 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-h-[76px] sm:min-w-[232px] sm:text-xl"
+                            className="group relative inline-flex min-h-[68px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/22 px-11 py-4 text-lg font-bold uppercase tracking-[0.26em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-18px_36px_rgba(18,99,131,0.24),0_20px_46px_rgba(2,35,63,0.34)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-white/30 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-h-[76px] sm:min-w-[232px] sm:text-xl [@media(orientation:landscape)_and_(max-height:520px)]:min-h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:px-8 [@media(orientation:landscape)_and_(max-height:520px)]:py-2 [@media(orientation:landscape)_and_(max-height:520px)]:text-base"
                         >
                             {/*
                                 Inertia Link keeps this as a client-side page visit
@@ -107,7 +107,7 @@ export default function Welcome() {
                     >
                         <Link
                             href="/design-philosophy"
-                            className="group relative inline-flex min-h-[54px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-cyan-50/50 bg-cyan-950/24 px-9 py-3 text-base font-bold text-cyan-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.46),0_14px_34px_rgba(2,35,63,0.24)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-cyan-50/18 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-w-[232px] sm:text-lg"
+                            className="group relative inline-flex min-h-[54px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-cyan-50/50 bg-cyan-950/24 px-9 py-3 text-base font-bold text-cyan-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.46),0_14px_34px_rgba(2,35,63,0.24)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-cyan-50/18 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-w-[232px] sm:text-lg [@media(orientation:landscape)_and_(max-height:520px)]:min-h-[40px] [@media(orientation:landscape)_and_(max-height:520px)]:px-7 [@media(orientation:landscape)_and_(max-height:520px)]:py-2 [@media(orientation:landscape)_and_(max-height:520px)]:text-base"
                         >
                             <span className="absolute inset-x-5 top-2 h-4 rounded-full bg-white/20 blur-md transition duration-300 group-hover:bg-white/30" />
                             <span className="relative">設計思想</span>
