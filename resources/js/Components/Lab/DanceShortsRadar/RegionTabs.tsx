@@ -1,17 +1,17 @@
-import type { DanceShortsRegionTab, DanceShortsRegionTabCode } from './types';
+import type { DanceShortsTab, DanceShortsTabCode } from './types';
 
 type RegionTabsProps = {
-    tabs: DanceShortsRegionTab[];
-    selectedTab: DanceShortsRegionTabCode;
-    onSelectTab: (region: DanceShortsRegionTabCode) => void;
+    tabs: DanceShortsTab[];
+    selectedTab: DanceShortsTabCode;
+    onSelectTab: (tab: DanceShortsTabCode) => void;
 };
 
 /*
- * まとめ / 日本 / アメリカ / 韓国 の地域タブだけを担当する表示コンポーネントです。
+ * 上昇候補 / まとめ / 日本 / アメリカ / 韓国 のタブ UI だけを担当する表示コンポーネントです。
  *
  * tabs は画面側から props として受け取り、このコンポーネントでは候補データを知りません。
- * タブが候補一覧やモックデータの構造を直接参照しないようにすることで、将来地域が増えたり
- * region 定義の取得元が変わっても、タブの責務を「選択中のタブを親へ通知すること」に保てます。
+ * タブが候補一覧やモックデータの構造を直接参照しないようにすることで、将来タブが増えたり
+ * 定義の取得元が変わっても、タブの責務を「選択中のタブを親へ通知すること」に保てます。
  */
 export default function RegionTabs({
     tabs,
@@ -19,15 +19,14 @@ export default function RegionTabs({
     onSelectTab,
 }: RegionTabsProps) {
     /*
-     * モバイルでも「まとめ / 日本 / アメリカ / 韓国」を横並びで見せます。
-     * 4列固定にしつつ、狭い幅では gap と左右 padding と文字サイズを少し抑え、
-     * タブ文字が折り返して高さを暴れさせないようにしています。
+     * 指定順の5タブを横一列で見せます。
+     * 各タブの高さを揃え、タブ文字が折り返して周辺レイアウトが動かないようにします。
      */
     return (
         <div
             role="tablist"
-            aria-label="地域"
-            className="grid grid-cols-4 gap-1.5 rounded-lg border border-white/24 bg-slate-950/38 p-1.5 shadow-[0_14px_30px_rgba(2,24,45,0.18)] backdrop-blur-xl sm:gap-2"
+            aria-label="表示カテゴリ"
+            className="grid grid-cols-5 gap-1 rounded-lg border border-white/24 bg-slate-950/38 p-1 shadow-[0_14px_30px_rgba(2,24,45,0.18)] backdrop-blur-xl sm:gap-2 sm:p-1.5"
         >
             {tabs.map((tab) => {
                 const isSelected = tab.code === selectedTab;
@@ -46,7 +45,7 @@ export default function RegionTabs({
                         aria-controls={`dance-shorts-panel-${tab.code}`}
                         onClick={() => onSelectTab(tab.code)}
                         className={[
-                            'min-h-11 rounded-md px-1.5 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/40 sm:px-3 sm:text-sm',
+                            'min-h-11 whitespace-nowrap rounded-md px-1 text-[11px] font-bold leading-tight transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/40 sm:px-3 sm:text-sm',
                             isSelected
                                 ? 'bg-white text-slate-950 shadow-[0_10px_22px_rgba(255,255,255,0.2)]'
                                 : 'text-cyan-50/82 hover:bg-white/12 hover:text-white',
