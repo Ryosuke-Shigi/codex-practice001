@@ -37,12 +37,17 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     /**
      * @return Collection<int, DanceShortVideoSnapshot>
      */
-    public function latestRankingSnapshotsByRegionCode(string $regionCode, int $limit): Collection
+    public function latestRankingSnapshotsByRegionCode(string $regionCode): Collection
     {
         /*
          * Ranking Query の current 候補です。
          * Repository は active / region / 最新 snapshot という DB 取得条件だけを閉じ、
          * 増加量や伸び率、ランキングとしての意味づけは Service / Action 側へ残します。
+         *
+         * orderBy は「current 候補の返却順」を安定させるためのものです。
+         * collected_at / id 順はランキング指標ではないため、この段階で表示件数 limit をかけると、
+         * 後段の metric sort では上位になるはずの動画を計算前に除外してしまいます。
+         * そのため Repository は候補を全件返し、limit は Action 側の metric 計算と sort 後にだけ適用します。
          */
         return DanceShortVideoSnapshot::query()
             ->with(['video', 'region'])
@@ -73,7 +78,6 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
             })
             ->orderByDesc('collected_at')
             ->orderByDesc('id')
-            ->limit(max(1, $limit))
             ->get();
     }
 

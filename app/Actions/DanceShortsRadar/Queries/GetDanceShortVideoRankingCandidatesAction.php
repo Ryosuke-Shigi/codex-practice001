@@ -30,11 +30,14 @@ class GetDanceShortVideoRankingCandidatesAction
          * Repository から取得する current は、指定 region の active 動画に紐づく最新 snapshot です。
          * Action は current 候補を受け取り、comparisonDays から previous cutoff を計算して、
          * 比較に必要なもう一方の snapshot を同じ Repository に取りに行きます。
+         *
+         * 表示件数 limit は、ここではまだ使いません。
+         * current snapshot の新しさや Repository の返却順はランキング指標ではないため、
+         * 全候補に対して previous を引き、metric を計算してから最後に絞り込みます。
          */
         $items = [];
         $currentSnapshots = $this->snapshotRepository->latestRankingSnapshotsByRegionCode(
             regionCode: $condition->regionCode,
-            limit: $limit,
         );
 
         foreach ($currentSnapshots as $currentSnapshot) {
@@ -94,6 +97,11 @@ class GetDanceShortVideoRankingCandidatesAction
             );
         }
 
+        /*
+         * limit はランキング sort 後にだけ適用します。
+         * sort 前に絞ると、Repository の collected_at / id 順に左右され、
+         * 本来は view_count_delta などで上位に来る動画が候補から消えるためです。
+         */
         return new DanceShortVideoRankingListDTO(
             array_slice($this->sortedItems($items, $sortKey), 0, $limit),
         );

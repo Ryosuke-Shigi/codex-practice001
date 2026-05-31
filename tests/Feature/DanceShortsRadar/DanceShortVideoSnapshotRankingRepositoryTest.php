@@ -31,7 +31,7 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         $archivedCurrent = $this->snapshot($archivedVideo, $jp, 888, '2026-05-31 03:00:00');
         $otherRegionCurrent = $this->snapshot($activeVideo, $us, 777, '2026-05-31 04:00:00');
 
-        $snapshots = $this->repository()->latestRankingSnapshotsByRegionCode('JP', 10);
+        $snapshots = $this->repository()->latestRankingSnapshotsByRegionCode('JP');
         $snapshotIds = $snapshots->pluck('id')->all();
 
         $this->assertContains($activeCurrent->getKey(), $snapshotIds);
@@ -44,21 +44,26 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         $this->assertTrue($snapshots->firstWhere('id', $activeCurrent->getKey())?->relationLoaded('region'));
     }
 
-    public function test_latest_ranking_snapshots_by_region_code_applies_limit_to_current_candidates(): void
+    public function test_latest_ranking_snapshots_by_region_code_does_not_apply_display_limit_before_ranking(): void
     {
         $jp = $this->region('JP', '日本');
 
+        /*
+         * Repository は current 候補を集める境界です。
+         * ランキング表示件数の limit を持たないため、取得順が collected_at / id 順でも、
+         * active な current snapshot はここで落とさず全件返すことを固定します。
+         */
         $first = $this->snapshot($this->video('first-video', 'First video'), $jp, 100, '2026-05-31 00:00:00');
         $second = $this->snapshot($this->video('second-video', 'Second video'), $jp, 200, '2026-05-31 01:00:00');
         $third = $this->snapshot($this->video('third-video', 'Third video'), $jp, 300, '2026-05-31 02:00:00');
 
-        $snapshots = $this->repository()->latestRankingSnapshotsByRegionCode('JP', 2);
+        $snapshots = $this->repository()->latestRankingSnapshotsByRegionCode('JP');
 
         $this->assertSame([
             $third->getKey(),
             $second->getKey(),
+            $first->getKey(),
         ], $snapshots->pluck('id')->all());
-        $this->assertNotContains($first->getKey(), $snapshots->pluck('id')->all());
     }
 
     public function test_latest_snapshot_at_or_before_returns_latest_snapshot_not_newer_than_cutoff(): void

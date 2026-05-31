@@ -122,6 +122,36 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         ], array_map(fn ($item): string => $item->title, $list->items));
     }
 
+    public function test_execute_applies_limit_after_metric_sort_not_before_current_candidate_collection(): void
+    {
+        $jp = $this->region('JP', '日本');
+        $newerSmallDelta = $this->video('newer-small-delta-video', 'Newer small delta');
+        $olderLargeDelta = $this->video('older-large-delta-video', 'Older large delta');
+
+        /*
+         * newerSmallDelta は current collected_at が新しいため、Repository の返却順だけを見ると先頭に来ます。
+         * ただしランキング指標では olderLargeDelta の view_count_delta が大きいので、
+         * Action が全候補の metric 計算と sort を終えてから limit=1 を適用することを確認します。
+         */
+        $this->snapshot($newerSmallDelta, $jp, 900, '2026-05-31 12:00:00');
+        $this->snapshot($newerSmallDelta, $jp, 1000, '2026-06-01 12:00:00');
+        $this->snapshot($olderLargeDelta, $jp, 100, '2026-05-30 12:00:00');
+        $this->snapshot($olderLargeDelta, $jp, 1000, '2026-06-01 11:00:00');
+
+        $list = app(GetDanceShortVideoRankingCandidatesAction::class)->execute(
+            new DanceShortVideoRankingConditionDTO(
+                regionCode: 'JP',
+                comparisonDays: 1,
+                limit: 1,
+                sortKey: 'view_count_delta',
+            ),
+        );
+
+        $this->assertCount(1, $list->items);
+        $this->assertSame('Older large delta', $list->items[0]->title);
+        $this->assertSame(900, $list->items[0]->viewCountDelta);
+    }
+
     public function test_execute_sorts_by_view_growth_rate_descending(): void
     {
         $jp = $this->region('JP', '日本');

@@ -46,7 +46,7 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         throw new RuntimeException('Cleanup action should not fetch latest snapshots.');
     }
 
-    public function latestRankingSnapshotsByRegionCode(string $regionCode, int $limit): Collection
+    public function latestRankingSnapshotsByRegionCode(string $regionCode): Collection
     {
         throw new RuntimeException('Cleanup action should not fetch ranking snapshots.');
     }
