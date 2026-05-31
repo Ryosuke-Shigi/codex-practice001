@@ -5,8 +5,9 @@ use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
-use App\Http\Controllers\DesignPhilosophyController;
 use App\Http\Controllers\DanceShortsRadarMockController;
+use App\Http\Controllers\DanceShortsRadarController;
+use App\Http\Controllers\DesignPhilosophyController;
 use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
@@ -63,6 +64,26 @@ Route::get('/lab', function () {
             'status' => 'Preview',
             'category' => 'PROJECT',
             'href' => '/quakewave-preview/map',
+        ],
+        [
+            /*
+             * Dance Shorts Radar の本画面です。
+             * 保存済み snapshot から通常ランキングを表示し、YouTube API 疎通前モックや
+             * アイデアボードとは別の PROJECT 導線として扱います。
+             */
+            'id' => 'dance-shorts-radar',
+            'title' => 'Dance Shorts Radar 通常ランキング',
+            'summary' => '保存済みYouTube Shorts snapshotの差分から、地域別の通常ランキング候補を確認する画面です。',
+            'status' => 'Preview',
+            'category' => 'PROJECT',
+            'href' => '/dance-shorts-radar',
+            'actionLabel' => 'ランキングを見る',
+            'tags' => [
+                'Shorts',
+                'Snapshot',
+                'Ranking',
+                'JP / US / KR',
+            ],
         ],
         [
             /*
@@ -273,6 +294,9 @@ Route::get('/lab/dance-shorts-radar-idea-board', function () {
 
 Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class)
     ->name('lab.dance-shorts-radar-mock');
+
+Route::get('/dance-shorts-radar', DanceShortsRadarController::class)
+    ->name('dance-shorts-radar.index');
 
 Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。

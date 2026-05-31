@@ -151,6 +151,7 @@ IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静�
 
 - `/`: ポートフォリオ入口
 - `/lab`: 実験・機能一覧
+- `/dance-shorts-radar`: Dance Shorts Radar の通常ランキング
 - `/lab/api-discovery-hub-idea-board`: API Discovery Hub 紹介ページ
 - `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map 紹介ページ
 - `/lab/dance-shorts-radar-idea-board`: Dance Shorts Radar 構想説明
