@@ -1,9 +1,14 @@
 import DanceShortsCandidateCard from './DanceShortsCandidateCard';
-import type { DanceShortsCandidate, DanceShortsRegionTab } from './types';
+import type {
+    DanceShortsAggregationPeriod,
+    DanceShortsCandidate,
+    DanceShortsTab,
+} from './types';
 
 type DanceShortsCandidateListProps = {
-    regionTab: DanceShortsRegionTab;
+    regionTab: DanceShortsTab;
     candidates: DanceShortsCandidate[];
+    periodLabel: DanceShortsAggregationPeriod;
 };
 
 /*
@@ -12,10 +17,14 @@ type DanceShortsCandidateListProps = {
  * candidates は Page に渡る前の Action 境界で既に表示順へ並んでいます。
  * ここで sort しない理由は、一覧表示コンポーネントを「受け取った候補を順に描く」だけにして、
  * 並び替え仕様をデータ組み立て側のテストで固定できるようにするためです。
+ *
+ * periodLabel は、期間ボタンの active 状態が一覧側にも反映されていることを示すための表示値です。
+ * 現時点では期間によって candidates を再計算しないため、このコンポーネントでも絞り込みや再取得は行いません。
  */
 export default function DanceShortsCandidateList({
     regionTab,
     candidates,
+    periodLabel,
 }: DanceShortsCandidateListProps) {
     /*
      * regionTab.code は ALL の場合もありますが、ここでは aria の対応関係と見出しにだけ使います。
@@ -40,6 +49,9 @@ export default function DanceShortsCandidateList({
                         {regionTab.description}を、1時間あたりの視聴増加数が多い順に表示しています。
                     </p>
                 </div>
+                <span className="rounded-md border border-white/22 bg-white/10 px-3 py-1.5 text-xs font-bold text-cyan-50">
+                    {periodLabel}
+                </span>
                 <span className="rounded-md border border-white/22 bg-white/10 px-3 py-1.5 text-xs font-bold text-cyan-50">
                     {candidates.length}件
                 </span>

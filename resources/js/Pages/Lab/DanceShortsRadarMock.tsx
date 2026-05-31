@@ -2,14 +2,19 @@ import { useMemo, useState } from 'react';
 
 import { Head, Link } from '@inertiajs/react';
 
+import AggregationPeriodButtons from '@/Components/Lab/DanceShortsRadar/AggregationPeriodButtons';
 import DanceShortsCandidateList from '@/Components/Lab/DanceShortsRadar/DanceShortsCandidateList';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
+import RisingCandidatesSection from '@/Components/Lab/DanceShortsRadar/RisingCandidatesSection';
+import { risingCandidateMockData } from '@/Components/Lab/DanceShortsRadar/risingCandidatesMockData';
 import type {
+    DanceShortsAggregationPeriod,
     DanceShortsCandidate,
     DanceShortsCandidatesByRegion,
     DanceShortsRegion,
     DanceShortsRegionTab,
-    DanceShortsRegionTabCode,
+    DanceShortsTab,
+    DanceShortsTabCode,
 } from '@/Components/Lab/DanceShortsRadar/types';
 import PublicLayout from '@/Layouts/PublicLayout';
 
@@ -34,12 +39,43 @@ type DanceShortsRadarPageProps = {
     mockNotice: string;
 };
 
+const risingCandidatesTab: DanceShortsTab = {
+    code: 'RISING',
+    label: '上昇候補',
+    description: '海外先行で伸びていて、日本ではまだ伸びきっていない可能性がある候補',
+};
+
+/*
+ * 画面で見せるタブ順の仕様です。
+ *
+ * Laravel 側の regionTabs は既存モックの都合で ALL / JP / US / KR の順に渡ってきますが、
+ * 今回の画面仕様では「上昇候補」を先頭に置き、その直後に「まとめ」を置きます。
+ * サーバー側の固定データ順をこの要件だけのために変えると、地域別候補を組み立てる Action の責務まで
+ * UI都合で動かすことになるため、表示順の調整は Page 側のタブ定義として扱います。
+ */
+const tabDisplayOrder: DanceShortsTabCode[] = [
+    'RISING',
+    'ALL',
+    'JP',
+    'US',
+    'KR',
+];
+
+const aggregationPeriods: DanceShortsAggregationPeriod[] = [
+    '1日',
+    '3日',
+    '7日',
+    '14日',
+    '30日',
+];
+
 /*
  * Dance Shorts Radar の API 疎通前モック画面です。
  *
  * このページの責務:
  * - Action / Responder から渡されたモック props を受け取る
- * - ALL / JP / US / KR のタブ状態を画面内 state として持つ
+ * - 上昇候補 / ALL / JP / US / KR のタブ状態を画面内 state として持つ
+ * - 集計期間の選択状態を画面内 state として持つ
  * - 選択タブに対応する候補一覧を表示専用コンポーネントへ渡す
  *
  * このページでやらないこと:
@@ -58,12 +94,35 @@ export default function DanceShortsRadarPage({
     mockNotice,
 }: DanceShortsRadarPageProps) {
     /*
-     * 初期タブは props の先頭に合わせます。
-     * Action 側で regionTabs の先頭を ALL にしているため、初期表示は「まとめ」になります。
+     * 初期タブは今回追加する「上昇候補」に固定します。
+     * regionTabs は既存の地域タブ props として受け取り、画面側で表示順を指定の日本語タブ順へ整えます。
      */
-    const initialTab = regionTabs[0]?.code ?? 'ALL';
     const [selectedTab, setSelectedTab] =
-        useState<DanceShortsRegionTabCode>(initialTab);
+        useState<DanceShortsTabCode>('RISING');
+    const [selectedPeriod, setSelectedPeriod] =
+        useState<DanceShortsAggregationPeriod>('7日');
+
+    const displayTabs = useMemo(() => {
+        /*
+         * regionTabs は Action / Responder から来る既存 props です。
+         * ここで Map にしてから tabDisplayOrder に沿って取り出すことで、
+         * 「props の受け取り」と「画面上の表示順」を分けます。
+         * 上昇候補はまだサーバー由来の実データではないため、この Page 内の固定タブとして追加します。
+         */
+        const regionTabsByCode = new Map(
+            regionTabs.map((regionTab) => [regionTab.code, regionTab]),
+        );
+
+        return tabDisplayOrder
+            .map((tabCode): DanceShortsTab | null => {
+                if (tabCode === 'RISING') {
+                    return risingCandidatesTab;
+                }
+
+                return regionTabsByCode.get(tabCode) ?? null;
+            })
+            .filter((tab): tab is DanceShortsTab => tab !== null);
+    }, [regionTabs]);
 
     /*
      * URL query ではなくタブのローカル state だけで切り替えます。
@@ -71,19 +130,22 @@ export default function DanceShortsRadarPage({
      */
     const selectedTabDefinition = useMemo(
         () =>
-            regionTabs.find((regionTab) => regionTab.code === selectedTab) ??
-            regionTabs[0],
-        [regionTabs, selectedTab],
+            displayTabs.find((regionTab) => regionTab.code === selectedTab) ??
+            displayTabs[0],
+        [displayTabs, selectedTab],
     );
     /*
      * ALL は実データの地域コードではないため candidatesByRegion には含めません。
      * Page では ALL のときだけ allCandidates を選び、地域別タブでは JP / US / KR の配列を取り出します。
      * どちらも Action 側で表示順にしてあるため、カードや一覧コンポーネントへ sort 処理を漏らしません。
+     * RISING は専用セクションへ固定モックデータを渡すため、地域別 candidate の選択対象には含めません。
      */
     const selectedCandidates =
         selectedTab === 'ALL'
             ? allCandidates
-            : candidatesByRegion[selectedTab] ?? [];
+            : selectedTab === 'RISING'
+                ? []
+                : candidatesByRegion[selectedTab] ?? [];
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -99,7 +161,9 @@ export default function DanceShortsRadarPage({
                             伸びている候補モック
                         </h1>
                         <p className="mt-3 max-w-3xl text-sm leading-7 text-cyan-50/88 drop-shadow-[0_8px_20px_rgba(3,25,48,0.22)]">
-                            まとめ / 日本 / アメリカ / 韓国 のタブで、ダンスShorts候補の見え方を確認するための画面です。実際の伸び判定やYouTube Data API接続はまだ行いません。
+                            上昇候補 / まとめ / 日本 / アメリカ / 韓国
+                            のタブで、ダンスShorts候補の見え方を確認するための画面です。実際の伸び判定やYouTube
+                            Data API接続はまだ行いません。
                         </p>
                     </div>
 
@@ -131,22 +195,41 @@ export default function DanceShortsRadarPage({
                             表示順は、1時間あたりの視聴増加数、視聴数の増加数、現在の視聴数、いいね数の順に比較しています。
                         </p>
                         <p>
-                            候補として眺めるための画面であり、流行や成果を断定するものではありません。
+                            候補として眺めるための画面であり、反応や成果を断定するものではありません。
                         </p>
                     </div>
                 </section>
 
                 <RegionTabs
-                    tabs={regionTabs}
+                    tabs={displayTabs}
                     selectedTab={selectedTab}
                     onSelectTab={setSelectedTab}
                 />
 
-                {selectedTabDefinition && (
-                    <DanceShortsCandidateList
-                        regionTab={selectedTabDefinition}
-                        candidates={selectedCandidates}
+                <AggregationPeriodButtons
+                    periods={aggregationPeriods}
+                    selectedPeriod={selectedPeriod}
+                    onSelectPeriod={setSelectedPeriod}
+                />
+
+                {/*
+                    上昇候補だけは、地域別候補とは表示したい指標が違います。
+                    selectedCandidates へ変換して既存一覧に流し込むのではなく、専用セクションへ分けることで、
+                    「海外先行の観測候補」と「地域別ランキング候補」の props の意味を混ぜないようにしています。
+                */}
+                {selectedTab === 'RISING' ? (
+                    <RisingCandidatesSection
+                        periodLabel={selectedPeriod}
+                        candidates={risingCandidateMockData}
                     />
+                ) : (
+                    selectedTabDefinition && (
+                        <DanceShortsCandidateList
+                            regionTab={selectedTabDefinition}
+                            candidates={selectedCandidates}
+                            periodLabel={selectedPeriod}
+                        />
+                    )
                 )}
             </div>
         </PublicLayout>
