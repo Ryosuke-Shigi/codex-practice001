@@ -3,81 +3,74 @@
 namespace Tests\Unit\ApiCatalog\DTO;
 
 use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
-use Illuminate\Http\Request;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 class ApiCatalogListQueryDTOTest extends TestCase
 {
-    public function test_from_request_clamps_page_to_one_when_it_is_less_than_one(): void
+    public function test_constructor_preserves_received_values(): void
     {
-        /*
-         * page は一覧取得のページ番号として Repository の paginate に渡ります。
-         * 0 や負数をそのまま下流へ流すと、Repository 側に入力補正の責務が漏れるため、
-         * Request から DTO を作る境界で 1 以上に丸める仕様を固定します。
-         */
-        $query = ApiCatalogListQueryDTO::fromRequest($this->request([
-            'page' => '0',
-        ]));
+        $query = new ApiCatalogListQueryDTO(
+            keyword: ' keyword ',
+            providerKey: '',
+            domain: "\t",
+            sortKey: 'source_latest_updated_at desc',
+            page: 0,
+            perPage: 999,
+        );
 
-        $this->assertSame(1, $query->page);
+        $this->assertSame(' keyword ', $query->keyword);
+        $this->assertSame('', $query->providerKey);
+        $this->assertSame("\t", $query->domain);
+        $this->assertSame('source_latest_updated_at desc', $query->sortKey);
+        $this->assertSame(0, $query->page);
+        $this->assertSame(999, $query->perPage);
     }
 
-    public function test_from_request_clamps_per_page_to_supported_range(): void
+    public function test_dto_does_not_depend_on_http_request(): void
     {
-        /*
-         * per_page はユーザー入力ですが、一覧の取得条件として直接DBページングに影響します。
-         * 1未満は1へ、過大値は50へ丸め、Repository は正規化済みの件数だけを受け取る前提にします。
-         */
-        $tooSmall = ApiCatalogListQueryDTO::fromRequest($this->request([
-            'per_page' => '0',
-        ]));
-        $tooLarge = ApiCatalogListQueryDTO::fromRequest($this->request([
-            'per_page' => '999',
-        ]));
-
-        $this->assertSame(1, $tooSmall->perPage);
-        $this->assertSame(50, $tooLarge->perPage);
+        $this->assertFalse(method_exists(ApiCatalogListQueryDTO::class, 'fromRequest'));
+        $this->assertStringNotContainsString(
+            'Illuminate\\Http\\Request',
+            $this->source(),
+        );
     }
 
-    public function test_from_request_normalizes_invalid_sort_to_updated_desc(): void
+    public function test_dto_does_not_normalize_sort_key(): void
     {
-        /*
-         * sort に任意のカラム名やSQL断片を許すと、Repository が入力検証まで背負ってしまいます。
-         * DTO 境界で許可済み sort key だけに閉じ、不正値は初期表示と同じ updated_desc に戻します。
-         */
-        $query = ApiCatalogListQueryDTO::fromRequest($this->request([
-            'sort' => 'source_latest_updated_at desc',
-        ]));
+        $query = new ApiCatalogListQueryDTO(
+            keyword: null,
+            providerKey: null,
+            domain: null,
+            sortKey: 'invalid_sort',
+            page: 1,
+            perPage: 6,
+        );
 
-        $this->assertSame(ApiCatalogListQueryDTO::SORT_UPDATED_DESC, $query->sortKey);
+        $this->assertSame('invalid_sort', $query->sortKey);
     }
 
-    public function test_from_request_normalizes_empty_filter_strings_to_null(): void
+    public function test_dto_does_not_clamp_page_or_per_page(): void
     {
-        /*
-         * keyword / provider_key / domain の空文字は「絞り込みなし」と同じ意味です。
-         * 空文字のまま Repository へ渡すと、LIKE '%%' や provider_key='' のような
-         * 意図しないDB条件になり得るため、DTOで null に寄せて取得条件を安定させます。
-         */
-        $query = ApiCatalogListQueryDTO::fromRequest($this->request([
-            'keyword' => '   ',
-            'provider_key' => '',
-            'domain' => "\t\n",
-        ]));
+        $query = new ApiCatalogListQueryDTO(
+            keyword: null,
+            providerKey: null,
+            domain: null,
+            sortKey: ApiCatalogListQueryDTO::SORT_UPDATED_DESC,
+            page: -10,
+            perPage: 999,
+        );
 
-        $this->assertNull($query->keyword);
-        $this->assertNull($query->providerKey);
-        $this->assertNull($query->domain);
+        $this->assertSame(-10, $query->page);
+        $this->assertSame(999, $query->perPage);
     }
 
-    /**
-     * Controller を通さず DTO の入力正規化だけを見るため、最小の Request をここで作ります。
-     * HTTPレスポンスやInertia props はこのテストの対象外です。
-     *
-     * @param  array<string, mixed>  $query
-     */
-    private function request(array $query): Request
+    private function source(): string
     {
-        return Request::create('/api-catalog', 'GET', $query);
+        $fileName = (new ReflectionClass(ApiCatalogListQueryDTO::class))->getFileName();
+
+        $this->assertIsString($fileName);
+
+        return (string) file_get_contents($fileName);
     }
 }

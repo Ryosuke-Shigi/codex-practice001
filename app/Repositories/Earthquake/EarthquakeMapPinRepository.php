@@ -89,7 +89,11 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
          * QuakeWave MAP 本体は toMapPinListDTO() を使いますが、同じ latestModels() を
          * 経由させることで、最新順や上限の扱いを Repository 内で一箇所に揃えます。
          */
-        return $this->latestModels(EarthquakeMapPinListQueryDTO::forLatest($limit))
+        return $this->latestModels(new EarthquakeMapPinListQueryDTO(
+            limit: $limit,
+            startDate: null,
+            endDate: null,
+        ))
             ->map(fn (EarthquakeMapPin $pin): array => $this->pinToArray($pin))
             ->all();
     }

@@ -169,7 +169,7 @@ class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
     {
         /*
          * Repository は「取得順」というDB取得条件だけを担当します。
-         * sortKey は DTO で許可済みに正規化済みなので、ここでは固定の orderBy へ写像します。
+         * sortKey は Factory で許可済みに正規化してから渡されるため、ここでは固定の orderBy へ写像します。
          */
         match ($sortKey) {
             ApiCatalogListQueryDTO::SORT_UPDATED_ASC => $builder

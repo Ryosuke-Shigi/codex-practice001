@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\ApiCatalog\Queries\GetApiCatalogDetailAction;
 use App\Actions\ApiCatalog\Queries\GetApiCatalogListAction;
 use App\Actions\ApiCatalog\Queries\GetApiCatalogSyncStatusAction;
-use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
+use App\Factories\ApiCatalog\ApiCatalogListQueryDTOFactory;
 use App\Responders\ApiCatalog\ApiCatalogDetailResponder;
 use App\Responders\ApiCatalog\ApiCatalogListResponder;
 use Illuminate\Http\Request;
@@ -18,9 +18,10 @@ class ApiCatalogController extends Controller
         GetApiCatalogListAction $action,
         GetApiCatalogSyncStatusAction $syncStatusAction,
         ApiCatalogListResponder $responder,
+        ApiCatalogListQueryDTOFactory $queryFactory,
     ): Response {
         // Controller は HTTP query を DTO に詰める入口だけに留め、取得や表示整形は下位層へ渡します。
-        $query = ApiCatalogListQueryDTO::fromRequest($request);
+        $query = $queryFactory->fromRequest($request);
         $result = $action->execute($query);
         $syncStatus = $syncStatusAction->execute();
 
