@@ -13,6 +13,7 @@ use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 class SyncDanceShortVideosActionTest extends TestCase
@@ -175,6 +176,41 @@ class SyncDanceShortVideosActionTest extends TestCase
             'region_id' => $region->getKey(),
         ]);
     }
+
+    public function test_execute_counts_search_api_failure_as_sync_failure_without_saving_data(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
+
+        $region = DanceShortRegion::query()->create([
+            'code' => 'JP',
+            'name' => '日本',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        DanceShortSearchKeyword::query()->create([
+            'region_id' => $region->getKey(),
+            'keyword' => 'dance shorts',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->app->instance(
+            YouTubeVideoApiRepositoryInterface::class,
+            new FailingSearchDanceShortYouTubeVideoApiRepository(),
+        );
+
+        $result = app(SyncDanceShortVideosAction::class)->execute();
+
+        $this->assertSame(1, $result->searchedRegionCount);
+        $this->assertSame(1, $result->searchedKeywordCount);
+        $this->assertSame(0, $result->fetchedVideoCount);
+        $this->assertSame(0, $result->fetchedVideoDetailCount);
+        $this->assertSame(0, $result->savedVideoCount);
+        $this->assertSame(0, $result->savedSnapshotCount);
+        $this->assertSame(1, $result->failedCount);
+        $this->assertDatabaseCount('dance_short_videos', 0);
+        $this->assertDatabaseCount('dance_short_video_snapshots', 0);
+    }
 }
 
 class FakeDanceShortYouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
@@ -279,5 +315,18 @@ class FakeDanceShortYouTubeVideoApiRepository implements YouTubeVideoApiReposito
             likeCount: 789,
             commentCount: 12,
         );
+    }
+}
+
+class FailingSearchDanceShortYouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
+{
+    public function searchVideos(DanceShortSearchConditionDTO $condition): array
+    {
+        throw new RuntimeException('YouTube search failed.');
+    }
+
+    public function fetchVideoDetails(array $youtubeVideoIds): array
+    {
+        throw new RuntimeException('YouTube details should not be fetched after search failure.');
     }
 }
