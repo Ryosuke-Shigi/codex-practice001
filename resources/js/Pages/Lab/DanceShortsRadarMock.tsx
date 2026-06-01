@@ -6,13 +6,20 @@ import AggregationPeriodButtons from '@/Components/Lab/DanceShortsRadar/Aggregat
 import DanceShortsCandidateList from '@/Components/Lab/DanceShortsRadar/DanceShortsCandidateList';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
 import RisingCandidatesSection from '@/Components/Lab/DanceShortsRadar/RisingCandidatesSection';
+import SnapshotObservationNavigation from '@/Components/Lab/DanceShortsRadar/SnapshotObservationNavigation';
+import SnapshotObservationTable from '@/Components/Lab/DanceShortsRadar/SnapshotObservationTable';
 import { risingCandidateMockData } from '@/Components/Lab/DanceShortsRadar/risingCandidatesMockData';
+import {
+    firstSnapshotObservationMockData,
+    latestSnapshotObservationMockData,
+} from '@/Components/Lab/DanceShortsRadar/snapshotObservationMockData';
 import type {
     DanceShortsAggregationPeriod,
     DanceShortsCandidate,
     DanceShortsCandidatesByRegion,
     DanceShortsRegion,
     DanceShortsRegionTab,
+    DanceShortsSnapshotObservationKind,
     DanceShortsTab,
     DanceShortsTabCode,
 } from '@/Components/Lab/DanceShortsRadar/types';
@@ -101,6 +108,18 @@ export default function DanceShortsRadarPage({
         useState<DanceShortsTabCode>('RISING');
     const [selectedPeriod, setSelectedPeriod] =
         useState<DanceShortsAggregationPeriod>('7日');
+    /*
+     * 初回観測一覧 / 最新観測一覧は、通常ランキングのタブではなく「別画面相当の表示モード」として扱います。
+     *
+     * selectedTab に FIRST / LATEST のような値を足してしまうと、RegionTabs が持つ
+     * 「上昇候補 / まとめ / 地域別ランキング候補を切り替える」責務に snapshot 一覧の文脈が混ざります。
+     * その結果、previous snapshot の無い初回観測にも集計期間やランキング順位が効いているように見えます。
+     *
+     * ここでは観測一覧だけを別 state に分け、値が入っている間はランキング系 UI を描画しません。
+     * 画面上の見た目は同じ MOCK ページ内の切り替えですが、仕様上は「通常ランキングとは別枠」です。
+     */
+    const [selectedObservationView, setSelectedObservationView] =
+        useState<DanceShortsSnapshotObservationKind | null>(null);
 
     const displayTabs = useMemo(() => {
         /*
@@ -146,6 +165,23 @@ export default function DanceShortsRadarPage({
             : selectedTab === 'RISING'
                 ? []
                 : candidatesByRegion[selectedTab] ?? [];
+
+    const selectedObservationList =
+        selectedObservationView === 'first'
+            ? {
+                  title: '初回観測一覧',
+                  description:
+                      'previous snapshot がまだ無い動画を、初回取得直後に観測できた一覧として表示します。比較元が無いため、増加量や増加率は表示しません。',
+                  observations: firstSnapshotObservationMockData,
+              }
+            : selectedObservationView === 'latest'
+                ? {
+                      title: '最新観測一覧',
+                      description:
+                          '最新 snapshot を持つ動画の現在状態を確認する一覧です。比較ランキングではなく、取得済みの現在値を中心に表示します。',
+                      observations: latestSnapshotObservationMockData,
+                  }
+                : null;
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -200,36 +236,74 @@ export default function DanceShortsRadarPage({
                     </div>
                 </section>
 
-                <RegionTabs
-                    tabs={displayTabs}
-                    selectedTab={selectedTab}
-                    onSelectTab={setSelectedTab}
+                <SnapshotObservationNavigation
+                    activeView={selectedObservationView}
+                    onOpenFirstObservation={() =>
+                        setSelectedObservationView('first')
+                    }
+                    onOpenLatestObservation={() =>
+                        setSelectedObservationView('latest')
+                    }
                 />
 
-                <AggregationPeriodButtons
-                    periods={aggregationPeriods}
-                    selectedPeriod={selectedPeriod}
-                    onSelectPeriod={setSelectedPeriod}
-                />
+                {selectedObservationList ? (
+                    <>
+                        {/*
+                            観測一覧モードでは RegionTabs / AggregationPeriodButtons を非表示にします。
+                            初回観測一覧には comparison period の意味がなく、最新観測一覧も「現在状態の確認」であって
+                            view_count_delta / view_growth_rate を比較するランキングではありません。
+                            戻るボタンで selectedObservationView を null に戻したときだけ、既存の通常ランキング系 UI を再表示します。
+                        */}
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedObservationView(null)}
+                                className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/30 bg-white/12 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                            >
+                                比較ランキングへ戻る
+                            </button>
+                        </div>
 
-                {/*
-                    上昇候補だけは、地域別候補とは表示したい指標が違います。
-                    selectedCandidates へ変換して既存一覧に流し込むのではなく、専用セクションへ分けることで、
-                    「海外先行の観測候補」と「地域別ランキング候補」の props の意味を混ぜないようにしています。
-                */}
-                {selectedTab === 'RISING' ? (
-                    <RisingCandidatesSection
-                        periodLabel={selectedPeriod}
-                        candidates={risingCandidateMockData}
-                    />
-                ) : (
-                    selectedTabDefinition && (
-                        <DanceShortsCandidateList
-                            regionTab={selectedTabDefinition}
-                            candidates={selectedCandidates}
-                            periodLabel={selectedPeriod}
+                        <SnapshotObservationTable
+                            title={selectedObservationList.title}
+                            description={selectedObservationList.description}
+                            observations={selectedObservationList.observations}
                         />
-                    )
+                    </>
+                ) : (
+                    <>
+                        <RegionTabs
+                            tabs={displayTabs}
+                            selectedTab={selectedTab}
+                            onSelectTab={setSelectedTab}
+                        />
+
+                        <AggregationPeriodButtons
+                            periods={aggregationPeriods}
+                            selectedPeriod={selectedPeriod}
+                            onSelectPeriod={setSelectedPeriod}
+                        />
+
+                        {/*
+                            上昇候補だけは、地域別候補とは表示したい指標が違います。
+                            selectedCandidates へ変換して既存一覧に流し込むのではなく、専用セクションへ分けることで、
+                            「海外先行の観測候補」と「地域別ランキング候補」の props の意味を混ぜないようにしています。
+                        */}
+                        {selectedTab === 'RISING' ? (
+                            <RisingCandidatesSection
+                                periodLabel={selectedPeriod}
+                                candidates={risingCandidateMockData}
+                            />
+                        ) : (
+                            selectedTabDefinition && (
+                                <DanceShortsCandidateList
+                                    regionTab={selectedTabDefinition}
+                                    candidates={selectedCandidates}
+                                    periodLabel={selectedPeriod}
+                                />
+                            )
+                        )}
+                    </>
                 )}
             </div>
         </PublicLayout>

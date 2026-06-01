@@ -86,3 +86,31 @@ export type DanceShortsRisingCandidate = {
     tags: string[];
     observation_note: string;
 };
+
+/*
+ * snapshot 一覧画面専用の表示種別です。
+ * 通常ランキングのタブ値や保存対象地域とは別に扱い、初回観測一覧 / 最新観測一覧を
+ * view_count_delta や view_growth_rate の比較ランキングへ混ぜないための型です。
+ *
+ * ここに 'RISING' や 'ALL' を入れないことで、観測一覧の画面切り替えとランキングタブの選択状態を分離します。
+ * React 側の state もこの型で分けるため、後続で snapshot 一覧の本データ接続を入れるときに
+ * ランキング用 DTO / Repository / Query と同じ入口へ寄せてしまう事故を避けやすくします。
+ */
+export type DanceShortsSnapshotObservationKind = 'first' | 'latest';
+
+/*
+ * 初回観測一覧 / 最新観測一覧で使う MOCK 表示データです。
+ * 比較ランキングではないため、view_count_delta / view_growth_rate / views_per_hour は持たせません。
+ */
+export type DanceShortsSnapshotObservation = {
+    region: DanceShortsRegionCode;
+    keyword: string;
+    title: string;
+    channel_title: string;
+    view_count: number;
+    like_count: number;
+    comment_count: number;
+    published_at: string;
+    observed_at: string;
+    status: '比較元なし' | '最新観測';
+};
