@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react';
 
+import { DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS } from './inertiaReloadOptions';
 import type { DanceShortsTab, DanceShortsTabCode } from './types';
 
 type RegionTabsProps = {
@@ -63,7 +64,10 @@ export default function RegionTabs({
                                 router.get(
                                     tab.href ?? '',
                                     {},
-                                    { preserveScroll: true },
+                                    {
+                                        preserveScroll: true,
+                                        only: DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS,
+                                    },
                                 )
                             }
                             className={`inline-flex items-center justify-center ${className}`}

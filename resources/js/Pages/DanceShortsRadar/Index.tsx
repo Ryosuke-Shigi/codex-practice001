@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 
 import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Cards/DanceShortsDisplayCardField';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
+import { DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS } from '@/Components/Lab/DanceShortsRadar/inertiaReloadOptions';
 import { DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES } from '@/Components/Lab/DanceShortsRadar/types';
 import type {
     DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps,
@@ -72,7 +73,10 @@ function OptionButtons({
                         type="button"
                         aria-pressed={option.isActive}
                         onClick={() =>
-                            router.get(option.href, {}, { preserveScroll: true })
+                            router.get(option.href, {}, {
+                                preserveScroll: true,
+                                only: DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS,
+                            })
                         }
                         className={[
                             'inline-flex min-h-9 items-center rounded-md border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35',
