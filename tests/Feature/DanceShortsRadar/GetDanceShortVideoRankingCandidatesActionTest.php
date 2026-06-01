@@ -95,6 +95,35 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         ], array_map(fn ($item): string => $item->title, $list->items));
     }
 
+    public function test_execute_falls_back_to_immediate_previous_snapshot_when_comparison_day_snapshot_is_missing(): void
+    {
+        $jp = $this->region('JP', '日本');
+        $video = $this->video('same-day-video', 'Same day previous');
+
+        /*
+         * 本番投入直後は、7日前以前の比較元 snapshot がまだ無くても、
+         * 同日内に複数回同期されていることがあります。
+         * current だけの初回観測は除外しつつ、直前 snapshot が存在する動画は通常ランキングに表示します。
+         */
+        $this->snapshot($video, $jp, 900, '2026-06-01 04:08:24');
+        $this->snapshot($video, $jp, 1000, '2026-06-01 04:09:17');
+
+        $list = app(GetDanceShortVideoRankingCandidatesAction::class)->execute(
+            new DanceShortVideoRankingConditionDTO(
+                regionCode: 'JP',
+                comparisonDays: 7,
+                limit: 10,
+                sortKey: 'view_count_delta',
+            ),
+        );
+
+        $this->assertCount(1, $list->items);
+        $this->assertSame('same-day-video', $list->items[0]->youtubeVideoId);
+        $this->assertSame(900, $list->items[0]->previousViewCount);
+        $this->assertSame(100, $list->items[0]->viewCountDelta);
+        $this->assertSame('2026-06-01 04:08:24', $list->items[0]->previousCollectedAt->format('Y-m-d H:i:s'));
+    }
+
     public function test_execute_sorts_by_view_count_delta_descending_and_applies_limit(): void
     {
         $jp = $this->region('JP', '日本');

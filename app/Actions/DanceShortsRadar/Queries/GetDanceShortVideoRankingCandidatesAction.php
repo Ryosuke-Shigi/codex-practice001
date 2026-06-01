@@ -51,6 +51,24 @@ class GetDanceShortVideoRankingCandidatesAction
 
             if ($previousSnapshot === null) {
                 /*
+                 * 本番投入直後やローカル確認直後は、snapshot が同日・同時間帯にしか存在しないことがあります。
+                 * その状態で comparisonDays 以前の snapshot だけを要求すると、DB には current / previous が
+                 * あるのに通常ランキングが 0 件になり、「本データ接続できていない」ように見えます。
+                 *
+                 * ここではまず comparisonDays どおりの比較元を探し、見つからない場合だけ直前 snapshot へ
+                 * fallback します。current 1件しかない動画は引き続き対象外なので、初回観測一覧を本画面に
+                 * 混ぜるわけではありません。
+                 */
+                $previousSnapshot = $this->snapshotRepository->latestSnapshotBefore(
+                    videoId: (int) $currentSnapshot->video_id,
+                    regionId: (int) $currentSnapshot->region_id,
+                    currentCollectedAt: $currentCollectedAt,
+                    currentSnapshotId: (int) $currentSnapshot->getKey(),
+                );
+            }
+
+            if ($previousSnapshot === null) {
+                /*
                  * 初期方針では previous がない動画はランキング対象外にします。
                  * current だけでカードを作ると増加量・伸び率・時間あたり増加数の意味が崩れるため、
                  * ここでは空の指標を持つ DTO にはせず、候補から外します。

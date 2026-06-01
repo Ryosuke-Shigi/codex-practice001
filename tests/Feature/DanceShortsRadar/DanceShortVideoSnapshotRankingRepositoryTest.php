@@ -103,6 +103,28 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         $this->assertNull($found);
     }
 
+    public function test_latest_snapshot_before_returns_immediate_previous_snapshot_excluding_current_row(): void
+    {
+        $jp = $this->region('JP', '日本');
+        $video = $this->video('active-video', 'Active video');
+
+        $older = $this->snapshot($video, $jp, 100, '2026-06-01 04:08:24');
+        $immediatePrevious = $this->snapshot($video, $jp, 200, '2026-06-01 04:09:16');
+        $current = $this->snapshot($video, $jp, 300, '2026-06-01 04:09:17');
+
+        $found = $this->repository()->latestSnapshotBefore(
+            (int) $video->getKey(),
+            (int) $jp->getKey(),
+            $current->collected_at,
+            (int) $current->getKey(),
+        );
+
+        $this->assertNotNull($found);
+        $this->assertTrue($immediatePrevious->is($found));
+        $this->assertFalse($older->is($found));
+        $this->assertFalse($current->is($found));
+    }
+
     public function test_snapshot_table_keeps_derived_metrics_out_of_db(): void
     {
         $this->assertFalse(Schema::hasColumn('dance_short_video_snapshots', 'view_count_delta'));

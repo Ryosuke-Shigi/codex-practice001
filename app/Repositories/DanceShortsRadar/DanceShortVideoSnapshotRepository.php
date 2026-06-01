@@ -100,6 +100,36 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
             ->first();
     }
 
+    public function latestSnapshotBefore(
+        int $videoId,
+        int $regionId,
+        CarbonInterface $currentCollectedAt,
+        int $currentSnapshotId,
+    ): ?DanceShortVideoSnapshot {
+        /*
+         * 初回同期から十分な日数が経っていない環境では、
+         * current - comparisonDays 以前の snapshot がまだ存在しないことがあります。
+         * その場合でも同じ video / region に直前 snapshot があれば通常ランキングとして表示できるため、
+         * current より古い行を collected_at / id の stable tie-break で取得します。
+         *
+         * Repository は「current より古い DB 行」の取得条件だけを持ちます。
+         * この fallback をいつ使うか、表示上どう扱うかは Action / Responder 側へ残します。
+         */
+        return DanceShortVideoSnapshot::query()
+            ->where('video_id', $videoId)
+            ->where('region_id', $regionId)
+            ->where(function ($query) use ($currentCollectedAt, $currentSnapshotId): void {
+                $query->where('collected_at', '<', $currentCollectedAt->toDateTimeString())
+                    ->orWhere(function ($query) use ($currentCollectedAt, $currentSnapshotId): void {
+                        $query->where('collected_at', $currentCollectedAt->toDateTimeString())
+                            ->where('id', '<', $currentSnapshotId);
+                    });
+            })
+            ->orderByDesc('collected_at')
+            ->orderByDesc('id')
+            ->first();
+    }
+
     public function deleteCollectedBefore(CarbonInterface $cutoffAt): int
     {
         /*

@@ -40,5 +40,20 @@ interface DanceShortVideoSnapshotRepositoryInterface
         CarbonInterface $cutoffAt,
     ): ?DanceShortVideoSnapshot;
 
+    /**
+     * current snapshot より前に保存された直近 snapshot を取得します。
+     *
+     * 通常ランキングでは、指定 comparisonDays 以前の snapshot がまだ無い初期観測直後でも、
+     * 直前 snapshot があれば増加量を表示できるようにします。
+     * 「何日前と比較するか」という意味づけやフォールバック採用判断は Action / Service 側へ残し、
+     * Repository は current より古い行を stable tie-break で取る DB 条件だけを扱います。
+     */
+    public function latestSnapshotBefore(
+        int $videoId,
+        int $regionId,
+        CarbonInterface $currentCollectedAt,
+        int $currentSnapshotId,
+    ): ?DanceShortVideoSnapshot;
+
     public function deleteCollectedBefore(CarbonInterface $cutoffAt): int;
 }

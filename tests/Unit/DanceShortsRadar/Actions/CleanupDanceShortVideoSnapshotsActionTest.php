@@ -59,6 +59,15 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         throw new RuntimeException('Cleanup action should not fetch previous snapshots.');
     }
 
+    public function latestSnapshotBefore(
+        int $videoId,
+        int $regionId,
+        CarbonInterface $currentCollectedAt,
+        int $currentSnapshotId,
+    ): ?DanceShortVideoSnapshot {
+        throw new RuntimeException('Cleanup action should not fetch previous snapshots.');
+    }
+
     public function deleteCollectedBefore(CarbonInterface $cutoffAt): int
     {
         $this->deletedBefore = $cutoffAt;
