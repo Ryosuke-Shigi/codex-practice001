@@ -4,12 +4,13 @@ import { Head, Link } from '@inertiajs/react';
 
 import DanceShortsCandidateList from '@/Components/Lab/DanceShortsRadar/DanceShortsCandidateList';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
+import RisingCandidatesSection from '@/Components/Lab/DanceShortsRadar/RisingCandidatesSection';
 import type {
     DanceShortsAggregationPeriod,
     DanceShortsCandidate,
+    DanceShortsRisingCandidate,
     DanceShortsRegionCode,
     DanceShortsTab,
-    DanceShortsTabCode,
 } from '@/Components/Lab/DanceShortsRadar/types';
 import PublicLayout from '@/Layouts/PublicLayout';
 
@@ -42,6 +43,7 @@ type SortKeyOption = {
 type DanceShortsRadarIndexProps = {
     filters: {
         region: string | null;
+        selectedTab: string;
         comparisonDays: number;
         limit: number;
         sortKey: string;
@@ -52,14 +54,12 @@ type DanceShortsRadarIndexProps = {
         Record<DanceShortsRegionCode, DanceShortsCandidate[]>
     >;
     allCandidates: DanceShortsCandidate[];
+    risingCandidates: DanceShortsRisingCandidate[];
     comparisonDayOptions: ComparisonDayOption[];
     sortKeyOptions: SortKeyOption[];
     emptyMessage: string;
+    risingEmptyMessage: string;
 };
-
-function isSelectableTabCode(value: string | null): value is DanceShortsTabCode {
-    return value === 'ALL' || value === 'JP' || value === 'US' || value === 'KR';
-}
 
 function OptionLinks({
     label,
@@ -97,9 +97,11 @@ export default function DanceShortsRadarIndex({
     regionTabs,
     candidatesByRegion,
     allCandidates,
+    risingCandidates,
     comparisonDayOptions,
     sortKeyOptions,
     emptyMessage,
+    risingEmptyMessage,
 }: DanceShortsRadarIndexProps) {
     /*
      * 本番画面では region の切り替えを URL query に残してサーバー再取得します。
@@ -119,9 +121,11 @@ export default function DanceShortsRadarIndex({
             })),
         [regionTabs],
     );
-    const selectedTab = isSelectableTabCode(filters.region)
-        ? filters.region
-        : displayTabs[0]?.code;
+    const selectedTab =
+        displayTabs.find((regionTab) => regionTab.isActive)?.code ??
+        displayTabs.find((regionTab) => regionTab.code === filters.selectedTab)
+            ?.code ??
+        displayTabs[0]?.code;
     const selectedTabDefinition =
         displayTabs.find((regionTab) => regionTab.code === selectedTab) ??
         displayTabs[0];
@@ -136,6 +140,7 @@ export default function DanceShortsRadarIndex({
             : candidatesByRegion[selectedTab as DanceShortsRegionCode] ?? [];
     const periodLabel =
         `${filters.comparisonDays}日` as DanceShortsAggregationPeriod;
+    const isRisingTab = selectedTab === 'RISING';
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -164,19 +169,38 @@ export default function DanceShortsRadarIndex({
                         <p className="text-sm font-semibold text-cyan-50/78">
                             {selectedTabDefinition?.label ?? '地域未選択'} /{' '}
                             {filters.comparisonDays}日比較 /{' '}
-                            {selectedCandidates.length}件
+                            {isRisingTab
+                                ? risingCandidates.length
+                                : selectedCandidates.length}
+                            件
                         </p>
                         <p className="mt-1 text-xs text-cyan-50/60">
-                            sort_key: {filters.sortKey} / limit:{' '}
-                            {filters.limit}
+                            {isRisingTab
+                                ? `上昇候補順 / limit: ${filters.limit}`
+                                : `sort_key: ${filters.sortKey} / limit: ${filters.limit}`}
                         </p>
                     </div>
-                    <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:min-w-[520px]">
+                    <div
+                        className={[
+                            'grid min-w-0 gap-3 lg:min-w-[520px]',
+                            isRisingTab ? '' : 'sm:grid-cols-2',
+                        ].join(' ')}
+                    >
                         <OptionLinks
                             label="比較日数"
                             options={comparisonDayOptions}
                         />
-                        <OptionLinks label="並び順" options={sortKeyOptions} />
+                        {!isRisingTab && (
+                            /*
+                             * 上昇候補は Service / Responder が固定順で渡す観測候補です。
+                             * React 側で sortKey を使って並び替えたり、metric を再計算したりしないため、
+                             * 上昇候補タブではユーザー選択の並び順 UI を表示しません。
+                             */
+                            <OptionLinks
+                                label="並び順"
+                                options={sortKeyOptions}
+                            />
+                        )}
                     </div>
                 </section>
 
@@ -187,7 +211,13 @@ export default function DanceShortsRadarIndex({
                     />
                 )}
 
-                {selectedTabDefinition ? (
+                {selectedTabDefinition && isRisingTab ? (
+                    <RisingCandidatesSection
+                        periodLabel={periodLabel}
+                        candidates={risingCandidates}
+                        emptyMessage={risingEmptyMessage}
+                    />
+                ) : selectedTabDefinition ? (
                     <DanceShortsCandidateList
                         regionTab={selectedTabDefinition}
                         candidates={selectedCandidates}

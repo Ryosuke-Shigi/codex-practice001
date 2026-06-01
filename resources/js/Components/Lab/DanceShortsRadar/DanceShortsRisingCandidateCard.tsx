@@ -7,22 +7,31 @@ type DanceShortsRisingCandidateCardProps = {
     sourceRegionLabel: string;
     japanStatus: string;
     viewCountDelta: number;
-    viewGrowthRate: number;
-    thumbnailUrl: string;
-    youtubeUrl: string;
+    viewGrowthRate: number | null;
+    japanViewCountDelta: number | null;
+    thumbnailUrl: string | null;
+    youtubeUrl: string | null;
     tags: string[];
     observationNote: string;
     index: number;
 };
 
 const numberFormatter = new Intl.NumberFormat('ja-JP');
+const percentFormatter = new Intl.NumberFormat('ja-JP', {
+    maximumFractionDigits: 1,
+    style: 'percent',
+});
 
 function formatNumber(value: number) {
     return numberFormatter.format(value);
 }
 
-function formatGrowthRate(value: number) {
-    return `${value.toFixed(1)}%`;
+function formatGrowthRate(value: number | null) {
+    return value === null ? '算出不可' : percentFormatter.format(value);
+}
+
+function formatJapanViewCountDelta(value: number | null) {
+    return value === null ? '未観測' : `+${formatNumber(value)}回`;
 }
 
 /*
@@ -40,6 +49,7 @@ export default function DanceShortsRisingCandidateCard({
     japanStatus,
     viewCountDelta,
     viewGrowthRate,
+    japanViewCountDelta,
     thumbnailUrl,
     youtubeUrl,
     tags,
@@ -93,9 +103,8 @@ export default function DanceShortsRisingCandidateCard({
                 </p>
 
                 {/*
-                    viewCountDelta / viewGrowthRate は将来の集計期間に連動する想定の指標です。
-                    このモック段階では計算せず、props として受けた値を表示するだけにして、
-                    実集計ロジックが入ったときもカード側の責務が増えないようにしています。
+                    viewCountDelta / viewGrowthRate は Service / Responder から受け取った値です。
+                    React 側で再計算せず、null は 0 に変換しないことで「算出不可」を保ちます。
                 */}
                 <dl className="mt-4 grid gap-0.5 text-sm">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2 first:border-t-0">
@@ -108,30 +117,42 @@ export default function DanceShortsRisingCandidateCard({
                     </div>
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2">
                         <dt className="min-w-0 text-cyan-50/68">
-                            視聴数増加量
+                            海外側の視聴数増加量
                         </dt>
                         <dd className="shrink-0 font-semibold tabular-nums text-white">
                             +{formatNumber(viewCountDelta)}回
                         </dd>
                     </div>
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2">
-                        <dt className="min-w-0 text-cyan-50/68">増加率</dt>
+                        <dt className="min-w-0 text-cyan-50/68">
+                            海外側の増加率
+                        </dt>
                         <dd className="shrink-0 font-semibold tabular-nums text-white">
                             {formatGrowthRate(viewGrowthRate)}
                         </dd>
                     </div>
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2">
+                        <dt className="min-w-0 text-cyan-50/68">
+                            日本側の視聴数増加量
+                        </dt>
+                        <dd className="shrink-0 font-semibold tabular-nums text-white">
+                            {formatJapanViewCountDelta(japanViewCountDelta)}
+                        </dd>
+                    </div>
                 </dl>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                        <span
-                            key={tag}
-                            className="rounded-md border border-white/18 bg-white/8 px-2.5 py-1 text-xs font-bold text-cyan-50/78"
-                        >
-                            {tag}
-                        </span>
-                    ))}
-                </div>
+                {tags.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {tags.map((tag) => (
+                            <span
+                                key={tag}
+                                className="rounded-md border border-white/18 bg-white/8 px-2.5 py-1 text-xs font-bold text-cyan-50/78"
+                            >
+                                {tag}
+                            </span>
+                        ))}
+                    </div>
+                )}
             </div>
         </article>
     );

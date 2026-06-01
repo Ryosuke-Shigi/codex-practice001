@@ -8,6 +8,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingListDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
@@ -46,10 +47,14 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->seed(DanceShortRegionSeeder::class);
 
         $jp = DanceShortRegion::query()->where('code', 'JP')->firstOrFail();
+        $us = DanceShortRegion::query()->where('code', 'US')->firstOrFail();
         $video = $this->video('jp-ranking-video', 'JP ranking short');
+        $usRisingVideo = $this->video('us-rising-video', 'US rising short');
 
         $this->snapshot($video, $jp, 700, '2026-05-31 12:00:00');
         $this->snapshot($video, $jp, 1000, '2026-06-01 12:00:00', 789, 12);
+        $this->snapshot($usRisingVideo, $us, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($usRisingVideo, $us, 1200, '2026-06-01 12:00:00');
 
         $this
             ->get('/dance-shorts-radar')
@@ -57,20 +62,24 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DanceShortsRadar/Index', false)
                 ->where('filters.region', null)
+                ->where('filters.selectedTab', 'RISING')
                 ->where('filters.comparisonDays', 1)
                 ->where('filters.sortKey', 'views_per_hour')
                 ->where('filters.limit', 20)
-                ->has('regionTabs', 4)
-                ->where('regionTabs.0.code', 'ALL')
-                ->where('regionTabs.0.label', 'まとめ')
+                ->has('regionTabs', 5)
+                ->where('regionTabs.0.code', 'RISING')
+                ->where('regionTabs.0.label', '上昇候補')
                 ->where('regionTabs.0.isActive', true)
-                ->where('regionTabs.1.code', 'JP')
-                ->where('regionTabs.1.label', '日本')
+                ->where('regionTabs.1.code', 'ALL')
+                ->where('regionTabs.1.label', 'まとめ')
                 ->where('regionTabs.1.isActive', false)
-                ->where('regionTabs.2.code', 'US')
-                ->where('regionTabs.2.label', 'アメリカ')
-                ->where('regionTabs.3.code', 'KR')
-                ->where('regionTabs.3.label', '韓国')
+                ->where('regionTabs.2.code', 'JP')
+                ->where('regionTabs.2.label', '日本')
+                ->where('regionTabs.2.isActive', false)
+                ->where('regionTabs.3.code', 'US')
+                ->where('regionTabs.3.label', 'アメリカ')
+                ->where('regionTabs.4.code', 'KR')
+                ->where('regionTabs.4.label', '韓国')
                 ->has('regions', 3)
                 ->where('regions.0.code', 'JP')
                 ->where('regions.0.label', '日本')
@@ -80,18 +89,14 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('comparisonDayOptions.2.isActive', false)
                 ->where('sortKeyOptions.0.value', 'views_per_hour')
                 ->where('sortKeyOptions.0.isActive', true)
-                ->has('ranking.items', 1)
-                ->where('ranking.total', 1)
-                ->where('ranking.items.0.youtubeVideoId', 'jp-ranking-video')
-                ->where('ranking.items.0.title', 'JP ranking short')
-                ->where('ranking.items.0.region.code', 'JP')
-                ->where('ranking.items.0.currentViewCount', 1000)
-                ->where('ranking.items.0.previousViewCount', 700)
-                ->where('ranking.items.0.viewCountDelta', 300)
-                ->where('ranking.items.0.viewsPerHour', 300 / 24)
-                ->where('ranking.items.0.likeCount', 789)
-                ->where('ranking.items.0.commentCount', 12)
-                ->where('ranking.items.0.hasPreviousSnapshot', true)
+                ->has('ranking.items', 0)
+                ->where('ranking.total', 0)
+                ->has('risingCandidates', 1)
+                ->where('risingCandidates.0.youtube_video_id', 'us-rising-video')
+                ->where('risingCandidates.0.source_region', 'US')
+                ->where('risingCandidates.0.view_count_delta', 200)
+                ->where('risingCandidates.0.japan_view_count_delta', null)
+                ->where('risingCandidates.0.japan_status', '日本側は未観測')
                 ->where('candidatesByRegion.JP.0.youtube_video_id', 'jp-ranking-video')
                 ->where('candidatesByRegion.JP.0.view_count', 1000)
                 ->where('candidatesByRegion.JP.0.previous_view_count', 700)
@@ -101,6 +106,8 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('candidatesByRegion.JP.0.like_count', 789)
                 ->where('candidatesByRegion.JP.0.comment_count', 12)
                 ->where('allCandidates.0.youtube_video_id', 'jp-ranking-video')
+                ->missing('candidatesByRegion.ALL')
+                ->missing('candidatesByRegion.RISING')
             );
 
         $this->assertSame(0, $youtubeRepository->callCount);
@@ -123,19 +130,25 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DanceShortsRadar/Index', false)
                 ->where('filters.region', null)
-                ->has('regionTabs', 4)
-                ->where('regionTabs.0.code', 'ALL')
-                ->where('regionTabs.0.label', 'まとめ')
+                ->where('filters.selectedTab', 'RISING')
+                ->has('regionTabs', 5)
+                ->where('regionTabs.0.code', 'RISING')
+                ->where('regionTabs.0.label', '上昇候補')
                 ->where('regionTabs.0.isActive', true)
-                ->where('regionTabs.1.code', 'JP')
-                ->where('regionTabs.1.label', '日本')
-                ->where('regionTabs.2.code', 'US')
-                ->where('regionTabs.2.label', 'アメリカ')
-                ->where('regionTabs.3.code', 'KR')
-                ->where('regionTabs.3.label', '韓国')
+                ->where('regionTabs.1.code', 'ALL')
+                ->where('regionTabs.1.label', 'まとめ')
+                ->where('regionTabs.1.isActive', false)
+                ->where('regionTabs.2.code', 'JP')
+                ->where('regionTabs.2.label', '日本')
+                ->where('regionTabs.3.code', 'US')
+                ->where('regionTabs.3.label', 'アメリカ')
+                ->where('regionTabs.4.code', 'KR')
+                ->where('regionTabs.4.label', '韓国')
                 ->has('ranking.items', 0)
                 ->where('ranking.total', 0)
+                ->has('risingCandidates', 0)
                 ->where('emptyMessage', '表示できる通常ランキング候補はまだありません。')
+                ->where('risingEmptyMessage', '表示できる上昇候補はまだありません。')
             );
 
         $this->assertSame(0, $youtubeRepository->callCount);
@@ -221,13 +234,17 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($krVideo, $kr, 1000, '2026-06-01 12:00:00');
 
         $this
-            ->get('/dance-shorts-radar?sort=view_count_delta')
+            ->get('/dance-shorts-radar?region=ALL&sort=view_count_delta')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('filters.region', null)
-                ->where('regionTabs.0.code', 'ALL')
-                ->where('regionTabs.0.label', 'まとめ')
-                ->where('regionTabs.0.isActive', true)
+                ->where('filters.selectedTab', 'ALL')
+                ->where('regionTabs.0.code', 'RISING')
+                ->where('regionTabs.0.label', '上昇候補')
+                ->where('regionTabs.0.isActive', false)
+                ->where('regionTabs.1.code', 'ALL')
+                ->where('regionTabs.1.label', 'まとめ')
+                ->where('regionTabs.1.isActive', true)
                 ->where('ranking.items.0.youtubeVideoId', 'us-summary-video')
                 ->where('ranking.items.1.youtubeVideoId', 'kr-summary-video')
                 ->where('ranking.items.2.youtubeVideoId', 'jp-summary-video')
@@ -238,6 +255,83 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('candidatesByRegion.US.0.youtube_video_id', 'us-summary-video')
                 ->where('candidatesByRegion.KR.0.youtube_video_id', 'kr-summary-video')
                 ->missing('candidatesByRegion.ALL')
+                ->missing('candidatesByRegion.RISING')
+            );
+    }
+
+    public function test_rising_candidates_use_us_or_kr_source_and_smaller_japan_delta(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $us = $this->region('US', 'アメリカ', 20);
+        $kr = $this->region('KR', '韓国', 30);
+        $usVideo = $this->video('us-rising-candidate', 'US rising candidate');
+        $krVideo = $this->video('kr-rising-candidate', 'KR rising candidate');
+        $notCandidateVideo = $this->video('jp-already-large', 'JP already large');
+
+        $this->snapshot($usVideo, $us, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($usVideo, $us, 1800, '2026-06-01 12:00:00');
+
+        $this->snapshot($krVideo, $kr, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($krVideo, $kr, 1500, '2026-06-01 12:00:00');
+        $this->snapshot($krVideo, $jp, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($krVideo, $jp, 1100, '2026-06-01 12:00:00');
+
+        $this->snapshot($notCandidateVideo, $us, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($notCandidateVideo, $us, 1200, '2026-06-01 12:00:00');
+        $this->snapshot($notCandidateVideo, $jp, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($notCandidateVideo, $jp, 1600, '2026-06-01 12:00:00');
+
+        $this
+            ->get('/dance-shorts-radar?region=RISING&comparisonDays=1')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.selectedTab', 'RISING')
+                ->where('regionTabs.0.code', 'RISING')
+                ->where('regionTabs.0.isActive', true)
+                ->where('risingCandidates.0.youtube_video_id', 'us-rising-candidate')
+                ->where('risingCandidates.0.source_region', 'US')
+                ->where('risingCandidates.0.view_count_delta', 800)
+                ->where('risingCandidates.0.japan_comparison_status', 'unobserved')
+                ->where('risingCandidates.1.youtube_video_id', 'kr-rising-candidate')
+                ->where('risingCandidates.1.source_region', 'KR')
+                ->where('risingCandidates.1.view_count_delta', 500)
+                ->where('risingCandidates.1.japan_view_count_delta', 100)
+                ->where('risingCandidates.1.japan_comparison_status', 'smaller_delta')
+                ->missing('risingCandidates.2')
+                ->missing('candidatesByRegion.ALL')
+                ->missing('candidatesByRegion.RISING')
+            );
+    }
+
+    public function test_rising_candidates_ignore_user_sort_key_and_keep_null_growth_rate(): void
+    {
+        $us = $this->region('US', 'アメリカ', 20);
+        $highCurrentSmallDelta = $this->video('high-current-small-delta', 'High current small delta');
+        $lowerCurrentLargeDelta = $this->video('lower-current-large-delta', 'Lower current large delta');
+        $nullGrowthVideo = $this->video('null-growth-rising', 'Null growth rising');
+
+        $this->snapshot($highCurrentSmallDelta, $us, 9900, '2026-05-31 12:00:00');
+        $this->snapshot($highCurrentSmallDelta, $us, 10000, '2026-06-01 12:00:00');
+
+        $this->snapshot($lowerCurrentLargeDelta, $us, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($lowerCurrentLargeDelta, $us, 1800, '2026-06-01 12:00:00');
+
+        $this->snapshot($nullGrowthVideo, $us, 0, '2026-05-31 12:00:00');
+        $this->snapshot($nullGrowthVideo, $us, 500, '2026-06-01 12:00:00');
+
+        $this
+            ->get('/dance-shorts-radar?region=RISING&comparisonDays=1&sort=current_view_count')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.selectedTab', 'RISING')
+                ->where('filters.sortKey', 'current_view_count')
+                ->where('risingCandidates.0.youtube_video_id', 'lower-current-large-delta')
+                ->where('risingCandidates.0.view_count_delta', 800)
+                ->where('risingCandidates.1.youtube_video_id', 'null-growth-rising')
+                ->where('risingCandidates.1.view_count_delta', 500)
+                ->where('risingCandidates.1.view_growth_rate', null)
+                ->where('risingCandidates.2.youtube_video_id', 'high-current-small-delta')
+                ->where('risingCandidates.2.view_count_delta', 100)
             );
     }
 
@@ -331,6 +425,8 @@ class DanceShortVideoRankingPageTest extends TestCase
                             'JP' => $rankingList,
                         ],
                         allRankingList: $rankingList,
+                        risingCandidateList: new DanceShortVideoRisingCandidateListDTO([]),
+                        selectedTabCode: 'JP',
                         selectedRegionCode: 'JP',
                         comparisonDays: 7,
                         limit: 20,

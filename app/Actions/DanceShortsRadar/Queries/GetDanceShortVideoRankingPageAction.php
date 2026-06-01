@@ -9,6 +9,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
 use App\Models\DanceShortRegion;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortRisingCandidateService;
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 
 /*
@@ -31,6 +32,7 @@ class GetDanceShortVideoRankingPageAction
     public function __construct(
         private readonly DanceShortSearchTargetRepositoryInterface $searchTargetRepository,
         private readonly GetDanceShortVideoRankingCandidatesAction $rankingCandidatesAction,
+        private readonly DanceShortRisingCandidateService $risingCandidateService,
         private readonly DanceShortSnapshotMetricService $snapshotMetricService,
     ) {
     }
@@ -39,8 +41,8 @@ class GetDanceShortVideoRankingPageAction
     {
         /*
          * 本画面の地域別候補は DB 上の active region をそのまま使います。
-         * 「まとめ」タブは表示専用の ALL なので、ここでは DB region として作らず、
-         * 未指定時の selectedRegionCode は null のまま扱います。
+         * 「上昇候補」タブと「まとめ」タブは表示専用なので、DB region として作らず、
+         * Repository へ RISING / ALL を渡さない境界をここで守ります。
          */
         $regions = $this->searchTargetRepository
             ->activeRegions()
@@ -51,7 +53,8 @@ class GetDanceShortVideoRankingPageAction
             ->values()
             ->all();
 
-        $selectedRegionCode = $this->selectedRegionCode($input->regionCode, $regions);
+        $selectedTabCode = $this->selectedTabCode($input->regionCode, $regions);
+        $selectedRegionCode = $this->selectedRegionCode($selectedTabCode, $regions);
         $comparisonDays = $this->snapshotMetricService->normalizeComparisonDays($input->comparisonDays);
         $sortKey = $this->snapshotMetricService->normalizeSortKey($input->sortKey);
         $limit = min(self::MAX_LIMIT, max(1, $input->limit));
@@ -96,15 +99,56 @@ class GetDanceShortVideoRankingPageAction
             array_slice($this->rankingCandidatesAction->sortedItems($allRankingItems, $sortKey), 0, $limit),
         );
 
-        $rankingList = $selectedRegionCode === null
-            ? $allRankingList
-            : ($rankingListsByRegion[$selectedRegionCode] ?? new DanceShortVideoRankingListDTO([]));
+        /*
+         * 上昇候補はユーザー選択の sortKey を使いません。
+         * 通常ランキングの表示順とは別に、US / KR / JP の ranking DTO を固定の上昇候補順で Service に
+         * 判定させます。Repository は引き続き実在 region の snapshot 取得だけを担当し、ALL / RISING を
+         * DB region として扱いません。
+         */
+        $risingRankingListsByRegion = [];
+
+        foreach ($regions as $region) {
+            if (! in_array($region->code, ['JP', 'US', 'KR'], true)) {
+                continue;
+            }
+
+            $risingRankingListsByRegion[$region->code] = $this->rankingCandidatesAction->execute(
+                new DanceShortVideoRankingConditionDTO(
+                    regionCode: $region->code,
+                    comparisonDays: $comparisonDays,
+                    limit: self::MAX_LIMIT,
+                    sortKey: 'view_count_delta',
+                ),
+            );
+        }
+
+        $sourceRisingItems = [];
+
+        foreach (['US', 'KR'] as $sourceRegionCode) {
+            foreach (($risingRankingListsByRegion[$sourceRegionCode] ?? new DanceShortVideoRankingListDTO([]))->items as $item) {
+                $sourceRisingItems[] = $item;
+            }
+        }
+
+        $risingCandidateList = $this->risingCandidateService->buildRisingCandidates(
+            sourceItems: $sourceRisingItems,
+            japanItems: ($risingRankingListsByRegion['JP'] ?? new DanceShortVideoRankingListDTO([]))->items,
+            limit: $limit,
+        );
+
+        $rankingList = match (true) {
+            $selectedTabCode === 'RISING' => new DanceShortVideoRankingListDTO([]),
+            $selectedTabCode === 'ALL' => $allRankingList,
+            default => $rankingListsByRegion[$selectedRegionCode] ?? new DanceShortVideoRankingListDTO([]),
+        };
 
         return new DanceShortVideoRankingPageDTO(
             regions: $regions,
             rankingList: $rankingList,
             rankingListsByRegion: $rankingListsByRegion,
             allRankingList: $allRankingList,
+            risingCandidateList: $risingCandidateList,
+            selectedTabCode: $selectedTabCode,
             selectedRegionCode: $selectedRegionCode,
             comparisonDays: $comparisonDays,
             limit: $limit,
@@ -117,17 +161,33 @@ class GetDanceShortVideoRankingPageAction
     /**
      * @param  array<int, DanceShortVideoRankingRegionDTO>  $regions
      */
-    private function selectedRegionCode(?string $requestedRegionCode, array $regions): ?string
+    private function selectedTabCode(?string $requestedRegionCode, array $regions): string
     {
-        if ($requestedRegionCode === null || strtoupper($requestedRegionCode) === 'ALL') {
-            return null;
+        if ($requestedRegionCode === null || strtoupper($requestedRegionCode) === 'RISING') {
+            return 'RISING';
         }
 
-        if ($requestedRegionCode !== null) {
-            foreach ($regions as $region) {
-                if ($region->code === $requestedRegionCode) {
-                    return $region->code;
-                }
+        if (strtoupper($requestedRegionCode) === 'ALL') {
+            return 'ALL';
+        }
+
+        foreach ($regions as $region) {
+            if ($region->code === $requestedRegionCode) {
+                return $region->code;
+            }
+        }
+
+        return 'RISING';
+    }
+
+    /**
+     * @param  array<int, DanceShortVideoRankingRegionDTO>  $regions
+     */
+    private function selectedRegionCode(string $selectedTabCode, array $regions): ?string
+    {
+        foreach ($regions as $region) {
+            if ($region->code === $selectedTabCode) {
+                return $region->code;
             }
         }
 

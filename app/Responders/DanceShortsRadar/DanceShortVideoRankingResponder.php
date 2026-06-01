@@ -5,6 +5,7 @@ namespace App\Responders\DanceShortsRadar;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,6 +33,7 @@ final readonly class DanceShortVideoRankingResponder
         return Inertia::render('DanceShortsRadar/Index', [
             'filters' => [
                 'region' => $page->selectedRegionCode,
+                'selectedTab' => $page->selectedTabCode,
                 'comparisonDays' => $page->comparisonDays,
                 'limit' => $page->limit,
                 'sortKey' => $page->sortKey,
@@ -49,6 +51,7 @@ final readonly class DanceShortVideoRankingResponder
              */
             'candidatesByRegion' => $this->candidatesByRegionProps($page),
             'allCandidates' => $this->allCandidateProps($page),
+            'risingCandidates' => $this->risingCandidateProps($page),
             'comparisonDayOptions' => array_map(
                 fn (int $comparisonDays): array => $this->comparisonDayOptionProps($comparisonDays, $page),
                 $page->comparisonDayOptions,
@@ -67,6 +70,7 @@ final readonly class DanceShortVideoRankingResponder
             'emptyMessage' => count($page->regions) === 0
                 ? '有効な地域がまだ登録されていません。'
                 : '表示できる通常ランキング候補はまだありません。',
+            'risingEmptyMessage' => '表示できる上昇候補はまだありません。',
         ]);
     }
 
@@ -85,16 +89,23 @@ final readonly class DanceShortVideoRankingResponder
     private function regionTabProps(DanceShortVideoRankingPageDTO $page): array
     {
         /*
-         * 本画面の「まとめ」は既存表示仕様と同じ ALL コードを持つ表示専用タブです。
-         * DB region ではないため $page->regions には入れず、href も region query を付けない形で作ります。
-         * selectedRegionCode が null のときだけ active にし、Repository へ ALL が流れない境界を保ちます。
+         * RISING と ALL はどちらも表示専用タブです。
+         * RISING は上昇候補 Service が作った観測候補、ALL は Responder が地域別 DTO をまとめた表示であり、
+         * どちらも dance_short_regions へ追加しません。href は Query Action が識別できる tab 値だけを
+         * region query に置き、Repository へ RISING / ALL が渡らない境界は Action 側で保ちます。
          */
         $tabs = [[
+            'code' => 'RISING',
+            'label' => '上昇候補',
+            'description' => '海外先行で伸びている候補',
+            'href' => $this->indexHref('RISING', $page->comparisonDays, $page->sortKey, $page->limit),
+            'isActive' => $page->selectedTabCode === 'RISING',
+        ], [
             'code' => 'ALL',
             'label' => 'まとめ',
             'description' => '日本・アメリカ・韓国の保存済み snapshot ランキング',
-            'href' => $this->indexHref(null, $page->comparisonDays, $page->sortKey, $page->limit),
-            'isActive' => $page->selectedRegionCode === null,
+            'href' => $this->indexHref('ALL', $page->comparisonDays, $page->sortKey, $page->limit),
+            'isActive' => $page->selectedTabCode === 'ALL',
         ]];
 
         foreach ($page->regions as $region) {
@@ -103,7 +114,7 @@ final readonly class DanceShortVideoRankingResponder
                 'label' => $region->name,
                 'description' => $region->name.'の保存済み snapshot ランキング',
                 'href' => $this->indexHref($region->code, $page->comparisonDays, $page->sortKey, $page->limit),
-                'isActive' => $region->code === $page->selectedRegionCode,
+                'isActive' => $region->code === $page->selectedTabCode,
             ];
         }
 
@@ -153,12 +164,56 @@ final readonly class DanceShortVideoRankingResponder
         );
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function risingCandidateProps(DanceShortVideoRankingPageDTO $page): array
+    {
+        /*
+         * 上昇候補は「日本で必ず伸びる動画」ではなく、US / KR の保存済み snapshot で先行して増加し、
+         * JP 側が未観測または増加量の小さい優先観測候補です。
+         * Service が固定順で作った DTO を、React が表示する snake_case props へ変換するだけに留めます。
+         */
+        return array_map(
+            fn (DanceShortVideoRisingCandidateDTO $item): array => [
+                'video_id' => $item->videoId,
+                'youtube_video_id' => $item->youtubeVideoId,
+                'title' => $item->title,
+                'channel_title' => $item->channelTitle,
+                'published_at' => $item->publishedAt?->format('Y-m-d H:i'),
+                'source_region' => $item->sourceRegionCode,
+                'source_region_label' => $item->sourceRegionName,
+                'source_current_view_count' => $item->sourceCurrentViewCount,
+                'source_previous_view_count' => $item->sourcePreviousViewCount,
+                'view_count_delta' => $item->sourceViewCountDelta,
+                'view_growth_rate' => $item->sourceViewGrowthRate,
+                'views_per_hour' => $item->sourceViewsPerHour,
+                'source_collected_at' => $item->sourceCurrentCollectedAt->format('Y-m-d H:i'),
+                'source_previous_collected_at' => $item->sourcePreviousCollectedAt?->format('Y-m-d H:i'),
+                'japan_status' => $this->japanStatusLabel($item),
+                'japan_current_view_count' => $item->japanCurrentViewCount,
+                'japan_previous_view_count' => $item->japanPreviousViewCount,
+                'japan_view_count_delta' => $item->japanViewCountDelta,
+                'japan_view_growth_rate' => $item->japanViewGrowthRate,
+                'japan_views_per_hour' => $item->japanViewsPerHour,
+                'japan_collected_at' => $item->japanCurrentCollectedAt?->format('Y-m-d H:i'),
+                'japan_previous_collected_at' => $item->japanPreviousCollectedAt?->format('Y-m-d H:i'),
+                'japan_comparison_status' => $item->japanComparisonStatus,
+                'thumbnail_url' => $item->thumbnailUrl,
+                'youtube_url' => $item->url,
+                'tags' => [],
+                'observation_note' => $this->risingObservationNote($item),
+            ],
+            $page->risingCandidateList->items,
+        );
+    }
+
     private function comparisonDayOptionProps(int $comparisonDays, DanceShortVideoRankingPageDTO $page): array
     {
         return [
             'value' => $comparisonDays,
             'label' => $comparisonDays.'日',
-            'href' => $this->indexHref($page->selectedRegionCode, $comparisonDays, $page->sortKey, $page->limit),
+            'href' => $this->indexHref($page->selectedTabCode, $comparisonDays, $page->sortKey, $page->limit),
             'isActive' => $comparisonDays === $page->comparisonDays,
         ];
     }
@@ -168,7 +223,7 @@ final readonly class DanceShortVideoRankingResponder
         return [
             'value' => $sortKey,
             'label' => self::SORT_KEY_LABELS[$sortKey] ?? $sortKey,
-            'href' => $this->indexHref($page->selectedRegionCode, $page->comparisonDays, $sortKey, $page->limit),
+            'href' => $this->indexHref($page->selectedTabCode, $page->comparisonDays, $sortKey, $page->limit),
             'isActive' => $sortKey === $page->sortKey,
         ];
     }
@@ -233,14 +288,34 @@ final readonly class DanceShortVideoRankingResponder
         ];
     }
 
+    private function japanStatusLabel(DanceShortVideoRisingCandidateDTO $item): string
+    {
+        return match ($item->japanComparisonStatus) {
+            'unobserved' => '日本側は未観測',
+            'smaller_delta' => '日本側の増加量は海外側より小さい',
+            default => '日本側は確認中',
+        };
+    }
+
+    private function risingObservationNote(DanceShortVideoRisingCandidateDTO $item): string
+    {
+        return match ($item->japanComparisonStatus) {
+            'unobserved' => $item->sourceRegionName.'の保存済み snapshot では視聴数増加があり、日本側はまだ未観測の候補です。',
+            'smaller_delta' => $item->sourceRegionName.'の保存済み snapshot では視聴数増加が先行し、日本側の増加量は海外側より小さい候補です。',
+            default => $item->sourceRegionName.'の保存済み snapshot から継続観測したい候補です。',
+        };
+    }
+
     private function indexHref(
         ?string $regionCode,
         int $comparisonDays,
         string $sortKey,
         int $limit,
     ): string {
+        $queryRegionCode = $regionCode === 'RISING' ? null : $regionCode;
+
         $query = array_filter([
-            'region' => $regionCode,
+            'region' => $queryRegionCode,
             'comparisonDays' => $comparisonDays,
             'sort' => $sortKey,
             'limit' => $limit,

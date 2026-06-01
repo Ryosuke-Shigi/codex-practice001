@@ -19,7 +19,7 @@ export const risingCandidateMockData: DanceShortsRisingCandidate[] = [
         source_region_label: '韓国',
         japan_status: '日本では上位表示前の観測候補',
         view_count_delta: 286000,
-        view_growth_rate: 38.4,
+        view_growth_rate: 0.384,
         thumbnail_url: '/images/dance-shorts-radar/mock-kr.svg',
         youtube_url:
             'https://www.youtube.com/shorts/mock-rising-kr-point-step',
@@ -33,7 +33,7 @@ export const risingCandidateMockData: DanceShortsRisingCandidate[] = [
         source_region_label: 'アメリカ',
         japan_status: '日本未上昇の注目候補',
         view_count_delta: 214500,
-        view_growth_rate: 31.8,
+        view_growth_rate: 0.318,
         thumbnail_url: '/images/dance-shorts-radar/mock-us.svg',
         youtube_url:
             'https://www.youtube.com/shorts/mock-rising-us-clap-shuffle',
@@ -47,7 +47,7 @@ export const risingCandidateMockData: DanceShortsRisingCandidate[] = [
         source_region_label: '韓国',
         japan_status: '日本でこれから伸びる可能性がある候補',
         view_count_delta: 168200,
-        view_growth_rate: 24.6,
+        view_growth_rate: 0.246,
         thumbnail_url: '/images/dance-shorts-radar/mock-kr.svg',
         youtube_url:
             'https://www.youtube.com/shorts/mock-rising-kr-side-camera',

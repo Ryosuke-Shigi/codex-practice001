@@ -83,14 +83,31 @@ export type DanceShortsCandidatesByRegion = Record<
  * こちらは「海外先行の地域」「日本側の観測状態」「増加率」など、上昇候補タブで見たい意味を持たせます。
  */
 export type DanceShortsRisingCandidate = {
+    video_id?: number;
+    youtube_video_id?: string;
     title: string;
+    channel_title?: string | null;
+    published_at?: string | null;
     source_region: DanceShortsRegionCode;
     source_region_label: string;
+    source_current_view_count?: number;
+    source_previous_view_count?: number | null;
+    source_collected_at?: string | null;
+    source_previous_collected_at?: string | null;
     japan_status: string;
+    japan_current_view_count?: number | null;
+    japan_previous_view_count?: number | null;
+    japan_view_count_delta?: number | null;
+    japan_view_growth_rate?: number | null;
+    japan_views_per_hour?: number | null;
+    japan_collected_at?: string | null;
+    japan_previous_collected_at?: string | null;
+    japan_comparison_status?: 'unobserved' | 'smaller_delta';
     view_count_delta: number;
-    view_growth_rate: number;
-    thumbnail_url: string;
-    youtube_url: string;
+    view_growth_rate: number | null;
+    views_per_hour?: number | null;
+    thumbnail_url: string | null;
+    youtube_url: string | null;
     tags: string[];
     observation_note: string;
 };

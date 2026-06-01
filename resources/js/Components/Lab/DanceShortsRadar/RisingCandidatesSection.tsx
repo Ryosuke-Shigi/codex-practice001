@@ -7,13 +7,14 @@ import type {
 type RisingCandidatesSectionProps = {
     periodLabel: DanceShortsAggregationPeriod;
     candidates: DanceShortsRisingCandidate[];
+    emptyMessage?: string;
 };
 
 /*
  * 上昇候補タブの表示領域です。
  *
  * 説明文、選択中の集計期間ラベル、上昇候補カード一覧を表示します。
- * 候補判定や実データ集計はまだ行わず、受け取ったモックデータをそのまま描画します。
+ * 候補判定や実データ集計は行わず、受け取った candidates をそのまま描画します。
  *
  * このセクションは「上昇候補とは何か」をユーザーへ説明する表示責務を持ちます。
  * 一方で、どの動画を上昇候補とみなすか、期間ごとの数値をどう集計するかは将来の
@@ -22,6 +23,7 @@ type RisingCandidatesSectionProps = {
 export default function RisingCandidatesSection({
     periodLabel,
     candidates,
+    emptyMessage,
 }: RisingCandidatesSectionProps) {
     return (
         <section
@@ -46,7 +48,7 @@ export default function RisingCandidatesSection({
                         韓国・アメリカなど海外で伸びている兆候があり、日本ではまだ伸びきっていない可能性がある動画を、優先観測候補として表示します。
                     </p>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-cyan-50/72">
-                        公開指標から見たモック表示であり、実際の成果や日本での反応を断定するものではありません。
+                        公開指標から見た観測候補であり、実際の成果や日本での反応を断定するものではありません。
                     </p>
                 </div>
 
@@ -64,8 +66,15 @@ export default function RisingCandidatesSection({
                 </div>
             </div>
 
-            <div className="grid gap-4">
-                {candidates.map((candidate, index) => (
+            {candidates.length === 0 ? (
+                <section className="rounded-lg border border-white/18 bg-slate-950/36 p-6 text-white shadow-[0_16px_34px_rgba(4,25,42,0.14)] backdrop-blur-xl">
+                    <p className="text-sm font-semibold text-cyan-50/78">
+                        {emptyMessage ?? '表示できる上昇候補はまだありません。'}
+                    </p>
+                </section>
+            ) : (
+                <div className="grid gap-4">
+                    {candidates.map((candidate, index) => (
                     /*
                      * 上昇候補カードは既存の地域別カードとは別にしています。
                      * 地域別カードは現在視聴数や前回視聴数を見せるランキング表示、
@@ -79,14 +88,18 @@ export default function RisingCandidatesSection({
                         japanStatus={candidate.japan_status}
                         viewCountDelta={candidate.view_count_delta}
                         viewGrowthRate={candidate.view_growth_rate}
+                        japanViewCountDelta={
+                            candidate.japan_view_count_delta ?? null
+                        }
                         thumbnailUrl={candidate.thumbnail_url}
                         youtubeUrl={candidate.youtube_url}
                         tags={candidate.tags}
                         observationNote={candidate.observation_note}
                         index={index}
                     />
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
         </section>
     );
 }
