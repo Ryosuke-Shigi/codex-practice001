@@ -16,6 +16,7 @@ use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
+use Database\Seeders\DanceShortRegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use RuntimeException;
@@ -38,8 +39,13 @@ class DanceShortVideoRankingPageTest extends TestCase
         $youtubeRepository = new ThrowingRankingPageYouTubeVideoApiRepository();
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
-        $jp = $this->region('JP', '日本', 10);
-        $this->region('US', 'アメリカ', 20);
+        /*
+         * 通常ランキング画面の region tab は React の固定値ではなく、
+         * DanceShortRegionSeeder が投入する active region から作られることを固定します。
+         */
+        $this->seed(DanceShortRegionSeeder::class);
+
+        $jp = DanceShortRegion::query()->where('code', 'JP')->firstOrFail();
         $video = $this->video('jp-ranking-video', 'JP ranking short');
 
         $this->snapshot($video, $jp, 700, '2026-05-25 12:00:00');
@@ -54,11 +60,14 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('filters.comparisonDays', 7)
                 ->where('filters.sortKey', 'views_per_hour')
                 ->where('filters.limit', 20)
-                ->has('regionTabs', 2)
+                ->has('regionTabs', 3)
                 ->where('regionTabs.0.code', 'JP')
                 ->where('regionTabs.0.label', '日本')
                 ->where('regionTabs.0.isActive', true)
                 ->where('regionTabs.1.code', 'US')
+                ->where('regionTabs.1.label', 'アメリカ')
+                ->where('regionTabs.2.code', 'KR')
+                ->where('regionTabs.2.label', '韓国')
                 ->where('comparisonDayOptions.0.value', 1)
                 ->where('comparisonDayOptions.2.value', 7)
                 ->where('comparisonDayOptions.2.isActive', true)
@@ -73,6 +82,39 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('ranking.items.0.previousViewCount', 700)
                 ->where('ranking.items.0.viewCountDelta', 300)
                 ->where('ranking.items.0.viewsPerHour', 300 / (7 * 24))
+            );
+
+        $this->assertSame(0, $youtubeRepository->callCount);
+    }
+
+    public function test_page_shows_seeded_region_tabs_and_empty_ranking_without_snapshots(): void
+    {
+        $youtubeRepository = new ThrowingRankingPageYouTubeVideoApiRepository();
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+
+        /*
+         * snapshot が未投入でも、地域マスタだけでタブは表示され、ランキング部分は空配列として
+         * 安全に返る必要があります。この画面表示確認では YouTube API を呼びません。
+         */
+        $this->seed(DanceShortRegionSeeder::class);
+
+        $this
+            ->get('/dance-shorts-radar')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('DanceShortsRadar/Index', false)
+                ->where('filters.region', 'JP')
+                ->has('regionTabs', 3)
+                ->where('regionTabs.0.code', 'JP')
+                ->where('regionTabs.0.label', '日本')
+                ->where('regionTabs.0.isActive', true)
+                ->where('regionTabs.1.code', 'US')
+                ->where('regionTabs.1.label', 'アメリカ')
+                ->where('regionTabs.2.code', 'KR')
+                ->where('regionTabs.2.label', '韓国')
+                ->has('ranking.items', 0)
+                ->where('ranking.total', 0)
+                ->where('emptyMessage', '比較元 snapshot がある通常ランキング候補はまだありません。')
             );
 
         $this->assertSame(0, $youtubeRepository->callCount);

@@ -7,6 +7,7 @@ use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoCategory;
 use App\Models\DanceShortVideoSnapshot;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DanceShortRegionSeeder;
 use Database\Seeders\DanceShortSearchKeywordSeeder;
 use Illuminate\Database\QueryException;
@@ -43,28 +44,69 @@ class DanceShortDatabaseTest extends TestCase
     public function test_region_and_keyword_seeders_create_minimum_observation_data(): void
     {
         $this->seed(DanceShortRegionSeeder::class);
+
+        /*
+         * DanceShortRegionSeeder は code unique 制約を前提に updateOrCreate するため、
+         * 複数回実行しても JP / US / KR が重複しないことをここで固定します。
+         */
+        $this->seed(DanceShortRegionSeeder::class);
+
+        $this->assertSame(3, DanceShortRegion::query()->count());
+
         $this->seed(DanceShortSearchKeywordSeeder::class);
 
         $this->assertDatabaseHas('dance_short_regions', [
             'code' => 'JP',
             'name' => '日本',
+            'sort_order' => 10,
             'is_active' => true,
         ]);
         $this->assertDatabaseHas('dance_short_regions', [
             'code' => 'US',
             'name' => 'アメリカ',
+            'sort_order' => 20,
             'is_active' => true,
         ]);
         $this->assertDatabaseHas('dance_short_regions', [
             'code' => 'KR',
             'name' => '韓国',
+            'sort_order' => 30,
             'is_active' => true,
         ]);
+        $this->assertSame(3, DanceShortRegion::query()->count());
 
         $keyword = DanceShortSearchKeyword::query()->where('keyword', 'dance shorts')->firstOrFail();
 
         $this->assertNotNull($keyword->region_id);
         $this->assertSame('US', $keyword->region->code);
+    }
+
+    public function test_database_seeder_calls_dance_short_region_seeder(): void
+    {
+        /*
+         * README の通常セットアップで DatabaseSeeder を使った場合でも、地域マスタ不足で
+         * /dance-shorts-radar の region tab が消えないことを Feature 側から固定します。
+         */
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertDatabaseHas('dance_short_regions', [
+            'code' => 'JP',
+            'name' => '日本',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        $this->assertDatabaseHas('dance_short_regions', [
+            'code' => 'US',
+            'name' => 'アメリカ',
+            'sort_order' => 20,
+            'is_active' => true,
+        ]);
+        $this->assertDatabaseHas('dance_short_regions', [
+            'code' => 'KR',
+            'name' => '韓国',
+            'sort_order' => 30,
+            'is_active' => true,
+        ]);
     }
 
     public function test_youtube_video_id_is_unique(): void
