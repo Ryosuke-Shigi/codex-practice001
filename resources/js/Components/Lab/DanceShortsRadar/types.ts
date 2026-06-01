@@ -1,4 +1,12 @@
 export type DanceShortsRegionCode = 'JP' | 'US' | 'KR';
+export const DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES = {
+    RANKING: 'ranking',
+    RISING: 'rising',
+} as const;
+
+export type DanceShortsDisplayCardFieldType =
+    (typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES)[keyof typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES];
+
 /*
  * 画面で選べる集計期間です。
  * ここでは文字列リテラルとして固定し、仕様外の期間値が UI 側へ入り込まないようにします。
@@ -111,6 +119,24 @@ export type DanceShortsRisingCandidate = {
     tags: string[];
     observation_note: string;
 };
+
+export type DanceShortsDisplayCardField =
+    | {
+          type: typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RANKING;
+          selectedTab: DanceShortsTabCode;
+          comparisonDays: number;
+          sortKey: string;
+          cards: DanceShortsCandidate[];
+          emptyMessage: string;
+      }
+    | {
+          type: typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING;
+          selectedTab: DanceShortsTabCode;
+          comparisonDays: number;
+          sortKey: string;
+          cards: DanceShortsRisingCandidate[];
+          emptyMessage: string;
+      };
 
 /*
  * snapshot 一覧画面専用の表示種別です。

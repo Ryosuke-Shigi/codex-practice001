@@ -2,6 +2,8 @@
 
 namespace App\Responders\DanceShortsRadar;
 
+use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
@@ -57,6 +59,7 @@ final readonly class DanceShortVideoRankingResponder
             'candidatesByRegion' => $this->candidatesByRegionProps($page),
             'allCandidates' => $this->allCandidateProps($page),
             'risingCandidates' => $this->risingCandidateProps($page),
+            'displayCardField' => $this->displayCardFieldProps($page),
             'comparisonDayOptions' => array_map(
                 fn (int $comparisonDays): array => $this->comparisonDayOptionProps($comparisonDays, $page),
                 $page->comparisonDayOptions,
@@ -180,37 +183,53 @@ final readonly class DanceShortVideoRankingResponder
          * Service が固定順で作った DTO を、React が表示する snake_case props へ変換するだけに留めます。
          */
         return array_map(
-            fn (DanceShortVideoRisingCandidateDTO $item): array => [
-                'video_id' => $item->videoId,
-                'youtube_video_id' => $item->youtubeVideoId,
-                'title' => $item->title,
-                'channel_title' => $item->channelTitle,
-                'published_at' => $item->publishedAt?->format('Y-m-d H:i'),
-                'source_region' => $item->sourceRegionCode,
-                'source_region_label' => $item->sourceRegionName,
-                'source_current_view_count' => $item->sourceCurrentViewCount,
-                'source_previous_view_count' => $item->sourcePreviousViewCount,
-                'view_count_delta' => $item->sourceViewCountDelta,
-                'view_growth_rate' => $item->sourceViewGrowthRate,
-                'views_per_hour' => $item->sourceViewsPerHour,
-                'source_collected_at' => $item->sourceCurrentCollectedAt->format('Y-m-d H:i'),
-                'source_previous_collected_at' => $item->sourcePreviousCollectedAt?->format('Y-m-d H:i'),
-                'japan_status' => $this->japanStatusLabel($item),
-                'japan_current_view_count' => $item->japanCurrentViewCount,
-                'japan_previous_view_count' => $item->japanPreviousViewCount,
-                'japan_view_count_delta' => $item->japanViewCountDelta,
-                'japan_view_growth_rate' => $item->japanViewGrowthRate,
-                'japan_views_per_hour' => $item->japanViewsPerHour,
-                'japan_collected_at' => $item->japanCurrentCollectedAt?->format('Y-m-d H:i'),
-                'japan_previous_collected_at' => $item->japanPreviousCollectedAt?->format('Y-m-d H:i'),
-                'japan_comparison_status' => $item->japanComparisonStatus,
-                'thumbnail_url' => $item->thumbnailUrl,
-                'youtube_url' => $item->url,
-                'tags' => [],
-                'observation_note' => $this->risingObservationNote($item),
-            ],
+            fn (DanceShortVideoRisingCandidateDTO $item): array => $this->risingCandidateCardProps($item),
             $page->risingCandidateList->items,
         );
+    }
+
+    /**
+     * @return array{type: string, selectedTab: string, comparisonDays: int, sortKey: string, cards: array<int, array<string, mixed>>, emptyMessage: string}
+     */
+    private function displayCardFieldProps(DanceShortVideoRankingPageDTO $page): array
+    {
+        $field = $page->displayCardField;
+
+        /*
+         * displayCardField は React の主表示入口です。
+         *
+         * Action が type と cards を決め、Responder はカード DTO を既存カードコンポーネントが読める
+         * snake_case props へ変換します。ここで region の選び直しやランキングの再計算を行わないことで、
+         * 「表示対象の確定」は Action、「出力形への変換」は Responder という境界を保ちます。
+         */
+        return [
+            'type' => $field->type,
+            'selectedTab' => $field->selectedTab,
+            'comparisonDays' => $field->comparisonDays,
+            'sortKey' => $field->sortKey,
+            'cards' => array_map(
+                fn (DanceShortRankingDisplayCardDTO|DanceShortRisingDisplayCardDTO $card): array => $this->displayCardProps($card),
+                $field->cards->cards,
+            ),
+            'emptyMessage' => $field->emptyMessage,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function displayCardProps(
+        DanceShortRankingDisplayCardDTO|DanceShortRisingDisplayCardDTO $card,
+    ): array {
+        /*
+         * カード種別ごとの配列変換だけをここで切り替えます。
+         * 新しい displayCardField.type が増えた場合は、新しい DisplayCardDTO と変換メソッドを足せばよく、
+         * 既存の通常ランキング DTO と上昇候補 DTO を無理に統合する必要はありません。
+         */
+        return match (true) {
+            $card instanceof DanceShortRankingDisplayCardDTO => $this->candidateProps($card->rankingItem),
+            $card instanceof DanceShortRisingDisplayCardDTO => $this->risingCandidateCardProps($card->risingCandidate),
+        };
     }
 
     private function comparisonDayOptionProps(int $comparisonDays, DanceShortVideoRankingPageDTO $page): array
@@ -290,6 +309,42 @@ final readonly class DanceShortVideoRankingResponder
             'comparison_status' => $item->hasPreviousSnapshot ? '比較済み' : '比較元なし',
             'thumbnail_url' => $item->thumbnailUrl,
             'youtube_url' => $item->url,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function risingCandidateCardProps(DanceShortVideoRisingCandidateDTO $item): array
+    {
+        return [
+            'video_id' => $item->videoId,
+            'youtube_video_id' => $item->youtubeVideoId,
+            'title' => $item->title,
+            'channel_title' => $item->channelTitle,
+            'published_at' => $item->publishedAt?->format('Y-m-d H:i'),
+            'source_region' => $item->sourceRegionCode,
+            'source_region_label' => $item->sourceRegionName,
+            'source_current_view_count' => $item->sourceCurrentViewCount,
+            'source_previous_view_count' => $item->sourcePreviousViewCount,
+            'view_count_delta' => $item->sourceViewCountDelta,
+            'view_growth_rate' => $item->sourceViewGrowthRate,
+            'views_per_hour' => $item->sourceViewsPerHour,
+            'source_collected_at' => $item->sourceCurrentCollectedAt->format('Y-m-d H:i'),
+            'source_previous_collected_at' => $item->sourcePreviousCollectedAt?->format('Y-m-d H:i'),
+            'japan_status' => $this->japanStatusLabel($item),
+            'japan_current_view_count' => $item->japanCurrentViewCount,
+            'japan_previous_view_count' => $item->japanPreviousViewCount,
+            'japan_view_count_delta' => $item->japanViewCountDelta,
+            'japan_view_growth_rate' => $item->japanViewGrowthRate,
+            'japan_views_per_hour' => $item->japanViewsPerHour,
+            'japan_collected_at' => $item->japanCurrentCollectedAt?->format('Y-m-d H:i'),
+            'japan_previous_collected_at' => $item->japanPreviousCollectedAt?->format('Y-m-d H:i'),
+            'japan_comparison_status' => $item->japanComparisonStatus,
+            'thumbnail_url' => $item->thumbnailUrl,
+            'youtube_url' => $item->url,
+            'tags' => [],
+            'observation_note' => $this->risingObservationNote($item),
         ];
     }
 

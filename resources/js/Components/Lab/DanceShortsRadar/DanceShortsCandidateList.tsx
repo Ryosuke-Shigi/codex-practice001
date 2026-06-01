@@ -1,3 +1,4 @@
+import EmptyDisplayCardField from './Cards/EmptyDisplayCardField';
 import DanceShortsCandidateCard from './DanceShortsCandidateCard';
 import type {
     DanceShortsAggregationPeriod,
@@ -60,11 +61,9 @@ export default function DanceShortsCandidateList({
             </div>
 
             {candidates.length === 0 ? (
-                <section className="rounded-lg border border-white/18 bg-slate-950/36 p-6 text-white shadow-[0_16px_34px_rgba(4,25,42,0.14)] backdrop-blur-xl">
-                    <p className="text-sm font-semibold text-cyan-50/78">
-                        {emptyMessage ?? '表示できる候補はまだありません。'}
-                    </p>
-                </section>
+                <EmptyDisplayCardField
+                    message={emptyMessage ?? '表示できる候補はまだありません。'}
+                />
             ) : (
                 <div className="grid gap-4">
                     {candidates.map((candidate, index) => (

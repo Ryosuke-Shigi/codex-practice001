@@ -2,11 +2,18 @@
 
 namespace App\Actions\DanceShortsRadar\Queries;
 
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardListDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingConditionDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingListDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
 use App\Models\DanceShortRegion;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortRisingCandidateService;
@@ -142,12 +149,30 @@ class GetDanceShortVideoRankingPageAction
             default => $rankingListsByRegion[$selectedRegionCode] ?? new DanceShortVideoRankingListDTO([]),
         };
 
+        /*
+         * ここで React が実際に描く「1つのカードフィールド」を確定します。
+         *
+         * rankingList / risingCandidateList / allRankingList は後方互換やテスト確認にも使う
+         * ユースケース結果ですが、画面の主表示入口としては displayCardField だけを見ればよい形にします。
+         * これにより React 側は selectedTab を見て allCandidates / candidatesByRegion / risingCandidates を
+         * 選び直す必要がなくなり、タブ条件の意味づけはこの Action に閉じます。
+         */
+        $displayCardField = $this->displayCardField(
+            selectedTabCode: $selectedTabCode,
+            rankingList: $rankingList,
+            risingCandidateList: $risingCandidateList,
+            comparisonDays: $comparisonDays,
+            sortKey: $sortKey,
+            hasRegions: count($regions) > 0,
+        );
+
         return new DanceShortVideoRankingPageDTO(
             regions: $regions,
             rankingList: $rankingList,
             rankingListsByRegion: $rankingListsByRegion,
             allRankingList: $allRankingList,
             risingCandidateList: $risingCandidateList,
+            displayCardField: $displayCardField,
             selectedTabCode: $selectedTabCode,
             selectedRegionCode: $selectedRegionCode,
             comparisonDays: $comparisonDays,
@@ -198,5 +223,55 @@ class GetDanceShortVideoRankingPageAction
         }
 
         return null;
+    }
+
+    private function displayCardField(
+        string $selectedTabCode,
+        DanceShortVideoRankingListDTO $rankingList,
+        DanceShortVideoRisingCandidateListDTO $risingCandidateList,
+        int $comparisonDays,
+        string $sortKey,
+        bool $hasRegions,
+    ): DanceShortDisplayCardFieldDTO {
+        /*
+         * 上昇候補は通常ランキングとはカードの意味が違うため、カードDTOも分けます。
+         * ただし外枠の Field DTO は共通にして、React 側は displayCardField.type を見て
+         * 対応する表示コンポーネントへ渡すだけにします。
+         *
+         * emptyMessage も Field DTO に含めることで、Responder が「type から空文言を判断する」
+         * 必要をなくし、Responder は Inertia props への配列変換に集中できます。
+         */
+        if ($selectedTabCode === DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE) {
+            return new DanceShortDisplayCardFieldDTO(
+                type: DanceShortDisplayCardFieldDTO::TYPE_RISING,
+                selectedTab: $selectedTabCode,
+                comparisonDays: $comparisonDays,
+                sortKey: $sortKey,
+                cards: new DanceShortDisplayCardListDTO(array_map(
+                    fn (DanceShortVideoRisingCandidateDTO $item): DanceShortRisingDisplayCardDTO => new DanceShortRisingDisplayCardDTO($item),
+                    $risingCandidateList->items,
+                )),
+                emptyMessage: '表示できる上昇候補はまだありません。',
+            );
+        }
+
+        /*
+         * 通常ランキングは、JP / US / KR などの実在地域だけでなく ALL もここへ来ます。
+         * ALL の場合も Repository へ ALL を渡した結果ではなく、上で地域別ランキングを集約した
+         * allRankingList 由来の rankingList を使うため、DB region と表示専用タブ値は混ざりません。
+         */
+        return new DanceShortDisplayCardFieldDTO(
+            type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
+            selectedTab: $selectedTabCode,
+            comparisonDays: $comparisonDays,
+            sortKey: $sortKey,
+            cards: new DanceShortDisplayCardListDTO(array_map(
+                fn (DanceShortVideoRankingItemDTO $item): DanceShortRankingDisplayCardDTO => new DanceShortRankingDisplayCardDTO($item),
+                $rankingList->items,
+            )),
+            emptyMessage: $hasRegions
+                ? '表示できる通常ランキング候補はまだありません。'
+                : '有効な地域がまだ登録されていません。',
+        );
     }
 }

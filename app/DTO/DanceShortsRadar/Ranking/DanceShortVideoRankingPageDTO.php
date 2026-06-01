@@ -2,6 +2,8 @@
 
 namespace App\DTO\DanceShortsRadar\Ranking;
 
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
+
 /*
  * DanceShortsRadar 通常ランキング画面の Query Action 結果 DTO です。
  *
@@ -28,6 +30,7 @@ final readonly class DanceShortVideoRankingPageDTO
         public array $rankingListsByRegion,
         public DanceShortVideoRankingListDTO $allRankingList,
         public DanceShortVideoRisingCandidateListDTO $risingCandidateList,
+        public DanceShortDisplayCardFieldDTO $displayCardField,
         public string $selectedTabCode,
         public ?string $selectedRegionCode,
         public int $comparisonDays,
@@ -45,6 +48,7 @@ final readonly class DanceShortVideoRankingPageDTO
      *     rankingListsByRegion: array<string, array{items: array<int, array<string, bool|int|float|string|null>>}>,
      *     allRankingList: array{items: array<int, array<string, bool|int|float|string|null>>},
      *     risingCandidateList: array{items: array<int, array<string, bool|int|float|string|null>>},
+     *     displayCardField: array{type: string, selectedTab: string, comparisonDays: int, sortKey: string, cards: array<int, array<string, mixed>>, emptyMessage: string},
      *     selectedTabCode: string,
      *     selectedRegionCode: string|null,
      *     comparisonDays: int,
@@ -68,6 +72,7 @@ final readonly class DanceShortVideoRankingPageDTO
             ),
             'allRankingList' => $this->allRankingList->toArray(),
             'risingCandidateList' => $this->risingCandidateList->toArray(),
+            'displayCardField' => $this->displayCardField->toArray(),
             'selectedTabCode' => $this->selectedTabCode,
             'selectedRegionCode' => $this->selectedRegionCode,
             'comparisonDays' => $this->comparisonDays,

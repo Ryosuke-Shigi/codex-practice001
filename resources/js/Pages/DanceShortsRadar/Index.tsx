@@ -1,15 +1,10 @@
-import { useMemo } from 'react';
-
 import { Head, Link, router } from '@inertiajs/react';
 
-import DanceShortsCandidateList from '@/Components/Lab/DanceShortsRadar/DanceShortsCandidateList';
+import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Cards/DanceShortsDisplayCardField';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
-import RisingCandidatesSection from '@/Components/Lab/DanceShortsRadar/RisingCandidatesSection';
+import { DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES } from '@/Components/Lab/DanceShortsRadar/types';
 import type {
-    DanceShortsAggregationPeriod,
-    DanceShortsCandidate,
-    DanceShortsRisingCandidate,
-    DanceShortsRegionCode,
+    DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps,
     DanceShortsTab,
 } from '@/Components/Lab/DanceShortsRadar/types';
 import PublicLayout from '@/Layouts/PublicLayout';
@@ -17,9 +12,9 @@ import PublicLayout from '@/Layouts/PublicLayout';
 /*
  * DanceShortsRadar の通常ランキング本画面です。
  *
- * 本データ用 Responder が、既存の確認画面で固めた candidatesByRegion / allCandidates と同じ
- * 表示用 props shape へ変換して渡します。この Page は受け取った候補を既存の候補一覧 /
- * カード表示コンポーネントへ流し、DB 取得や snapshot metric の再計算は行いません。
+ * 本データ用 Responder が、現在条件に対応する displayCardField を表示用 props shape へ
+ * 変換して渡します。この Page は受け取ったカードフィールドを表示コンポーネントへ流し、
+ * DB 取得や snapshot metric の再計算は行いません。
  */
 type RegionTab = DanceShortsTab & {
     href: string;
@@ -50,15 +45,9 @@ type DanceShortsRadarIndexProps = {
     };
     regionTabs: RegionTab[];
     regions: DanceShortsTab[];
-    candidatesByRegion: Partial<
-        Record<DanceShortsRegionCode, DanceShortsCandidate[]>
-    >;
-    allCandidates: DanceShortsCandidate[];
-    risingCandidates: DanceShortsRisingCandidate[];
+    displayCardField: DanceShortsDisplayCardFieldProps;
     comparisonDayOptions: ComparisonDayOption[];
     sortKeyOptions: SortKeyOption[];
-    emptyMessage: string;
-    risingEmptyMessage: string;
 };
 
 function OptionButtons({
@@ -103,13 +92,9 @@ function OptionButtons({
 export default function DanceShortsRadarIndex({
     filters,
     regionTabs,
-    candidatesByRegion,
-    allCandidates,
-    risingCandidates,
+    displayCardField,
     comparisonDayOptions,
     sortKeyOptions,
-    emptyMessage,
-    risingEmptyMessage,
 }: DanceShortsRadarIndexProps) {
     /*
      * 本番画面では region の切り替えを URL query に残してサーバー再取得します。
@@ -118,37 +103,24 @@ export default function DanceShortsRadarIndex({
      * そのため、表示コンポーネントは共通化しつつ、href 付きタブとして使うことで
      * 「見え方は既存表示仕様と同じ、データ取得は本番 Query 経由」という境界を保ちます。
      */
-    const displayTabs = useMemo<RegionTab[]>(
-        () =>
-            regionTabs.map((regionTab) => ({
-                code: regionTab.code,
-                label: regionTab.label,
-                description: regionTab.description,
-                href: regionTab.href,
-                isActive: regionTab.isActive,
-            })),
-        [regionTabs],
-    );
-    const selectedTab =
-        displayTabs.find((regionTab) => regionTab.isActive)?.code ??
-        displayTabs.find((regionTab) => regionTab.code === filters.selectedTab)
-            ?.code ??
-        displayTabs[0]?.code;
+    const displayTabs = regionTabs;
+    const selectedTab = displayCardField.selectedTab;
     const selectedTabDefinition =
         displayTabs.find((regionTab) => regionTab.code === selectedTab) ??
+        displayTabs.find((regionTab) => regionTab.isActive) ??
         displayTabs[0];
+
     /*
-     * candidatesByRegion / allCandidates は Responder で表示用に整え済みです。
-     * Page 側では ALL か地域別かを選ぶだけにして、view_diff や views_per_hour の再計算、
-     * DB 由来 DTO からカード用 shape への詰め替え、ランキング sort は行いません。
+     * 表示対象のカード配列は displayCardField.cards として Laravel 側で確定済みです。
+     * Page 側では allCandidates / candidatesByRegion / risingCandidates から選び直さず、
+     * 1つの表示フィールドへ渡します。
+     *
+     * Page が見る type は、並び順 UI を出すかどうかの表示制御だけです。
+     * 「RISING ならどの候補を表示するか」「ALL ならどの地域を集約するか」は
+     * Query Action / DTO / Responder 側で固定します。
      */
-    const selectedCandidates =
-        selectedTab === 'ALL'
-            ? allCandidates
-            : candidatesByRegion[selectedTab as DanceShortsRegionCode] ?? [];
-    const periodLabel =
-        `${filters.comparisonDays}日` as DanceShortsAggregationPeriod;
-    const isRisingTab = selectedTab === 'RISING';
+    const isRisingField =
+        displayCardField.type === DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING;
 
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
@@ -176,29 +148,27 @@ export default function DanceShortsRadarIndex({
                     <div className="min-w-0">
                         <p className="text-sm font-semibold text-cyan-50/78">
                             {selectedTabDefinition?.label ?? '地域未選択'} /{' '}
-                            {filters.comparisonDays}日比較 /{' '}
-                            {isRisingTab
-                                ? risingCandidates.length
-                                : selectedCandidates.length}
+                            {displayCardField.comparisonDays}日比較 /{' '}
+                            {displayCardField.cards.length}
                             件
                         </p>
                         <p className="mt-1 text-xs text-cyan-50/60">
-                            {isRisingTab
+                            {isRisingField
                                 ? `上昇候補順 / limit: ${filters.limit}`
-                                : `sort_key: ${filters.sortKey} / limit: ${filters.limit}`}
+                                : `sort_key: ${displayCardField.sortKey} / limit: ${filters.limit}`}
                         </p>
                     </div>
                     <div
                         className={[
                             'grid min-w-0 gap-3 lg:min-w-[520px]',
-                            isRisingTab ? '' : 'sm:grid-cols-2',
+                            isRisingField ? '' : 'sm:grid-cols-2',
                         ].join(' ')}
                     >
                         <OptionButtons
                             label="比較日数"
                             options={comparisonDayOptions}
                         />
-                        {!isRisingTab && (
+                        {!isRisingField && (
                             /*
                              * 上昇候補は Service / Responder が固定順で渡す観測候補です。
                              * React 側で sortKey を使って並び替えたり、metric を再計算したりしないため、
@@ -219,26 +189,10 @@ export default function DanceShortsRadarIndex({
                     />
                 )}
 
-                {selectedTabDefinition && isRisingTab ? (
-                    <RisingCandidatesSection
-                        periodLabel={periodLabel}
-                        candidates={risingCandidates}
-                        emptyMessage={risingEmptyMessage}
-                    />
-                ) : selectedTabDefinition ? (
-                    <DanceShortsCandidateList
-                        regionTab={selectedTabDefinition}
-                        candidates={selectedCandidates}
-                        periodLabel={periodLabel}
-                        emptyMessage={emptyMessage}
-                    />
-                ) : (
-                    <section className="rounded-lg border border-white/18 bg-slate-950/36 p-6 text-white shadow-[0_16px_34px_rgba(4,25,42,0.14)] backdrop-blur-xl">
-                        <p className="text-sm font-semibold text-cyan-50/78">
-                            {emptyMessage}
-                        </p>
-                    </section>
-                )}
+                <DanceShortsDisplayCardField
+                    displayCardField={displayCardField}
+                    selectedTabDefinition={selectedTabDefinition}
+                />
             </main>
         </PublicLayout>
     );

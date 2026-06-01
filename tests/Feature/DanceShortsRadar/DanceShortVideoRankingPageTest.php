@@ -3,6 +3,9 @@
 namespace Tests\Feature\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Queries\GetDanceShortVideoRankingPageAction;
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardListDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingListDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
@@ -95,6 +98,15 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('sortKeyOptions.1.href', '/dance-shorts-radar?region=RISING&comparisonDays=1&sort=view_count_delta&limit=20')
                 ->has('ranking.items', 0)
                 ->where('ranking.total', 0)
+                ->where('displayCardField.type', 'rising')
+                ->where('displayCardField.selectedTab', 'RISING')
+                ->where('displayCardField.comparisonDays', 1)
+                ->where('displayCardField.sortKey', 'views_per_hour')
+                ->has('displayCardField.cards', 1)
+                ->where('displayCardField.cards.0.youtube_video_id', 'us-rising-video')
+                ->where('displayCardField.cards.0.source_region', 'US')
+                ->where('displayCardField.cards.0.view_count_delta', 200)
+                ->where('displayCardField.emptyMessage', '表示できる上昇候補はまだありません。')
                 ->has('risingCandidates', 1)
                 ->where('risingCandidates.0.youtube_video_id', 'us-rising-video')
                 ->where('risingCandidates.0.source_region', 'US')
@@ -150,6 +162,10 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('regionTabs.4.label', '韓国')
                 ->has('ranking.items', 0)
                 ->where('ranking.total', 0)
+                ->where('displayCardField.type', 'rising')
+                ->where('displayCardField.selectedTab', 'RISING')
+                ->has('displayCardField.cards', 0)
+                ->where('displayCardField.emptyMessage', '表示できる上昇候補はまだありません。')
                 ->has('risingCandidates', 0)
                 ->where('emptyMessage', '表示できる通常ランキング候補はまだありません。')
                 ->where('risingEmptyMessage', '表示できる上昇候補はまだありません。')
@@ -186,6 +202,12 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('candidatesByRegion.US.0.youtube_video_id', 'us-video')
                 ->where('candidatesByRegion.US.0.previous_view_count', 900)
                 ->where('candidatesByRegion.US.0.view_diff', 100)
+                ->where('displayCardField.type', 'ranking')
+                ->where('displayCardField.selectedTab', 'US')
+                ->where('displayCardField.comparisonDays', 1)
+                ->where('displayCardField.sortKey', 'view_count_delta')
+                ->where('displayCardField.cards.0.youtube_video_id', 'us-video')
+                ->where('displayCardField.cards.0.view_diff', 100)
             );
     }
 
@@ -218,6 +240,12 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('candidatesByRegion.JP.0.views_per_hour', null)
                 ->where('candidatesByRegion.JP.0.has_previous_snapshot', false)
                 ->where('candidatesByRegion.JP.0.comparison_status', '比較元なし')
+                ->where('displayCardField.type', 'ranking')
+                ->where('displayCardField.selectedTab', 'JP')
+                ->where('displayCardField.cards.0.youtube_video_id', 'initial-only-video')
+                ->where('displayCardField.cards.0.previous_view_count', null)
+                ->where('displayCardField.cards.0.view_diff', null)
+                ->where('displayCardField.cards.0.comparison_status', '比較元なし')
             );
     }
 
@@ -252,6 +280,12 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('ranking.items.0.youtubeVideoId', 'us-summary-video')
                 ->where('ranking.items.1.youtubeVideoId', 'kr-summary-video')
                 ->where('ranking.items.2.youtubeVideoId', 'jp-summary-video')
+                ->where('displayCardField.type', 'ranking')
+                ->where('displayCardField.selectedTab', 'ALL')
+                ->where('displayCardField.sortKey', 'view_count_delta')
+                ->where('displayCardField.cards.0.youtube_video_id', 'us-summary-video')
+                ->where('displayCardField.cards.1.youtube_video_id', 'kr-summary-video')
+                ->where('displayCardField.cards.2.youtube_video_id', 'jp-summary-video')
                 ->where('allCandidates.0.youtube_video_id', 'us-summary-video')
                 ->where('allCandidates.1.youtube_video_id', 'kr-summary-video')
                 ->where('allCandidates.2.youtube_video_id', 'jp-summary-video')
@@ -292,6 +326,13 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('filters.selectedTab', 'RISING')
                 ->where('regionTabs.0.code', 'RISING')
                 ->where('regionTabs.0.isActive', true)
+                ->where('displayCardField.type', 'rising')
+                ->where('displayCardField.selectedTab', 'RISING')
+                ->where('displayCardField.cards.0.youtube_video_id', 'us-rising-candidate')
+                ->where('displayCardField.cards.0.source_region', 'US')
+                ->where('displayCardField.cards.1.youtube_video_id', 'kr-rising-candidate')
+                ->where('displayCardField.cards.1.japan_view_count_delta', 100)
+                ->missing('displayCardField.cards.2')
                 ->where('risingCandidates.0.youtube_video_id', 'us-rising-candidate')
                 ->where('risingCandidates.0.source_region', 'US')
                 ->where('risingCandidates.0.view_count_delta', 800)
@@ -329,6 +370,12 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('filters.selectedTab', 'RISING')
                 ->where('filters.sortKey', 'current_view_count')
+                ->where('displayCardField.type', 'rising')
+                ->where('displayCardField.sortKey', 'current_view_count')
+                ->where('displayCardField.cards.0.youtube_video_id', 'lower-current-large-delta')
+                ->where('displayCardField.cards.1.youtube_video_id', 'null-growth-rising')
+                ->where('displayCardField.cards.1.view_growth_rate', null)
+                ->where('displayCardField.cards.2.youtube_video_id', 'high-current-small-delta')
                 ->where('risingCandidates.0.youtube_video_id', 'lower-current-large-delta')
                 ->where('risingCandidates.0.view_count_delta', 800)
                 ->where('risingCandidates.1.youtube_video_id', 'null-growth-rising')
@@ -349,6 +396,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page
                     ->where('filters.comparisonDays', $comparisonDays)
+                    ->where('displayCardField.comparisonDays', $comparisonDays)
                 );
 
             $this
@@ -356,6 +404,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page
                     ->where('filters.comparisonDays', $comparisonDays)
+                    ->where('displayCardField.comparisonDays', $comparisonDays)
                 );
         }
 
@@ -396,6 +445,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->assertInertia(fn (Assert $page) => $page
                     ->where('filters.region', $regionCode)
                     ->where('filters.selectedTab', $regionCode)
+                    ->where('displayCardField.selectedTab', $regionCode)
                 );
         }
 
@@ -453,6 +503,16 @@ class DanceShortVideoRankingPageTest extends TestCase
                         ],
                         allRankingList: $rankingList,
                         risingCandidateList: new DanceShortVideoRisingCandidateListDTO([]),
+                        displayCardField: new DanceShortDisplayCardFieldDTO(
+                            type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
+                            selectedTab: 'JP',
+                            comparisonDays: 7,
+                            sortKey: 'views_per_hour',
+                            cards: new DanceShortDisplayCardListDTO([
+                                new DanceShortRankingDisplayCardDTO($rankingList->items[0]),
+                            ]),
+                            emptyMessage: 'DTOから渡した空状態メッセージ',
+                        ),
                         selectedTabCode: 'JP',
                         selectedRegionCode: 'JP',
                         comparisonDays: 7,
@@ -486,6 +546,13 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('candidatesByRegion.JP.0.views_per_hour', 44.4)
                 ->where('candidatesByRegion.JP.0.like_count', 123)
                 ->where('candidatesByRegion.JP.0.comment_count', 45)
+                ->where('displayCardField.type', 'ranking')
+                ->where('displayCardField.emptyMessage', 'DTOから渡した空状態メッセージ')
+                ->where('displayCardField.cards.0.view_diff', 999)
+                ->where('displayCardField.cards.0.view_growth_rate', 1.25)
+                ->where('displayCardField.cards.0.views_per_hour', 44.4)
+                ->where('displayCardField.cards.0.like_count', 123)
+                ->where('displayCardField.cards.0.comment_count', 45)
             );
     }
 
