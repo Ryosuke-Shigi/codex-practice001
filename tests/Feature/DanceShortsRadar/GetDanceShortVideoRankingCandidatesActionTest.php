@@ -40,11 +40,11 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         $this->snapshot($inactiveVideo, $jp, 3000, '2026-05-31 12:00:00');
 
         $list = app(GetDanceShortVideoRankingCandidatesAction::class)->execute(
-            new DanceShortVideoRankingConditionDTO(regionCode: 'JP', limit: 10),
+            new DanceShortVideoRankingConditionDTO(regionCode: 'JP', comparisonDays: 7, limit: 10),
         );
 
         $this->assertInstanceOf(DanceShortVideoRankingListDTO::class, $list);
-        $this->assertCount(1, $list->items);
+        $this->assertCount(2, $list->items);
 
         $item = $list->items[0];
         $this->assertSame('target-video', $item->youtubeVideoId);
@@ -60,8 +60,19 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         $this->assertSame(789, $item->likeCount);
         $this->assertSame(12, $item->commentCount);
         $this->assertSame(7, $item->comparisonDays);
+        $this->assertTrue($item->hasPreviousSnapshot);
         $this->assertSame('2026-05-31 12:00:00', $item->currentCollectedAt->format('Y-m-d H:i:s'));
         $this->assertSame('2026-05-24 12:00:00', $item->previousCollectedAt->format('Y-m-d H:i:s'));
+
+        $fallbackItem = $list->items[1];
+        $this->assertSame('missing-previous-video', $fallbackItem->youtubeVideoId);
+        $this->assertSame(2000, $fallbackItem->currentViewCount);
+        $this->assertNull($fallbackItem->previousViewCount);
+        $this->assertNull($fallbackItem->viewCountDelta);
+        $this->assertNull($fallbackItem->viewGrowthRate);
+        $this->assertNull($fallbackItem->viewsPerHour);
+        $this->assertNull($fallbackItem->previousCollectedAt);
+        $this->assertFalse($fallbackItem->hasPreviousSnapshot);
         $this->assertSame(0, $youtubeRepository->callCount);
     }
 
@@ -103,7 +114,8 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         /*
          * 本番投入直後は、7日前以前の比較元 snapshot がまだ無くても、
          * 同日内に複数回同期されていることがあります。
-         * current だけの初回観測は除外しつつ、直前 snapshot が存在する動画は通常ランキングに表示します。
+         * current だけの初回観測は null metric の fallback 候補にしますが、
+         * 直前 snapshot が存在する動画は従来どおり比較 metric 付きの通常ランキングとして表示します。
          */
         $this->snapshot($video, $jp, 900, '2026-06-01 04:08:24');
         $this->snapshot($video, $jp, 1000, '2026-06-01 04:09:17');
@@ -121,7 +133,59 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         $this->assertSame('same-day-video', $list->items[0]->youtubeVideoId);
         $this->assertSame(900, $list->items[0]->previousViewCount);
         $this->assertSame(100, $list->items[0]->viewCountDelta);
+        $this->assertTrue($list->items[0]->hasPreviousSnapshot);
         $this->assertSame('2026-06-01 04:08:24', $list->items[0]->previousCollectedAt->format('Y-m-d H:i:s'));
+    }
+
+    public function test_execute_returns_current_snapshot_with_null_metrics_when_previous_snapshot_is_missing(): void
+    {
+        $jp = $this->region('JP', '日本');
+        $video = $this->video('initial-video', 'Initial observation');
+
+        $this->snapshot($video, $jp, 1500, '2026-06-01 12:00:00', 44, 5);
+
+        $list = app(GetDanceShortVideoRankingCandidatesAction::class)->execute(
+            new DanceShortVideoRankingConditionDTO(
+                regionCode: 'JP',
+                comparisonDays: 1,
+                limit: 10,
+                sortKey: 'views_per_hour',
+            ),
+        );
+
+        $this->assertCount(1, $list->items);
+        $this->assertSame('initial-video', $list->items[0]->youtubeVideoId);
+        $this->assertSame(1500, $list->items[0]->currentViewCount);
+        $this->assertNull($list->items[0]->previousViewCount);
+        $this->assertNull($list->items[0]->viewCountDelta);
+        $this->assertNull($list->items[0]->viewGrowthRate);
+        $this->assertNull($list->items[0]->viewsPerHour);
+        $this->assertNull($list->items[0]->previousCollectedAt);
+        $this->assertFalse($list->items[0]->hasPreviousSnapshot);
+    }
+
+    public function test_execute_limits_current_only_fallback_candidates_after_newest_order(): void
+    {
+        $jp = $this->region('JP', '日本');
+
+        foreach (range(1, 21) as $index) {
+            $video = $this->video('initial-video-'.$index, 'Initial '.$index);
+            $this->snapshot($video, $jp, 1000 + $index, '2026-06-01 12:'.str_pad((string) $index, 2, '0', STR_PAD_LEFT).':00');
+        }
+
+        $list = app(GetDanceShortVideoRankingCandidatesAction::class)->execute(
+            new DanceShortVideoRankingConditionDTO(
+                regionCode: 'JP',
+                comparisonDays: 1,
+                limit: 20,
+                sortKey: 'views_per_hour',
+            ),
+        );
+
+        $this->assertCount(20, $list->items);
+        $this->assertSame('initial-video-21', $list->items[0]->youtubeVideoId);
+        $this->assertSame('initial-video-2', $list->items[19]->youtubeVideoId);
+        $this->assertFalse($list->items[0]->hasPreviousSnapshot);
     }
 
     public function test_execute_sorts_by_view_count_delta_descending_and_applies_limit(): void

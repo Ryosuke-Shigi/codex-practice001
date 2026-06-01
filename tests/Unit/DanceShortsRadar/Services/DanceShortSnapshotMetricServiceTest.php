@@ -55,6 +55,20 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
         $this->assertNull($negativeDiff['viewsPerHour']);
     }
 
+    public function test_metrics_are_null_when_previous_snapshot_is_missing(): void
+    {
+        $metrics = $this->service()->calculateSnapshotMetrics(
+            previousViewCount: null,
+            previousCollectedAt: null,
+            currentViewCount: 1000,
+            currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
+        );
+
+        $this->assertNull($metrics['viewCountDelta']);
+        $this->assertNull($metrics['viewGrowthRate']);
+        $this->assertNull($metrics['viewsPerHour']);
+    }
+
     public function test_comparison_days_candidates_and_default_are_fixed(): void
     {
         $service = $this->service();
@@ -65,8 +79,8 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
         $this->assertSame(7, $service->normalizeComparisonDays(7));
         $this->assertSame(14, $service->normalizeComparisonDays(14));
         $this->assertSame(30, $service->normalizeComparisonDays(30));
-        $this->assertSame(7, $service->normalizeComparisonDays(8));
-        $this->assertSame(7, $service->normalizeComparisonDays(null));
+        $this->assertSame(1, $service->normalizeComparisonDays(8));
+        $this->assertSame(1, $service->normalizeComparisonDays(null));
     }
 
     public function test_sort_key_candidates_and_default_are_fixed(): void

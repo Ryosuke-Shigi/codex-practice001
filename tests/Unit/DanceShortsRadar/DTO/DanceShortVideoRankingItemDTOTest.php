@@ -30,6 +30,7 @@ class DanceShortVideoRankingItemDTOTest extends TestCase
             currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
             previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'UTC'),
             comparisonDays: 1,
+            hasPreviousSnapshot: true,
         );
 
         $this->assertSame([
@@ -52,6 +53,7 @@ class DanceShortVideoRankingItemDTOTest extends TestCase
             'currentCollectedAt' => '2026-05-31T12:00:00+00:00',
             'previousCollectedAt' => '2026-05-30T12:00:00+00:00',
             'comparisonDays' => 1,
+            'hasPreviousSnapshot' => true,
         ], $dto->toArray());
 
         $this->assertArrayNotHasKey('view_count_delta', $dto->toArray());
@@ -59,5 +61,41 @@ class DanceShortVideoRankingItemDTOTest extends TestCase
         $this->assertArrayNotHasKey('views_per_hour', $dto->toArray());
         $this->assertArrayNotHasKey('like_count', $dto->toArray());
         $this->assertArrayNotHasKey('comment_count', $dto->toArray());
+    }
+
+    public function test_to_array_keeps_null_metrics_for_items_without_previous_snapshot(): void
+    {
+        $dto = new DanceShortVideoRankingItemDTO(
+            videoId: 11,
+            youtubeVideoId: 'youtube-002',
+            title: 'Initial observed short',
+            channelTitle: null,
+            thumbnailUrl: null,
+            url: null,
+            publishedAt: null,
+            regionCode: 'JP',
+            regionName: '日本',
+            currentViewCount: 1200,
+            previousViewCount: null,
+            viewCountDelta: null,
+            viewGrowthRate: null,
+            viewsPerHour: null,
+            likeCount: null,
+            commentCount: null,
+            currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
+            previousCollectedAt: null,
+            comparisonDays: 1,
+            hasPreviousSnapshot: false,
+        );
+
+        $array = $dto->toArray();
+
+        $this->assertSame(1200, $array['currentViewCount']);
+        $this->assertNull($array['previousViewCount']);
+        $this->assertNull($array['viewCountDelta']);
+        $this->assertNull($array['viewGrowthRate']);
+        $this->assertNull($array['viewsPerHour']);
+        $this->assertNull($array['previousCollectedAt']);
+        $this->assertFalse($array['hasPreviousSnapshot']);
     }
 }

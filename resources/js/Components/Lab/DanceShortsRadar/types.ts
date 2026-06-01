@@ -62,10 +62,12 @@ export type DanceShortsCandidate = {
     like_count: number | null;
     comment_count?: number | null;
     view_count: number;
-    previous_view_count: number;
-    view_diff: number;
+    previous_view_count: number | null;
+    view_diff: number | null;
     view_growth_rate?: number | null;
     views_per_hour: number | null;
+    has_previous_snapshot?: boolean;
+    comparison_status?: '比較済み' | '比較元なし';
     thumbnail_url: string | null;
     youtube_url: string | null;
 };

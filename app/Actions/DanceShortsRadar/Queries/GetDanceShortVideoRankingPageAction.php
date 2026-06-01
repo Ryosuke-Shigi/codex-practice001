@@ -38,8 +38,9 @@ class GetDanceShortVideoRankingPageAction
     public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortVideoRankingPageDTO
     {
         /*
-         * 本画面の region tab は DB 上の active region をそのまま使います。
-         * JP / US / KR のような既知コードをここで決め打ちせず、未指定時は表示順の先頭を初期値にします。
+         * 本画面の地域別候補は DB 上の active region をそのまま使います。
+         * 「まとめ」タブは表示専用の ALL なので、ここでは DB region として作らず、
+         * 未指定時の selectedRegionCode は null のまま扱います。
          */
         $regions = $this->searchTargetRepository
             ->activeRegions()
@@ -56,10 +57,10 @@ class GetDanceShortVideoRankingPageAction
         $limit = min(self::MAX_LIMIT, max(1, $input->limit));
 
         /*
-         * MOCK 画面では candidatesByRegion / allCandidates という表示用 props shape を先に固めています。
+         * 既存の確認画面では candidatesByRegion / allCandidates という表示用 props shape を先に固めています。
          * 本画面でも同じ見え方へ寄せるため、選択中 region だけでなく active region すべての通常ランキングを
          * Query 結果として持ちます。ここで持つのはあくまで保存済み snapshot から作った Result DTO であり、
-         * MOCK の固定配列や表示専用タブ値を本番 Query に混ぜるわけではありません。
+         * 固定確認データや表示専用タブ値を本番 Query に混ぜるわけではありません。
          *
          * allCandidates への変換や snake_case の候補カード props 生成は Responder 側に残します。
          * Action が Inertia props のキー名まで知ると、ユースケース手順と画面出力形式が結びつきすぎるためです。
@@ -77,14 +78,33 @@ class GetDanceShortVideoRankingPageAction
             );
         }
 
+        /*
+         * 「まとめ」タブは JP / US / KR の候補を同じ sortKey で横断表示します。
+         * ALL を Repository に渡さず、地域別 Query の結果 DTO を集約してから、
+         * RankingCandidatesAction と同じ sort を適用します。React はこの allRankingList 由来の
+         * allCandidates を受け取って表示するだけで、再計算や再ソートを行いません。
+         */
+        $allRankingItems = [];
+
+        foreach ($rankingListsByRegion as $rankingListByRegion) {
+            foreach ($rankingListByRegion->items as $item) {
+                $allRankingItems[] = $item;
+            }
+        }
+
+        $allRankingList = new DanceShortVideoRankingListDTO(
+            array_slice($this->rankingCandidatesAction->sortedItems($allRankingItems, $sortKey), 0, $limit),
+        );
+
         $rankingList = $selectedRegionCode === null
-            ? new DanceShortVideoRankingListDTO([])
+            ? $allRankingList
             : ($rankingListsByRegion[$selectedRegionCode] ?? new DanceShortVideoRankingListDTO([]));
 
         return new DanceShortVideoRankingPageDTO(
             regions: $regions,
             rankingList: $rankingList,
             rankingListsByRegion: $rankingListsByRegion,
+            allRankingList: $allRankingList,
             selectedRegionCode: $selectedRegionCode,
             comparisonDays: $comparisonDays,
             limit: $limit,
@@ -99,6 +119,10 @@ class GetDanceShortVideoRankingPageAction
      */
     private function selectedRegionCode(?string $requestedRegionCode, array $regions): ?string
     {
+        if ($requestedRegionCode === null || strtoupper($requestedRegionCode) === 'ALL') {
+            return null;
+        }
+
         if ($requestedRegionCode !== null) {
             foreach ($regions as $region) {
                 if ($region->code === $requestedRegionCode) {
@@ -107,6 +131,6 @@ class GetDanceShortVideoRankingPageAction
             }
         }
 
-        return $regions[0]->code ?? null;
+        return null;
     }
 }

@@ -35,7 +35,7 @@ class GetDanceShortVideoRankingCandidatesAction
          * current snapshot の新しさや Repository の返却順はランキング指標ではないため、
          * 全候補に対して previous を引き、metric を計算してから最後に絞り込みます。
          */
-        $items = [];
+        $records = [];
         $currentSnapshots = $this->snapshotRepository->latestRankingSnapshotsByRegionCode(
             regionCode: $condition->regionCode,
         );
@@ -56,8 +56,8 @@ class GetDanceShortVideoRankingCandidatesAction
                  * あるのに通常ランキングが 0 件になり、「本データ接続できていない」ように見えます。
                  *
                  * ここではまず comparisonDays どおりの比較元を探し、見つからない場合だけ直前 snapshot へ
-                 * fallback します。current 1件しかない動画は引き続き対象外なので、初回観測一覧を本画面に
-                 * 混ぜるわけではありません。
+                 * fallback します。直前 snapshot がある動画は比較 metric を算出できるため、
+                 * current 1件だけの fallback 候補より上位グループとして扱います。
                  */
                 $previousSnapshot = $this->snapshotRepository->latestSnapshotBefore(
                     videoId: (int) $currentSnapshot->video_id,
@@ -67,22 +67,16 @@ class GetDanceShortVideoRankingCandidatesAction
                 );
             }
 
-            if ($previousSnapshot === null) {
-                /*
-                 * 初期方針では previous がない動画はランキング対象外にします。
-                 * current だけでカードを作ると増加量・伸び率・時間あたり増加数の意味が崩れるため、
-                 * ここでは空の指標を持つ DTO にはせず、候補から外します。
-                 */
-                continue;
-            }
-
             /*
              * 差分や伸び率は Service の責務です。
              * Action は current / previous の Model を集め、Service の計算結果を DTO へ詰める進行表に留めます。
+             * previous が最後まで見つからない current 1件だけの動画も、取得開始直後の通常ランキングを
+             * 空画面にしないため fallback 候補として DTO 化します。その場合、Service には null を渡し、
+             * viewCountDelta / viewGrowthRate / viewsPerHour を null のまま保ちます。
              */
             $metrics = $this->snapshotMetricService->calculateSnapshotMetrics(
-                previousViewCount: $previousSnapshot->view_count,
-                previousCollectedAt: $previousSnapshot->collected_at,
+                previousViewCount: $previousSnapshot?->view_count,
+                previousCollectedAt: $previousSnapshot?->collected_at,
                 currentViewCount: $currentSnapshot->view_count,
                 currentCollectedAt: $currentCollectedAt,
             );
@@ -94,27 +88,36 @@ class GetDanceShortVideoRankingCandidatesAction
              * DB カラム名や Eloquent Model をこの先の Responder / React 接続工程へ漏らさないよう、
              * Query Action の出口で必要な値だけを DTO に固定します。
              */
-            $items[] = new DanceShortVideoRankingItemDTO(
-                videoId: (int) $video->getKey(),
-                youtubeVideoId: (string) $video->youtube_video_id,
-                title: (string) $video->title,
-                channelTitle: $video->channel_title === null ? null : (string) $video->channel_title,
-                thumbnailUrl: $video->thumbnail_url === null ? null : (string) $video->thumbnail_url,
-                url: $video->url === null ? null : (string) $video->url,
-                publishedAt: $video->published_at,
-                regionCode: (string) $region->code,
-                regionName: (string) $region->name,
-                currentViewCount: (int) $currentSnapshot->view_count,
-                previousViewCount: (int) $previousSnapshot->view_count,
-                viewCountDelta: (int) $metrics['viewCountDelta'],
-                viewGrowthRate: $metrics['viewGrowthRate'],
-                viewsPerHour: $metrics['viewsPerHour'],
-                likeCount: $currentSnapshot->like_count === null ? null : (int) $currentSnapshot->like_count,
-                commentCount: $currentSnapshot->comment_count === null ? null : (int) $currentSnapshot->comment_count,
-                currentCollectedAt: $currentCollectedAt,
-                previousCollectedAt: $previousSnapshot->collected_at,
-                comparisonDays: $comparisonDays,
-            );
+            $records[] = [
+                'item' => new DanceShortVideoRankingItemDTO(
+                    videoId: (int) $video->getKey(),
+                    youtubeVideoId: (string) $video->youtube_video_id,
+                    title: (string) $video->title,
+                    channelTitle: $video->channel_title === null ? null : (string) $video->channel_title,
+                    thumbnailUrl: $video->thumbnail_url === null ? null : (string) $video->thumbnail_url,
+                    url: $video->url === null ? null : (string) $video->url,
+                    publishedAt: $video->published_at,
+                    regionCode: (string) $region->code,
+                    regionName: (string) $region->name,
+                    currentViewCount: (int) $currentSnapshot->view_count,
+                    previousViewCount: $previousSnapshot === null ? null : (int) $previousSnapshot->view_count,
+                    viewCountDelta: $metrics['viewCountDelta'],
+                    viewGrowthRate: $metrics['viewGrowthRate'],
+                    viewsPerHour: $metrics['viewsPerHour'],
+                    likeCount: $currentSnapshot->like_count === null ? null : (int) $currentSnapshot->like_count,
+                    commentCount: $currentSnapshot->comment_count === null ? null : (int) $currentSnapshot->comment_count,
+                    currentCollectedAt: $currentCollectedAt,
+                    previousCollectedAt: $previousSnapshot?->collected_at,
+                    comparisonDays: $comparisonDays,
+                    hasPreviousSnapshot: $previousSnapshot !== null,
+                ),
+                /*
+                 * current 1件だけの fallback 候補同士は metric で比較できないため、
+                 * Repository と同じ collected_at / id の新しい順で並べます。
+                 * snapshot id は表示 props へは出さず、Action 内の安定 sort 用メタデータに留めます。
+                 */
+                'currentSnapshotId' => (int) $currentSnapshot->getKey(),
+            ];
         }
 
         /*
@@ -123,7 +126,7 @@ class GetDanceShortVideoRankingCandidatesAction
          * 本来は view_count_delta などで上位に来る動画が候補から消えるためです。
          */
         return new DanceShortVideoRankingListDTO(
-            array_slice($this->sortedItems($items, $sortKey), 0, $limit),
+            array_slice($this->sortedRecords($records, $sortKey), 0, $limit),
         );
     }
 
@@ -131,17 +134,57 @@ class GetDanceShortVideoRankingCandidatesAction
      * @param  array<int, DanceShortVideoRankingItemDTO>  $items
      * @return array<int, DanceShortVideoRankingItemDTO>
      */
-    private function sortedItems(array $items, string $sortKey): array
+    public function sortedItems(array $items, string $sortKey): array
+    {
+        /*
+         * Page Action が「まとめ」タブ用に JP / US / KR のランキング DTO を集約するときも、
+         * 地域別と同じ ranking sort を使えるよう公開しています。
+         * ここでも metric の再計算は行わず、すでに DTO に入っている値だけを比較します。
+         */
+        $records = array_map(
+            fn (DanceShortVideoRankingItemDTO $item): array => [
+                'item' => $item,
+                'currentSnapshotId' => 0,
+            ],
+            $items,
+        );
+
+        return $this->sortedRecords($records, $sortKey);
+    }
+
+    /**
+     * @param  array<int, array{item: DanceShortVideoRankingItemDTO, currentSnapshotId: int}>  $records
+     * @return array<int, DanceShortVideoRankingItemDTO>
+     */
+    private function sortedRecords(array $records, string $sortKey): array
     {
         /*
          * 並び順の最終適用は Query Action で行います。
          * Repository は DB 取得条件、Service は比較値計算に閉じ、ランキング表示としての順序は
          * ListDTO を返す直前のここへ集約します。
          */
-        usort($items, function (
-            DanceShortVideoRankingItemDTO $first,
-            DanceShortVideoRankingItemDTO $second,
+        usort($records, function (
+            array $firstRecord,
+            array $secondRecord,
         ) use ($sortKey): int {
+            $first = $firstRecord['item'];
+            $second = $secondRecord['item'];
+
+            /*
+             * 比較可能な通常ランキング候補を、current 1件だけの fallback 候補より優先します。
+             * fallback 候補の metric は null のため、単純な null 末尾 sort だけでは
+             * current_view_count などの sortKey で混ざる可能性があります。
+             */
+            if ($first->hasPreviousSnapshot !== $second->hasPreviousSnapshot) {
+                return $first->hasPreviousSnapshot ? -1 : 1;
+            }
+
+            if (! $first->hasPreviousSnapshot && ! $second->hasPreviousSnapshot) {
+                return strcmp($second->currentCollectedAt->toDateTimeString(), $first->currentCollectedAt->toDateTimeString())
+                    ?: ($secondRecord['currentSnapshotId'] <=> $firstRecord['currentSnapshotId'])
+                    ?: ($first->videoId <=> $second->videoId);
+            }
+
             $firstValue = $this->sortValue($first, $sortKey);
             $secondValue = $this->sortValue($second, $sortKey);
 
@@ -159,12 +202,15 @@ class GetDanceShortVideoRankingCandidatesAction
             }
 
             return ($secondValue <=> $firstValue)
-                ?: ($second->viewCountDelta <=> $first->viewCountDelta)
+                ?: (($second->viewCountDelta ?? PHP_INT_MIN) <=> ($first->viewCountDelta ?? PHP_INT_MIN))
                 ?: ($second->currentViewCount <=> $first->currentViewCount)
                 ?: ($first->videoId <=> $second->videoId);
         });
 
-        return $items;
+        return array_map(
+            fn (array $record): DanceShortVideoRankingItemDTO => $record['item'],
+            $records,
+        );
     }
 
     private function sortValue(DanceShortVideoRankingItemDTO $item, string $sortKey): int|float|null

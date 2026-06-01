@@ -36,18 +36,15 @@ final readonly class DanceShortVideoRankingResponder
                 'limit' => $page->limit,
                 'sortKey' => $page->sortKey,
             ],
-            'regionTabs' => array_map(
-                fn (DanceShortVideoRankingRegionDTO $region): array => $this->regionTabProps($region, $page),
-                $page->regions,
-            ),
+            'regionTabs' => $this->regionTabProps($page),
             'regions' => array_map(
                 fn (DanceShortVideoRankingRegionDTO $region): array => $this->regionProps($region),
                 $page->regions,
             ),
             /*
-             * MOCK 画面で固めた通常ランキング相当の props shape です。
+             * 既存の確認画面で固めた通常ランキング相当の props shape です。
              * 本番側では Query Action が返した DTO だけを材料にして同じ shape へ整えます。
-             * ここに固定 MOCK データ生成や candidate の sort 計算を置かないことで、
+             * ここに固定確認データ生成や candidate の sort 計算を置かないことで、
              * 「表示用 props 変換」と「ランキング取得・計算」の境界を分けたままにします。
              */
             'candidatesByRegion' => $this->candidatesByRegionProps($page),
@@ -67,9 +64,9 @@ final readonly class DanceShortVideoRankingResponder
                 ),
                 'total' => count($page->rankingList->items),
             ],
-            'emptyMessage' => $page->selectedRegionCode === null
+            'emptyMessage' => count($page->regions) === 0
                 ? '有効な地域がまだ登録されていません。'
-                : '比較元 snapshot がある通常ランキング候補はまだありません。',
+                : '表示できる通常ランキング候補はまだありません。',
         ]);
     }
 
@@ -82,17 +79,35 @@ final readonly class DanceShortVideoRankingResponder
         ];
     }
 
-    private function regionTabProps(
-        DanceShortVideoRankingRegionDTO $region,
-        DanceShortVideoRankingPageDTO $page,
-    ): array {
-        return [
-            'code' => $region->code,
-            'label' => $region->name,
-            'description' => $region->name.'の保存済み snapshot ランキング',
-            'href' => $this->indexHref($region->code, $page->comparisonDays, $page->sortKey, $page->limit),
-            'isActive' => $region->code === $page->selectedRegionCode,
-        ];
+    /**
+     * @return array<int, array{code: string, label: string, description: string, href: string, isActive: bool}>
+     */
+    private function regionTabProps(DanceShortVideoRankingPageDTO $page): array
+    {
+        /*
+         * 本画面の「まとめ」は既存表示仕様と同じ ALL コードを持つ表示専用タブです。
+         * DB region ではないため $page->regions には入れず、href も region query を付けない形で作ります。
+         * selectedRegionCode が null のときだけ active にし、Repository へ ALL が流れない境界を保ちます。
+         */
+        $tabs = [[
+            'code' => 'ALL',
+            'label' => 'まとめ',
+            'description' => '日本・アメリカ・韓国の保存済み snapshot ランキング',
+            'href' => $this->indexHref(null, $page->comparisonDays, $page->sortKey, $page->limit),
+            'isActive' => $page->selectedRegionCode === null,
+        ]];
+
+        foreach ($page->regions as $region) {
+            $tabs[] = [
+                'code' => $region->code,
+                'label' => $region->name,
+                'description' => $region->name.'の保存済み snapshot ランキング',
+                'href' => $this->indexHref($region->code, $page->comparisonDays, $page->sortKey, $page->limit),
+                'isActive' => $region->code === $page->selectedRegionCode,
+            ];
+        }
+
+        return $tabs;
     }
 
     /**
@@ -105,8 +120,8 @@ final readonly class DanceShortVideoRankingResponder
         foreach ($page->regions as $region) {
             /*
              * candidatesByRegion のキーは DB の active region code だけに限定します。
-             * MOCK 側の ALL や RISING は UI タブ専用の概念なので、本番の地域別候補には混ぜません。
-             * これにより React 側は MOCK と近い shape を受け取りつつ、保存対象地域と表示専用タブ値を
+             * ALL や RISING は UI タブ専用の概念なので、本番の地域別候補には混ぜません。
+             * これにより React 側は既存表示仕様と近い shape を受け取りつつ、保存対象地域と表示専用タブ値を
              * 取り違えずに済みます。
              */
             $rankingList = $page->rankingListsByRegion[$region->code] ?? null;
@@ -126,26 +141,16 @@ final readonly class DanceShortVideoRankingResponder
      */
     private function allCandidateProps(DanceShortVideoRankingPageDTO $page): array
     {
-        $candidates = [];
-
-        foreach ($page->regions as $region) {
-            /*
-             * allCandidates は MOCK 画面と同じく「まとめ表示」用の配列です。
-             * candidatesByRegion['ALL'] を作らないのは、ALL を region code として見せないためです。
-             * 並び順は各 region のランキング DTO が持つ順序をそのまま保ち、ここで再ソートや再計算はしません。
-             */
-            $rankingList = $page->rankingListsByRegion[$region->code] ?? null;
-
-            if ($rankingList === null) {
-                continue;
-            }
-
-            foreach ($rankingList->items as $item) {
-                $candidates[] = $this->candidateProps($item);
-            }
-        }
-
-        return $candidates;
+        /*
+         * allCandidates は既存表示仕様と同じく「まとめ表示」用の配列です。
+         * candidatesByRegion['ALL'] を作らないのは、ALL を region code として見せないためです。
+         * 並び順と limit は Query Action が作った allRankingList に従い、Responder では
+         * snake_case の候補カード props へ変換するだけに留めます。
+         */
+        return array_map(
+            fn (DanceShortVideoRankingItemDTO $item): array => $this->candidateProps($item),
+            $page->allRankingList->items,
+        );
     }
 
     private function comparisonDayOptionProps(int $comparisonDays, DanceShortVideoRankingPageDTO $page): array
@@ -191,15 +196,17 @@ final readonly class DanceShortVideoRankingResponder
             'commentCount' => $item->commentCount,
             'collectedAt' => $item->currentCollectedAt->toIso8601String(),
             'currentCollectedAt' => $item->currentCollectedAt->toIso8601String(),
-            'previousCollectedAt' => $item->previousCollectedAt->toIso8601String(),
+            'previousCollectedAt' => $item->previousCollectedAt?->toIso8601String(),
             'comparisonDays' => $item->comparisonDays,
+            'hasPreviousSnapshot' => $item->hasPreviousSnapshot,
+            'comparisonStatus' => $item->hasPreviousSnapshot ? '比較済み' : '比較元なし',
         ];
     }
 
     private function candidateProps(DanceShortVideoRankingItemDTO $item): array
     {
         /*
-         * 既存 MOCK の候補カード props は snake_case で固まっています。
+         * 既存の候補カード props は snake_case で固まっています。
          * 本番画面側もここで同じ表示入力へ寄せることで、React は既存カードを「受け取った値を表示する」
          * コンポーネントとして使い回せます。camelCase の RankingItemDTO は PHP レイヤー内の境界、
          * snake_case の candidate props は Inertia / React 表示境界、という変換点をここに閉じます。
@@ -219,6 +226,8 @@ final readonly class DanceShortVideoRankingResponder
             'view_diff' => $item->viewCountDelta,
             'view_growth_rate' => $item->viewGrowthRate,
             'views_per_hour' => $item->viewsPerHour,
+            'has_previous_snapshot' => $item->hasPreviousSnapshot,
+            'comparison_status' => $item->hasPreviousSnapshot ? '比較済み' : '比較元なし',
             'thumbnail_url' => $item->thumbnailUrl,
             'youtube_url' => $item->url,
         ];

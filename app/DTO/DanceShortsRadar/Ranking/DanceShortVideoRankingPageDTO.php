@@ -6,7 +6,8 @@ namespace App\DTO\DanceShortsRadar\Ranking;
  * DanceShortsRadar 通常ランキング画面の Query Action 結果 DTO です。
  *
  * この DTO は「画面を描くために Responder が必要とするユースケース結果」を束ねます。
- * rankingList は既存の snapshot 比較ランキング Query の結果であり、comparisonDayOptions や
+ * rankingList は現在選択中タブで表示するランキング、allRankingList は「まとめ」タブ用に
+ * active region の候補を同じ sortKey でまとめたランキングです。comparisonDayOptions や
  * sortKeyOptions は画面操作に必要な許可済み選択肢です。
  *
  * Inertia props の最終形、href、表示ラベル、空メッセージは Responder で整えます。
@@ -24,6 +25,7 @@ final readonly class DanceShortVideoRankingPageDTO
         public array $regions,
         public DanceShortVideoRankingListDTO $rankingList,
         public array $rankingListsByRegion,
+        public DanceShortVideoRankingListDTO $allRankingList,
         public ?string $selectedRegionCode,
         public int $comparisonDays,
         public int $limit,
@@ -36,8 +38,9 @@ final readonly class DanceShortVideoRankingPageDTO
     /**
      * @return array{
      *     regions: array<int, array{code: string, name: string}>,
-     *     rankingList: array{items: array<int, array<string, int|float|string|null>>},
-     *     rankingListsByRegion: array<string, array{items: array<int, array<string, int|float|string|null>>}>,
+     *     rankingList: array{items: array<int, array<string, bool|int|float|string|null>>},
+     *     rankingListsByRegion: array<string, array{items: array<int, array<string, bool|int|float|string|null>>}>,
+     *     allRankingList: array{items: array<int, array<string, bool|int|float|string|null>>},
      *     selectedRegionCode: string|null,
      *     comparisonDays: int,
      *     limit: int,
@@ -58,6 +61,7 @@ final readonly class DanceShortVideoRankingPageDTO
                 fn (DanceShortVideoRankingListDTO $rankingList): array => $rankingList->toArray(),
                 $this->rankingListsByRegion,
             ),
+            'allRankingList' => $this->allRankingList->toArray(),
             'selectedRegionCode' => $this->selectedRegionCode,
             'comparisonDays' => $this->comparisonDays,
             'limit' => $this->limit,

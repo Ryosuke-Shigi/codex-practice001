@@ -48,7 +48,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $jp = DanceShortRegion::query()->where('code', 'JP')->firstOrFail();
         $video = $this->video('jp-ranking-video', 'JP ranking short');
 
-        $this->snapshot($video, $jp, 700, '2026-05-25 12:00:00');
+        $this->snapshot($video, $jp, 700, '2026-05-31 12:00:00');
         $this->snapshot($video, $jp, 1000, '2026-06-01 12:00:00', 789, 12);
 
         $this
@@ -56,24 +56,28 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DanceShortsRadar/Index', false)
-                ->where('filters.region', 'JP')
-                ->where('filters.comparisonDays', 7)
+                ->where('filters.region', null)
+                ->where('filters.comparisonDays', 1)
                 ->where('filters.sortKey', 'views_per_hour')
                 ->where('filters.limit', 20)
-                ->has('regionTabs', 3)
-                ->where('regionTabs.0.code', 'JP')
-                ->where('regionTabs.0.label', '日本')
+                ->has('regionTabs', 4)
+                ->where('regionTabs.0.code', 'ALL')
+                ->where('regionTabs.0.label', 'まとめ')
                 ->where('regionTabs.0.isActive', true)
-                ->where('regionTabs.1.code', 'US')
-                ->where('regionTabs.1.label', 'アメリカ')
-                ->where('regionTabs.2.code', 'KR')
-                ->where('regionTabs.2.label', '韓国')
+                ->where('regionTabs.1.code', 'JP')
+                ->where('regionTabs.1.label', '日本')
+                ->where('regionTabs.1.isActive', false)
+                ->where('regionTabs.2.code', 'US')
+                ->where('regionTabs.2.label', 'アメリカ')
+                ->where('regionTabs.3.code', 'KR')
+                ->where('regionTabs.3.label', '韓国')
                 ->has('regions', 3)
                 ->where('regions.0.code', 'JP')
                 ->where('regions.0.label', '日本')
                 ->where('comparisonDayOptions.0.value', 1)
+                ->where('comparisonDayOptions.0.isActive', true)
                 ->where('comparisonDayOptions.2.value', 7)
-                ->where('comparisonDayOptions.2.isActive', true)
+                ->where('comparisonDayOptions.2.isActive', false)
                 ->where('sortKeyOptions.0.value', 'views_per_hour')
                 ->where('sortKeyOptions.0.isActive', true)
                 ->has('ranking.items', 1)
@@ -84,13 +88,16 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('ranking.items.0.currentViewCount', 1000)
                 ->where('ranking.items.0.previousViewCount', 700)
                 ->where('ranking.items.0.viewCountDelta', 300)
-                ->where('ranking.items.0.viewsPerHour', 300 / (7 * 24))
+                ->where('ranking.items.0.viewsPerHour', 300 / 24)
                 ->where('ranking.items.0.likeCount', 789)
                 ->where('ranking.items.0.commentCount', 12)
+                ->where('ranking.items.0.hasPreviousSnapshot', true)
                 ->where('candidatesByRegion.JP.0.youtube_video_id', 'jp-ranking-video')
                 ->where('candidatesByRegion.JP.0.view_count', 1000)
                 ->where('candidatesByRegion.JP.0.previous_view_count', 700)
                 ->where('candidatesByRegion.JP.0.view_diff', 300)
+                ->where('candidatesByRegion.JP.0.has_previous_snapshot', true)
+                ->where('candidatesByRegion.JP.0.comparison_status', '比較済み')
                 ->where('candidatesByRegion.JP.0.like_count', 789)
                 ->where('candidatesByRegion.JP.0.comment_count', 12)
                 ->where('allCandidates.0.youtube_video_id', 'jp-ranking-video')
@@ -115,18 +122,20 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DanceShortsRadar/Index', false)
-                ->where('filters.region', 'JP')
-                ->has('regionTabs', 3)
-                ->where('regionTabs.0.code', 'JP')
-                ->where('regionTabs.0.label', '日本')
+                ->where('filters.region', null)
+                ->has('regionTabs', 4)
+                ->where('regionTabs.0.code', 'ALL')
+                ->where('regionTabs.0.label', 'まとめ')
                 ->where('regionTabs.0.isActive', true)
-                ->where('regionTabs.1.code', 'US')
-                ->where('regionTabs.1.label', 'アメリカ')
-                ->where('regionTabs.2.code', 'KR')
-                ->where('regionTabs.2.label', '韓国')
+                ->where('regionTabs.1.code', 'JP')
+                ->where('regionTabs.1.label', '日本')
+                ->where('regionTabs.2.code', 'US')
+                ->where('regionTabs.2.label', 'アメリカ')
+                ->where('regionTabs.3.code', 'KR')
+                ->where('regionTabs.3.label', '韓国')
                 ->has('ranking.items', 0)
                 ->where('ranking.total', 0)
-                ->where('emptyMessage', '比較元 snapshot がある通常ランキング候補はまだありません。')
+                ->where('emptyMessage', '表示できる通常ランキング候補はまだありません。')
             );
 
         $this->assertSame(0, $youtubeRepository->callCount);
@@ -160,6 +169,75 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('candidatesByRegion.US.0.youtube_video_id', 'us-video')
                 ->where('candidatesByRegion.US.0.previous_view_count', 900)
                 ->where('candidatesByRegion.US.0.view_diff', 100)
+            );
+    }
+
+    public function test_page_passes_current_only_fallback_props_as_null_without_zero_values(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $video = $this->video('initial-only-video', 'Initial only short');
+
+        $this->snapshot($video, $jp, 1500, '2026-06-01 12:00:00', 25, 3);
+
+        $this
+            ->get('/dance-shorts-radar?region=JP&comparisonDays=1')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.region', 'JP')
+                ->where('filters.comparisonDays', 1)
+                ->has('ranking.items', 1)
+                ->where('ranking.items.0.youtubeVideoId', 'initial-only-video')
+                ->where('ranking.items.0.currentViewCount', 1500)
+                ->where('ranking.items.0.previousViewCount', null)
+                ->where('ranking.items.0.viewCountDelta', null)
+                ->where('ranking.items.0.viewGrowthRate', null)
+                ->where('ranking.items.0.viewsPerHour', null)
+                ->where('ranking.items.0.previousCollectedAt', null)
+                ->where('ranking.items.0.hasPreviousSnapshot', false)
+                ->where('candidatesByRegion.JP.0.youtube_video_id', 'initial-only-video')
+                ->where('candidatesByRegion.JP.0.previous_view_count', null)
+                ->where('candidatesByRegion.JP.0.view_diff', null)
+                ->where('candidatesByRegion.JP.0.view_growth_rate', null)
+                ->where('candidatesByRegion.JP.0.views_per_hour', null)
+                ->where('candidatesByRegion.JP.0.has_previous_snapshot', false)
+                ->where('candidatesByRegion.JP.0.comparison_status', '比較元なし')
+            );
+    }
+
+    public function test_summary_tab_uses_all_candidates_sorted_by_selected_ranking_key(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $us = $this->region('US', 'アメリカ', 20);
+        $kr = $this->region('KR', '韓国', 30);
+        $jpVideo = $this->video('jp-summary-video', 'JP summary short');
+        $usVideo = $this->video('us-summary-video', 'US summary short');
+        $krVideo = $this->video('kr-summary-video', 'KR summary short');
+
+        $this->snapshot($jpVideo, $jp, 900, '2026-05-31 12:00:00');
+        $this->snapshot($jpVideo, $jp, 1000, '2026-06-01 12:00:00');
+        $this->snapshot($usVideo, $us, 500, '2026-05-31 12:00:00');
+        $this->snapshot($usVideo, $us, 1000, '2026-06-01 12:00:00');
+        $this->snapshot($krVideo, $kr, 700, '2026-05-31 12:00:00');
+        $this->snapshot($krVideo, $kr, 1000, '2026-06-01 12:00:00');
+
+        $this
+            ->get('/dance-shorts-radar?sort=view_count_delta')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.region', null)
+                ->where('regionTabs.0.code', 'ALL')
+                ->where('regionTabs.0.label', 'まとめ')
+                ->where('regionTabs.0.isActive', true)
+                ->where('ranking.items.0.youtubeVideoId', 'us-summary-video')
+                ->where('ranking.items.1.youtubeVideoId', 'kr-summary-video')
+                ->where('ranking.items.2.youtubeVideoId', 'jp-summary-video')
+                ->where('allCandidates.0.youtube_video_id', 'us-summary-video')
+                ->where('allCandidates.1.youtube_video_id', 'kr-summary-video')
+                ->where('allCandidates.2.youtube_video_id', 'jp-summary-video')
+                ->where('candidatesByRegion.JP.0.youtube_video_id', 'jp-summary-video')
+                ->where('candidatesByRegion.US.0.youtube_video_id', 'us-summary-video')
+                ->where('candidatesByRegion.KR.0.youtube_video_id', 'kr-summary-video')
+                ->missing('candidatesByRegion.ALL')
             );
     }
 
@@ -240,6 +318,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                             currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
                             previousCollectedAt: CarbonImmutable::parse('2026-05-25 12:00:00', 'UTC'),
                             comparisonDays: 7,
+                            hasPreviousSnapshot: true,
                         ),
                     ]);
 
@@ -251,6 +330,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                         rankingListsByRegion: [
                             'JP' => $rankingList,
                         ],
+                        allRankingList: $rankingList,
                         selectedRegionCode: 'JP',
                         comparisonDays: 7,
                         limit: 20,

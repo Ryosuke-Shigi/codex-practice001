@@ -12,11 +12,12 @@ namespace App\DTO\DanceShortsRadar\Ranking;
 final readonly class DanceShortVideoRankingConditionDTO
 {
     /*
-     * 比較期間は DanceShortsRadarMock.tsx の UI 仕様をそのままサーバー側にも写します。
+     * 比較期間は既存の確認画面で固めた UI 仕様をそのままサーバー側にも写します。
+     * 初期表示はデータ取得開始直後でも比較元を作りやすい 1日に寄せます。
      * ここで 8日などの別候補を足すと、モック画面で先に固めた操作仕様と Query 側の意味が
      * ズレるため、許可値は 1 / 3 / 7 / 14 / 30 に固定します。
      */
-    public const DEFAULT_COMPARISON_DAYS = 7;
+    public const DEFAULT_COMPARISON_DAYS = 1;
 
     public const DEFAULT_LIMIT = 20;
 

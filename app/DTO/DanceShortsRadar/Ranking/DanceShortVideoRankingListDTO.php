@@ -13,7 +13,7 @@ final readonly class DanceShortVideoRankingListDTO
     }
 
     /**
-     * @return array{items: array<int, array<string, int|float|string|null>>}
+     * @return array{items: array<int, array<string, bool|int|float|string|null>>}
      */
     public function toArray(): array
     {

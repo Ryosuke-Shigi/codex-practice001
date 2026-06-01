@@ -28,11 +28,21 @@ function formatOptionalMetric(value: number | null, suffix: string) {
     return value === null ? '算出不可' : `${formatNumber(value)}${suffix}`;
 }
 
+function formatPreviousViewCount(value: number | null) {
+    return value === null ? '比較元なし' : `${formatNumber(value)}回`;
+}
+
+function formatViewDiff(value: number | null) {
+    return value === null ? '算出不可' : `+${formatNumber(value)}回`;
+}
+
 export default function DanceShortsStats({ candidate }: DanceShortsStatsProps) {
     /*
      * 表示ラベルはユーザー指定の日本語ラベルに合わせています。
      * previous_view_count / view_diff / views_per_hour はモック段階では仮データで、
      * ここでは計算せず、受け取った props をそのまま表示します。
+     * 本データの初回観測 fallback では previous_view_count / view_diff が null になります。
+     * null は「比較元なし / 算出不可」として扱い、0回に変換しません。
      */
     const stats = [
         {
@@ -41,11 +51,11 @@ export default function DanceShortsStats({ candidate }: DanceShortsStatsProps) {
         },
         {
             label: '前回の視聴数',
-            value: `${formatNumber(candidate.previous_view_count)}回`,
+            value: formatPreviousViewCount(candidate.previous_view_count),
         },
         {
             label: '視聴数の増加数',
-            value: `+${formatNumber(candidate.view_diff)}回`,
+            value: formatViewDiff(candidate.view_diff),
         },
         {
             label: '1時間あたりの視聴増加数',

@@ -16,7 +16,7 @@ import PublicLayout from '@/Layouts/PublicLayout';
 /*
  * DanceShortsRadar の通常ランキング本画面です。
  *
- * 本データ用 Responder が、MOCK 画面で固めた candidatesByRegion / allCandidates と同じ
+ * 本データ用 Responder が、既存の確認画面で固めた candidatesByRegion / allCandidates と同じ
  * 表示用 props shape へ変換して渡します。この Page は受け取った候補を既存の候補一覧 /
  * カード表示コンポーネントへ流し、DB 取得や snapshot metric の再計算は行いません。
  */
@@ -103,10 +103,10 @@ export default function DanceShortsRadarIndex({
 }: DanceShortsRadarIndexProps) {
     /*
      * 本番画面では region の切り替えを URL query に残してサーバー再取得します。
-     * MOCK 画面の RegionTabs はローカル state だけで切り替えますが、本画面で同じことをすると
+     * 既存の確認画面の RegionTabs はローカル state だけで切り替えますが、本画面で同じことをすると
      * comparisonDays / sort の query が選択中 region とズレやすくなります。
      * そのため、表示コンポーネントは共通化しつつ、href 付きタブとして使うことで
-     * 「見え方は MOCK と同じ、データ取得は本番 Query 経由」という境界を保ちます。
+     * 「見え方は既存表示仕様と同じ、データ取得は本番 Query 経由」という境界を保ちます。
      */
     const displayTabs = useMemo<RegionTab[]>(
         () =>
@@ -162,7 +162,7 @@ export default function DanceShortsRadarIndex({
                 <section className="grid gap-4 rounded-lg border border-white/18 bg-slate-950/38 p-4 text-white shadow-[0_16px_36px_rgba(4,25,42,0.16)] backdrop-blur-xl lg:grid-cols-[minmax(0,1fr)_auto]">
                     <div className="min-w-0">
                         <p className="text-sm font-semibold text-cyan-50/78">
-                            {filters.region ?? '地域未選択'} /{' '}
+                            {selectedTabDefinition?.label ?? '地域未選択'} /{' '}
                             {filters.comparisonDays}日比較 /{' '}
                             {selectedCandidates.length}件
                         </p>

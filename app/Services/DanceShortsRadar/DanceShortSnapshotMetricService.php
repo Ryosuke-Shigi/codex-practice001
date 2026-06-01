@@ -22,8 +22,8 @@ class DanceShortSnapshotMetricService
     public function normalizeComparisonDays(?int $comparisonDays): int
     {
         /*
-         * Request 層は今回は作らないため、Query 土台では DTO 経由の値をここで安全側へ丸めます。
-         * 不正値は例外ではなくモック初期値の 7日に戻し、ランキング取得を安定して続行できる形にします。
+         * Request 層は形式検証だけに留め、Query 土台では DTO 経由の値をここで安全側へ丸めます。
+         * 不正値は例外ではなく初期値の 1日に戻し、取得開始直後のランキング確認を安定して続行します。
          */
         if (in_array($comparisonDays, DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS, true)) {
             return (int) $comparisonDays;

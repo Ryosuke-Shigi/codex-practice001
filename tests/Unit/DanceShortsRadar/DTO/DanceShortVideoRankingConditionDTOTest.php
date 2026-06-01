@@ -12,12 +12,12 @@ class DanceShortVideoRankingConditionDTOTest extends TestCase
         $dto = new DanceShortVideoRankingConditionDTO(regionCode: 'JP');
 
         $this->assertSame('JP', $dto->regionCode);
-        $this->assertSame(7, $dto->comparisonDays);
+        $this->assertSame(1, $dto->comparisonDays);
         $this->assertSame(20, $dto->limit);
         $this->assertSame('views_per_hour', $dto->sortKey);
         $this->assertSame([
             'regionCode' => 'JP',
-            'comparisonDays' => 7,
+            'comparisonDays' => 1,
             'limit' => 20,
             'sortKey' => 'views_per_hour',
         ], $dto->toArray());
