@@ -6,9 +6,12 @@ return [
     | DanceShortsRadar sync and retention settings
     |--------------------------------------------------------------------------
     |
-    | Scheduler registration is intentionally not added for DanceShortsRadar in
-    | this step. sync_enabled is a future gate for explicitly enabled scheduled
-    | syncs, and defaults to false so local environments do not consume API quota.
+    | The hourly YouTube sync scheduler is guarded by sync_enabled. The value
+    | defaults to false so local environments do not enqueue the YouTube sync
+    | job or consume API quota unless explicitly enabled.
+    |
+    | Snapshot cleanup is a separate DB-only maintenance job. It uses
+    | snapshot_retention_days and does not consume YouTube Data API quota.
     |
     */
 
