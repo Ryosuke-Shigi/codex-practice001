@@ -156,7 +156,7 @@ const testItems = [
     {
         title: '時間あたり増加数',
         description:
-            'captured_at の差から時間あたり再生増加数を算出し、0除算や欠損を扱います。',
+            'collected_at の差から時間あたり再生増加数を算出し、0除算や欠損を扱います。',
     },
     {
         title: '断定表現の回避',

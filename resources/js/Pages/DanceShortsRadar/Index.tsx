@@ -1,26 +1,26 @@
+import { useMemo } from 'react';
+
 import { Head, Link } from '@inertiajs/react';
 
+import DanceShortsCandidateList from '@/Components/Lab/DanceShortsRadar/DanceShortsCandidateList';
+import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
+import type {
+    DanceShortsAggregationPeriod,
+    DanceShortsCandidate,
+    DanceShortsRegionCode,
+    DanceShortsTab,
+    DanceShortsTabCode,
+} from '@/Components/Lab/DanceShortsRadar/types';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 /*
  * DanceShortsRadar の通常ランキング本画面です。
  *
- * この画面は、サーバー側 Responder から渡された props を表示する責務に限定します。
- * region / comparisonDays / sortKey の切り替えは、Responder が作った href を Inertia Link で開き、
- * 保存済み snapshot 由来のランキングをサーバー側で再取得します。
- *
- * React 側で行わないこと:
- * - YouTube API 呼び出し
- * - viewCountDelta / viewGrowthRate / viewsPerHour の再計算
- * - ランキング sort
- * - モック専用 candidatesByRegion への本データ接続
- *
- * ここで行う数値処理は、受け取った値を ja-JP で読みやすく表示するための formatting だけです。
+ * 本データ用 Responder が、MOCK 画面で固めた candidatesByRegion / allCandidates と同じ
+ * 表示用 props shape へ変換して渡します。この Page は受け取った候補を既存の候補一覧 /
+ * カード表示コンポーネントへ流し、DB 取得や snapshot metric の再計算は行いません。
  */
-type RegionTab = {
-    code: string;
-    label: string;
-    description: string;
+type RegionTab = DanceShortsTab & {
     href: string;
     isActive: boolean;
 };
@@ -39,29 +39,6 @@ type SortKeyOption = {
     isActive: boolean;
 };
 
-type RankingItem = {
-    videoId: number;
-    youtubeVideoId: string;
-    title: string;
-    channelTitle: string | null;
-    thumbnailUrl: string | null;
-    url: string | null;
-    publishedAt: string | null;
-    region: {
-        code: string;
-        name: string;
-    };
-    currentViewCount: number;
-    previousViewCount: number;
-    viewCountDelta: number;
-    viewGrowthRate: number | null;
-    viewsPerHour: number | null;
-    collectedAt: string;
-    currentCollectedAt: string;
-    previousCollectedAt: string;
-    comparisonDays: number;
-};
-
 type DanceShortsRadarIndexProps = {
     filters: {
         region: string | null;
@@ -70,65 +47,18 @@ type DanceShortsRadarIndexProps = {
         sortKey: string;
     };
     regionTabs: RegionTab[];
+    regions: DanceShortsTab[];
+    candidatesByRegion: Partial<
+        Record<DanceShortsRegionCode, DanceShortsCandidate[]>
+    >;
+    allCandidates: DanceShortsCandidate[];
     comparisonDayOptions: ComparisonDayOption[];
     sortKeyOptions: SortKeyOption[];
-    ranking: {
-        items: RankingItem[];
-        total: number;
-    };
     emptyMessage: string;
 };
 
-const numberFormatter = new Intl.NumberFormat('ja-JP');
-const compactNumberFormatter = new Intl.NumberFormat('ja-JP', {
-    maximumFractionDigits: 1,
-});
-const percentFormatter = new Intl.NumberFormat('ja-JP', {
-    maximumFractionDigits: 1,
-    style: 'percent',
-});
-const dateTimeFormatter = new Intl.DateTimeFormat('ja-JP', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
-
-function formatNumber(value: number): string {
-    return numberFormatter.format(value);
-}
-
-function formatMetric(value: number | null): string {
-    return value === null ? '算出不可' : compactNumberFormatter.format(value);
-}
-
-function formatGrowthRate(value: number | null): string {
-    return value === null ? '算出不可' : percentFormatter.format(value);
-}
-
-function formatDateTime(value: string | null): string {
-    if (value === null) {
-        return '未設定';
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return dateTimeFormatter.format(date);
-}
-
-function MetricCell({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="min-w-0 border-t border-white/10 py-2 first:border-t-0">
-            <dt className="text-xs font-semibold text-cyan-50/66">
-                {label}
-            </dt>
-            <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-white">
-                {value}
-            </dd>
-        </div>
-    );
+function isSelectableTabCode(value: string | null): value is DanceShortsTabCode {
+    return value === 'ALL' || value === 'JP' || value === 'US' || value === 'KR';
 }
 
 function OptionLinks({
@@ -162,104 +92,51 @@ function OptionLinks({
     );
 }
 
-function RankingCard({ item, index }: { item: RankingItem; index: number }) {
-    const thumbnail = item.thumbnailUrl;
-
-    return (
-        <article className="grid gap-4 rounded-lg border border-white/18 bg-slate-950/42 p-4 text-white shadow-[0_16px_34px_rgba(4,25,42,0.18)] backdrop-blur-xl md:grid-cols-[minmax(168px,220px)_minmax(0,1fr)]">
-            <div className="min-w-0">
-                {thumbnail === null ? (
-                    <div className="grid aspect-video place-items-center rounded-md border border-white/14 bg-emerald-950/38 text-sm font-semibold text-emerald-50/78">
-                        No Thumbnail
-                    </div>
-                ) : item.url === null ? (
-                    <img
-                        src={thumbnail}
-                        alt=""
-                        className="aspect-video w-full rounded-md object-cover"
-                        loading="lazy"
-                    />
-                ) : (
-                    <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
-                    >
-                        <img
-                            src={thumbnail}
-                            alt=""
-                            className="aspect-video w-full rounded-md object-cover"
-                            loading="lazy"
-                        />
-                    </a>
-                )}
-            </div>
-
-            <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md border border-emerald-100/28 bg-emerald-100/12 px-2.5 py-1 text-xs font-semibold text-emerald-50">
-                        {index + 1}
-                    </span>
-                    <span className="rounded-md border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-cyan-50">
-                        {item.region.name}
-                    </span>
-                    <span className="rounded-md border border-amber-100/24 bg-amber-100/12 px-2.5 py-1 text-xs font-semibold text-amber-50">
-                        {item.comparisonDays}日比較
-                    </span>
-                </div>
-
-                <h2 className="mt-3 text-lg font-semibold leading-snug text-white sm:text-xl">
-                    {item.title}
-                </h2>
-                <p className="mt-1 text-sm font-semibold text-cyan-50/72">
-                    {item.channelTitle ?? 'チャンネル名未設定'}
-                </p>
-
-                <dl className="mt-4 grid gap-x-5 sm:grid-cols-2 xl:grid-cols-3">
-                    <MetricCell
-                        label="現在の視聴数"
-                        value={`${formatNumber(item.currentViewCount)}回`}
-                    />
-                    <MetricCell
-                        label="比較元の視聴数"
-                        value={`${formatNumber(item.previousViewCount)}回`}
-                    />
-                    <MetricCell
-                        label="視聴数の増加数"
-                        value={`+${formatNumber(item.viewCountDelta)}回`}
-                    />
-                    <MetricCell
-                        label="伸び率"
-                        value={formatGrowthRate(item.viewGrowthRate)}
-                    />
-                    <MetricCell
-                        label="1時間あたり"
-                        value={`${formatMetric(item.viewsPerHour)}回/時`}
-                    />
-                    <MetricCell
-                        label="収集日時"
-                        value={formatDateTime(item.collectedAt)}
-                    />
-                </dl>
-
-                <div className="mt-4 grid gap-2 text-xs text-cyan-50/66 sm:grid-cols-2">
-                    <p>比較元: {formatDateTime(item.previousCollectedAt)}</p>
-                    <p>公開日: {formatDateTime(item.publishedAt)}</p>
-                </div>
-            </div>
-        </article>
-    );
-}
-
 export default function DanceShortsRadarIndex({
     filters,
     regionTabs,
+    candidatesByRegion,
+    allCandidates,
     comparisonDayOptions,
     sortKeyOptions,
-    ranking,
     emptyMessage,
 }: DanceShortsRadarIndexProps) {
+    /*
+     * 本番画面では region の切り替えを URL query に残してサーバー再取得します。
+     * MOCK 画面の RegionTabs はローカル state だけで切り替えますが、本画面で同じことをすると
+     * comparisonDays / sort の query が選択中 region とズレやすくなります。
+     * そのため、表示コンポーネントは共通化しつつ、href 付きタブとして使うことで
+     * 「見え方は MOCK と同じ、データ取得は本番 Query 経由」という境界を保ちます。
+     */
+    const displayTabs = useMemo<RegionTab[]>(
+        () =>
+            regionTabs.map((regionTab) => ({
+                code: regionTab.code,
+                label: regionTab.label,
+                description: regionTab.description,
+                href: regionTab.href,
+                isActive: regionTab.isActive,
+            })),
+        [regionTabs],
+    );
+    const selectedTab = isSelectableTabCode(filters.region)
+        ? filters.region
+        : displayTabs[0]?.code;
+    const selectedTabDefinition =
+        displayTabs.find((regionTab) => regionTab.code === selectedTab) ??
+        displayTabs[0];
+    /*
+     * candidatesByRegion / allCandidates は Responder で表示用に整え済みです。
+     * Page 側では ALL か地域別かを選ぶだけにして、view_diff や views_per_hour の再計算、
+     * DB 由来 DTO からカード用 shape への詰め替え、ランキング sort は行いません。
+     */
+    const selectedCandidates =
+        selectedTab === 'ALL'
+            ? allCandidates
+            : candidatesByRegion[selectedTab as DanceShortsRegionCode] ?? [];
+    const periodLabel =
+        `${filters.comparisonDays}日` as DanceShortsAggregationPeriod;
+
     return (
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
             <Head title="Dance Shorts Radar" />
@@ -287,7 +164,7 @@ export default function DanceShortsRadarIndex({
                         <p className="text-sm font-semibold text-cyan-50/78">
                             {filters.region ?? '地域未選択'} /{' '}
                             {filters.comparisonDays}日比較 /{' '}
-                            {ranking.total}件
+                            {selectedCandidates.length}件
                         </p>
                         <p className="mt-1 text-xs text-cyan-50/60">
                             sort_key: {filters.sortKey} / limit:{' '}
@@ -303,50 +180,25 @@ export default function DanceShortsRadarIndex({
                     </div>
                 </section>
 
-                <nav
-                    aria-label="地域"
-                    className="grid gap-2 rounded-lg border border-white/18 bg-slate-950/34 p-2 shadow-[0_14px_30px_rgba(4,25,42,0.14)] backdrop-blur-xl sm:grid-cols-3"
-                >
-                    {regionTabs.map((regionTab) => (
-                        <Link
-                            key={regionTab.code}
-                            href={regionTab.href}
-                            preserveScroll
-                            aria-current={
-                                regionTab.isActive ? 'page' : undefined
-                            }
-                            className={[
-                                'min-h-14 rounded-md border px-3 py-2 transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35',
-                                regionTab.isActive
-                                    ? 'border-white bg-white text-slate-950 shadow-[0_10px_20px_rgba(255,255,255,0.18)]'
-                                    : 'border-white/14 bg-white/8 text-cyan-50 hover:bg-white/14',
-                            ].join(' ')}
-                        >
-                            <span className="block text-sm font-semibold">
-                                {regionTab.label}
-                            </span>
-                            <span className="mt-0.5 block text-xs opacity-72">
-                                {regionTab.code}
-                            </span>
-                        </Link>
-                    ))}
-                </nav>
+                {displayTabs.length > 0 && (
+                    <RegionTabs
+                        tabs={displayTabs}
+                        selectedTab={selectedTab ?? 'JP'}
+                    />
+                )}
 
-                {ranking.items.length === 0 ? (
+                {selectedTabDefinition ? (
+                    <DanceShortsCandidateList
+                        regionTab={selectedTabDefinition}
+                        candidates={selectedCandidates}
+                        periodLabel={periodLabel}
+                        emptyMessage={emptyMessage}
+                    />
+                ) : (
                     <section className="rounded-lg border border-white/18 bg-slate-950/36 p-6 text-white shadow-[0_16px_34px_rgba(4,25,42,0.14)] backdrop-blur-xl">
                         <p className="text-sm font-semibold text-cyan-50/78">
                             {emptyMessage}
                         </p>
-                    </section>
-                ) : (
-                    <section className="grid gap-4">
-                        {ranking.items.map((item, index) => (
-                            <RankingCard
-                                key={`${item.region.code}-${item.youtubeVideoId}`}
-                                item={item}
-                                index={index}
-                            />
-                        ))}
                     </section>
                 )}
             </main>

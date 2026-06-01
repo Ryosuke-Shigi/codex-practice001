@@ -55,12 +55,21 @@ class GetDanceShortVideoRankingPageAction
         $sortKey = $this->snapshotMetricService->normalizeSortKey($input->sortKey);
         $limit = min(self::MAX_LIMIT, max(1, $input->limit));
 
-        $rankingList = new DanceShortVideoRankingListDTO([]);
+        /*
+         * MOCK 画面では candidatesByRegion / allCandidates という表示用 props shape を先に固めています。
+         * 本画面でも同じ見え方へ寄せるため、選択中 region だけでなく active region すべての通常ランキングを
+         * Query 結果として持ちます。ここで持つのはあくまで保存済み snapshot から作った Result DTO であり、
+         * MOCK の固定配列や表示専用タブ値を本番 Query に混ぜるわけではありません。
+         *
+         * allCandidates への変換や snake_case の候補カード props 生成は Responder 側に残します。
+         * Action が Inertia props のキー名まで知ると、ユースケース手順と画面出力形式が結びつきすぎるためです。
+         */
+        $rankingListsByRegion = [];
 
-        if ($selectedRegionCode !== null) {
-            $rankingList = $this->rankingCandidatesAction->execute(
+        foreach ($regions as $region) {
+            $rankingListsByRegion[$region->code] = $this->rankingCandidatesAction->execute(
                 new DanceShortVideoRankingConditionDTO(
-                    regionCode: $selectedRegionCode,
+                    regionCode: $region->code,
                     comparisonDays: $comparisonDays,
                     limit: $limit,
                     sortKey: $sortKey,
@@ -68,9 +77,14 @@ class GetDanceShortVideoRankingPageAction
             );
         }
 
+        $rankingList = $selectedRegionCode === null
+            ? new DanceShortVideoRankingListDTO([])
+            : ($rankingListsByRegion[$selectedRegionCode] ?? new DanceShortVideoRankingListDTO([]));
+
         return new DanceShortVideoRankingPageDTO(
             regions: $regions,
             rankingList: $rankingList,
+            rankingListsByRegion: $rankingListsByRegion,
             selectedRegionCode: $selectedRegionCode,
             comparisonDays: $comparisonDays,
             limit: $limit,

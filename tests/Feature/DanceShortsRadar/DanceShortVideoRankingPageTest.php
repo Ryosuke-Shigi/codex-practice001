@@ -49,7 +49,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $video = $this->video('jp-ranking-video', 'JP ranking short');
 
         $this->snapshot($video, $jp, 700, '2026-05-25 12:00:00');
-        $this->snapshot($video, $jp, 1000, '2026-06-01 12:00:00');
+        $this->snapshot($video, $jp, 1000, '2026-06-01 12:00:00', 789, 12);
 
         $this
             ->get('/dance-shorts-radar')
@@ -68,6 +68,9 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('regionTabs.1.label', 'アメリカ')
                 ->where('regionTabs.2.code', 'KR')
                 ->where('regionTabs.2.label', '韓国')
+                ->has('regions', 3)
+                ->where('regions.0.code', 'JP')
+                ->where('regions.0.label', '日本')
                 ->where('comparisonDayOptions.0.value', 1)
                 ->where('comparisonDayOptions.2.value', 7)
                 ->where('comparisonDayOptions.2.isActive', true)
@@ -82,6 +85,15 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('ranking.items.0.previousViewCount', 700)
                 ->where('ranking.items.0.viewCountDelta', 300)
                 ->where('ranking.items.0.viewsPerHour', 300 / (7 * 24))
+                ->where('ranking.items.0.likeCount', 789)
+                ->where('ranking.items.0.commentCount', 12)
+                ->where('candidatesByRegion.JP.0.youtube_video_id', 'jp-ranking-video')
+                ->where('candidatesByRegion.JP.0.view_count', 1000)
+                ->where('candidatesByRegion.JP.0.previous_view_count', 700)
+                ->where('candidatesByRegion.JP.0.view_diff', 300)
+                ->where('candidatesByRegion.JP.0.like_count', 789)
+                ->where('candidatesByRegion.JP.0.comment_count', 12)
+                ->where('allCandidates.0.youtube_video_id', 'jp-ranking-video')
             );
 
         $this->assertSame(0, $youtubeRepository->callCount);
@@ -134,7 +146,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($usVideo, $us, 300, '2026-05-25 12:00:00');
 
         $this
-            ->get('/dance-shorts-radar?region=US&comparison_days=1&sort_key=view_count_delta&limit=10')
+            ->get('/dance-shorts-radar?region=US&comparisonDays=1&sort=view_count_delta&limit=10')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('filters.region', 'US')
@@ -145,6 +157,9 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('ranking.items.0.previousViewCount', 900)
                 ->where('ranking.items.0.viewCountDelta', 100)
                 ->where('ranking.items.0.comparisonDays', 1)
+                ->where('candidatesByRegion.US.0.youtube_video_id', 'us-video')
+                ->where('candidatesByRegion.US.0.previous_view_count', 900)
+                ->where('candidatesByRegion.US.0.view_diff', 100)
             );
     }
 
@@ -155,6 +170,13 @@ class DanceShortVideoRankingPageTest extends TestCase
         foreach ([1, 3, 7, 14, 30] as $comparisonDays) {
             $this
                 ->get('/dance-shorts-radar?comparison_days='.$comparisonDays)
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('filters.comparisonDays', $comparisonDays)
+                );
+
+            $this
+                ->get('/dance-shorts-radar?comparisonDays='.$comparisonDays)
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page
                     ->where('filters.comparisonDays', $comparisonDays)
@@ -177,6 +199,12 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->get('/dance-shorts-radar?sort_key=invalid')
             ->assertRedirect('/dance-shorts-radar')
             ->assertSessionHasErrors('sort_key');
+
+        $this
+            ->from('/dance-shorts-radar')
+            ->get('/dance-shorts-radar?sort=invalid')
+            ->assertRedirect('/dance-shorts-radar')
+            ->assertSessionHasErrors('sort');
     }
 
     public function test_responder_uses_ranking_dto_metric_values_without_recalculating(): void
@@ -191,31 +219,38 @@ class DanceShortVideoRankingPageTest extends TestCase
 
                 public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortVideoRankingPageDTO
                 {
+                    $rankingList = new DanceShortVideoRankingListDTO([
+                        new DanceShortVideoRankingItemDTO(
+                            videoId: 10,
+                            youtubeVideoId: 'metric-source-video',
+                            title: 'Metric source short',
+                            channelTitle: 'Metric Channel',
+                            thumbnailUrl: null,
+                            url: null,
+                            publishedAt: CarbonImmutable::parse('2026-05-30 09:00:00', 'UTC'),
+                            regionCode: 'JP',
+                            regionName: '日本',
+                            currentViewCount: 1000,
+                            previousViewCount: 700,
+                            viewCountDelta: 999,
+                            viewGrowthRate: 1.25,
+                            viewsPerHour: 44.4,
+                            likeCount: 123,
+                            commentCount: 45,
+                            currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
+                            previousCollectedAt: CarbonImmutable::parse('2026-05-25 12:00:00', 'UTC'),
+                            comparisonDays: 7,
+                        ),
+                    ]);
+
                     return new DanceShortVideoRankingPageDTO(
                         regions: [
                             new DanceShortVideoRankingRegionDTO('JP', '日本'),
                         ],
-                        rankingList: new DanceShortVideoRankingListDTO([
-                            new DanceShortVideoRankingItemDTO(
-                                videoId: 10,
-                                youtubeVideoId: 'metric-source-video',
-                                title: 'Metric source short',
-                                channelTitle: 'Metric Channel',
-                                thumbnailUrl: null,
-                                url: null,
-                                publishedAt: CarbonImmutable::parse('2026-05-30 09:00:00', 'UTC'),
-                                regionCode: 'JP',
-                                regionName: '日本',
-                                currentViewCount: 1000,
-                                previousViewCount: 700,
-                                viewCountDelta: 999,
-                                viewGrowthRate: 1.25,
-                                viewsPerHour: 44.4,
-                                currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
-                                previousCollectedAt: CarbonImmutable::parse('2026-05-25 12:00:00', 'UTC'),
-                                comparisonDays: 7,
-                            ),
-                        ]),
+                        rankingList: $rankingList,
+                        rankingListsByRegion: [
+                            'JP' => $rankingList,
+                        ],
                         selectedRegionCode: 'JP',
                         comparisonDays: 7,
                         limit: 20,
@@ -241,6 +276,13 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('ranking.items.0.viewCountDelta', 999)
                 ->where('ranking.items.0.viewGrowthRate', 1.25)
                 ->where('ranking.items.0.viewsPerHour', 44.4)
+                ->where('ranking.items.0.likeCount', 123)
+                ->where('ranking.items.0.commentCount', 45)
+                ->where('candidatesByRegion.JP.0.view_diff', 999)
+                ->where('candidatesByRegion.JP.0.view_growth_rate', 1.25)
+                ->where('candidatesByRegion.JP.0.views_per_hour', 44.4)
+                ->where('candidatesByRegion.JP.0.like_count', 123)
+                ->where('candidatesByRegion.JP.0.comment_count', 45)
             );
     }
 
@@ -272,11 +314,15 @@ class DanceShortVideoRankingPageTest extends TestCase
         DanceShortRegion $region,
         int $viewCount,
         string $collectedAt,
+        ?int $likeCount = null,
+        ?int $commentCount = null,
     ): DanceShortVideoSnapshot {
         return DanceShortVideoSnapshot::query()->create([
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
             'view_count' => $viewCount,
+            'like_count' => $likeCount,
+            'comment_count' => $commentCount,
             'collected_at' => $collectedAt,
         ]);
     }

@@ -31,7 +31,9 @@ export default function DanceShortsCandidateCard({
                     youtubeUrl={candidate.youtube_url}
                 />
                 <p className="mt-2 text-xs font-semibold text-cyan-50/66">
-                    サムネイルからYouTubeを別タブで開けます
+                    {candidate.youtube_url === null
+                        ? 'YouTube URL は未取得です'
+                        : 'サムネイルからYouTubeを別タブで開けます'}
                 </p>
             </div>
 
@@ -55,6 +57,11 @@ export default function DanceShortsCandidateCard({
                 <h3 className="mt-1 text-xl font-semibold leading-tight text-white">
                     {candidate.title}
                 </h3>
+                {candidate.channel_title !== undefined && (
+                    <p className="mt-2 text-sm font-semibold text-cyan-50/72">
+                        {candidate.channel_title ?? 'チャンネル名未設定'}
+                    </p>
+                )}
 
                 <dl className="mt-3 grid gap-2 text-sm text-cyan-50/78">
                     <div>
@@ -62,9 +69,19 @@ export default function DanceShortsCandidateCard({
                             投稿日
                         </dt>
                         <dd className="mt-1 font-semibold text-white">
-                            {candidate.published_at}
+                            {candidate.published_at ?? '未設定'}
                         </dd>
                     </div>
+                    {candidate.collected_at !== undefined && (
+                        <div>
+                            <dt className="text-xs font-bold text-cyan-100/60">
+                                収集日時
+                            </dt>
+                            <dd className="mt-1 font-semibold text-white">
+                                {candidate.collected_at ?? '未設定'}
+                            </dd>
+                        </div>
+                    )}
                 </dl>
 
                 <div className="mt-4">

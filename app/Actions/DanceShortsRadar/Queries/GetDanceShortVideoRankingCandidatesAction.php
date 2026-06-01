@@ -91,6 +91,8 @@ class GetDanceShortVideoRankingCandidatesAction
                 viewCountDelta: (int) $metrics['viewCountDelta'],
                 viewGrowthRate: $metrics['viewGrowthRate'],
                 viewsPerHour: $metrics['viewsPerHour'],
+                likeCount: $currentSnapshot->like_count === null ? null : (int) $currentSnapshot->like_count,
+                commentCount: $currentSnapshot->comment_count === null ? null : (int) $currentSnapshot->comment_count,
                 currentCollectedAt: $currentCollectedAt,
                 previousCollectedAt: $previousSnapshot->collected_at,
                 comparisonDays: $comparisonDays,

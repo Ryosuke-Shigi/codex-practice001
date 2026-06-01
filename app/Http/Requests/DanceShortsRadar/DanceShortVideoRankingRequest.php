@@ -24,7 +24,9 @@ class DanceShortVideoRankingRequest extends FormRequest
          */
         return [
             'region' => ['nullable', 'string', 'max:20', 'regex:/\A[A-Za-z0-9_-]+\z/'],
+            'comparisonDays' => ['nullable', 'integer', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS)],
             'comparison_days' => ['nullable', 'integer', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS)],
+            'sort' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],
             'sort_key' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
         ];
@@ -45,7 +47,7 @@ class DanceShortVideoRankingRequest extends FormRequest
 
     public function comparisonDays(): int
     {
-        $comparisonDays = $this->validated('comparison_days');
+        $comparisonDays = $this->validated('comparisonDays') ?? $this->validated('comparison_days');
 
         return $comparisonDays === null
             ? DanceShortVideoRankingConditionDTO::DEFAULT_COMPARISON_DAYS
@@ -63,7 +65,7 @@ class DanceShortVideoRankingRequest extends FormRequest
 
     public function sortKey(): string
     {
-        $sortKey = $this->validated('sort_key');
+        $sortKey = $this->validated('sort') ?? $this->validated('sort_key');
 
         return is_string($sortKey) && $sortKey !== ''
             ? $sortKey

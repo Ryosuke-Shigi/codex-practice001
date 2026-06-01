@@ -9,6 +9,7 @@ type DanceShortsCandidateListProps = {
     regionTab: DanceShortsTab;
     candidates: DanceShortsCandidate[];
     periodLabel: DanceShortsAggregationPeriod;
+    emptyMessage?: string;
 };
 
 /*
@@ -25,6 +26,7 @@ export default function DanceShortsCandidateList({
     regionTab,
     candidates,
     periodLabel,
+    emptyMessage,
 }: DanceShortsCandidateListProps) {
     /*
      * regionTab.code は ALL の場合もありますが、ここでは aria の対応関係と見出しにだけ使います。
@@ -57,19 +59,27 @@ export default function DanceShortsCandidateList({
                 </span>
             </div>
 
-            <div className="grid gap-4">
-                {candidates.map((candidate, index) => (
-                    /*
-                     * youtube_url は候補ごとの外部リンクとして一意に近い値なので、モック一覧の key に使います。
-                     * 本実装で video_id を持つようになったら、ここは video_id 由来の安定 key へ差し替える想定です。
-                     */
-                    <DanceShortsCandidateCard
-                        key={`${candidate.region}-${candidate.youtube_url}`}
-                        candidate={candidate}
-                        index={index}
-                    />
-                ))}
-            </div>
+            {candidates.length === 0 ? (
+                <section className="rounded-lg border border-white/18 bg-slate-950/36 p-6 text-white shadow-[0_16px_34px_rgba(4,25,42,0.14)] backdrop-blur-xl">
+                    <p className="text-sm font-semibold text-cyan-50/78">
+                        {emptyMessage ?? '表示できる候補はまだありません。'}
+                    </p>
+                </section>
+            ) : (
+                <div className="grid gap-4">
+                    {candidates.map((candidate, index) => (
+                        /*
+                         * 本データでは video_id、モックでは youtube_url を key の中心に使います。
+                         * どちらも表示用 props であり、カード内では key の組み立て以外に利用しません。
+                         */
+                        <DanceShortsCandidateCard
+                            key={`${candidate.region}-${candidate.video_id ?? candidate.youtube_url ?? candidate.title}`}
+                            candidate={candidate}
+                            index={index}
+                        />
+                    ))}
+                </div>
+            )}
         </section>
     );
 }

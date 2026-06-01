@@ -25,6 +25,8 @@ class DanceShortVideoRankingItemDTOTest extends TestCase
             viewCountDelta: 300,
             viewGrowthRate: 300 / 700,
             viewsPerHour: 12.5,
+            likeCount: 789,
+            commentCount: 12,
             currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
             previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'UTC'),
             comparisonDays: 1,
@@ -45,6 +47,8 @@ class DanceShortVideoRankingItemDTOTest extends TestCase
             'viewCountDelta' => 300,
             'viewGrowthRate' => 300 / 700,
             'viewsPerHour' => 12.5,
+            'likeCount' => 789,
+            'commentCount' => 12,
             'currentCollectedAt' => '2026-05-31T12:00:00+00:00',
             'previousCollectedAt' => '2026-05-30T12:00:00+00:00',
             'comparisonDays' => 1,
@@ -53,5 +57,7 @@ class DanceShortVideoRankingItemDTOTest extends TestCase
         $this->assertArrayNotHasKey('view_count_delta', $dto->toArray());
         $this->assertArrayNotHasKey('view_growth_rate', $dto->toArray());
         $this->assertArrayNotHasKey('views_per_hour', $dto->toArray());
+        $this->assertArrayNotHasKey('like_count', $dto->toArray());
+        $this->assertArrayNotHasKey('comment_count', $dto->toArray());
     }
 }

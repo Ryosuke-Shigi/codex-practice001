@@ -16,12 +16,14 @@ final readonly class DanceShortVideoRankingPageDTO
 {
     /**
      * @param  array<int, DanceShortVideoRankingRegionDTO>  $regions
+     * @param  array<string, DanceShortVideoRankingListDTO>  $rankingListsByRegion
      * @param  array<int, int>  $comparisonDayOptions
      * @param  array<int, string>  $sortKeyOptions
      */
     public function __construct(
         public array $regions,
         public DanceShortVideoRankingListDTO $rankingList,
+        public array $rankingListsByRegion,
         public ?string $selectedRegionCode,
         public int $comparisonDays,
         public int $limit,
@@ -35,6 +37,7 @@ final readonly class DanceShortVideoRankingPageDTO
      * @return array{
      *     regions: array<int, array{code: string, name: string}>,
      *     rankingList: array{items: array<int, array<string, int|float|string|null>>},
+     *     rankingListsByRegion: array<string, array{items: array<int, array<string, int|float|string|null>>}>,
      *     selectedRegionCode: string|null,
      *     comparisonDays: int,
      *     limit: int,
@@ -51,6 +54,10 @@ final readonly class DanceShortVideoRankingPageDTO
                 $this->regions,
             ),
             'rankingList' => $this->rankingList->toArray(),
+            'rankingListsByRegion' => array_map(
+                fn (DanceShortVideoRankingListDTO $rankingList): array => $rankingList->toArray(),
+                $this->rankingListsByRegion,
+            ),
             'selectedRegionCode' => $this->selectedRegionCode,
             'comparisonDays' => $this->comparisonDays,
             'limit' => $this->limit,

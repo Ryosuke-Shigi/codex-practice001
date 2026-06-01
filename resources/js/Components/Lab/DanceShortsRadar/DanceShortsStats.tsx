@@ -8,10 +8,24 @@ type DanceShortsStatsProps = {
  * 日本語画面なので、数値は ja-JP の桁区切りで統一します。
  * 単位は stats 配列の label/value で明示し、カード側が個別の数値整形を知らなくてよいようにします。
  */
-const numberFormatter = new Intl.NumberFormat('ja-JP');
+const numberFormatter = new Intl.NumberFormat('ja-JP', {
+    maximumFractionDigits: 1,
+});
+const percentFormatter = new Intl.NumberFormat('ja-JP', {
+    maximumFractionDigits: 1,
+    style: 'percent',
+});
 
 function formatNumber(value: number) {
     return numberFormatter.format(value);
+}
+
+function formatOptionalNumber(value: number | null, suffix: string) {
+    return value === null ? '未取得' : `${formatNumber(value)}${suffix}`;
+}
+
+function formatOptionalMetric(value: number | null, suffix: string) {
+    return value === null ? '算出不可' : `${formatNumber(value)}${suffix}`;
 }
 
 export default function DanceShortsStats({ candidate }: DanceShortsStatsProps) {
@@ -35,13 +49,40 @@ export default function DanceShortsStats({ candidate }: DanceShortsStatsProps) {
         },
         {
             label: '1時間あたりの視聴増加数',
-            value: `${formatNumber(candidate.views_per_hour)}回/時`,
+            value: formatOptionalMetric(candidate.views_per_hour, '回/時'),
         },
         {
             label: 'いいね数',
-            value: `${formatNumber(candidate.like_count)}件`,
+            value: formatOptionalNumber(candidate.like_count, '件'),
         },
     ];
+
+    if (candidate.view_growth_rate !== undefined) {
+        /*
+         * view_growth_rate は本データ接続で追加される任意項目です。
+         * MOCK の候補にはまだ存在しないため、undefined のときは表示項目自体を増やさず、
+         * 本番 Responder が値を渡した場合だけカードに出します。ここでも計算はせず、props の値を表示します。
+         */
+        stats.push({
+            label: '伸び率',
+            value:
+                candidate.view_growth_rate === null
+                    ? '算出不可'
+                    : percentFormatter.format(candidate.view_growth_rate),
+        });
+    }
+
+    if (candidate.comment_count !== undefined) {
+        /*
+         * comment_count も snapshot 由来の任意項目です。
+         * API 側で非公開・欠損になる可能性があるため null は「未取得」として表示し、
+         * 0 件と欠損を React 側で混同しないようにします。
+         */
+        stats.push({
+            label: 'コメント数',
+            value: formatOptionalNumber(candidate.comment_count, '件'),
+        });
+    }
 
     return (
         <dl className="grid gap-0.5 text-sm">

@@ -52,16 +52,22 @@ export type DanceShortsTab = {
 };
 
 export type DanceShortsCandidate = {
+    video_id?: number;
+    youtube_video_id?: string;
     region: DanceShortsRegionCode;
     title: string;
-    published_at: string;
-    like_count: number;
+    channel_title?: string | null;
+    published_at: string | null;
+    collected_at?: string | null;
+    like_count: number | null;
+    comment_count?: number | null;
     view_count: number;
     previous_view_count: number;
     view_diff: number;
-    views_per_hour: number;
-    thumbnail_url: string;
-    youtube_url: string;
+    view_growth_rate?: number | null;
+    views_per_hour: number | null;
+    thumbnail_url: string | null;
+    youtube_url: string | null;
 };
 
 export type DanceShortsCandidatesByRegion = Record<

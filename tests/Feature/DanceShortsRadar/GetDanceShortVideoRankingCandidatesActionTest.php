@@ -34,7 +34,7 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         $this->snapshot($targetVideo, $jp, 700, '2026-05-24 12:00:00');
         $this->snapshot($targetVideo, $jp, 900, '2026-05-25 12:00:00');
         $this->snapshot($targetVideo, $us, 9999, '2026-05-24 12:00:00');
-        $this->snapshot($targetVideo, $jp, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($targetVideo, $jp, 1000, '2026-05-31 12:00:00', 789, 12);
         $this->snapshot($missingPreviousVideo, $jp, 2000, '2026-05-31 11:00:00');
         $this->snapshot($inactiveVideo, $jp, 100, '2026-05-24 12:00:00');
         $this->snapshot($inactiveVideo, $jp, 3000, '2026-05-31 12:00:00');
@@ -57,6 +57,8 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         $this->assertSame(300, $item->viewCountDelta);
         $this->assertSame(300 / 700, $item->viewGrowthRate);
         $this->assertSame(300 / (7 * 24), $item->viewsPerHour);
+        $this->assertSame(789, $item->likeCount);
+        $this->assertSame(12, $item->commentCount);
         $this->assertSame(7, $item->comparisonDays);
         $this->assertSame('2026-05-31 12:00:00', $item->currentCollectedAt->format('Y-m-d H:i:s'));
         $this->assertSame('2026-05-24 12:00:00', $item->previousCollectedAt->format('Y-m-d H:i:s'));
@@ -207,11 +209,15 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
         DanceShortRegion $region,
         int $viewCount,
         string $collectedAt,
+        ?int $likeCount = null,
+        ?int $commentCount = null,
     ): DanceShortVideoSnapshot {
         return DanceShortVideoSnapshot::query()->create([
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
             'view_count' => $viewCount,
+            'like_count' => $likeCount,
+            'comment_count' => $commentCount,
             'collected_at' => $collectedAt,
         ]);
     }
