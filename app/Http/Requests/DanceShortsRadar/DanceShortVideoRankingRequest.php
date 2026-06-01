@@ -3,6 +3,7 @@
 namespace App\Http\Requests\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingConditionDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,7 +24,12 @@ class DanceShortVideoRankingRequest extends FormRequest
          * region が active region かどうか、未指定時にどの region を選ぶかは Query Action 側へ残します。
          */
         return [
-            'region' => ['nullable', 'string', 'max:20', 'regex:/\A[A-Za-z0-9_-]+\z/'],
+            /*
+             * region は URL に残るタブ選択値です。
+             * ここでは RISING / ALL / JP / US / KR という入力形式の許可だけを行い、
+             * RISING / ALL を DB region として扱うかどうかの判断はしません。
+             */
+            'region' => ['nullable', 'string', Rule::in(DanceShortVideoRankingPageInputDTO::ALLOWED_REGION_QUERY_VALUES)],
             'comparisonDays' => ['nullable', 'integer', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS)],
             'comparison_days' => ['nullable', 'integer', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS)],
             'sort' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],

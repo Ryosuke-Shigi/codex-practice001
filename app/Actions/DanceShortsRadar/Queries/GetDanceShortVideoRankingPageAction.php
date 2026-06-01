@@ -163,12 +163,18 @@ class GetDanceShortVideoRankingPageAction
      */
     private function selectedTabCode(?string $requestedRegionCode, array $regions): string
     {
-        if ($requestedRegionCode === null || strtoupper($requestedRegionCode) === 'RISING') {
-            return 'RISING';
+        /*
+         * URL query の region は、実在地域だけでなく表示専用タブも受け取ります。
+         * ここで「選択中タブ」として解決し、後続の selectedRegionCode() で
+         * DB region として扱ってよい値だけを切り出すことで、RISING / ALL が
+         * Repository の region 条件へ流れ込まないようにしています。
+         */
+        if ($requestedRegionCode === null || strtoupper($requestedRegionCode) === DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE) {
+            return DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE;
         }
 
-        if (strtoupper($requestedRegionCode) === 'ALL') {
-            return 'ALL';
+        if (strtoupper($requestedRegionCode) === DanceShortVideoRankingPageInputDTO::ALL_TAB_CODE) {
+            return DanceShortVideoRankingPageInputDTO::ALL_TAB_CODE;
         }
 
         foreach ($regions as $region) {
@@ -177,7 +183,7 @@ class GetDanceShortVideoRankingPageAction
             }
         }
 
-        return 'RISING';
+        return DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE;
     }
 
     /**

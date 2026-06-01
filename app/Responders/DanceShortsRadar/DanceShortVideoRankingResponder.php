@@ -32,7 +32,12 @@ final readonly class DanceShortVideoRankingResponder
     {
         return Inertia::render('DanceShortsRadar/Index', [
             'filters' => [
-                'region' => $page->selectedRegionCode,
+                /*
+                 * region はブラウザ URL に残す現在タブの値です。
+                 * 以前は RISING / ALL を null として返していましたが、React の操作を
+                 * router.get() に寄せるには、表示専用タブも query 値として明示します。
+                 */
+                'region' => $page->selectedTabCode,
                 'selectedTab' => $page->selectedTabCode,
                 'comparisonDays' => $page->comparisonDays,
                 'limit' => $page->limit,
@@ -312,10 +317,13 @@ final readonly class DanceShortVideoRankingResponder
         string $sortKey,
         int $limit,
     ): string {
-        $queryRegionCode = $regionCode === 'RISING' ? null : $regionCode;
-
+        /*
+         * 各操作ボタンは React 側で query を組み立てず、この href を router.get() に渡します。
+         * RISING / ALL も region query に残すことで、リロード、戻る/進む、URL共有時に
+         * 同じ表示条件を Laravel 側の Request / Action / Responder から復元できます。
+         */
         $query = array_filter([
-            'region' => $queryRegionCode,
+            'region' => $regionCode,
             'comparisonDays' => $comparisonDays,
             'sort' => $sortKey,
             'limit' => $limit,

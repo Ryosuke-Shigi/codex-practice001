@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 import DanceShortsCandidateList from '@/Components/Lab/DanceShortsRadar/DanceShortsCandidateList';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
@@ -61,22 +61,30 @@ type DanceShortsRadarIndexProps = {
     risingEmptyMessage: string;
 };
 
-function OptionLinks({
+function OptionButtons({
     label,
     options,
 }: {
     label: string;
     options: Array<ComparisonDayOption | SortKeyOption>;
 }) {
+    /*
+     * 比較日数と並び順の操作も、タブと同じく Responder が作った href を router.get() に渡します。
+     * Page 側で query を再生成しないことで、region / comparisonDays / sort / limit の保持ルールを
+     * Laravel 側へ集約し、React は「押された選択肢を Inertia 遷移に渡す」だけに留めます。
+     */
     return (
         <section className="min-w-0">
             <p className="text-xs font-semibold text-cyan-50/70">{label}</p>
             <div className="mt-2 flex flex-wrap gap-2">
                 {options.map((option) => (
-                    <Link
+                    <button
                         key={`${label}-${option.value}`}
-                        href={option.href}
-                        preserveScroll
+                        type="button"
+                        aria-pressed={option.isActive}
+                        onClick={() =>
+                            router.get(option.href, {}, { preserveScroll: true })
+                        }
                         className={[
                             'inline-flex min-h-9 items-center rounded-md border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35',
                             option.isActive
@@ -85,7 +93,7 @@ function OptionLinks({
                         ].join(' ')}
                     >
                         {option.label}
-                    </Link>
+                    </button>
                 ))}
             </div>
         </section>
@@ -186,7 +194,7 @@ export default function DanceShortsRadarIndex({
                             isRisingTab ? '' : 'sm:grid-cols-2',
                         ].join(' ')}
                     >
-                        <OptionLinks
+                        <OptionButtons
                             label="比較日数"
                             options={comparisonDayOptions}
                         />
@@ -196,7 +204,7 @@ export default function DanceShortsRadarIndex({
                              * React 側で sortKey を使って並び替えたり、metric を再計算したりしないため、
                              * 上昇候補タブではユーザー選択の並び順 UI を表示しません。
                              */
-                            <OptionLinks
+                            <OptionButtons
                                 label="並び順"
                                 options={sortKeyOptions}
                             />

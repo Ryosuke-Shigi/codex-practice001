@@ -52,4 +52,29 @@ describe('RegionTabs', () => {
         );
         expect(markup).toContain('aria-selected="true"');
     });
+
+    it('renders href-backed tabs as router buttons instead of anchor links', () => {
+        const tabs: Array<DanceShortsTab & { href: string }> = [
+            {
+                code: 'RISING',
+                label: '上昇候補',
+                description: '海外先行で伸びている候補',
+                href: '/dance-shorts-radar?region=RISING',
+            },
+            {
+                code: 'ALL',
+                label: 'まとめ',
+                description: '全地域のまとめ',
+                href: '/dance-shorts-radar?region=ALL',
+            },
+        ];
+
+        const markup = renderToStaticMarkup(
+            <RegionTabs tabs={tabs} selectedTab="RISING" />,
+        );
+
+        expect(markup).toContain('type="button"');
+        expect(markup).not.toContain('<a ');
+        expect(markup).toContain('aria-selected="true"');
+    });
 });

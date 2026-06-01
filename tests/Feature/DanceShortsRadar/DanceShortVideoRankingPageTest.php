@@ -61,7 +61,7 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DanceShortsRadar/Index', false)
-                ->where('filters.region', null)
+                ->where('filters.region', 'RISING')
                 ->where('filters.selectedTab', 'RISING')
                 ->where('filters.comparisonDays', 1)
                 ->where('filters.sortKey', 'views_per_hour')
@@ -69,9 +69,11 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->has('regionTabs', 5)
                 ->where('regionTabs.0.code', 'RISING')
                 ->where('regionTabs.0.label', '上昇候補')
+                ->where('regionTabs.0.href', '/dance-shorts-radar?region=RISING&comparisonDays=1&sort=views_per_hour&limit=20')
                 ->where('regionTabs.0.isActive', true)
                 ->where('regionTabs.1.code', 'ALL')
                 ->where('regionTabs.1.label', 'まとめ')
+                ->where('regionTabs.1.href', '/dance-shorts-radar?region=ALL&comparisonDays=1&sort=views_per_hour&limit=20')
                 ->where('regionTabs.1.isActive', false)
                 ->where('regionTabs.2.code', 'JP')
                 ->where('regionTabs.2.label', '日本')
@@ -84,11 +86,13 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('regions.0.code', 'JP')
                 ->where('regions.0.label', '日本')
                 ->where('comparisonDayOptions.0.value', 1)
+                ->where('comparisonDayOptions.0.href', '/dance-shorts-radar?region=RISING&comparisonDays=1&sort=views_per_hour&limit=20')
                 ->where('comparisonDayOptions.0.isActive', true)
                 ->where('comparisonDayOptions.2.value', 7)
                 ->where('comparisonDayOptions.2.isActive', false)
                 ->where('sortKeyOptions.0.value', 'views_per_hour')
                 ->where('sortKeyOptions.0.isActive', true)
+                ->where('sortKeyOptions.1.href', '/dance-shorts-radar?region=RISING&comparisonDays=1&sort=view_count_delta&limit=20')
                 ->has('ranking.items', 0)
                 ->where('ranking.total', 0)
                 ->has('risingCandidates', 1)
@@ -129,7 +133,7 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DanceShortsRadar/Index', false)
-                ->where('filters.region', null)
+                ->where('filters.region', 'RISING')
                 ->where('filters.selectedTab', 'RISING')
                 ->has('regionTabs', 5)
                 ->where('regionTabs.0.code', 'RISING')
@@ -237,7 +241,7 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->get('/dance-shorts-radar?region=ALL&sort=view_count_delta')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('filters.region', null)
+                ->where('filters.region', 'ALL')
                 ->where('filters.selectedTab', 'ALL')
                 ->where('regionTabs.0.code', 'RISING')
                 ->where('regionTabs.0.label', '上昇候補')
@@ -377,6 +381,29 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->get('/dance-shorts-radar?sort=invalid')
             ->assertRedirect('/dance-shorts-radar')
             ->assertSessionHasErrors('sort');
+    }
+
+    public function test_request_allows_only_expected_region_query_values(): void
+    {
+        $this->region('JP', '日本', 10);
+        $this->region('US', 'アメリカ', 20);
+        $this->region('KR', '韓国', 30);
+
+        foreach (['RISING', 'ALL', 'JP', 'US', 'KR'] as $regionCode) {
+            $this
+                ->get('/dance-shorts-radar?region='.$regionCode)
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->where('filters.region', $regionCode)
+                    ->where('filters.selectedTab', $regionCode)
+                );
+        }
+
+        $this
+            ->from('/dance-shorts-radar')
+            ->get('/dance-shorts-radar?region=INVALID')
+            ->assertRedirect('/dance-shorts-radar')
+            ->assertSessionHasErrors('region');
     }
 
     public function test_responder_uses_ranking_dto_metric_values_without_recalculating(): void

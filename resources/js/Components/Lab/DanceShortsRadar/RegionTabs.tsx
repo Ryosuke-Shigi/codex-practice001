@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 
 import type { DanceShortsTab, DanceShortsTabCode } from './types';
 
@@ -44,23 +44,32 @@ export default function RegionTabs({
 
                 if (tab.href !== undefined) {
                     /*
-                     * 本番画面ではタブクリックで region query を変え、サーバー側 Query / Responder から
+                     * 本番画面では router.get() で region query を変え、サーバー側 Query / Responder から
                      * 再取得した props を受け直します。MOCK と同じタブの見た目を使いながら、
                      * 本番側では React state だけで DB 由来データを切り替えないようにしています。
+                     *
+                     * href は Responder が生成した URL だけを使います。ここで URLSearchParams を組み立て始めると、
+                     * Laravel 側の query validation と React 側の query 生成が二重管理になりやすいためです。
                      */
                     return (
-                        <Link
+                        <button
                             key={tab.code}
                             id={`dance-shorts-tab-${tab.code}`}
+                            type="button"
                             role="tab"
                             aria-selected={isSelected}
                             aria-controls={`dance-shorts-panel-${tab.code}`}
-                            href={tab.href}
-                            preserveScroll
+                            onClick={() =>
+                                router.get(
+                                    tab.href ?? '',
+                                    {},
+                                    { preserveScroll: true },
+                                )
+                            }
                             className={`inline-flex items-center justify-center ${className}`}
                         >
                             {tab.label}
-                        </Link>
+                        </button>
                     );
                 }
 

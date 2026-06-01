@@ -14,6 +14,32 @@ namespace App\DTO\DanceShortsRadar\Ranking;
  */
 final readonly class DanceShortVideoRankingPageInputDTO
 {
+    /*
+     * RISING / ALL は dance_short_regions に保存する地域コードではなく、
+     * 画面のタブ状態を URL query に残すための表示専用コードです。
+     * React からは region query として渡されますが、Repository へ渡す地域条件とは
+     * Action 側で必ず分けます。
+     */
+    public const RISING_TAB_CODE = 'RISING';
+
+    public const ALL_TAB_CODE = 'ALL';
+
+    /*
+     * Request 層の許可値は「URL query として受け付ける値」の固定リストです。
+     * active region かどうかの DB 状態判断は Request では扱わず、
+     * Query Action が active region 一覧を取得したあとで選択状態として解決します。
+     */
+    /**
+     * @var array<int, string>
+     */
+    public const ALLOWED_REGION_QUERY_VALUES = [
+        self::RISING_TAB_CODE,
+        self::ALL_TAB_CODE,
+        'JP',
+        'US',
+        'KR',
+    ];
+
     public function __construct(
         public ?string $regionCode,
         public int $comparisonDays = DanceShortVideoRankingConditionDTO::DEFAULT_COMPARISON_DAYS,
