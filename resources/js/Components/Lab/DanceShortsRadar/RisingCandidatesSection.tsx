@@ -76,7 +76,7 @@ export default function RisingCandidatesSection({
                 />
             ) : (
                 <div className="grid gap-4">
-                    {candidates.map((candidate, index) => (
+                    {candidates.map((candidate) => (
                     /*
                      * 上昇候補カードは既存の地域別カードとは別にしています。
                      * 地域別カードは現在視聴数や前回視聴数を見せるランキング表示、
@@ -97,7 +97,6 @@ export default function RisingCandidatesSection({
                         youtubeUrl={candidate.youtube_url}
                         tags={candidate.tags}
                         observationNote={candidate.observation_note}
-                        index={index}
                     />
                     ))}
                 </div>

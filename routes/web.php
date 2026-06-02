@@ -6,6 +6,7 @@ use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
 use App\Http\Controllers\DanceShortsRadarMockController;
+use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarController;
 use App\Http\Controllers\DesignPhilosophyController;
 use App\Http\Controllers\QuakeWavePreviewController;
@@ -297,6 +298,9 @@ Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class
 
 Route::get('/dance-shorts-radar', DanceShortsRadarController::class)
     ->name('dance-shorts-radar.index');
+
+Route::get('/api/dance-shorts-radar/display-card-window', DanceShortsRadarDisplayCardWindowController::class)
+    ->name('dance-shorts-radar.display-card-window');
 
 Route::get('/lab/construction-order-workflow-mock', function () {
     // 見た目確認専用の Inertia ページです。業務処理は後続の責務分離時に追加します。

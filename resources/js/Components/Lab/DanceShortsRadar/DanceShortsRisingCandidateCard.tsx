@@ -13,7 +13,6 @@ type DanceShortsRisingCandidateCardProps = {
     youtubeUrl: string | null;
     tags: string[];
     observationNote: string;
-    index: number;
 };
 
 const numberFormatter = new Intl.NumberFormat('ja-JP');
@@ -54,7 +53,6 @@ export default function DanceShortsRisingCandidateCard({
     youtubeUrl,
     tags,
     observationNote,
-    index,
 }: DanceShortsRisingCandidateCardProps) {
     return (
         <article className="grid gap-4 rounded-lg border border-white/22 bg-slate-950/44 p-4 text-white shadow-[0_18px_36px_rgba(2,24,45,0.18)] backdrop-blur-xl md:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]">
@@ -85,9 +83,6 @@ export default function DanceShortsRisingCandidateCard({
                     </span>
                     <span className="rounded-md border border-white/24 bg-white/10 px-2.5 py-1 text-xs font-bold text-cyan-50">
                         地域コード: {sourceRegion}
-                    </span>
-                    <span className="rounded-md border border-amber-100/28 bg-amber-100/12 px-2.5 py-1 text-xs font-bold text-amber-50">
-                        観測順 {index + 1}
                     </span>
                 </div>
 

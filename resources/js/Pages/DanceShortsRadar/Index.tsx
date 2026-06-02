@@ -58,6 +58,11 @@ export default function DanceShortsRadarIndex({
                 />
                 <DanceShortsDisplayCardField
                     displayCardField={displayCardField}
+                    windowRequest={{
+                        tab: displaySelectField.selectedTab,
+                        comparisonDays: displaySelectField.comparisonDays,
+                        sortKey: displaySelectField.sortKey,
+                    }}
                 />
             </main>
         </PublicLayout>

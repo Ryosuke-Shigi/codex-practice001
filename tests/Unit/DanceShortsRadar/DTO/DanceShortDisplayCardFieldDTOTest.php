@@ -4,6 +4,7 @@ namespace Tests\Unit\DanceShortsRadar\DTO;
 
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardListDTO;
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardPaginationDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
@@ -17,45 +18,71 @@ class DanceShortDisplayCardFieldDTOTest extends TestCase
     {
         $dto = new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
-            cards: new DanceShortDisplayCardListDTO([
+            visibleCards: new DanceShortDisplayCardListDTO([
                 new DanceShortRankingDisplayCardDTO($this->rankingItem()),
             ]),
-            emptyMessage: '表示できる通常ランキング候補はまだありません。',
+            activeIndex: 0,
+            activeRank: 1,
+            pagination: $this->pagination(),
+            emptyMessage: null,
         );
 
         $array = $dto->toArray();
 
         $this->assertSame('ranking', $array['type']);
-        $this->assertSame('表示できる通常ランキング候補はまだありません。', $array['emptyMessage']);
+        $this->assertNull($array['emptyMessage']);
+        $this->assertSame(0, $array['activeIndex']);
+        $this->assertSame(1, $array['activeRank']);
+        $this->assertSame(1, $array['pagination']['startRank']);
+        $this->assertSame(5, $array['pagination']['windowSize']);
+        $this->assertFalse($array['pagination']['hasPrev']);
+        $this->assertTrue($array['pagination']['hasNext']);
         $this->assertArrayNotHasKey('selectedTab', $array);
         $this->assertArrayNotHasKey('comparisonDays', $array);
         $this->assertArrayNotHasKey('sortKey', $array);
-        $this->assertSame('ranking', $array['cards'][0]['type']);
-        $this->assertSame('ranking-video', $array['cards'][0]['rankingItem']['youtubeVideoId']);
-        $this->assertSame(300, $array['cards'][0]['rankingItem']['viewCountDelta']);
+        $this->assertArrayNotHasKey('cards', $array);
+        $this->assertSame('ranking', $array['visibleCards'][0]['type']);
+        $this->assertSame('ranking-video', $array['visibleCards'][0]['rankingItem']['youtubeVideoId']);
+        $this->assertSame(300, $array['visibleCards'][0]['rankingItem']['viewCountDelta']);
     }
 
     public function test_to_array_keeps_rising_display_card_shape(): void
     {
         $dto = new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RISING,
-            cards: new DanceShortDisplayCardListDTO([
+            visibleCards: new DanceShortDisplayCardListDTO([
                 new DanceShortRisingDisplayCardDTO($this->risingCandidate()),
             ]),
-            emptyMessage: '表示できる上昇候補はまだありません。',
+            activeIndex: 0,
+            activeRank: 1,
+            pagination: $this->pagination(),
+            emptyMessage: null,
         );
 
         $array = $dto->toArray();
 
         $this->assertSame('rising', $array['type']);
-        $this->assertSame('表示できる上昇候補はまだありません。', $array['emptyMessage']);
+        $this->assertNull($array['emptyMessage']);
         $this->assertArrayNotHasKey('selectedTab', $array);
         $this->assertArrayNotHasKey('comparisonDays', $array);
         $this->assertArrayNotHasKey('sortKey', $array);
-        $this->assertSame('rising', $array['cards'][0]['type']);
-        $this->assertSame('rising-video', $array['cards'][0]['risingCandidate']['youtubeVideoId']);
-        $this->assertSame('US', $array['cards'][0]['risingCandidate']['sourceRegionCode']);
-        $this->assertSame('unobserved', $array['cards'][0]['risingCandidate']['japanComparisonStatus']);
+        $this->assertArrayNotHasKey('cards', $array);
+        $this->assertSame('rising', $array['visibleCards'][0]['type']);
+        $this->assertSame('rising-video', $array['visibleCards'][0]['risingCandidate']['youtubeVideoId']);
+        $this->assertSame('US', $array['visibleCards'][0]['risingCandidate']['sourceRegionCode']);
+        $this->assertSame('unobserved', $array['visibleCards'][0]['risingCandidate']['japanComparisonStatus']);
+    }
+
+    private function pagination(): DanceShortDisplayCardPaginationDTO
+    {
+        return new DanceShortDisplayCardPaginationDTO(
+            startRank: 1,
+            windowSize: 5,
+            hasPrev: false,
+            hasNext: true,
+            prevStartRank: null,
+            nextStartRank: 6,
+        );
     }
 
     private function rankingItem(): DanceShortVideoRankingItemDTO

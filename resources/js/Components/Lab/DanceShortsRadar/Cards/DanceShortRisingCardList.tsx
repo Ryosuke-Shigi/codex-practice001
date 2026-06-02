@@ -28,7 +28,7 @@ export default function DanceShortRisingCardList({
 
     return (
         <section id="dance-shorts-card-field" className="grid gap-4">
-            {cards.map((candidate, index) => (
+            {cards.map((candidate) => (
                 <DanceShortsRisingCandidateCard
                     key={`${candidate.source_region}-${candidate.youtube_url ?? candidate.youtube_video_id ?? candidate.title}`}
                     title={candidate.title}
@@ -44,7 +44,6 @@ export default function DanceShortRisingCardList({
                     youtubeUrl={candidate.youtube_url}
                     tags={candidate.tags}
                     observationNote={candidate.observation_note}
-                    index={index}
                 />
             ))}
         </section>

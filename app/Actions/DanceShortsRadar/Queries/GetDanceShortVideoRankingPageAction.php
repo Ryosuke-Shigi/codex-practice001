@@ -16,6 +16,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
 use App\Models\DanceShortRegion;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
 use App\Services\DanceShortsRadar\DanceShortRisingCandidateService;
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 
@@ -41,6 +42,7 @@ class GetDanceShortVideoRankingPageAction
         private readonly GetDanceShortVideoRankingCandidatesAction $rankingCandidatesAction,
         private readonly DanceShortRisingCandidateService $risingCandidateService,
         private readonly DanceShortSnapshotMetricService $snapshotMetricService,
+        private readonly DanceShortDisplayCardWindowService $displayCardWindowService,
     ) {
     }
 
@@ -64,7 +66,11 @@ class GetDanceShortVideoRankingPageAction
         $selectedRegionCode = $this->selectedRegionCode($selectedTabCode, $regions);
         $comparisonDays = $this->snapshotMetricService->normalizeComparisonDays($input->comparisonDays);
         $sortKey = $this->snapshotMetricService->normalizeSortKey($input->sortKey);
-        $limit = min(self::MAX_LIMIT, max(1, $input->limit));
+        $legacyLimit = min(self::MAX_LIMIT, max(1, $input->limit));
+        $windowSize = $this->displayCardWindowService->normalizeWindowSize($input->windowSize);
+        $startRank = $this->displayCardWindowService->normalizeStartRank($input->startRank, $windowSize);
+        $windowFetchLimit = $this->displayCardWindowService->fetchLimitFor($startRank, $windowSize);
+        $limit = max($legacyLimit, $windowFetchLimit);
 
         /*
          * 既存の確認画面では candidatesByRegion / allCandidates という表示用 props shape を先に固めています。
@@ -123,7 +129,7 @@ class GetDanceShortVideoRankingPageAction
                 new DanceShortVideoRankingConditionDTO(
                     regionCode: $region->code,
                     comparisonDays: $comparisonDays,
-                    limit: self::MAX_LIMIT,
+                    limit: max(self::MAX_LIMIT, $limit),
                     sortKey: 'view_count_delta',
                 ),
             );
@@ -162,6 +168,8 @@ class GetDanceShortVideoRankingPageAction
             rankingList: $rankingList,
             risingCandidateList: $risingCandidateList,
             hasRegions: count($regions) > 0,
+            startRank: $startRank,
+            windowSize: $windowSize,
         );
 
         return new DanceShortVideoRankingPageDTO(
@@ -228,6 +236,8 @@ class GetDanceShortVideoRankingPageAction
         DanceShortVideoRankingListDTO $rankingList,
         DanceShortVideoRisingCandidateListDTO $risingCandidateList,
         bool $hasRegions,
+        int $startRank,
+        int $windowSize,
     ): DanceShortDisplayCardFieldDTO {
         /*
          * 上昇候補は通常ランキングとはカードの意味が違うため、カードDTOも分けます。
@@ -238,13 +248,23 @@ class GetDanceShortVideoRankingPageAction
          * 必要をなくし、Responder は Inertia props への配列変換に集中できます。
          */
         if ($selectedTabCode === DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE) {
+            $window = $this->displayCardWindowService->buildWindow(
+                items: $risingCandidateList->items,
+                startRank: $startRank,
+                windowSize: $windowSize,
+            );
+            $visibleItems = $window['visibleItems'];
+
             return new DanceShortDisplayCardFieldDTO(
                 type: DanceShortDisplayCardFieldDTO::TYPE_RISING,
-                cards: new DanceShortDisplayCardListDTO(array_map(
+                visibleCards: new DanceShortDisplayCardListDTO(array_map(
                     fn (DanceShortVideoRisingCandidateDTO $item): DanceShortRisingDisplayCardDTO => new DanceShortRisingDisplayCardDTO($item),
-                    $risingCandidateList->items,
+                    $visibleItems,
                 )),
-                emptyMessage: '表示できる上昇候補はまだありません。',
+                activeIndex: 0,
+                activeRank: $this->displayCardWindowService->activeRankFor($startRank, 0, count($visibleItems) > 0),
+                pagination: $window['pagination'],
+                emptyMessage: count($visibleItems) === 0 ? '表示できる上昇候補はまだありません。' : null,
             );
         }
 
@@ -253,15 +273,25 @@ class GetDanceShortVideoRankingPageAction
          * ALL の場合も Repository へ ALL を渡した結果ではなく、上で地域別ランキングを集約した
          * allRankingList 由来の rankingList を使うため、DB region と表示専用タブ値は混ざりません。
          */
+        $window = $this->displayCardWindowService->buildWindow(
+            items: $rankingList->items,
+            startRank: $startRank,
+            windowSize: $windowSize,
+        );
+        $visibleItems = $window['visibleItems'];
+
         return new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
-            cards: new DanceShortDisplayCardListDTO(array_map(
+            visibleCards: new DanceShortDisplayCardListDTO(array_map(
                 fn (DanceShortVideoRankingItemDTO $item): DanceShortRankingDisplayCardDTO => new DanceShortRankingDisplayCardDTO($item),
-                $rankingList->items,
+                $visibleItems,
             )),
-            emptyMessage: $hasRegions
+            activeIndex: 0,
+            activeRank: $this->displayCardWindowService->activeRankFor($startRank, 0, count($visibleItems) > 0),
+            pagination: $window['pagination'],
+            emptyMessage: count($visibleItems) === 0 ? ($hasRegions
                 ? '表示できる通常ランキング候補はまだありません。'
-                : '有効な地域がまだ登録されていません。',
+                : '有効な地域がまだ登録されていません。') : null,
         );
     }
 }

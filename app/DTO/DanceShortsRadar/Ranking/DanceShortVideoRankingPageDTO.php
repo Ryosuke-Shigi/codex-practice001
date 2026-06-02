@@ -48,7 +48,21 @@ final readonly class DanceShortVideoRankingPageDTO
      *     rankingListsByRegion: array<string, array{items: array<int, array<string, bool|int|float|string|null>>}>,
      *     allRankingList: array{items: array<int, array<string, bool|int|float|string|null>>},
      *     risingCandidateList: array{items: array<int, array<string, bool|int|float|string|null>>},
-     *     displayCardField: array{type: string, cards: array<int, array<string, mixed>>, emptyMessage: string},
+     *     displayCardField: array{
+     *         type: string,
+     *         visibleCards: array<int, array<string, mixed>>,
+     *         activeIndex: int,
+     *         activeRank: int|null,
+     *         pagination: array{
+     *             startRank: int,
+     *             windowSize: int,
+     *             hasPrev: bool,
+     *             hasNext: bool,
+     *             prevStartRank: int|null,
+     *             nextStartRank: int|null
+     *         },
+     *         emptyMessage: string|null
+     *     },
      *     selectedTabCode: string,
      *     selectedRegionCode: string|null,
      *     comparisonDays: int,

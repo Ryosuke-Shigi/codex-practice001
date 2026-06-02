@@ -29,18 +29,23 @@ class DanceShortVideoRankingRequest extends FormRequest
              * ここでは RISING / ALL / JP / US / KR という入力形式の許可だけを行い、
              * RISING / ALL を DB region として扱うかどうかの判断はしません。
              */
+            'tab' => ['nullable', 'string', Rule::in(DanceShortVideoRankingPageInputDTO::ALLOWED_REGION_QUERY_VALUES)],
             'region' => ['nullable', 'string', Rule::in(DanceShortVideoRankingPageInputDTO::ALLOWED_REGION_QUERY_VALUES)],
             'comparisonDays' => ['nullable', 'integer', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS)],
             'comparison_days' => ['nullable', 'integer', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_COMPARISON_DAYS)],
             'sort' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],
             'sort_key' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'startRank' => ['nullable', 'integer'],
+            'start_rank' => ['nullable', 'integer'],
+            'windowSize' => ['nullable', 'integer'],
+            'window_size' => ['nullable', 'integer'],
         ];
     }
 
     public function regionCode(): ?string
     {
-        $region = $this->validated('region');
+        $region = $this->validated('tab') ?? $this->validated('region');
 
         if (! is_string($region)) {
             return null;
@@ -76,5 +81,19 @@ class DanceShortVideoRankingRequest extends FormRequest
         return is_string($sortKey) && $sortKey !== ''
             ? $sortKey
             : DanceShortVideoRankingConditionDTO::DEFAULT_SORT_KEY;
+    }
+
+    public function startRank(): int
+    {
+        $startRank = $this->validated('startRank') ?? $this->validated('start_rank');
+
+        return $startRank === null ? 1 : (int) $startRank;
+    }
+
+    public function windowSize(): int
+    {
+        $windowSize = $this->validated('windowSize') ?? $this->validated('window_size');
+
+        return $windowSize === null ? 5 : (int) $windowSize;
     }
 }

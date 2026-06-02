@@ -111,6 +111,15 @@ export type DanceShortsCandidate = {
     youtube_url: string | null;
 };
 
+export type DanceShortsDisplayCardPagination = {
+    startRank: number;
+    windowSize: number;
+    hasPrev: boolean;
+    hasNext: boolean;
+    prevStartRank: number | null;
+    nextStartRank: number | null;
+};
+
 export type DanceShortsCandidatesByRegion = Record<
     DanceShortsRegionCode,
     DanceShortsCandidate[]
@@ -154,14 +163,26 @@ export type DanceShortsRisingCandidate = {
 export type DanceShortsDisplayCardField =
     | {
           type: typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RANKING;
-          cards: DanceShortsCandidate[];
-          emptyMessage: string;
+          visibleCards: DanceShortsCandidate[];
+          activeIndex: number;
+          activeRank: number | null;
+          pagination: DanceShortsDisplayCardPagination;
+          emptyMessage: string | null;
       }
     | {
           type: typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING;
-          cards: DanceShortsRisingCandidate[];
-          emptyMessage: string;
+          visibleCards: DanceShortsRisingCandidate[];
+          activeIndex: number;
+          activeRank: number | null;
+          pagination: DanceShortsDisplayCardPagination;
+          emptyMessage: string | null;
       };
+
+export type DanceShortsDisplayCardWindowRequest = {
+    tab: DanceShortsTabCode;
+    comparisonDays: number;
+    sortKey: string;
+};
 
 /*
  * snapshot 一覧画面専用の表示種別です。

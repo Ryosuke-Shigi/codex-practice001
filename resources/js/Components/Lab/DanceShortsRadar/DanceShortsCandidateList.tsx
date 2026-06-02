@@ -66,7 +66,7 @@ export default function DanceShortsCandidateList({
                 />
             ) : (
                 <div className="grid gap-4">
-                    {candidates.map((candidate, index) => (
+                    {candidates.map((candidate) => (
                         /*
                          * 本データでは video_id、モックでは youtube_url を key の中心に使います。
                          * どちらも表示用 props であり、カード内では key の組み立て以外に利用しません。
@@ -74,7 +74,6 @@ export default function DanceShortsCandidateList({
                         <DanceShortsCandidateCard
                             key={`${candidate.region}-${candidate.video_id ?? candidate.youtube_url ?? candidate.title}`}
                             candidate={candidate}
-                            index={index}
                         />
                     ))}
                 </div>

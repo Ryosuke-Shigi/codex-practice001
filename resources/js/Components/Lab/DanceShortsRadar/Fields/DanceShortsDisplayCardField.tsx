@@ -1,5 +1,8 @@
 import DanceShortsCardDisplayField from '../Cards/DanceShortsDisplayCardField';
-import type { DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps } from '../types';
+import type {
+    DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps,
+    DanceShortsDisplayCardWindowRequest,
+} from '../types';
 
 /*
  * Page から見た card field の入口です。
@@ -10,8 +13,15 @@ import type { DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps } 
  */
 export default function DanceShortsDisplayCardField({
     displayCardField,
+    windowRequest,
 }: {
     displayCardField: DanceShortsDisplayCardFieldProps;
+    windowRequest: DanceShortsDisplayCardWindowRequest;
 }) {
-    return <DanceShortsCardDisplayField displayCardField={displayCardField} />;
+    return (
+        <DanceShortsCardDisplayField
+            displayCardField={displayCardField}
+            windowRequest={windowRequest}
+        />
+    );
 }

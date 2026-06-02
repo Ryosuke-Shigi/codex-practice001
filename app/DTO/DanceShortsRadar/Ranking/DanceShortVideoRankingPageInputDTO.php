@@ -45,6 +45,8 @@ final readonly class DanceShortVideoRankingPageInputDTO
         public int $comparisonDays = DanceShortVideoRankingConditionDTO::DEFAULT_COMPARISON_DAYS,
         public int $limit = DanceShortVideoRankingConditionDTO::DEFAULT_LIMIT,
         public string $sortKey = DanceShortVideoRankingConditionDTO::DEFAULT_SORT_KEY,
+        public int $startRank = 1,
+        public int $windowSize = 5,
     ) {
     }
 
@@ -53,7 +55,9 @@ final readonly class DanceShortVideoRankingPageInputDTO
      *     regionCode: string|null,
      *     comparisonDays: int,
      *     limit: int,
-     *     sortKey: string
+     *     sortKey: string,
+     *     startRank: int,
+     *     windowSize: int
      * }
      */
     public function toArray(): array
@@ -63,6 +67,8 @@ final readonly class DanceShortVideoRankingPageInputDTO
             'comparisonDays' => $this->comparisonDays,
             'limit' => $this->limit,
             'sortKey' => $this->sortKey,
+            'startRank' => $this->startRank,
+            'windowSize' => $this->windowSize,
         ];
     }
 }

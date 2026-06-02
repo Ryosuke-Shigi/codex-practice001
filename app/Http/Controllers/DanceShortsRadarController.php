@@ -30,6 +30,8 @@ class DanceShortsRadarController extends Controller
             comparisonDays: $request->comparisonDays(),
             limit: $request->limit(),
             sortKey: $request->sortKey(),
+            startRank: $request->startRank(),
+            windowSize: $request->windowSize(),
         );
 
         return $responder->index($action->execute($input));

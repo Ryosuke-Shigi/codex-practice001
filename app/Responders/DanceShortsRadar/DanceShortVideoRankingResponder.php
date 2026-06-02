@@ -2,12 +2,14 @@
 
 namespace App\Responders\DanceShortsRadar;
 
+use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,7 +53,7 @@ final readonly class DanceShortVideoRankingResponder
             fn (string $sortKey): array => $this->sortKeyOptionProps($sortKey, $page),
             $page->sortKeyOptions,
         );
-        $displayCardField = $this->displayCardFieldProps($page);
+        $displayCardField = $this->displayCardFieldProps($page->displayCardField);
 
         return Inertia::render('DanceShortsRadar/Index', [
             'displaySelectField' => $this->displaySelectFieldProps(
@@ -135,7 +137,7 @@ final readonly class DanceShortVideoRankingResponder
             'description' => $description,
             'selectedTabLabel' => $selectedTabLabel,
             'comparisonDaysLabel' => $page->comparisonDays.'日比較',
-            'cardCountLabel' => count($page->displayCardField->cards->cards).'件',
+            'cardCountLabel' => count($page->displayCardField->visibleCards->cards).'件',
             'sortLabel' => $page->selectedTabCode === 'RISING'
                 ? '上昇候補順'
                 : (self::SORT_KEY_LABELS[$page->sortKey] ?? $page->sortKey),
@@ -166,19 +168,19 @@ final readonly class DanceShortVideoRankingResponder
          * RISING と ALL はどちらも表示専用タブです。
          * RISING は上昇候補 Service が作った観測候補、ALL は Responder が地域別 DTO をまとめた表示であり、
          * どちらも dance_short_regions へ追加しません。href は Query Action が識別できる tab 値だけを
-         * region query に置き、Repository へ RISING / ALL が渡らない境界は Action 側で保ちます。
+         * query に置き、Repository へ RISING / ALL が渡らない境界は Action 側で保ちます。
          */
         $tabs = [[
             'code' => 'RISING',
             'label' => '上昇候補',
             'description' => '海外先行で伸びている候補',
-            'href' => $this->indexHref('RISING', $page->comparisonDays, $page->sortKey, $page->limit),
+            'href' => $this->indexHref('RISING', $page->comparisonDays, $page->sortKey),
             'isActive' => $page->selectedTabCode === 'RISING',
         ], [
             'code' => 'ALL',
             'label' => 'まとめ',
             'description' => '日本・アメリカ・韓国の保存済み snapshot ランキング',
-            'href' => $this->indexHref('ALL', $page->comparisonDays, $page->sortKey, $page->limit),
+            'href' => $this->indexHref('ALL', $page->comparisonDays, $page->sortKey),
             'isActive' => $page->selectedTabCode === 'ALL',
         ]];
 
@@ -187,7 +189,7 @@ final readonly class DanceShortVideoRankingResponder
                 'code' => $region->code,
                 'label' => $region->name,
                 'description' => $region->name.'の保存済み snapshot ランキング',
-                'href' => $this->indexHref($region->code, $page->comparisonDays, $page->sortKey, $page->limit),
+                'href' => $this->indexHref($region->code, $page->comparisonDays, $page->sortKey),
                 'isActive' => $region->code === $page->selectedTabCode,
             ];
         }
@@ -196,16 +198,28 @@ final readonly class DanceShortVideoRankingResponder
     }
 
     /**
-     * @return array{type: string, cards: array<int, array<string, mixed>>, emptyMessage: string}
+     * @return array{
+     *     type: string,
+     *     visibleCards: array<int, array<string, mixed>>,
+     *     activeIndex: int,
+     *     activeRank: int|null,
+     *     pagination: array{
+     *         startRank: int,
+     *         windowSize: int,
+     *         hasPrev: bool,
+     *         hasNext: bool,
+     *         prevStartRank: int|null,
+     *         nextStartRank: int|null
+     *     },
+     *     emptyMessage: string|null
+     * }
      */
-    private function displayCardFieldProps(DanceShortVideoRankingPageDTO $page): array
+    public function displayCardFieldProps(DanceShortDisplayCardFieldDTO $field): array
     {
-        $field = $page->displayCardField;
-
         /*
          * displayCardField は下側の差し替え領域専用です。
          *
-         * Action が type と cards を決め、Responder はカード DTO を既存カードコンポーネントが読める
+         * Action が type と visibleCards を決め、Responder はカード DTO を既存カードコンポーネントが読める
          * snake_case props へ変換します。ここで region の選び直しやランキングの再計算を行わないことで、
          * 「表示対象の確定」は Action、「出力形への変換」は Responder という境界を保ちます。
          *
@@ -214,12 +228,22 @@ final readonly class DanceShortVideoRankingResponder
          */
         return [
             'type' => $field->type,
-            'cards' => array_map(
+            'visibleCards' => array_map(
                 fn (DanceShortRankingDisplayCardDTO|DanceShortRisingDisplayCardDTO $card): array => $this->displayCardProps($card),
-                $field->cards->cards,
+                $field->visibleCards->cards,
             ),
+            'activeIndex' => $field->activeIndex,
+            'activeRank' => $field->activeRank,
+            'pagination' => $field->pagination->toArray(),
             'emptyMessage' => $field->emptyMessage,
         ];
+    }
+
+    public function cardWindow(DanceShortDisplayCardFieldDTO $field): JsonResponse
+    {
+        return response()->json([
+            'displayCardField' => $this->displayCardFieldProps($field),
+        ]);
     }
 
     /**
@@ -244,7 +268,7 @@ final readonly class DanceShortVideoRankingResponder
         return [
             'value' => $comparisonDays,
             'label' => $comparisonDays.'日',
-            'href' => $this->indexHref($page->selectedTabCode, $comparisonDays, $page->sortKey, $page->limit),
+            'href' => $this->indexHref($page->selectedTabCode, $comparisonDays, $page->sortKey),
             'isActive' => $comparisonDays === $page->comparisonDays,
         ];
     }
@@ -254,7 +278,7 @@ final readonly class DanceShortVideoRankingResponder
         return [
             'value' => $sortKey,
             'label' => self::SORT_KEY_LABELS[$sortKey] ?? $sortKey,
-            'href' => $this->indexHref($page->selectedTabCode, $page->comparisonDays, $sortKey, $page->limit),
+            'href' => $this->indexHref($page->selectedTabCode, $page->comparisonDays, $sortKey),
             'isActive' => $sortKey === $page->sortKey,
         ];
     }
@@ -347,18 +371,16 @@ final readonly class DanceShortVideoRankingResponder
         ?string $regionCode,
         int $comparisonDays,
         string $sortKey,
-        int $limit,
     ): string {
         /*
          * 各操作ボタンは React 側で query を組み立てず、この href を router.get() に渡します。
-         * RISING / ALL も region query に残すことで、リロード、戻る/進む、URL共有時に
+         * RISING / ALL も tab query に残すことで、リロード、戻る/進む、URL共有時に
          * 同じ表示条件を Laravel 側の Request / Action / Responder から復元できます。
          */
         $query = array_filter([
-            'region' => $regionCode,
+            'tab' => $regionCode,
             'comparisonDays' => $comparisonDays,
             'sort' => $sortKey,
-            'limit' => $limit,
         ], fn (mixed $value): bool => $value !== null);
 
         return route('dance-shorts-radar.index', [], false).'?'.http_build_query($query);
