@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 
-import { DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS } from './inertiaReloadOptions';
+import { DANCE_SHORTS_RADAR_RELOAD_OPTIONS } from './inertiaReloadOptions';
 import type { DanceShortsTab, DanceShortsTabCode } from './types';
 
 type RegionTabsProps = {
@@ -51,6 +51,9 @@ export default function RegionTabs({
                      *
                      * href は Responder が生成した URL だけを使います。ここで URLSearchParams を組み立て始めると、
                      * Laravel 側の query validation と React 側の query 生成が二重管理になりやすいためです。
+                     *
+                     * reload option も共通定義を使います。タブ切り替えだけ preserveState や only props が
+                     * 他の条件ボタンとズレると、同じ Inertia 遷移なのに操作ごとに再描画の体感が変わるためです。
                      */
                     return (
                         <button
@@ -64,10 +67,7 @@ export default function RegionTabs({
                                 router.get(
                                     tab.href ?? '',
                                     {},
-                                    {
-                                        preserveScroll: true,
-                                        only: DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS,
-                                    },
+                                    DANCE_SHORTS_RADAR_RELOAD_OPTIONS,
                                 )
                             }
                             className={`inline-flex items-center justify-center ${className}`}

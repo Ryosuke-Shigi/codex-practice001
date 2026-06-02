@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 
 import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Cards/DanceShortsDisplayCardField';
 import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
-import { DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS } from '@/Components/Lab/DanceShortsRadar/inertiaReloadOptions';
+import { DANCE_SHORTS_RADAR_RELOAD_OPTIONS } from '@/Components/Lab/DanceShortsRadar/inertiaReloadOptions';
 import { DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES } from '@/Components/Lab/DanceShortsRadar/types';
 import type {
     DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps,
@@ -62,6 +62,10 @@ function OptionButtons({
      * 比較日数と並び順の操作も、タブと同じく Responder が作った href を router.get() に渡します。
      * Page 側で query を再生成しないことで、region / comparisonDays / sort / limit の保持ルールを
      * Laravel 側へ集約し、React は「押された選択肢を Inertia 遷移に渡す」だけに留めます。
+     *
+     * reload option は RegionTabs と同じ共通定義を使います。comparisonDays / sort の切り替えでも
+     * preserveState を維持し、更新対象 props を displayCardField と query 依存 UI props に揃えることで、
+     * カード表示Field中心に差し替わる体感へ寄せます。
      */
     return (
         <section className="min-w-0">
@@ -73,10 +77,11 @@ function OptionButtons({
                         type="button"
                         aria-pressed={option.isActive}
                         onClick={() =>
-                            router.get(option.href, {}, {
-                                preserveScroll: true,
-                                only: DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS,
-                            })
+                            router.get(
+                                option.href,
+                                {},
+                                DANCE_SHORTS_RADAR_RELOAD_OPTIONS,
+                            )
                         }
                         className={[
                             'inline-flex min-h-9 items-center rounded-md border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35',
