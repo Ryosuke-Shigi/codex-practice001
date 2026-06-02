@@ -14,12 +14,20 @@ describe('DanceShortsRadar Inertia reload options', () => {
         );
 
         expect(DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS).toEqual([
-            'filters',
-            'regionTabs',
+            'displaySelectField',
+            'displayHeaderField',
             'displayCardField',
-            'comparisonDayOptions',
-            'sortKeyOptions',
         ]);
+        expect(DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS).not.toContain('filters');
+        expect(DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS).not.toContain(
+            'regionTabs',
+        );
+        expect(DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS).not.toContain(
+            'comparisonDayOptions',
+        );
+        expect(DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS).not.toContain(
+            'sortKeyOptions',
+        );
         expect(DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS).not.toContain(
             'allCandidates',
         );

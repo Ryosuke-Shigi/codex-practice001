@@ -1,7 +1,6 @@
 import {
     DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES,
     type DanceShortsDisplayCardField,
-    type DanceShortsTab,
 } from '../types';
 import DanceShortRankingCardList from './DanceShortRankingCardList';
 import DanceShortRisingCardList from './DanceShortRisingCardList';
@@ -9,7 +8,6 @@ import EmptyDisplayCardField from './EmptyDisplayCardField';
 
 type DanceShortsDisplayCardFieldProps = {
     displayCardField: DanceShortsDisplayCardField;
-    selectedTabDefinition?: DanceShortsTab;
 };
 
 /*
@@ -21,7 +19,6 @@ type DanceShortsDisplayCardFieldProps = {
  */
 export default function DanceShortsDisplayCardField({
     displayCardField,
-    selectedTabDefinition,
 }: DanceShortsDisplayCardFieldProps) {
     /*
      * この switch は「どのカード配列を表示するか」ではなく、「確定済みカード配列を
@@ -36,9 +33,6 @@ export default function DanceShortsDisplayCardField({
             return (
                 <DanceShortRankingCardList
                     cards={displayCardField.cards}
-                    comparisonDays={displayCardField.comparisonDays}
-                    selectedTabDefinition={selectedTabDefinition}
-                    selectedTab={displayCardField.selectedTab}
                     emptyMessage={displayCardField.emptyMessage}
                 />
             );
@@ -47,7 +41,6 @@ export default function DanceShortsDisplayCardField({
             return (
                 <DanceShortRisingCardList
                     cards={displayCardField.cards}
-                    comparisonDays={displayCardField.comparisonDays}
                     emptyMessage={displayCardField.emptyMessage}
                 />
             );

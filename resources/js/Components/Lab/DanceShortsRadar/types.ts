@@ -59,6 +59,37 @@ export type DanceShortsTab = {
     description: string;
 };
 
+export type DanceShortsFieldTab = DanceShortsTab & {
+    href: string;
+    isActive: boolean;
+};
+
+export type DanceShortsSelectOption<T extends string | number> = {
+    value: T;
+    label: string;
+    href: string;
+    isActive: boolean;
+};
+
+export type DanceShortsDisplaySelectField = {
+    selectedTab: DanceShortsTabCode;
+    comparisonDays: number;
+    sortKey: string;
+    showSortKeyOptions: boolean;
+    regionTabs: DanceShortsFieldTab[];
+    comparisonDayOptions: Array<DanceShortsSelectOption<number>>;
+    sortKeyOptions: Array<DanceShortsSelectOption<string>>;
+};
+
+export type DanceShortsDisplayHeaderField = {
+    title: string;
+    description: string;
+    selectedTabLabel: string;
+    comparisonDaysLabel: string;
+    cardCountLabel: string;
+    sortLabel: string;
+};
+
 export type DanceShortsCandidate = {
     video_id?: number;
     youtube_video_id?: string;
@@ -123,17 +154,11 @@ export type DanceShortsRisingCandidate = {
 export type DanceShortsDisplayCardField =
     | {
           type: typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RANKING;
-          selectedTab: DanceShortsTabCode;
-          comparisonDays: number;
-          sortKey: string;
           cards: DanceShortsCandidate[];
           emptyMessage: string;
       }
     | {
           type: typeof DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING;
-          selectedTab: DanceShortsTabCode;
-          comparisonDays: number;
-          sortKey: string;
           cards: DanceShortsRisingCandidate[];
           emptyMessage: string;
       };

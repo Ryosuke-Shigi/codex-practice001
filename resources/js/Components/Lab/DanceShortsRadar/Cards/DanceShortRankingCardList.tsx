@@ -1,53 +1,40 @@
-import DanceShortsCandidateList from '../DanceShortsCandidateList';
-import type {
-    DanceShortsAggregationPeriod,
-    DanceShortsCandidate,
-    DanceShortsTab,
-    DanceShortsTabCode,
-} from '../types';
+import DanceShortsCandidateCard from '../DanceShortsCandidateCard';
+import type { DanceShortsCandidate } from '../types';
+import EmptyDisplayCardField from './EmptyDisplayCardField';
 
 type DanceShortRankingCardListProps = {
     cards: DanceShortsCandidate[];
-    comparisonDays: number;
-    selectedTabDefinition?: DanceShortsTab;
-    selectedTab: DanceShortsTabCode;
     emptyMessage: string;
 };
-
-function periodLabel(comparisonDays: number): DanceShortsAggregationPeriod {
-    return `${comparisonDays}日` as DanceShortsAggregationPeriod;
-}
 
 /*
  * 通常ランキング用カードリストの薄い adapter です。
  *
  * 既存の DanceShortsCandidateList はモック画面側でも使われるため、移動や大きな props 変更はせず、
- * displayCardField の ranking cards を既存コンポーネントへ橋渡しします。
+ * 本画面の displayCardField ではカード一覧と空状態だけを描きます。
  */
 export default function DanceShortRankingCardList({
     cards,
-    comparisonDays,
-    selectedTabDefinition,
-    selectedTab,
     emptyMessage,
 }: DanceShortRankingCardListProps) {
     /*
-     * selectedTabDefinition は regionTabs から取れた表示名・説明文です。
-     * 万一タブ定義が見つからない場合でも、カード一覧自体は Action が確定した selectedTab で
-     * 表示できるように最小限の fallback を用意します。
+     * 通常ランキングのカード一覧は、Responder が確定した順序をそのまま描画します。
+     * ここで selectedTab や sortKey を見て選び直すと、Laravel 側で固定した表示対象と
+     * React 側の表示が二重管理になるため、カード配列以外の画面状態は受け取りません。
      */
-    const regionTab = selectedTabDefinition ?? {
-        code: selectedTab,
-        label: selectedTab,
-        description: '保存済み snapshot ランキング',
-    };
+    if (cards.length === 0) {
+        return <EmptyDisplayCardField message={emptyMessage} />;
+    }
 
     return (
-        <DanceShortsCandidateList
-            regionTab={regionTab}
-            candidates={cards}
-            periodLabel={periodLabel(comparisonDays)}
-            emptyMessage={emptyMessage}
-        />
+        <section id="dance-shorts-card-field" className="grid gap-4">
+            {cards.map((candidate, index) => (
+                <DanceShortsCandidateCard
+                    key={`${candidate.region}-${candidate.video_id ?? candidate.youtube_url ?? candidate.title}`}
+                    candidate={candidate}
+                    index={index}
+                />
+            ))}
+        </section>
     );
 }

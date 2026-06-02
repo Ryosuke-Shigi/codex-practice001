@@ -161,8 +161,6 @@ class GetDanceShortVideoRankingPageAction
             selectedTabCode: $selectedTabCode,
             rankingList: $rankingList,
             risingCandidateList: $risingCandidateList,
-            comparisonDays: $comparisonDays,
-            sortKey: $sortKey,
             hasRegions: count($regions) > 0,
         );
 
@@ -229,8 +227,6 @@ class GetDanceShortVideoRankingPageAction
         string $selectedTabCode,
         DanceShortVideoRankingListDTO $rankingList,
         DanceShortVideoRisingCandidateListDTO $risingCandidateList,
-        int $comparisonDays,
-        string $sortKey,
         bool $hasRegions,
     ): DanceShortDisplayCardFieldDTO {
         /*
@@ -244,9 +240,6 @@ class GetDanceShortVideoRankingPageAction
         if ($selectedTabCode === DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE) {
             return new DanceShortDisplayCardFieldDTO(
                 type: DanceShortDisplayCardFieldDTO::TYPE_RISING,
-                selectedTab: $selectedTabCode,
-                comparisonDays: $comparisonDays,
-                sortKey: $sortKey,
                 cards: new DanceShortDisplayCardListDTO(array_map(
                     fn (DanceShortVideoRisingCandidateDTO $item): DanceShortRisingDisplayCardDTO => new DanceShortRisingDisplayCardDTO($item),
                     $risingCandidateList->items,
@@ -262,9 +255,6 @@ class GetDanceShortVideoRankingPageAction
          */
         return new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
-            selectedTab: $selectedTabCode,
-            comparisonDays: $comparisonDays,
-            sortKey: $sortKey,
             cards: new DanceShortDisplayCardListDTO(array_map(
                 fn (DanceShortVideoRankingItemDTO $item): DanceShortRankingDisplayCardDTO => new DanceShortRankingDisplayCardDTO($item),
                 $rankingList->items,

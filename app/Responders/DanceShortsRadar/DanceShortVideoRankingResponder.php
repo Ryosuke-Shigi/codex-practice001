@@ -32,63 +32,129 @@ final readonly class DanceShortVideoRankingResponder
 
     public function index(DanceShortVideoRankingPageDTO $page): Response
     {
+        /*
+         * 3Field 化後の本画面では、React が旧 props を横断して表示対象を組み立てません。
+         *
+         * - displaySelectField: 操作 UI と href / active 状態
+         * - displayHeaderField: 現在条件の説明ラベル
+         * - displayCardField: 下側に差し替えるカード一覧
+         *
+         * Responder はこの3つを同じ PageDTO から同時に作ることで、タブ、比較日数、並び順、
+         * カード件数の表示が同じ query 条件から来ていることを保証します。
+         */
+        $regionTabs = $this->regionTabProps($page);
+        $comparisonDayOptions = array_map(
+            fn (int $comparisonDays): array => $this->comparisonDayOptionProps($comparisonDays, $page),
+            $page->comparisonDayOptions,
+        );
+        $sortKeyOptions = array_map(
+            fn (string $sortKey): array => $this->sortKeyOptionProps($sortKey, $page),
+            $page->sortKeyOptions,
+        );
+        $displayCardField = $this->displayCardFieldProps($page);
+
         return Inertia::render('DanceShortsRadar/Index', [
-            'filters' => [
-                /*
-                 * region はブラウザ URL に残す現在タブの値です。
-                 * 以前は RISING / ALL を null として返していましたが、React の操作を
-                 * router.get() に寄せるには、表示専用タブも query 値として明示します。
-                 */
-                'region' => $page->selectedTabCode,
-                'selectedTab' => $page->selectedTabCode,
-                'comparisonDays' => $page->comparisonDays,
-                'limit' => $page->limit,
-                'sortKey' => $page->sortKey,
-            ],
-            'regionTabs' => $this->regionTabProps($page),
-            'regions' => array_map(
-                fn (DanceShortVideoRankingRegionDTO $region): array => $this->regionProps($region),
-                $page->regions,
+            'displaySelectField' => $this->displaySelectFieldProps(
+                page: $page,
+                regionTabs: $regionTabs,
+                comparisonDayOptions: $comparisonDayOptions,
+                sortKeyOptions: $sortKeyOptions,
             ),
-            /*
-             * 既存の確認画面で固めた通常ランキング相当の props shape です。
-             * 本番側では Query Action が返した DTO だけを材料にして同じ shape へ整えます。
-             * ここに固定確認データ生成や candidate の sort 計算を置かないことで、
-             * 「表示用 props 変換」と「ランキング取得・計算」の境界を分けたままにします。
-             */
-            'candidatesByRegion' => $this->candidatesByRegionProps($page),
-            'allCandidates' => $this->allCandidateProps($page),
-            'risingCandidates' => $this->risingCandidateProps($page),
-            'displayCardField' => $this->displayCardFieldProps($page),
-            'comparisonDayOptions' => array_map(
-                fn (int $comparisonDays): array => $this->comparisonDayOptionProps($comparisonDays, $page),
-                $page->comparisonDayOptions,
+            'displayHeaderField' => $this->displayHeaderFieldProps(
+                page: $page,
+                regionTabs: $regionTabs,
             ),
-            'sortKeyOptions' => array_map(
-                fn (string $sortKey): array => $this->sortKeyOptionProps($sortKey, $page),
-                $page->sortKeyOptions,
-            ),
-            'ranking' => [
-                'items' => array_map(
-                    fn (DanceShortVideoRankingItemDTO $item): array => $this->rankingItemProps($item),
-                    $page->rankingList->items,
-                ),
-                'total' => count($page->rankingList->items),
-            ],
-            'emptyMessage' => count($page->regions) === 0
-                ? '有効な地域がまだ登録されていません。'
-                : '表示できる通常ランキング候補はまだありません。',
-            'risingEmptyMessage' => '表示できる上昇候補はまだありません。',
+            'displayCardField' => $displayCardField,
         ]);
     }
 
-    private function regionProps(DanceShortVideoRankingRegionDTO $region): array
-    {
+    /**
+     * @param  array<int, array{code: string, label: string, description: string, href: string, isActive: bool}>  $regionTabs
+     * @param  array<int, array{value: int, label: string, href: string, isActive: bool}>  $comparisonDayOptions
+     * @param  array<int, array{value: string, label: string, href: string, isActive: bool}>  $sortKeyOptions
+     * @return array{
+     *     selectedTab: string,
+     *     comparisonDays: int,
+     *     sortKey: string,
+     *     showSortKeyOptions: bool,
+     *     regionTabs: array<int, array{code: string, label: string, description: string, href: string, isActive: bool}>,
+     *     comparisonDayOptions: array<int, array{value: int, label: string, href: string, isActive: bool}>,
+     *     sortKeyOptions: array<int, array{value: string, label: string, href: string, isActive: bool}>
+     * }
+     */
+    private function displaySelectFieldProps(
+        DanceShortVideoRankingPageDTO $page,
+        array $regionTabs,
+        array $comparisonDayOptions,
+        array $sortKeyOptions,
+    ): array {
+        /*
+         * select field は操作部品専用の props です。
+         *
+         * React 側はここに入っている href を router.get() へ渡すだけで、URL query を組み直しません。
+         * showSortKeyOptions もここで確定し、上昇候補タブでは並び順 UI を出さないという表示制御を
+         * card field 側へ漏らさないようにします。カード件数や説明文は header / card field に分けます。
+         */
         return [
-            'code' => $region->code,
-            'label' => $region->name,
-            'description' => $region->name.'の保存済み snapshot ランキング',
+            'selectedTab' => $page->selectedTabCode,
+            'comparisonDays' => $page->comparisonDays,
+            'sortKey' => $page->sortKey,
+            'showSortKeyOptions' => $page->selectedTabCode !== 'RISING',
+            'regionTabs' => $regionTabs,
+            'comparisonDayOptions' => $comparisonDayOptions,
+            'sortKeyOptions' => $sortKeyOptions,
         ];
+    }
+
+    /**
+     * @param  array<int, array{code: string, label: string, description: string, href: string, isActive: bool}>  $regionTabs
+     * @return array{
+     *     title: string,
+     *     description: string,
+     *     selectedTabLabel: string,
+     *     comparisonDaysLabel: string,
+     *     cardCountLabel: string,
+     *     sortLabel: string
+     * }
+     */
+    private function displayHeaderFieldProps(DanceShortVideoRankingPageDTO $page, array $regionTabs): array
+    {
+        /*
+         * header field は「いま何を見ているか」を説明するだけの props です。
+         *
+         * href や active 状態を持たせると select field と責務が重なり、カード配列を持たせると
+         * card field と責務が重なります。そのため、ここでは選択中タブ名、比較日数、件数、
+         * 並び順の表示ラベルだけを返します。
+         */
+        $selectedTab = $this->selectedTabProps($page->selectedTabCode, $regionTabs);
+        $selectedTabLabel = $selectedTab['label'] ?? $page->selectedTabCode;
+        $description = $selectedTab['description'] ?? '保存済み snapshot ランキング';
+
+        return [
+            'title' => $selectedTabLabel,
+            'description' => $description,
+            'selectedTabLabel' => $selectedTabLabel,
+            'comparisonDaysLabel' => $page->comparisonDays.'日比較',
+            'cardCountLabel' => count($page->displayCardField->cards->cards).'件',
+            'sortLabel' => $page->selectedTabCode === 'RISING'
+                ? '上昇候補順'
+                : (self::SORT_KEY_LABELS[$page->sortKey] ?? $page->sortKey),
+        ];
+    }
+
+    /**
+     * @param  array<int, array{code: string, label: string, description: string, href: string, isActive: bool}>  $regionTabs
+     * @return array{code: string, label: string, description: string, href: string, isActive: bool}|null
+     */
+    private function selectedTabProps(string $selectedTabCode, array $regionTabs): ?array
+    {
+        foreach ($regionTabs as $regionTab) {
+            if ($regionTab['code'] === $selectedTabCode) {
+                return $regionTab;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -130,83 +196,24 @@ final readonly class DanceShortVideoRankingResponder
     }
 
     /**
-     * @return array<string, array<int, array<string, mixed>>>
-     */
-    private function candidatesByRegionProps(DanceShortVideoRankingPageDTO $page): array
-    {
-        $candidatesByRegion = [];
-
-        foreach ($page->regions as $region) {
-            /*
-             * candidatesByRegion のキーは DB の active region code だけに限定します。
-             * ALL や RISING は UI タブ専用の概念なので、本番の地域別候補には混ぜません。
-             * これにより React 側は既存表示仕様と近い shape を受け取りつつ、保存対象地域と表示専用タブ値を
-             * 取り違えずに済みます。
-             */
-            $rankingList = $page->rankingListsByRegion[$region->code] ?? null;
-            $candidatesByRegion[$region->code] = $rankingList === null
-                ? []
-                : array_map(
-                    fn (DanceShortVideoRankingItemDTO $item): array => $this->candidateProps($item),
-                    $rankingList->items,
-                );
-        }
-
-        return $candidatesByRegion;
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function allCandidateProps(DanceShortVideoRankingPageDTO $page): array
-    {
-        /*
-         * allCandidates は既存表示仕様と同じく「まとめ表示」用の配列です。
-         * candidatesByRegion['ALL'] を作らないのは、ALL を region code として見せないためです。
-         * 並び順と limit は Query Action が作った allRankingList に従い、Responder では
-         * snake_case の候補カード props へ変換するだけに留めます。
-         */
-        return array_map(
-            fn (DanceShortVideoRankingItemDTO $item): array => $this->candidateProps($item),
-            $page->allRankingList->items,
-        );
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function risingCandidateProps(DanceShortVideoRankingPageDTO $page): array
-    {
-        /*
-         * 上昇候補は「日本で必ず伸びる動画」ではなく、US / KR の保存済み snapshot で先行して増加し、
-         * JP 側が未観測または増加量の小さい優先観測候補です。
-         * Service が固定順で作った DTO を、React が表示する snake_case props へ変換するだけに留めます。
-         */
-        return array_map(
-            fn (DanceShortVideoRisingCandidateDTO $item): array => $this->risingCandidateCardProps($item),
-            $page->risingCandidateList->items,
-        );
-    }
-
-    /**
-     * @return array{type: string, selectedTab: string, comparisonDays: int, sortKey: string, cards: array<int, array<string, mixed>>, emptyMessage: string}
+     * @return array{type: string, cards: array<int, array<string, mixed>>, emptyMessage: string}
      */
     private function displayCardFieldProps(DanceShortVideoRankingPageDTO $page): array
     {
         $field = $page->displayCardField;
 
         /*
-         * displayCardField は React の主表示入口です。
+         * displayCardField は下側の差し替え領域専用です。
          *
          * Action が type と cards を決め、Responder はカード DTO を既存カードコンポーネントが読める
          * snake_case props へ変換します。ここで region の選び直しやランキングの再計算を行わないことで、
          * 「表示対象の確定」は Action、「出力形への変換」は Responder という境界を保ちます。
+         *
+         * selectedTab / comparisonDays / sortKey は意図的に返しません。カード表示側がそれらを見ると、
+         * select/header の状態責務が card field に戻り、3Field 分離が崩れるためです。
          */
         return [
             'type' => $field->type,
-            'selectedTab' => $field->selectedTab,
-            'comparisonDays' => $field->comparisonDays,
-            'sortKey' => $field->sortKey,
             'cards' => array_map(
                 fn (DanceShortRankingDisplayCardDTO|DanceShortRisingDisplayCardDTO $card): array => $this->displayCardProps($card),
                 $field->cards->cards,
@@ -249,36 +256,6 @@ final readonly class DanceShortVideoRankingResponder
             'label' => self::SORT_KEY_LABELS[$sortKey] ?? $sortKey,
             'href' => $this->indexHref($page->selectedTabCode, $page->comparisonDays, $sortKey, $page->limit),
             'isActive' => $sortKey === $page->sortKey,
-        ];
-    }
-
-    private function rankingItemProps(DanceShortVideoRankingItemDTO $item): array
-    {
-        return [
-            'videoId' => $item->videoId,
-            'youtubeVideoId' => $item->youtubeVideoId,
-            'title' => $item->title,
-            'channelTitle' => $item->channelTitle,
-            'thumbnailUrl' => $item->thumbnailUrl,
-            'url' => $item->url,
-            'publishedAt' => $item->publishedAt?->toIso8601String(),
-            'region' => [
-                'code' => $item->regionCode,
-                'name' => $item->regionName,
-            ],
-            'currentViewCount' => $item->currentViewCount,
-            'previousViewCount' => $item->previousViewCount,
-            'viewCountDelta' => $item->viewCountDelta,
-            'viewGrowthRate' => $item->viewGrowthRate,
-            'viewsPerHour' => $item->viewsPerHour,
-            'likeCount' => $item->likeCount,
-            'commentCount' => $item->commentCount,
-            'collectedAt' => $item->currentCollectedAt->toIso8601String(),
-            'currentCollectedAt' => $item->currentCollectedAt->toIso8601String(),
-            'previousCollectedAt' => $item->previousCollectedAt?->toIso8601String(),
-            'comparisonDays' => $item->comparisonDays,
-            'hasPreviousSnapshot' => $item->hasPreviousSnapshot,
-            'comparisonStatus' => $item->hasPreviousSnapshot ? '比較済み' : '比較元なし',
         ];
     }
 

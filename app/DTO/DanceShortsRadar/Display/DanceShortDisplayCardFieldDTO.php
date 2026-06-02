@@ -10,8 +10,8 @@ namespace App\DTO\DanceShortsRadar\Display;
  * Inertia props 用の snake_case 配列化は Responder 側へ残します。
  *
  * この DTO が担うのは「今回の query 条件で表示するカードフィールドは何か」を運ぶことだけです。
- * selectedTab / comparisonDays / sortKey は画面の状態表示とテスト固定用に保持しますが、
- * ここでタブ選択、ランキング計算、空文言の分岐、React 用 props 名への変換は行いません。
+ * タブ選択状態、比較日数、並び順などの画面状態は select / header field 側へ分け、
+ * ここではカード一覧と空状態だけを保持します。
  */
 final readonly class DanceShortDisplayCardFieldDTO
 {
@@ -21,9 +21,6 @@ final readonly class DanceShortDisplayCardFieldDTO
 
     public function __construct(
         public string $type,
-        public string $selectedTab,
-        public int $comparisonDays,
-        public string $sortKey,
         public DanceShortDisplayCardListDTO $cards,
         public string $emptyMessage,
     ) {
@@ -32,9 +29,6 @@ final readonly class DanceShortDisplayCardFieldDTO
     /**
      * @return array{
      *     type: string,
-     *     selectedTab: string,
-     *     comparisonDays: int,
-     *     sortKey: string,
      *     cards: array<int, array<string, mixed>>,
      *     emptyMessage: string
      * }
@@ -43,9 +37,6 @@ final readonly class DanceShortDisplayCardFieldDTO
     {
         return [
             'type' => $this->type,
-            'selectedTab' => $this->selectedTab,
-            'comparisonDays' => $this->comparisonDays,
-            'sortKey' => $this->sortKey,
             'cards' => $this->cards->toArray()['cards'],
             'emptyMessage' => $this->emptyMessage,
         ];

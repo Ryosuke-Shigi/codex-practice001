@@ -17,9 +17,6 @@ class DanceShortDisplayCardFieldDTOTest extends TestCase
     {
         $dto = new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
-            selectedTab: 'JP',
-            comparisonDays: 1,
-            sortKey: 'view_count_delta',
             cards: new DanceShortDisplayCardListDTO([
                 new DanceShortRankingDisplayCardDTO($this->rankingItem()),
             ]),
@@ -29,10 +26,10 @@ class DanceShortDisplayCardFieldDTOTest extends TestCase
         $array = $dto->toArray();
 
         $this->assertSame('ranking', $array['type']);
-        $this->assertSame('JP', $array['selectedTab']);
-        $this->assertSame(1, $array['comparisonDays']);
-        $this->assertSame('view_count_delta', $array['sortKey']);
         $this->assertSame('表示できる通常ランキング候補はまだありません。', $array['emptyMessage']);
+        $this->assertArrayNotHasKey('selectedTab', $array);
+        $this->assertArrayNotHasKey('comparisonDays', $array);
+        $this->assertArrayNotHasKey('sortKey', $array);
         $this->assertSame('ranking', $array['cards'][0]['type']);
         $this->assertSame('ranking-video', $array['cards'][0]['rankingItem']['youtubeVideoId']);
         $this->assertSame(300, $array['cards'][0]['rankingItem']['viewCountDelta']);
@@ -42,9 +39,6 @@ class DanceShortDisplayCardFieldDTOTest extends TestCase
     {
         $dto = new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RISING,
-            selectedTab: 'RISING',
-            comparisonDays: 1,
-            sortKey: 'views_per_hour',
             cards: new DanceShortDisplayCardListDTO([
                 new DanceShortRisingDisplayCardDTO($this->risingCandidate()),
             ]),
@@ -54,8 +48,10 @@ class DanceShortDisplayCardFieldDTOTest extends TestCase
         $array = $dto->toArray();
 
         $this->assertSame('rising', $array['type']);
-        $this->assertSame('RISING', $array['selectedTab']);
         $this->assertSame('表示できる上昇候補はまだありません。', $array['emptyMessage']);
+        $this->assertArrayNotHasKey('selectedTab', $array);
+        $this->assertArrayNotHasKey('comparisonDays', $array);
+        $this->assertArrayNotHasKey('sortKey', $array);
         $this->assertSame('rising', $array['cards'][0]['type']);
         $this->assertSame('rising-video', $array['cards'][0]['risingCandidate']['youtubeVideoId']);
         $this->assertSame('US', $array['cards'][0]['risingCandidate']['sourceRegionCode']);

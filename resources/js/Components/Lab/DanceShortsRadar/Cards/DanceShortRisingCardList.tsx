@@ -1,35 +1,52 @@
-import RisingCandidatesSection from '../RisingCandidatesSection';
-import type {
-    DanceShortsAggregationPeriod,
-    DanceShortsRisingCandidate,
-} from '../types';
+import DanceShortsRisingCandidateCard from '../DanceShortsRisingCandidateCard';
+import type { DanceShortsRisingCandidate } from '../types';
+import EmptyDisplayCardField from './EmptyDisplayCardField';
 
 type DanceShortRisingCardListProps = {
     cards: DanceShortsRisingCandidate[];
-    comparisonDays: number;
     emptyMessage: string;
 };
-
-function periodLabel(comparisonDays: number): DanceShortsAggregationPeriod {
-    return `${comparisonDays}日` as DanceShortsAggregationPeriod;
-}
 
 /*
  * 上昇候補用カードリストの薄い adapter です。
  *
- * 上昇候補は通常ランキングとはカード props の意味が違うため、既存の RisingCandidatesSection を
- * そのまま使います。ここでは comparisonDays を表示ラベルへ変える以外の判断を持たせません。
+ * 上昇候補は通常ランキングとはカード props の意味が違うため、専用カードへそのまま流します。
+ * 見出し、説明文、比較日数、件数は displayHeaderField 側で表示します。
  */
 export default function DanceShortRisingCardList({
     cards,
-    comparisonDays,
     emptyMessage,
 }: DanceShortRisingCardListProps) {
+    /*
+     * 上昇候補カードは、通常ランキングとは異なる意味の props を持ちます。
+     * ただし「どの動画が上昇候補か」「どの順序で見せるか」は Service / Action 側で確定済みです。
+     * この adapter では受け取った cards を並べるだけにし、React 独自の候補判定を戻しません。
+     */
+    if (cards.length === 0) {
+        return <EmptyDisplayCardField message={emptyMessage} />;
+    }
+
     return (
-        <RisingCandidatesSection
-            periodLabel={periodLabel(comparisonDays)}
-            candidates={cards}
-            emptyMessage={emptyMessage}
-        />
+        <section id="dance-shorts-card-field" className="grid gap-4">
+            {cards.map((candidate, index) => (
+                <DanceShortsRisingCandidateCard
+                    key={`${candidate.source_region}-${candidate.youtube_url ?? candidate.youtube_video_id ?? candidate.title}`}
+                    title={candidate.title}
+                    sourceRegion={candidate.source_region}
+                    sourceRegionLabel={candidate.source_region_label}
+                    japanStatus={candidate.japan_status}
+                    viewCountDelta={candidate.view_count_delta}
+                    viewGrowthRate={candidate.view_growth_rate}
+                    japanViewCountDelta={
+                        candidate.japan_view_count_delta ?? null
+                    }
+                    thumbnailUrl={candidate.thumbnail_url}
+                    youtubeUrl={candidate.youtube_url}
+                    tags={candidate.tags}
+                    observationNote={candidate.observation_note}
+                    index={index}
+                />
+            ))}
+        </section>
     );
 }

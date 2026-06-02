@@ -2,26 +2,14 @@
  * DanceShortsRadar 本画面のタブ / 比較日数 / 並び順切り替えで使う
  * Inertia partial reload 対象 props です。
  *
- * displayCardField は、Laravel 側で region / comparisonDays / sort / limit を
- * 反映して確定した表示カード群です。React 側では allCandidates /
- * candidatesByRegion / risingCandidates から表示対象を選び直さないため、
- * 画面更新時に必ず再取得します。
- *
- * filters は header の limit 表示、regionTabs / comparisonDayOptions /
- * sortKeyOptions は href と active 状態が現在の query に依存します。
- * これらを only から外すと、カードだけは新しくなっても上部 UI の選択状態や
- * 次に押すリンクが古い query のまま残る可能性があります。
- *
- * 一方で allCandidates / candidatesByRegion / risingCandidates のような
- * 旧表示用の大きい候補配列 props はここに含めません。partial reload の体感を
- * displayCardField 中心に寄せるため、更新対象は query 依存の表示 props に絞ります。
+ * displaySelectField は操作 UI と href / active 状態、displayHeaderField は
+ * 現在状態の説明、displayCardField は Laravel 側で確定したカード表示だけを持ちます。
+ * React 側では旧候補配列や旧 UI props から表示対象を選び直しません。
  */
 export const DANCE_SHORTS_RADAR_RELOAD_ONLY_PROPS: string[] = [
-    'filters',
-    'regionTabs',
+    'displaySelectField',
+    'displayHeaderField',
     'displayCardField',
-    'comparisonDayOptions',
-    'sortKeyOptions',
 ];
 
 /*
