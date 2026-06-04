@@ -16,9 +16,30 @@ class DanceShortSearchKeywordSeeder extends Seeder
         $this->call(DanceShortRegionSeeder::class);
 
         $keywordsByRegionCode = [
-            'JP' => ['ダンス shorts'],
-            'US' => ['dance shorts'],
-            'KR' => ['댄스 쇼츠'],
+            'JP' => [
+                'やってみた shorts',
+                '検証してみた shorts',
+                'チャレンジ shorts',
+                'リアクション shorts',
+                'ゲーム実況 shorts',
+                '踊ってみた shorts',
+            ],
+            'US' => [
+                'i tried shorts',
+                'challenge shorts',
+                'reaction shorts',
+                'gaming shorts',
+                'POV shorts',
+                'vtuber challenge shorts',
+            ],
+            'KR' => [
+                '해봤어요 shorts',
+                '챌린지 shorts',
+                '리액션 shorts',
+                '게임 shorts',
+                '커버댄스 shorts',
+                '검증해봤어요 shorts',
+            ],
         ];
 
         foreach ($keywordsByRegionCode as $regionCode => $keywords) {
@@ -28,17 +49,17 @@ class DanceShortSearchKeywordSeeder extends Seeder
                 continue;
             }
 
+            DanceShortSearchKeyword::query()
+                ->where('region_id', $region->getKey())
+                ->delete();
+
             foreach ($keywords as $index => $keyword) {
-                DanceShortSearchKeyword::query()->updateOrCreate(
-                    [
-                        'region_id' => $region->getKey(),
-                        'keyword' => $keyword,
-                    ],
-                    [
-                        'sort_order' => ($index + 1) * 10,
-                        'is_active' => true,
-                    ],
-                );
+                DanceShortSearchKeyword::query()->create([
+                    'region_id' => $region->getKey(),
+                    'keyword' => $keyword,
+                    'sort_order' => ($index + 1) * 10,
+                    'is_active' => true,
+                ]);
             }
         }
     }
