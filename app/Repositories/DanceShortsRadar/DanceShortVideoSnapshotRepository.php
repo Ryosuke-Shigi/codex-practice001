@@ -410,35 +410,51 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     private function deltaExpression(string $currentAlias, string $previousAlias): string
     {
         return sprintf(
-            'CASE WHEN %2$s.id IS NOT NULL THEN %1$s.view_count - %2$s.view_count ELSE NULL END',
+            'CASE WHEN %2$s.id IS NOT NULL THEN %3$s - %4$s ELSE NULL END',
             $currentAlias,
             $previousAlias,
+            $this->signedViewCountExpression($currentAlias),
+            $this->signedViewCountExpression($previousAlias),
         );
     }
 
     private function growthRateExpression(string $currentAlias, string $previousAlias): string
     {
+        $deltaExpression = $this->deltaExpression($currentAlias, $previousAlias);
+
         return sprintf(
             'CASE WHEN %2$s.id IS NOT NULL AND %2$s.view_count > 0 '.
-            'THEN (%1$s.view_count - %2$s.view_count) * 1.0 / %2$s.view_count ELSE NULL END',
+            'THEN (%3$s) * 1.0 / %2$s.view_count ELSE NULL END',
             $currentAlias,
             $previousAlias,
+            $deltaExpression,
         );
     }
 
     private function viewsPerHourExpression(string $currentAlias, string $previousAlias): string
     {
+        $deltaExpression = $this->deltaExpression($currentAlias, $previousAlias);
         $hoursExpression = DB::connection()->getDriverName() === 'sqlite'
             ? sprintf('(julianday(%s.collected_at) - julianday(%s.collected_at)) * 24.0', $currentAlias, $previousAlias)
             : sprintf('TIMESTAMPDIFF(SECOND, %s.collected_at, %s.collected_at) / 3600.0', $previousAlias, $currentAlias);
 
         return sprintf(
             'CASE WHEN %2$s.id IS NOT NULL AND %3$s > 0 '.
-            'THEN (%1$s.view_count - %2$s.view_count) * 1.0 / (%3$s) ELSE NULL END',
+            'THEN (%4$s) * 1.0 / (%3$s) ELSE NULL END',
             $currentAlias,
             $previousAlias,
             $hoursExpression,
+            $deltaExpression,
         );
+    }
+
+    private function signedViewCountExpression(string $alias): string
+    {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return sprintf('CAST(%s.view_count AS INTEGER)', $alias);
+        }
+
+        return sprintf('CAST(%s.view_count AS SIGNED)', $alias);
     }
 
     private function orderRankingRows(Builder $query, string $sortKey): void
