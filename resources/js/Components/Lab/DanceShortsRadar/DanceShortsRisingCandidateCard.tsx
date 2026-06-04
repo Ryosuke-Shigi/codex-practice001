@@ -3,8 +3,10 @@ import type { DanceShortsRegionCode } from './types';
 
 type DanceShortsRisingCandidateCardProps = {
     title: string;
+    publishedAt: string | null | undefined;
     sourceRegion: DanceShortsRegionCode;
     sourceRegionLabel: string;
+    sourceCollectedAt: string | null | undefined;
     japanStatus: string;
     viewCountDelta: number;
     viewGrowthRate: number | null;
@@ -13,6 +15,8 @@ type DanceShortsRisingCandidateCardProps = {
     youtubeUrl: string | null;
     tags: string[];
     observationNote: string;
+    rank: number;
+    isActive: boolean;
 };
 
 const numberFormatter = new Intl.NumberFormat('ja-JP');
@@ -33,6 +37,12 @@ function formatJapanViewCountDelta(value: number | null) {
     return value === null ? '未観測' : `+${formatNumber(value)}回`;
 }
 
+function formatDateTime(value: string | null | undefined) {
+    return value === null || value === undefined
+        ? '未設定'
+        : value.replaceAll('-', '/');
+}
+
 /*
  * 上昇候補1件分のカード表示です。
  *
@@ -43,8 +53,10 @@ function formatJapanViewCountDelta(value: number | null) {
  */
 export default function DanceShortsRisingCandidateCard({
     title,
+    publishedAt,
     sourceRegion,
     sourceRegionLabel,
+    sourceCollectedAt,
     japanStatus,
     viewCountDelta,
     viewGrowthRate,
@@ -53,101 +65,103 @@ export default function DanceShortsRisingCandidateCard({
     youtubeUrl,
     tags,
     observationNote,
+    rank,
+    isActive,
 }: DanceShortsRisingCandidateCardProps) {
     return (
-        <article className="grid gap-4 rounded-lg border border-white/22 bg-slate-950/44 p-4 text-white shadow-[0_18px_36px_rgba(2,24,45,0.18)] backdrop-blur-xl md:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]">
-            <div className="min-w-0">
-                {/*
-                    サムネイルリンクは既存カードと同じ専用コンポーネントを使います。
-                    外部リンクの target / rel の扱いを一箇所へ寄せ、上昇候補カード側ではリンク安全設定を持ちません。
-                */}
+        <article
+            aria-current={isActive ? 'true' : undefined}
+            className={[
+                'grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-1.5 overflow-hidden rounded-lg border p-2 text-white shadow-[0_14px_28px_rgba(2,24,45,0.16)] backdrop-blur-xl sm:grid-cols-[minmax(12rem,42%)_minmax(0,1fr)] sm:grid-rows-[auto_minmax(0,1fr)] sm:gap-2 sm:p-2.5',
+                isActive
+                    ? 'border-cyan-200/72 bg-slate-900/72 shadow-[0_16px_34px_rgba(34,211,238,0.16)]'
+                    : 'border-white/18 bg-slate-950/44',
+            ].join(' ')}
+        >
+            <div className="flex min-w-0 items-center justify-between gap-2 sm:col-span-2">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-100/30 bg-cyan-100/12 text-xs font-black tabular-nums text-cyan-50">
+                    {rank}
+                </span>
+                <span className="truncate rounded-md border border-white/18 bg-white/8 px-2 py-0.5 text-[11px] font-bold text-cyan-50/78">
+                    {sourceRegionLabel} / {sourceRegion}
+                </span>
+            </div>
+
+            {/*
+                サムネイルリンクは既存カードと同じ専用コンポーネントを使います。
+                外部リンクの target / rel の扱いを一箇所へ寄せ、上昇候補カード側ではリンク安全設定を持ちません。
+            */}
+            <div className="grid min-h-0 min-w-0 content-center sm:row-start-2 sm:h-full">
                 <DanceShortsThumbnailLink
                     title={title}
                     thumbnailUrl={thumbnailUrl}
                     youtubeUrl={youtubeUrl}
+                    className="h-full"
+                    mediaClassName="h-full min-h-0"
                 />
-                <p className="mt-2 text-xs font-semibold text-cyan-50/66">
-                    サムネイルからYouTubeを別タブで開けます
-                </p>
             </div>
 
-            <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                    {/*
-                        「先行地域」は上昇候補タブで特に重要な文脈です。
-                        candidate.region ではなく sourceRegion として受けることで、日本向けランキングの地域コードと
-                        海外側で先に伸びている地域の意味を分けています。
-                    */}
-                    <span className="rounded-md border border-white/24 bg-white/10 px-2.5 py-1 text-xs font-bold text-cyan-50">
-                        先行地域: {sourceRegionLabel}
-                    </span>
-                    <span className="rounded-md border border-white/24 bg-white/10 px-2.5 py-1 text-xs font-bold text-cyan-50">
-                        地域コード: {sourceRegion}
-                    </span>
+            <div className="flex min-h-0 min-w-0 flex-col gap-1 sm:row-start-2 sm:gap-1.5">
+                <div className="grid min-w-0 gap-1 sm:gap-1.5">
+                    <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-white sm:text-base">
+                        {title}
+                    </h3>
+                    <p className="text-[11px] font-semibold leading-snug text-cyan-50/62">
+                        投稿 {formatDateTime(publishedAt)} | 収集{' '}
+                        {formatDateTime(sourceCollectedAt)}
+                    </p>
+
+                    <p className="line-clamp-2 rounded-md border border-cyan-100/18 bg-cyan-100/10 px-2.5 py-1.5 text-xs leading-snug text-cyan-50/82">
+                        {observationNote}
+                    </p>
                 </div>
-
-                <p className="mt-3 text-xs font-bold text-cyan-100/60">
-                    タイトル
-                </p>
-                <h3 className="mt-1 text-xl font-semibold leading-tight text-white">
-                    {title}
-                </h3>
-
-                <p className="mt-3 rounded-md border border-cyan-100/18 bg-cyan-100/10 px-3 py-2 text-sm leading-6 text-cyan-50/82">
-                    {observationNote}
-                </p>
 
                 {/*
                     viewCountDelta / viewGrowthRate は Service / Responder から受け取った値です。
                     React 側で再計算せず、null は 0 に変換しないことで「算出不可」を保ちます。
                 */}
-                <dl className="mt-4 grid gap-0.5 text-sm">
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2 first:border-t-0">
-                        <dt className="min-w-0 text-cyan-50/68">
-                            日本側の状態
-                        </dt>
-                        <dd className="max-w-[12rem] text-right font-semibold text-white sm:max-w-none">
-                            {japanStatus}
-                        </dd>
-                    </div>
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2">
-                        <dt className="min-w-0 text-cyan-50/68">
-                            海外側の視聴数増加量
-                        </dt>
-                        <dd className="shrink-0 font-semibold tabular-nums text-white">
-                            +{formatNumber(viewCountDelta)}回
-                        </dd>
-                    </div>
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2">
-                        <dt className="min-w-0 text-cyan-50/68">
-                            海外側の増加率
-                        </dt>
-                        <dd className="shrink-0 font-semibold tabular-nums text-white">
-                            {formatGrowthRate(viewGrowthRate)}
-                        </dd>
-                    </div>
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-white/10 py-2">
-                        <dt className="min-w-0 text-cyan-50/68">
-                            日本側の視聴数増加量
-                        </dt>
-                        <dd className="shrink-0 font-semibold tabular-nums text-white">
-                            {formatJapanViewCountDelta(japanViewCountDelta)}
-                        </dd>
-                    </div>
-                </dl>
+                <div className="mt-auto grid gap-1 sm:gap-1.5">
+                    <dl className="grid gap-0.5 rounded-md border border-cyan-100/18 bg-cyan-100/10 px-2.5 py-1.5 text-xs">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 py-0.5">
+                            <dt className="min-w-0 truncate font-semibold text-cyan-50/72">
+                                海外側の視聴増加数
+                            </dt>
+                            <dd className="shrink-0 font-bold tabular-nums text-white">
+                                +{formatNumber(viewCountDelta)}回
+                            </dd>
+                        </div>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-t border-white/10 py-0.5">
+                            <dt className="min-w-0 truncate font-semibold text-cyan-50/72">
+                                海外側の増加率
+                            </dt>
+                            <dd className="shrink-0 font-bold tabular-nums text-white">
+                                {formatGrowthRate(viewGrowthRate)}
+                            </dd>
+                        </div>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-t border-white/10 py-0.5">
+                            <dt className="min-w-0 truncate font-semibold text-cyan-50/72">
+                                日本側
+                            </dt>
+                            <dd className="min-w-0 truncate text-right font-bold tabular-nums text-white">
+                                {japanStatus} /{' '}
+                                {formatJapanViewCountDelta(japanViewCountDelta)}
+                            </dd>
+                        </div>
+                    </dl>
 
-                {tags.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                            <span
-                                key={tag}
-                                className="rounded-md border border-white/18 bg-white/8 px-2.5 py-1 text-xs font-bold text-cyan-50/78"
-                            >
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-                )}
+                    {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {tags.map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="rounded-md border border-white/18 bg-white/8 px-2 py-0.5 text-[11px] font-bold text-cyan-50/78"
+                                >
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </article>
     );

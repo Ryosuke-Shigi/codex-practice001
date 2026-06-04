@@ -130,7 +130,7 @@ final readonly class DanceShortVideoRankingResponder
          */
         $selectedTab = $this->selectedTabProps($page->selectedTabCode, $regionTabs);
         $selectedTabLabel = $selectedTab['label'] ?? $page->selectedTabCode;
-        $description = $selectedTab['description'] ?? '保存済み snapshot ランキング';
+        $description = $selectedTab['description'] ?? 'ダンスShortsランキング';
 
         return [
             'title' => $selectedTabLabel,
@@ -179,7 +179,7 @@ final readonly class DanceShortVideoRankingResponder
         ], [
             'code' => 'ALL',
             'label' => 'まとめ',
-            'description' => '日本・アメリカ・韓国の保存済み snapshot ランキング',
+            'description' => '日本・アメリカ・韓国のランキング',
             'href' => $this->indexHref('ALL', $page->comparisonDays, $page->sortKey),
             'isActive' => $page->selectedTabCode === 'ALL',
         ]];
@@ -188,7 +188,7 @@ final readonly class DanceShortVideoRankingResponder
             $tabs[] = [
                 'code' => $region->code,
                 'label' => $region->name,
-                'description' => $region->name.'の保存済み snapshot ランキング',
+                'description' => $region->name.'のランキング',
                 'href' => $this->indexHref($region->code, $page->comparisonDays, $page->sortKey),
                 'isActive' => $region->code === $page->selectedTabCode,
             ];
@@ -361,9 +361,9 @@ final readonly class DanceShortVideoRankingResponder
     private function risingObservationNote(DanceShortVideoRisingCandidateDTO $item): string
     {
         return match ($item->japanComparisonStatus) {
-            'unobserved' => $item->sourceRegionName.'の保存済み snapshot では視聴数増加があり、日本側はまだ未観測の候補です。',
-            'smaller_delta' => $item->sourceRegionName.'の保存済み snapshot では視聴数増加が先行し、日本側の増加量は海外側より小さい候補です。',
-            default => $item->sourceRegionName.'の保存済み snapshot から継続観測したい候補です。',
+            'unobserved' => $item->sourceRegionName.'で視聴数が伸び、日本側はまだ未観測の候補です。',
+            'smaller_delta' => $item->sourceRegionName.'で視聴数増加が先行し、日本側の増加量は海外側より小さい候補です。',
+            default => $item->sourceRegionName.'で継続観測したい候補です。',
         };
     }
 

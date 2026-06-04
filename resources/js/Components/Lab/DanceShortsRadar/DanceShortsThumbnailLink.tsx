@@ -2,6 +2,8 @@ type DanceShortsThumbnailLinkProps = {
     title: string;
     thumbnailUrl: string | null;
     youtubeUrl: string | null;
+    className?: string;
+    mediaClassName?: string;
 };
 
 /*
@@ -15,9 +17,31 @@ export default function DanceShortsThumbnailLink({
     title,
     thumbnailUrl,
     youtubeUrl,
+    className,
+    mediaClassName,
 }: DanceShortsThumbnailLinkProps) {
+    const containerClassName = [
+        'overflow-hidden rounded-lg border border-white/20 bg-slate-950/58',
+        className,
+    ]
+        .filter(Boolean)
+        .join(' ');
+    const thumbnailClassName = [
+        'aspect-video w-full object-cover transition duration-300 group-hover:scale-[1.03]',
+        mediaClassName,
+    ]
+        .filter(Boolean)
+        .join(' ');
+
     const thumbnail = thumbnailUrl === null ? (
-        <div className="grid aspect-video w-full place-items-center bg-slate-900 text-sm font-semibold text-cyan-50/74">
+        <div
+            className={[
+                'grid aspect-video w-full place-items-center bg-slate-900 text-sm font-semibold text-cyan-50/74',
+                mediaClassName,
+            ]
+                .filter(Boolean)
+                .join(' ')}
+        >
             No Thumbnail
         </div>
     ) : (
@@ -25,7 +49,7 @@ export default function DanceShortsThumbnailLink({
             src={thumbnailUrl}
             alt={`${title} のサムネイル`}
             loading="lazy"
-            className="aspect-video w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className={thumbnailClassName}
         />
     );
 
@@ -33,7 +57,7 @@ export default function DanceShortsThumbnailLink({
         return (
             <div
                 aria-label={`${title} のサムネイル`}
-                className="overflow-hidden rounded-lg border border-white/20 bg-slate-950/58"
+                className={containerClassName}
             >
                 {thumbnail}
             </div>
@@ -45,10 +69,19 @@ export default function DanceShortsThumbnailLink({
             href={youtubeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`${title} をYouTubeで開く`}
-            className="group block overflow-hidden rounded-lg border border-white/20 bg-slate-950/58 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/40"
+            aria-label={`${title}をYouTubeで開く`}
+            className={[
+                'group relative block focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/40',
+                containerClassName,
+            ].join(' ')}
         >
             {thumbnail}
+            <span
+                aria-hidden="true"
+                className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full border border-white/32 bg-slate-950/70 text-xs font-black text-white shadow-[0_8px_16px_rgba(2,24,45,0.22)]"
+            >
+                ↗
+            </span>
         </a>
     );
 }

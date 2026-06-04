@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 
 import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayCardField';
 import DanceShortsDisplayHeaderField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayHeaderField';
+import DanceShortsDisplayMessageField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayMessageField';
 import DanceShortsDisplaySelectField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplaySelectField';
 import type {
     DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps,
@@ -29,41 +30,41 @@ export default function DanceShortsRadarIndex({
     displayCardField,
 }: DanceShortsRadarIndexProps) {
     return (
-        <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
+        <PublicLayout className="h-dvh overflow-hidden px-2 py-2 sm:px-3 lg:px-5">
             <Head title="Dance Shorts Radar" />
 
-            <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-5 pb-10">
-                <header className="flex flex-wrap items-end justify-between gap-4">
-                    <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase text-emerald-50/72">
-                            Dance Shorts Radar
-                        </p>
-                        <h1 className="mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                            通常ランキング
-                        </h1>
-                    </div>
+            <main className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-1.5 overflow-hidden">
+                <header className="flex shrink-0 items-center justify-between gap-3">
+                    <DanceShortsDisplayHeaderField
+                        displayHeaderField={displayHeaderField}
+                    />
                     <Link
                         href="/lab"
-                        className="inline-flex min-h-10 items-center rounded-md border border-white/25 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                        className="inline-flex min-h-8 shrink-0 items-center rounded-md border border-white/25 bg-white/10 px-2.5 text-xs font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                     >
                         Labへ戻る
                     </Link>
                 </header>
 
-                <DanceShortsDisplaySelectField
-                    displaySelectField={displaySelectField}
-                />
-                <DanceShortsDisplayHeaderField
-                    displayHeaderField={displayHeaderField}
-                />
-                <DanceShortsDisplayCardField
-                    displayCardField={displayCardField}
-                    windowRequest={{
-                        tab: displaySelectField.selectedTab,
-                        comparisonDays: displaySelectField.comparisonDays,
-                        sortKey: displaySelectField.sortKey,
-                    }}
-                />
+                <div className="mx-auto grid min-h-0 w-full max-w-4xl flex-1 grid-rows-[auto_auto_minmax(0,1fr)] gap-1.5 overflow-hidden">
+                    <DanceShortsDisplaySelectField
+                        displaySelectField={displaySelectField}
+                    />
+                    <DanceShortsDisplayMessageField
+                        displayMessageField={displayHeaderField}
+                        showSortKeyOptions={
+                            displaySelectField.showSortKeyOptions
+                        }
+                    />
+                    <DanceShortsDisplayCardField
+                        displayCardField={displayCardField}
+                        windowRequest={{
+                            tab: displaySelectField.selectedTab,
+                            comparisonDays: displaySelectField.comparisonDays,
+                            sortKey: displaySelectField.sortKey,
+                        }}
+                    />
+                </div>
             </main>
         </PublicLayout>
     );
