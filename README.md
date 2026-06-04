@@ -1,203 +1,199 @@
-# Laravel Portfolio - API Discovery Hub / QuakeWave Preview
+# Laravel Portfolio - codex-practice001
 
-Laravel 11 + Docker + Inertia + React + TypeScript で構築したポートフォリオアプリです。
+Laravel 11 + Docker + Inertia + React + TypeScript で構築しているポートフォリオアプリです。
 
-このリポジトリでは、公開APIカタログを検索・保存・調査できる **API Discovery Hub** と、気象庁XMLを取得・保存・地図可視化する **QuakeWave Preview** を実装しています。
+公開URL: https://ada-works.dev
 
-単に画面を作るだけではなく、外部データ取得、DBキャッシュ、差分同期、Queue / Scheduler、status API、DTO / ListDTO、Repository、Service、Action、Responder、Feature / Unit Test、CI/CD を組み合わせ、後から読める・直せる・説明できる構成を重視しています。
+このリポジトリでは、AIに実装を丸投げせず、人間が仕様・責務・境界・テスト観点を決めたうえで、ChatGPT と CodexApp を使い分けながら開発しています。
 
-- 公開URL: https://ada-works.dev
-- Repository: https://github.com/Ryosuke-Shigi/codex-practice001
-- Backend: PHP 8.3, Laravel 11
-- Frontend: Inertia, React 19, TypeScript, Vite, Tailwind CSS, motion
-- Database / Queue: MySQL 8.0, Redis
-- Infrastructure: Docker Compose, nginx, php-fpm, AWS Lightsail, Cloudflare
-- Test: PHPUnit / Laravel Feature Test / Unit Test / Vitest
-- CI/CD: GitHub Actions / CI成功後のみLightsailへDeploy
+## Projects
 
-## このポートフォリオで見せたいこと
+新しく作ったものを上に並べています。  
+モック段階・構想段階のものは、この一覧には含めていません。
 
-このポートフォリオは、AIにコードを丸投げして作ったアプリではありません。
+### DanceShortsRadar
 
-人間が先に仕様・責務・境界・テスト観点を決め、ChatGPT / CodexApp を設計整理・実装補助・差分修正・レビュー補助として使っています。
+YouTube Shorts のダンス動画を対象に、地域・比較日数・並び順を切り替えながら、伸びている動画を確認する機能です。
 
-重視している点は以下です。
+主な要素:
 
-- 外部データ取得をその場限りの処理にせず、DBキャッシュと差分同期で扱う
-- Controller に業務処理を集めず、Action / Service / Repository / DTO / Responder に責務を分ける
-- Queue / Scheduler を使い、重い同期処理を画面操作から分離する
-- status API とポーリングで、非同期処理の進行状態を画面から確認できるようにする
-- Feature / Unit Test で仕様・境界値・失敗時の状態を固定する
-- GitHub Actions で `php artisan test` / `npm run test:run` / `npm run build` を実行する
-- CI 成功後だけ Lightsail へデプロイする
-- APIカタログと地震データという別ドメインに、同じ設計方針を適用する
-- React 側でも背景描画・選択UI・個別オーブ・移動ロジック・候補定義を分け、UI演出を安全に追加・削除・差し替えできるようにする
-- README / docs / AGENTS.md / Notion により、人間とAIが後から作業文脈を再起動できるようにする
+- YouTube Data API 連携
+- 動画データ同期
+- snapshot 保存
+- ranking Query
+- comparisonDays / sort
+- selectedVideoId 基準の5枚 window
+- Strategy / Factory によるランキング表示制御
+- Repository / Service / Action / Strategy / Responder の責務分離
+- Feature / Unit Test による仕様固定
 
-## 実装済みドメイン
+この機能では、動画データの取得・保存・比較・ランキング表示を分離し、表示条件やランキング条件を後から変更しやすい構成にしています。
+
+### Japan Quake Wave Map
+
+気象庁の地震火山情報 Atom feed と個別XMLを取得し、地震情報を保存・解析・地図表示する機能です。
+
+主な要素:
+
+- 気象庁 Atom feed の取得
+- feed entry 保存
+- entry_id を基準にした insert / update / skip
+- 個別XMLから震源座標・最大震度・マグニチュード・深さを抽出
+- 緯度・経度・最大震度を持つデータのみ map pin 化
+- 震度なしデータ・座標なしデータを map pin 化しない制御
+- Job による同期処理
+- status API
+- Feature / Unit Test による仕様固定
 
 ### API Discovery Hub
 
 APIs.guru の `list.json` を取得し、公開APIカタログを検索・保存・調査できる機能です。
 
-主な機能:
+主な要素:
 
-- APIs.guru `list.json` から公開APIカタログを取得
+- APIs.guru `list.json` の取得
 - `api_catalog_cache` への同期キャッシュ保存
-- API の insert / update / skip の差分同期
-- APIs.guru から消えた API を `is_active=false` として扱う同期処理
+- insert / update / skip の差分同期
 - `payload_hash` による変更検知
-- API 一覧のキーワード検索
+- API 一覧検索
 - provider / domain 絞り込み
-- 更新日時・名称など、このアプリ内の指標による並び替え
-- URL query による検索条件、並び順、ページ番号の保持
-- API詳細画面でのキャッシュ済みメタ情報表示
+- API詳細表示
 - APIごとの調査メモ保存・更新・削除
 - Google / GitHub / Docs / Sample 検索リンクの表示時生成
-- Queue による手動同期開始
-- Scheduler による定期同期 Job 投入
-- API Preview による外部API疎通確認
-- 外部APIに依存しないモック画面によるUI確認
-- アイデアボードによる初見向け説明導線
+- Queue / Scheduler による同期処理
+- Repository / Service / DTO / Action / Responder の責務分離
+- Feature / Unit Test による仕様固定
 
-API Discovery Hub では、外部APIの値をそのまま画面に出すのではなく、取得・変換・保存・表示用整形を分離しています。
+## Tech Stack
 
-### QuakeWave Preview
+### Backend
 
-気象庁の地震火山情報 Atom feed と個別XMLを取得し、地震情報を保存・解析・地図表示する機能です。
+- PHP 8.3
+- Laravel 11
+- Inertia Laravel
+- MySQL 8.0
+- Redis
+- Laravel Queue
+- Laravel Scheduler
+- Flysystem AWS S3 Adapter
 
-主な機能:
+### Frontend
 
-- 気象庁の地震火山情報 Atom feed を取得
-- 地震情報 entry の抽出
-- `earthquake_feed_entries` への保存
-- `entry_id` を基準にした insert / update / skip の差分同期
-- 保存済み feed entry から個別 XML を取得
-- 個別 XML から震源座標・最大震度・マグニチュード・深さを抽出
-- 緯度・経度・最大震度があるデータだけを地図表示用 pin として保存
-- 震度なしデータ・座標なしデータを map pin 化しない制御
-- feed entry 取込と map pin 生成を分けた同期処理
-- 1ボタン更新で feed entry 取込 → map pin 生成を順番に実行
-- 同期ステータスの JSON API
-- 同期ステータスのポーリング表示
-- 水面上の日本地図と地震ピン表示
-- 日付範囲、表示件数、震度フィルタ、詳細パネル折りたたみを含む地図UI
-- アイデアボードによる初見向け説明導線
+- Inertia.js
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS
+- motion
+- Vitest
+- ECharts
+- Mermaid
 
-QuakeWave Preview では、Atom feed の取得、個別XML解析、地図表示用データ生成、画面表示を分離しています。
+### Infrastructure / CI
 
-地震情報を防災用途として保証するものではなく、外部XMLデータの取得・解析・可視化を題材にしたポートフォリオ機能です。
+- Docker Compose
+- nginx
+- php-fpm
+- GitHub Actions
+- AWS Lightsail
+- Cloudflare
 
-## IDEA-BOARD / Lab 導線
+## Local Development Tools
 
-`/lab` では、実装済み・構想中の機能を PROJECT / IDEA-BOARD / MOCK に分けて確認できます。
+ローカル開発環境では、開発・確認用に以下のコンテナや補助ツールを含めています。
 
-IDEA-BOARDカテゴリは、初見の人が短時間で「何を作ったか」「どこが工夫か」「本体画面はどこか」を理解するためのアイデアボードです。
+- nginx
+- php-fpm
+- php-cli
+- artisan
+- composer
+- npm container
+- MySQL
+- Redis
+- MinIO
+- Mailpit
+- Adminer
+- queue worker
+- scheduler
 
-Lab Index 表示順:
+用途:
 
-1. PROJECT
-2. IDEA-BOARD
-3. MOCK
+- MinIO: ローカル開発用の S3 互換ストレージ
+- Mailpit: メール送信確認
+- Adminer: MySQL確認
+- npm container: Vite / Vitest / frontend build
+- queue worker: Laravel Job 実行
+- scheduler: Laravel Scheduler 実行
 
-IDEA-BOARD表示順:
+MinIO / Mailpit / Adminer はローカル開発用です。  
+本番環境では、Adminer / Mailpit / MySQL / Redis / MinIO を外部公開しません。
 
-1. API Discovery Hub
-2. Japan Quake Wave Map
-3. Dance Shorts Radar
-4. 工事発注管理・請求システム
-5. Spec Flow Trainer
+## Local S3 / MinIO
 
-主なIDEA-BOARD導線:
+本番では AWS S3 を使い、ローカル開発では MinIO を S3 互換ストレージとして使います。
 
-- `/lab/api-discovery-hub-idea-board`: API Discovery Hub の紹介ページ
-- `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map の紹介ページ
-- `/lab/dance-shorts-radar-idea-board`: Dance Shorts Radar の構想説明
-- `/lab/construction-order-workflow-idea-board`: 工事発注管理・請求システムの構想説明
-- `/lab/spec-flow-trainer`: Spec Flow Trainer の構想説明
+Laravel 側の保存処理は `Storage::disk('s3')` に統一し、接続先の違いは `.env` と Docker Compose で切り替えます。
 
-IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静的な紹介ページとして本体機能への導線を担当します。
+ローカル用の設定例:
 
-## Welcome / 背景エフェクト選択UI
+```dotenv
+FILESYSTEM_DISK=s3
+AWS_ACCESS_KEY_ID=minio
+AWS_SECRET_ACCESS_KEY=minio_password
+AWS_DEFAULT_REGION=ap-northeast-1
+AWS_BUCKET=local-bucket
+AWS_ENDPOINT=http://minio:9000
+AWS_URL=http://localhost:9000/local-bucket
+AWS_USE_PATH_STYLE_ENDPOINT=true
+```
 
-`/` の Welcome 画面では、背景エフェクトを円形オーブで選択できます。
+MinIO Console は以下で確認します。
 
-選択できるエフェクトは以下です。
+```text
+http://localhost:9001
+```
 
-- `water`: 明るい水面と波紋
-- `caustics`: 水中の光の揺らぎ
-- `cursorRipple`: カーソル反応を含む波紋表現
-- `aquaParticles`: 水中の粒子・気泡のような浮遊表現
-- `surfaceShimmer`: 水面のきらめき
+`.env` 変更後は、Laravel の設定キャッシュをクリアします。
 
-`none` のような背景なし選択肢や、見た目の違いが分かりづらい `floatingLight` は候補から外しています。
+```bash
+make app-clear
+```
 
-このUIは単なる装飾ではなく、フロント側でも責務分離を確認するための実装です。
+## AI Driven Development
 
-主な分離:
+このプロジェクトでは、AIを開発の主体にはしません。
 
-- `EffectLayer`: 選択された背景エフェクトを描画する
-- `effectPatterns`: エフェクト候補、表示名、実コンポーネント、プレビュー情報を集約する
-- `EffectPatternSelector`: 円形オーブ一覧と選択操作を管理する
-- `EffectPatternOrb`: 1つのオーブの見た目、プレビュー、選択中状態を担当する
-- `useBouncingOrbs`: オーブの座標、速度、画面端での跳ね返り処理を担当する
-- `AquaParticlesBackground`: 水中粒子風のCSS-only背景エフェクトを担当する
+人間が先に決めるもの:
 
-背景描画、選択UI、個別オーブ、移動ロジック、候補定義を分けることで、エフェクトの追加・削除・差し替えをページ全体に広げずに行えるようにしています。
+- 何を作るか
+- 入力
+- 出力
+- 成功条件
+- 失敗条件
+- 責務境界
+- テスト観点
+- 実装しないこと
+- 完成判定
+- 本番反映判断
 
-## 画面導線
+ChatGPT は、仕様整理・設計整理・責務分離・テスト観点・CodexApp向け指示文作成・レビュー観点整理に使います。
 
-短時間で確認する場合は、`/` → `/lab` → IDEA-BOARD → 本番機能の順で見ると全体像を追いやすいです。
+CodexApp は、既存コード確認・差分作成・実装補助・テスト追加・README整理に使います。
 
-- `/`: ポートフォリオ入口
-- `/lab`: 実験・機能一覧
-- `/dance-shorts-radar`: Dance Shorts Radar の通常ランキング
-- `/lab/api-discovery-hub-idea-board`: API Discovery Hub 紹介ページ
-- `/lab/quake-wave-map-idea-board`: Japan Quake Wave Map 紹介ページ
-- `/lab/dance-shorts-radar-idea-board`: Dance Shorts Radar 構想説明
-- `/api-preview`: 外部API確認用画面
-- `/api-catalog`: API Discovery Hub の本番一覧
-- `/api-catalog/{apiKey}`: API詳細・調査メモ画面
-- `/api-catalog/mock`: APIカタログUI確認用モック
-- `/quakewave-preview`: QuakeWave Preview 入口
-- `/quakewave-preview/map`: 地震ピン地図表示
-- `/quakewave-preview/xml`: 気象庁 Atom feed / 個別XML取得確認
+AIの出力はそのまま採用せず、テスト・Pull Request・差分確認・責務レビューで人間が確認します。
 
-補助的なルート:
+AIを信用することと、任せて放置することは別です。  
+このプロジェクトでは、テスト・CI・差分確認・責務レビューによって、AIの作業範囲を人間が制御します。
 
-- `/api-preview/apis-guru`
-- `/api-preview/apis-guru/mock`
-- `/api-preview/apis-guru/mock-error`
-- `/api-catalog/sync`
-- `/api-catalog/sync/status`
-- `/api-catalog/{apiKey}/notes`
-- `/quakewave-preview/feed-entries/sync`
-- `/quakewave-preview/feed-entries/sync/status`
-- `/quakewave-preview/map-pins/sync`
-- `/quakewave-preview/map-pins/sync/status`
-- `/quakewave-preview/refresh`
-- `/quakewave-preview/refresh/status`
-
-## スクリーンショット
-
-### Welcome
-
-<img width="663" height="701" alt="image" src="https://github.com/user-attachments/assets/46fa4fdd-c0db-40ca-9e0b-b5f84117161b" />
-
-
-### Lab
-
-<img width="641" height="693" alt="image" src="https://github.com/user-attachments/assets/ee293559-116c-4890-85cf-3218c801a22d" />
-
-
-## 設計方針
+## Architecture
 
 このポートフォリオは、ADR パターンとレイヤードアーキテクチャを基準にしています。
-ここでの ADR は Action-Domain-Responder の考え方を指します。
+
+ここでの ADR は、Action-Domain-Responder の考え方を指します。
 
 主な責務分離:
 
-- Controller: HTTP 入口
+- Controller: HTTP入口
 - Request: 入力バリデーション
 - Action: 1ユースケースの手順
 - Command: 登録・更新・削除・同期開始などの状態変更
@@ -211,27 +207,69 @@ IDEA-BOARDでは、DB取得・同期処理・外部API通信は行わず、静�
 - Event / Listener: 発生した事実と副作用処理
 - Component: 画面表示、UI状態、ユーザー操作
 
-API Discovery Hub と QuakeWave Preview は異なるドメインですが、どちらも以下の流れで構成しています。
+Controller に業務判断を書かず、Repository に出力整形を書かず、Service に HTTP 都合を混ぜない構成を基本にしています。
 
-1. 外部データを取得する
-2. DTO / ListDTO に変換する
-3. Repository 経由でDBへ保存する
-4. Service で差分同期や状態判断を扱う
-5. Action でユースケースの手順を制御する
-6. Responder で画面表示用データに整える
-7. React / Inertia で表示する
-8. Feature / Unit Test で仕様を固定する
+## Directory Structure
 
-フロントエンド側でも、画面を一枚の大きなコンポーネントにせず、表示責務・状態管理・選択UI・演出ロジックを分ける方針です。
-Welcome の背景エフェクト選択UIでは、エフェクト候補、描画レイヤー、選択オーブ、移動ロジックを分け、見た目の試行錯誤をしてもページ全体へ影響が広がりにくい構成にしています。
+主な配置は次のとおりです。
 
-設計方針の詳細は [docs/architecture.md](./docs/architecture.md) にまとめています。
+```text
+app/
+├── Actions/
+│   └── <Domain>/
+│       ├── Commands/
+│       └── Queries/
+├── Services/
+│   └── <Domain>/
+├── Repositories/
+│   └── <Domain>/
+├── DTO/
+│   └── <Domain>/
+├── Responders/
+│   └── <Domain>/
+├── Factories/
+│   └── <Domain>/
+├── Strategies/
+│   └── <Domain>/
+├── Events/
+├── Listeners/
+└── Jobs/
+```
 
-## テスト方針
+Laravel標準領域:
+
+```text
+app/
+└── Http/
+    ├── Controllers/
+    └── Requests/
+```
+
+フロントエンド側:
+
+```text
+resources/js/
+├── Components/
+├── Layouts/
+├── Pages/
+└── theme/
+```
+
+テスト:
+
+```text
+tests/
+├── Feature/
+└── Unit/
+```
+
+Docker構成側では、このリポジトリは `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
+
+## Testing
 
 このプロジェクトでは、テストを単なる確認ではなく、AIが壊してはいけない仕様を固定するための安全柵として扱っています。
 
-テストで守る主な対象:
+主に以下をテストで確認します。
 
 - DTO / ListDTO の形
 - Repository の取得条件・保存条件
@@ -241,45 +279,16 @@ Welcome の背景エフェクト選択UIでは、エフェクト候補、描画�
 - Responder が渡す Inertia props
 - 保存APIやメモ機能
 - 地震データ取得・保存・ピン再生成
-- IDEA-BOARDのルート・Inertia component・Lab表示順
 - 同期処理の結果集計
+- ランキング表示条件
+- display-card-window の表示仕様
 
 テストはコードレビューの代替ではありません。
 
-テストで確認できるのは主に「期待する仕様が壊れていないか」です。
+テストで確認できるのは主に「期待する仕様が壊れていないか」です。  
 「責務分離が崩れていないか」「設計が汚れていないか」は、別途レビューで確認します。
 
-テスト方針の詳細は [docs/testing.md](./docs/testing.md) にまとめています。
-
-### 主なテスト
-
-API Discovery Hub:
-
-- `tests/Feature/ApiCatalog/ApiCatalogSyncTest.php`
-- `tests/Feature/ApiCatalog/ApiCatalogListSearchTest.php`
-- `tests/Feature/ApiCatalog/ApiCatalogNoteTest.php`
-- `tests/Feature/ApiPreviewTest.php`
-- `tests/Unit/ApiCatalog/Services/ApiCatalogSyncServiceTest.php`
-- `resources/js/Components/ApiCatalog/apiCatalogSearchLinks.test.ts`
-
-QuakeWave Preview:
-
-- `tests/Feature/QuakeWavePreview/QuakeWavePreviewFeedEntrySyncTest.php`
-- `tests/Feature/QuakeWavePreview/QuakeWavePreviewXmlPreviewTest.php`
-- `tests/Feature/QuakeWavePreview/EarthquakeFeedEntryRepositoryTest.php`
-- `tests/Feature/QuakeWavePreview/EarthquakeMapPinRepositoryTest.php`
-- `tests/Feature/QuakeWavePreview/EarthquakeMapRefreshActionTest.php`
-- `tests/Feature/QuakeWavePreview/QuakeWavePreviewSyncStatusTest.php`
-- `tests/Feature/QuakeWavePreview/QuakeWavePreviewMapRequestTest.php`
-
-Lab / IDEA-BOARD:
-
-- `tests/Feature/Lab/ApiDiscoveryHubPpTest.php`
-- `tests/Feature/Lab/QuakeWaveMapPpTest.php`
-- `tests/Feature/Lab/DanceShortsRadarTest.php`
-- `tests/Feature/Lab/LabIndexTest.php`
-
-テスト実行:
+基本コマンド:
 
 ```bash
 docker compose run --rm artisan test
@@ -293,9 +302,8 @@ docker compose run --rm npm run build
 
 CI workflow:
 
-- `.github/workflows/ci.yml`
-- `pull_request` 時に実行
-- `main` push 時に実行
+- Pull Request 時に実行
+- main push 時に実行
 - PHP 8.3 をセットアップ
 - Node 22 をセットアップ
 - `composer install`
@@ -306,14 +314,8 @@ CI workflow:
 - `php artisan test`
 - `npm run test:run`
 
-CIでは `.env.example` を元に testing 環境を作成し、Vite build 後に Laravel Feature / Unit Test と Vitest を実行します。
-Inertia 画面系Featureテストは Vite manifest を必要とするため、CIでは Laravel テストより先に `npm run build` を実行します。
-
-CI/CD確認時に発生した環境差のエラー対応は、Notionの「CI/CDエラー対応」に整理しています。
-
 Deploy workflow:
 
-- `.github/workflows/deploy.yml`
 - CI workflow 成功後のみ実行
 - GitHub runner 上で Vite build を作成
 - build済み assets を Lightsail へ転送
@@ -323,165 +325,72 @@ Deploy workflow:
 
 CIが失敗した場合、Deploy job は実行されません。
 
-これにより、テストが落ちた状態のコードを本番へ反映しない構成にしています。
+## Git / Review Flow
 
-## AI駆動開発の方針
+main への直接 push は行いません。
 
-このリポジトリでは、AI に仕様決定や完成判定を任せません。
+基本フロー:
 
-- 人間が仕様、責務、境界、DB設計、テスト観点を先に決める
-- ChatGPT は設計整理、責務分離の壁打ち、レビュー観点整理に使う
-- CodexApp は既存コード確認、差分作成、実装補助、テスト追加、README整理に使う
-- 最終判断、仕様確定、レビュー、本番反映判断は人間が行う
+1. main を最新化する
+2. featureブランチを作成する
+3. 実装する
+4. テストを実行する
+5. Pull Request を作成する
+6. 差分を確認する
+7. CI / status check を確認する
+8. 問題がなければ main へ merge する
 
-このプロジェクトでは、AI駆動開発を「AIに作らせること」ではなく、人間が仕様・責務・テスト・Git運用・CI/CDを制御したうえで、AIを実装補助として使う開発フローとして扱っています。
+Pull Request では、少なくとも以下を確認します。
 
-AIを信用することと、任せて放置することは別です。
-このプロジェクトでは、テスト・CI・差分確認・責務レビューによって、AIの作業範囲を人間が制御します。
+- 変更内容
+- 変更理由
+- 影響範囲
+- テスト結果
+- CI / status check
+- docs / README / AGENTS.md 更新有無
+- 秘密情報混入がないこと
+- 責務境界に違反していないこと
 
-AIエージェント向けの固定ルールは [AGENTS.md](./AGENTS.md) にまとめています。
+## Docs / Skills
 
-## 関連ドキュメント
+README は外部向けの概要説明です。  
+AIエージェント向けの固定ルール、設計方針、テスト方針、作業時の停止条件は別ファイルに分けています。
 
-- [AGENTS.md](./AGENTS.md): CodexApp / AIエージェント向けの作業ルール
-- [docs/architecture.md](./docs/architecture.md): ADR / レイヤード構成と各レイヤーの責務境界
-- [docs/testing.md](./docs/testing.md): テスト方針、優先順位、AI駆動開発でのテスト活用方針
+主なドキュメント:
 
-README は外部の人間向けの概要説明です。
-AGENTS.md は AIエージェント向けの固定ルールです。
-architecture.md は設計思想と責務境界の説明です。
-testing.md は仕様破壊検知とトークン消費削減のためのテスト方針です。
+- `AGENTS.md`
+- `docs/architecture.md`
+- `docs/testing.md`
 
-## データ保存方針
+主なスキル:
 
-### API Discovery Hub
+- `skills/no-alternative-implementation/SKILL.md`
 
-- `api_catalog_cache` は同期キャッシュ用テーブルとして扱う
-- `raw_payload` は保存しない
-- OpenAPI 定義本文、paths、schemas、parameters、responses は最初から保存しない
-- Google / GitHub / Docs / Sample 検索リンクはDBに保存しない
-- 検索リンクは表示時にAPI名・provider名などから生成する
-- `domain` はDBカラムとして追加せず、`provider_key` から表示・絞り込み用に扱う
-- APIメモは保存対象APIに紐づく調査メモとして扱う
+### AGENTS.md
 
-### QuakeWave Preview
+CodexApp / AIエージェント向けの作業ルールです。
 
-- 気象庁 Atom feed の entry は `earthquake_feed_entries` に保存する
-- `entry_id` を一意な識別子として扱う
-- 同じ `entry_id` のデータは insert / update / skip に分けて扱う
-- 個別XML本文そのものは保存対象にせず、地図表示に必要な情報へ変換して扱う
-- 地図表示用 pin は、個別XML解析後の結果として `earthquake_map_pins` に保存する
-- feed entry 取込と map pin 生成は別処理として分ける
+主に以下を扱います。
 
-### IDEA-BOARD
+- AIを丸投げ実装者として扱わない方針
+- 参照すべき docs / skills
+- ADR / レイヤード構成の責務境界
+- DTO / ListDTO 方針
+- Git運用ルール
+- コメント方針
+- テスト追加方針
+- レビュー観点
 
-- IDEA-BOARDは静的な紹介ページとして扱う
-- DB取得、外部API通信、同期開始処理は持たせない
-- 本体機能への導線と、技術的な見どころの説明を担当する
-- Lab表示順は Feature Test で固定する
+### docs/architecture.md
 
-## Docker / ローカル開発
+ADR / レイヤード構成と各レイヤーの責務境界をまとめています。
 
-Docker 構成は Laravel アプリケーション本体の一階層上にあります。
-このリポジトリは Docker Compose から `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
+### docs/testing.md
 
-Docker コマンドは、一階層上のプロジェクトルートで実行する前提です。
+テスト方針、優先順位、AI駆動開発でのテスト活用方針をまとめています。
 
-主な構成要素:
+### skills/no-alternative-implementation/SKILL.md
 
-- `nginx`: Laravel の入口
-- `php-fpm`: Laravel アプリ実行
-- `php-cli`: PHP CLI 実行用
-- `artisan`: `php artisan` 実行用
-- `composer`: Composer 実行用
-- `npm`: npm / Vite / Vitest 実行用
-- `queue`: Queue worker
-- `scheduler`: Laravel Scheduler
-- `mysql`: APIカタログキャッシュ、保存メモ、地震情報のDB
-- `redis`: Queue / Cache 用
-- `minio`: ローカル開発用の S3 互換ストレージ
-- `mailpit`: メール確認用
-- `adminer`: DB確認用
+指定された要件を満たせない場合に、AIエージェントが勝手に代替実装へ進むことを防ぐためのルールです。
 
-ローカル開発の基本コマンド:
-
-```bash
-docker compose build
-docker compose up -d nginx php-fpm queue scheduler mysql redis minio mailpit adminer
-docker compose run --rm composer install
-docker compose run --rm npm install
-docker compose run --rm artisan migrate
-docker compose run --rm artisan test
-docker compose run --rm npm run test:run
-docker compose run --rm npm run build
-```
-
-ローカルS3 / MinIO:
-
-本番は AWS S3 を使い、ローカル開発では MinIO を S3 互換ストレージとして使います。
-Laravel 側の保存処理は `Storage::disk('s3')` に統一し、接続先の違いは `.env` と Docker Compose で切り替えます。
-MinIO は `make up` の全体起動に含めています。単体で起動・確認したい場合は次のコマンドを使います。
-
-```bash
-make minio-up
-make minio-ps
-make minio-logs
-```
-
-MinIO Console は http://localhost:9001 で確認できます。
-ローカルの `src/.env` には次の値を設定し、Console で `local-bucket` を作成します。
-
-```dotenv
-FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=minio
-AWS_SECRET_ACCESS_KEY=minio_password
-AWS_DEFAULT_REGION=ap-northeast-1
-AWS_BUCKET=local-bucket
-AWS_ENDPOINT=http://minio:9000
-AWS_URL=http://localhost:9000/local-bucket
-AWS_USE_PATH_STYLE_ENDPOINT=true
-```
-
-`.env` 変更後は `make app-clear` で Laravel の設定キャッシュをクリアします。
-保存確認は Tinker で次を実行します。
-
-```php
-Storage::disk('s3')->put('test/hello.txt', 'hello minio');
-```
-
-同期処理の手動確認:
-
-```bash
-docker compose run --rm artisan api-catalog:sync
-docker compose run --rm artisan api-catalog:sync --queue
-```
-
-## ディレクトリ構成
-
-主な配置は次のとおりです。
-
-- `app/Http/Controllers`: HTTP 入口
-- `app/Http/Requests`: 入力バリデーション
-- `app/Actions`: ユースケース手順
-- `app/Services`: 業務ルール、状態判断
-- `app/Repositories`: DB / 外部API境界
-- `app/DTO`: レイヤー間データ
-- `app/Responders`: Inertia props などの出力整形
-- `app/Factories`: DTO や Strategy などの生成・選択
-- `app/Strategies`: 処理差分
-- `app/Events`, `app/Jobs`: 副作用や非同期処理
-- `resources/js/Pages`: Inertia / React の画面
-- `resources/js/Components`: React コンポーネント
-- `routes/web.php`: 画面ルート
-- `tests/Feature`: Feature テスト
-- `tests/Unit`: Unit テスト
-- `.github/workflows`: CI / Deploy workflow
-- `docs`: 設計方針・テスト方針などの補助ドキュメント
-
-## 注意事項
-
-API Discovery Hub は公開APIを探す補助とAPI調査の入口を目的にした機能であり、API の価値や注目度を断定するものではありません。
-
-QuakeWave Preview は気象庁XMLを利用した地震情報の取得・保存・地図可視化の検証機能であり、防災情報としての正確性や速報性を保証するものではありません。
-
-この README は、現状の API Discovery Hub、QuakeWave Preview、IDEA-BOARD、テスト、CI/CD の実装範囲に合わせたポートフォリオ概要です。
+指定された演出・機能・成功条件・対象ファイルがある作業では、要件未達のまま完了扱いにせず、停止して報告することを定義しています。
