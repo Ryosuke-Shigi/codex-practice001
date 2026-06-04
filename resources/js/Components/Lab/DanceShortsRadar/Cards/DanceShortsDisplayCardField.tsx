@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { TouchEvent } from 'react';
 
 import DanceShortsCandidateCard from '../DanceShortsCandidateCard';
 import DanceShortsRisingCandidateCard from '../DanceShortsRisingCandidateCard';
@@ -16,6 +17,8 @@ type DanceShortsDisplayCardFieldProps = {
 };
 
 type WindowCache = Record<number, DanceShortsDisplayCardField>;
+
+const cardSwipeDistanceThreshold = 40;
 
 /*
  * サーバーから同じ startRank が返ってきても、タブ・並び順・元データが変われば別 window として
@@ -73,6 +76,7 @@ export default function DanceShortsDisplayCardField({
         [displayCardField.pagination.startRank]: displayCardField,
     });
     const windowCacheRef = useRef(windowCache);
+    const cardTouchStartRef = useRef<{ x: number; y: number } | null>(null);
     const inflightWindowsRef = useRef<
         Map<number, Promise<DanceShortsDisplayCardField | null>>
     >(new Map());
@@ -287,6 +291,45 @@ export default function DanceShortsDisplayCardField({
         loadWindow,
     ]);
 
+    const onTouchStart = (event: TouchEvent<HTMLElement>) => {
+        const touch = event.touches[0];
+
+        cardTouchStartRef.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+        };
+    };
+
+    const onTouchEnd = (event: TouchEvent<HTMLElement>) => {
+        const start = cardTouchStartRef.current;
+
+        cardTouchStartRef.current = null;
+
+        if (start === null) {
+            return;
+        }
+
+        const touch = event.changedTouches[0];
+        const deltaX = touch.clientX - start.x;
+        const deltaY = touch.clientY - start.y;
+
+        if (
+            Math.abs(deltaX) < cardSwipeDistanceThreshold ||
+            Math.abs(deltaX) <= Math.abs(deltaY)
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (deltaX < 0) {
+            void moveToNext();
+            return;
+        }
+
+        void moveToPrevious();
+    };
+
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             const target = event.target as HTMLElement | null;
@@ -336,7 +379,9 @@ export default function DanceShortsDisplayCardField({
     return (
         <section
             id="dance-shorts-card-field"
-            className="relative h-full min-h-0 overflow-hidden"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            className="relative h-full min-h-0 touch-pan-y overflow-hidden"
             aria-busy={isWindowSwitching || isPrefetching}
         >
             <div className="h-full min-h-0">
