@@ -56,6 +56,7 @@ final readonly class GetDanceShortDisplayCardWindowAction
                 sortKey: $sortKey,
                 startRank: $startRank,
                 windowSize: $windowSize,
+                selectedVideoId: $input->selectedVideoId,
             ));
     }
 

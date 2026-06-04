@@ -32,6 +32,7 @@ class DanceShortsRadarController extends Controller
             sortKey: $request->sortKey(),
             startRank: $request->startRank(),
             windowSize: $request->windowSize(),
+            selectedVideoId: $request->selectedVideoId(),
         );
 
         return $responder->index($action->execute($input));

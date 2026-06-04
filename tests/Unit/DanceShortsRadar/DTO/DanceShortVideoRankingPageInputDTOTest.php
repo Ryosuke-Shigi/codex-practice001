@@ -14,6 +14,7 @@ class DanceShortVideoRankingPageInputDTOTest extends TestCase
             comparisonDays: 3,
             limit: 10,
             sortKey: 'view_count_delta',
+            selectedVideoId: 123,
         );
 
         $this->assertSame([
@@ -23,6 +24,7 @@ class DanceShortVideoRankingPageInputDTOTest extends TestCase
             'sortKey' => 'view_count_delta',
             'startRank' => 1,
             'windowSize' => 5,
+            'selectedVideoId' => 123,
         ], $dto->toArray());
     }
 

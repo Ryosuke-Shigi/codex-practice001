@@ -106,6 +106,64 @@ class DanceShortDisplayCardWindowService
         ];
     }
 
+    /**
+     * @template T
+     *
+     * @param  array<int, T>  $items
+     * @param  callable(T): int  $videoIdResolver
+     * @return array{visibleItems: array<int, T>, pagination: DanceShortDisplayCardPaginationDTO, activeIndex: int, activeRank: int|null}
+     */
+    public function buildWindowAroundSelectedVideo(
+        array $items,
+        int $selectedVideoId,
+        int $windowSize,
+        callable $videoIdResolver,
+    ): array {
+        $selectedIndex = null;
+
+        foreach ($items as $index => $item) {
+            if ($videoIdResolver($item) === $selectedVideoId) {
+                $selectedIndex = $index;
+                break;
+            }
+        }
+
+        if ($selectedIndex === null) {
+            $window = $this->buildWindow($items, 1, $windowSize);
+
+            return [
+                'visibleItems' => $window['visibleItems'],
+                'pagination' => $window['pagination'],
+                'activeIndex' => 0,
+                'activeRank' => $this->activeRankFor(
+                    startRank: 1,
+                    activeIndex: 0,
+                    hasVisibleCards: count($window['visibleItems']) > 0,
+                ),
+            ];
+        }
+
+        $selectedRank = $selectedIndex + 1;
+        $startRank = $this->centeredStartRank(
+            selectedRank: $selectedRank,
+            totalItemCount: count($items),
+            windowSize: $windowSize,
+        );
+        $activeIndex = $selectedRank - $startRank;
+        $window = $this->buildWindow($items, $startRank, $windowSize);
+
+        return [
+            'visibleItems' => $window['visibleItems'],
+            'pagination' => $window['pagination'],
+            'activeIndex' => $activeIndex,
+            'activeRank' => $this->activeRankFor(
+                startRank: $startRank,
+                activeIndex: $activeIndex,
+                hasVisibleCards: count($window['visibleItems']) > 0,
+            ),
+        ];
+    }
+
     public function activeRankFor(int $startRank, int $activeIndex, bool $hasVisibleCards): ?int
     {
         /*
@@ -113,5 +171,13 @@ class DanceShortDisplayCardWindowService
          * 空 window では 1位のような誤った順位を表示しないよう null を返します。
          */
         return $hasVisibleCards ? $startRank + $activeIndex : null;
+    }
+
+    private function centeredStartRank(int $selectedRank, int $totalItemCount, int $windowSize): int
+    {
+        $maxStartRank = max(1, $totalItemCount - $windowSize + 1);
+        $idealStartRank = $selectedRank - intdiv($windowSize, 2);
+
+        return min(max(1, $idealStartRank), $maxStartRank);
     }
 }

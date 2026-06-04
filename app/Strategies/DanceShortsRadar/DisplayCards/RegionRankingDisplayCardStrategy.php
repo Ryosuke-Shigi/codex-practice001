@@ -43,24 +43,48 @@ readonly class RegionRankingDisplayCardStrategy implements DanceShortDisplayCard
         array $regionCodes,
         string $emptyMessage,
     ): DanceShortDisplayCardWindowDTO {
-        /*
-         * 通常ランキング Strategy は、選択済み region または ALL 用 region 群だけを
-         * RankingCandidatesAction の window 入口へ渡します。ここで受け取る rankingList は
-         * windowSize + 1 件の lookahead を含むため、全件集約や React 側の再 sort は不要です。
-         */
-        $rankingList = $this->rankingCandidatesAction->executeWindowForRegionCodes(
-            regionCodes: $regionCodes,
-            comparisonDays: $condition->comparisonDays,
-            sortKey: $condition->sortKey,
-            startRank: $condition->startRank,
-            windowSize: $condition->windowSize,
-        );
-        $window = $this->displayCardWindowService->buildWindowFromLookahead(
-            lookaheadItems: $rankingList->items,
-            startRank: $condition->startRank,
-            windowSize: $condition->windowSize,
-        );
+        if ($condition->selectedVideoId === null) {
+            /*
+             * 通常ランキング Strategy は、選択済み region または ALL 用 region 群だけを
+             * RankingCandidatesAction の window 入口へ渡します。ここで受け取る rankingList は
+             * windowSize + 1 件の lookahead を含むため、全件集約や React 側の再 sort は不要です。
+             */
+            $rankingList = $this->rankingCandidatesAction->executeWindowForRegionCodes(
+                regionCodes: $regionCodes,
+                comparisonDays: $condition->comparisonDays,
+                sortKey: $condition->sortKey,
+                startRank: $condition->startRank,
+                windowSize: $condition->windowSize,
+            );
+            $window = $this->displayCardWindowService->buildWindowFromLookahead(
+                lookaheadItems: $rankingList->items,
+                startRank: $condition->startRank,
+                windowSize: $condition->windowSize,
+            );
+        } else {
+            /*
+             * selectedVideoId 指定時は、先にランキング全体順を確定してから選択カード前後を
+             * Service で切り出します。5件だけ取得してから並べる流れへ戻さないための分岐です。
+             */
+            $rankingList = $this->rankingCandidatesAction->executeForRegionCodes(
+                regionCodes: $regionCodes,
+                comparisonDays: $condition->comparisonDays,
+                sortKey: $condition->sortKey,
+            );
+            $window = $this->displayCardWindowService->buildWindowAroundSelectedVideo(
+                items: $rankingList->items,
+                selectedVideoId: $condition->selectedVideoId,
+                windowSize: $condition->windowSize,
+                videoIdResolver: fn (DanceShortVideoRankingItemDTO $item): int => $item->videoId,
+            );
+        }
         $visibleItems = $window['visibleItems'];
+        $activeIndex = $window['activeIndex'] ?? 0;
+        $activeRank = $window['activeRank'] ?? $this->displayCardWindowService->activeRankFor(
+            startRank: $condition->startRank,
+            activeIndex: 0,
+            hasVisibleCards: count($visibleItems) > 0,
+        );
 
         return new DanceShortDisplayCardWindowDTO(new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RANKING,
@@ -68,12 +92,8 @@ readonly class RegionRankingDisplayCardStrategy implements DanceShortDisplayCard
                 fn (DanceShortVideoRankingItemDTO $item): DanceShortRankingDisplayCardDTO => new DanceShortRankingDisplayCardDTO($item),
                 $visibleItems,
             )),
-            activeIndex: 0,
-            activeRank: $this->displayCardWindowService->activeRankFor(
-                startRank: $condition->startRank,
-                activeIndex: 0,
-                hasVisibleCards: count($visibleItems) > 0,
-            ),
+            activeIndex: $activeIndex,
+            activeRank: $activeRank,
             pagination: $window['pagination'],
             emptyMessage: count($visibleItems) === 0 ? $emptyMessage : null,
         ));

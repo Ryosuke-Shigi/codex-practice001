@@ -98,6 +98,8 @@ Strategy はアルゴリズム差分を扱います。
 
 Strategy は同じ目的に対する処理差分を表現するために使います。
 
+DanceShortsRadar のランキング表示では、`RISING`、`ALL`、地域別ランキングの取得差分を Strategy / Factory で選択します。`selectedVideoId` が指定された display-card-window では、選択中タブ、比較日数、並び順でランキング全体順を先に確定し、選択カードの順位を基準に前後を含む最大5件を Service で切り出します。Repository は全体順の read model 取得だけを担当し、選択カードの探索や window 表示判断は行いません。
+
 ## Event / Listener の責務
 
 Event は発生した事実を表します。

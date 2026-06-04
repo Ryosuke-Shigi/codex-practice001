@@ -47,6 +47,7 @@ final readonly class DanceShortVideoRankingPageInputDTO
         public string $sortKey = DanceShortVideoRankingConditionDTO::DEFAULT_SORT_KEY,
         public int $startRank = 1,
         public int $windowSize = 5,
+        public ?int $selectedVideoId = null,
     ) {
     }
 
@@ -57,7 +58,8 @@ final readonly class DanceShortVideoRankingPageInputDTO
      *     limit: int,
      *     sortKey: string,
      *     startRank: int,
-     *     windowSize: int
+     *     windowSize: int,
+     *     selectedVideoId: int|null
      * }
      */
     public function toArray(): array
@@ -69,6 +71,7 @@ final readonly class DanceShortVideoRankingPageInputDTO
             'sortKey' => $this->sortKey,
             'startRank' => $this->startRank,
             'windowSize' => $this->windowSize,
+            'selectedVideoId' => $this->selectedVideoId,
         ];
     }
 }

@@ -36,6 +36,8 @@ class DanceShortVideoRankingRequest extends FormRequest
             'sort' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],
             'sort_key' => ['nullable', 'string', Rule::in(DanceShortVideoRankingConditionDTO::ALLOWED_SORT_KEYS)],
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'selectedVideoId' => ['nullable', 'integer', 'min:1'],
+            'selected_video_id' => ['nullable', 'integer', 'min:1'],
             'startRank' => ['nullable', 'integer'],
             'start_rank' => ['nullable', 'integer'],
             'windowSize' => ['nullable', 'integer'],
@@ -88,6 +90,13 @@ class DanceShortVideoRankingRequest extends FormRequest
         $startRank = $this->validated('startRank') ?? $this->validated('start_rank');
 
         return $startRank === null ? 1 : (int) $startRank;
+    }
+
+    public function selectedVideoId(): ?int
+    {
+        $selectedVideoId = $this->validated('selectedVideoId') ?? $this->validated('selected_video_id');
+
+        return $selectedVideoId === null ? null : (int) $selectedVideoId;
     }
 
     public function windowSize(): int

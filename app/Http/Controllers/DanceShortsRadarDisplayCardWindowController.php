@@ -29,6 +29,7 @@ class DanceShortsRadarDisplayCardWindowController extends Controller
             sortKey: $request->sortKey(),
             startRank: $request->startRank(),
             windowSize: $request->windowSize(),
+            selectedVideoId: $request->selectedVideoId(),
         );
 
         return $responder->cardWindow($action->execute($input)->displayCardField);
