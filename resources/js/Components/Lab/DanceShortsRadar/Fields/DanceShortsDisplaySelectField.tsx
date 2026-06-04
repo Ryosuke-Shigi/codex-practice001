@@ -6,7 +6,6 @@ import { DANCE_SHORTS_RADAR_RELOAD_OPTIONS } from '../inertiaReloadOptions';
 import type {
     DanceShortsDisplaySelectField as DanceShortsDisplaySelectFieldProps,
     DanceShortsSelectOption,
-    DanceShortsTabCode,
 } from '../types';
 
 type SelectGroupKey = 'tab' | 'comparisonDays' | 'sort';
@@ -31,19 +30,6 @@ function displayTypeOptions(
         href: tab.href,
         isActive: tab.isActive,
     }));
-}
-
-function fixedRisingSortOption(
-    displaySelectField: DanceShortsDisplaySelectFieldProps,
-): SelectOption[] {
-    return [
-        {
-            value: displaySelectField.sortKey,
-            label: '上昇候補順',
-            href: '#',
-            isActive: true,
-        },
-    ];
 }
 
 function activeGroupIndex(groups: SelectGroup[], activeGroup: SelectGroupKey) {
@@ -80,32 +66,38 @@ export default function DanceShortsDisplaySelectField({
     /*
      * SelectField は「どのジャンルを選ぶか」を左右/スライドで切り替え、
      * そのジャンル内のボタンで値を決める操作面です。
+     * 上昇候補は固定順なので、並び順ジャンル自体を出しません。
      * 値ボタンは Responder が作った href を使い、React 側では ranking / sort / slice しません。
      */
     const touchStartRef = useRef<{ x: number; y: number } | null>(null);
     const groups = useMemo<SelectGroup[]>(
-        () => [
-            {
-                key: 'tab',
-                label: '地域',
-                shortLabel: '地域',
-                options: displayTypeOptions(displaySelectField),
-            },
-            {
-                key: 'comparisonDays',
-                label: '日数',
-                shortLabel: '日数',
-                options: displaySelectField.comparisonDayOptions,
-            },
-            {
-                key: 'sort',
-                label: '並び順',
-                shortLabel: '並び',
-                options: displaySelectField.showSortKeyOptions
-                    ? displaySelectField.sortKeyOptions
-                    : fixedRisingSortOption(displaySelectField),
-            },
-        ],
+        () => {
+            const selectableGroups: SelectGroup[] = [
+                {
+                    key: 'tab',
+                    label: '地域',
+                    shortLabel: '地域',
+                    options: displayTypeOptions(displaySelectField),
+                },
+                {
+                    key: 'comparisonDays',
+                    label: '日数',
+                    shortLabel: '日数',
+                    options: displaySelectField.comparisonDayOptions,
+                },
+            ];
+
+            if (displaySelectField.showSortKeyOptions) {
+                selectableGroups.push({
+                    key: 'sort',
+                    label: '並び順',
+                    shortLabel: '並び',
+                    options: displaySelectField.sortKeyOptions,
+                });
+            }
+
+            return selectableGroups;
+        },
         [displaySelectField],
     );
     const [activeGroup, setActiveGroup] = useState<SelectGroupKey>('tab');

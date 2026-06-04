@@ -52,6 +52,9 @@ export default function DanceShortsRadarIndex({
                     />
                     <DanceShortsDisplayMessageField
                         displayMessageField={displayHeaderField}
+                        showSortKeyOptions={
+                            displaySelectField.showSortKeyOptions
+                        }
                     />
                     <DanceShortsDisplayCardField
                         displayCardField={displayCardField}

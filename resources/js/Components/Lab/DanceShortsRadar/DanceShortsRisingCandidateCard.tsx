@@ -79,8 +79,8 @@ export default function DanceShortsRisingCandidateCard({
             ].join(' ')}
         >
             <div className="flex min-w-0 items-center justify-between gap-2 sm:col-span-2">
-                <span className="rounded-md border border-cyan-100/26 bg-cyan-100/12 px-2 py-0.5 text-xs font-black tabular-nums text-cyan-50">
-                    #{rank}
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-100/30 bg-cyan-100/12 text-xs font-black tabular-nums text-cyan-50">
+                    {rank}
                 </span>
                 <span className="truncate rounded-md border border-white/18 bg-white/8 px-2 py-0.5 text-[11px] font-bold text-cyan-50/78">
                     {sourceRegionLabel} / {sourceRegion}
