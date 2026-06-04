@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import DanceShortsStats from './DanceShortsStats';
 import DanceShortsThumbnailLink from './DanceShortsThumbnailLink';
 import type { DanceShortsCandidate } from './types';
@@ -7,6 +9,10 @@ type DanceShortsCandidateCardProps = {
     sortKey: string;
     rank: number;
     isActive: boolean;
+    thumbnailControls?: {
+        topRight: ReactNode;
+        bottomLeft: ReactNode;
+    };
 };
 
 function formatDateTime(value: string | null | undefined) {
@@ -27,18 +33,19 @@ export default function DanceShortsCandidateCard({
     sortKey,
     rank,
     isActive,
+    thumbnailControls,
 }: DanceShortsCandidateCardProps) {
     return (
         <article
             aria-current={isActive ? 'true' : undefined}
             className={[
-                'grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-1.5 overflow-hidden rounded-lg border p-2 text-white shadow-[0_14px_28px_rgba(2,24,45,0.16)] backdrop-blur-xl sm:grid-cols-[minmax(12rem,42%)_minmax(0,1fr)] sm:grid-rows-[auto_minmax(0,1fr)] sm:gap-2 sm:p-2.5',
+                'flex max-h-full min-h-0 flex-col gap-1.5 overflow-hidden rounded-lg border p-2 text-white shadow-[0_14px_28px_rgba(2,24,45,0.16)] backdrop-blur-xl sm:gap-2 sm:p-2.5',
                 isActive
                     ? 'border-cyan-200/72 bg-slate-900/72 shadow-[0_16px_34px_rgba(34,211,238,0.16)]'
                     : 'border-white/18 bg-slate-950/44',
             ].join(' ')}
         >
-            <div className="flex min-w-0 items-center justify-between gap-2 sm:col-span-2">
+            <div className="flex min-w-0 items-center justify-between gap-2">
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-100/30 bg-cyan-100/12 text-xs font-black tabular-nums text-cyan-50">
                     {rank}
                 </span>
@@ -51,17 +58,26 @@ export default function DanceShortsCandidateCard({
                 サムネイルクリックだけを YouTube への外部遷移にします。
                 カード全体を外部リンクにしないことで、後続でメモや追跡ボタンを足しても操作領域を分けやすくします。
             */}
-            <div className="grid min-h-0 min-w-0 content-center sm:row-start-2 sm:h-full">
+            <div className="grid min-w-0 gap-1">
+                {thumbnailControls !== undefined && (
+                    <div className="flex min-h-7 items-center justify-end pr-0.5">
+                        {thumbnailControls.topRight}
+                    </div>
+                )}
                 <DanceShortsThumbnailLink
                     title={candidate.title}
                     thumbnailUrl={candidate.thumbnail_url}
                     youtubeUrl={candidate.youtube_url}
-                    className="h-full"
-                    mediaClassName="h-full min-h-0"
+                    className="w-full"
                 />
+                {thumbnailControls !== undefined && (
+                    <div className="flex min-h-7 items-center justify-start pl-0.5">
+                        {thumbnailControls.bottomLeft}
+                    </div>
+                )}
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-col gap-1 sm:row-start-2 sm:gap-1.5">
+            <div className="flex min-h-0 min-w-0 flex-col gap-1 sm:gap-1.5">
                 <div className="grid min-w-0 gap-1 sm:gap-1.5">
                     <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-white sm:text-base">
                         {candidate.title}
@@ -76,7 +92,7 @@ export default function DanceShortsCandidateCard({
                         {formatDateTime(candidate.collected_at)}
                     </p>
                 </div>
-                <div className="mt-auto">
+                <div>
                     <DanceShortsStats candidate={candidate} sortKey={sortKey} />
                 </div>
             </div>

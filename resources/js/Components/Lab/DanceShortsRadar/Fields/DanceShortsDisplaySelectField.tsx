@@ -1,57 +1,21 @@
 import { router } from '@inertiajs/react';
-import { useMemo, useRef, useState } from 'react';
+import { useRef } from 'react';
 import type { TouchEvent } from 'react';
 
+import {
+    activeSelectGroupIndex,
+    isNavigableSelectOption,
+    moveSelectGroup,
+    type DanceShortsDisplaySelectGroup,
+    type DanceShortsDisplaySelectGroupKey,
+    type DanceShortsDisplaySelectOption,
+} from '../displaySelectGroups';
 import { DANCE_SHORTS_RADAR_RELOAD_OPTIONS } from '../inertiaReloadOptions';
-import type {
-    DanceShortsDisplaySelectField as DanceShortsDisplaySelectFieldProps,
-    DanceShortsSelectOption,
-} from '../types';
-
-type SelectGroupKey = 'tab' | 'comparisonDays' | 'sort';
-type SelectOptionValue = string | number;
-type SelectOption = DanceShortsSelectOption<SelectOptionValue>;
-
-type SelectGroup = {
-    key: SelectGroupKey;
-    label: string;
-    shortLabel: string;
-    options: SelectOption[];
-};
 
 const groupSwipeDistanceThreshold = 32;
 
-function displayTypeOptions(
-    displaySelectField: DanceShortsDisplaySelectFieldProps,
-): SelectOption[] {
-    return displaySelectField.regionTabs.map((tab) => ({
-        value: tab.code,
-        label: tab.label,
-        href: tab.href,
-        isActive: tab.isActive,
-    }));
-}
-
-function activeGroupIndex(groups: SelectGroup[], activeGroup: SelectGroupKey) {
-    const index = groups.findIndex((group) => group.key === activeGroup);
-
-    return index === -1 ? 0 : index;
-}
-
-function moveGroup(
-    groups: SelectGroup[],
-    activeGroup: SelectGroupKey,
-    direction: -1 | 1,
-) {
-    const currentIndex = activeGroupIndex(groups, activeGroup);
-    const nextIndex =
-        (currentIndex + direction + groups.length) % groups.length;
-
-    return groups[nextIndex].key;
-}
-
-function visitOption(option: SelectOption) {
-    if (option.isActive || option.href === '#') {
+function visitOption(option: DanceShortsDisplaySelectOption) {
+    if (!isNavigableSelectOption(option)) {
         return;
     }
 
@@ -59,9 +23,15 @@ function visitOption(option: SelectOption) {
 }
 
 export default function DanceShortsDisplaySelectField({
-    displaySelectField,
+    selectGroups,
+    activeSelectGroup,
+    onActiveSelectGroupChange,
 }: {
-    displaySelectField: DanceShortsDisplaySelectFieldProps;
+    selectGroups: DanceShortsDisplaySelectGroup[];
+    activeSelectGroup: DanceShortsDisplaySelectGroupKey;
+    onActiveSelectGroupChange: (
+        activeGroup: DanceShortsDisplaySelectGroupKey,
+    ) => void;
 }) {
     /*
      * SelectField は「どのジャンルを選ぶか」を左右/スライドで切り替え、
@@ -70,42 +40,20 @@ export default function DanceShortsDisplaySelectField({
      * 値ボタンは Responder が作った href を使い、React 側では ranking / sort / slice しません。
      */
     const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-    const groups = useMemo<SelectGroup[]>(
-        () => {
-            const selectableGroups: SelectGroup[] = [
-                {
-                    key: 'tab',
-                    label: '地域',
-                    shortLabel: '地域',
-                    options: displayTypeOptions(displaySelectField),
-                },
-                {
-                    key: 'comparisonDays',
-                    label: '日数',
-                    shortLabel: '日数',
-                    options: displaySelectField.comparisonDayOptions,
-                },
-            ];
-
-            if (displaySelectField.showSortKeyOptions) {
-                selectableGroups.push({
-                    key: 'sort',
-                    label: '並び順',
-                    shortLabel: '並び',
-                    options: displaySelectField.sortKeyOptions,
-                });
-            }
-
-            return selectableGroups;
-        },
-        [displaySelectField],
+    const activeIndex = activeSelectGroupIndex(
+        selectGroups,
+        activeSelectGroup,
     );
-    const [activeGroup, setActiveGroup] = useState<SelectGroupKey>('tab');
-    const activeIndex = activeGroupIndex(groups, activeGroup);
-    const currentGroup = groups[activeIndex];
+    const currentGroup = selectGroups[activeIndex];
+
+    if (currentGroup === undefined) {
+        return null;
+    }
 
     const onMoveGroup = (direction: -1 | 1) => {
-        setActiveGroup((current) => moveGroup(groups, current, direction));
+        onActiveSelectGroupChange(
+            moveSelectGroup(selectGroups, activeSelectGroup, direction),
+        );
     };
 
     const onTouchStart = (event: TouchEvent<HTMLElement>) => {
