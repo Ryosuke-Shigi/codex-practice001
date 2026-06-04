@@ -8,28 +8,6 @@ export function canStartAutoSlide(visibleCardCount: number) {
     return visibleCardCount > 1;
 }
 
-export function nextAutoSlideIndex(
-    activeIndex: number,
-    visibleCardCount: number,
-) {
-    if (!canStartAutoSlide(visibleCardCount)) {
-        return activeIndex;
-    }
-
-    return (activeIndex + 1) % visibleCardCount;
-}
-
-export function previousAutoSlideIndex(
-    activeIndex: number,
-    visibleCardCount: number,
-) {
-    if (!canStartAutoSlide(visibleCardCount)) {
-        return activeIndex;
-    }
-
-    return (activeIndex - 1 + visibleCardCount) % visibleCardCount;
-}
-
 export function detectCardSwipe(deltaX: number, deltaY: number) {
     const absoluteX = Math.abs(deltaX);
     const absoluteY = Math.abs(deltaY);

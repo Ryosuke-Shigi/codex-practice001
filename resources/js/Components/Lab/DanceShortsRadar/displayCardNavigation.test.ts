@@ -3,25 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
     canStartAutoSlide,
     detectCardSwipe,
-    nextAutoSlideIndex,
-    previousAutoSlideIndex,
     selectOptionDirectionForVerticalSwipe,
 } from './displayCardNavigation';
 
 describe('displayCardNavigation', () => {
-    it('loops auto slide indices inside the current window only', () => {
-        expect(nextAutoSlideIndex(4, 5)).toBe(0);
-        expect(previousAutoSlideIndex(0, 5)).toBe(4);
-        expect(nextAutoSlideIndex(2, 5)).toBe(3);
-        expect(previousAutoSlideIndex(2, 5)).toBe(1);
-    });
-
     it('does not start auto slide for empty or single-card windows', () => {
         expect(canStartAutoSlide(0)).toBe(false);
         expect(canStartAutoSlide(1)).toBe(false);
         expect(canStartAutoSlide(2)).toBe(true);
-        expect(nextAutoSlideIndex(0, 1)).toBe(0);
-        expect(previousAutoSlideIndex(0, 1)).toBe(0);
     });
 
     it('detects horizontal and vertical swipes while ignoring diagonal movement', () => {
