@@ -1,8 +1,24 @@
+import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { TouchEvent } from 'react';
+import type { MouseEvent, PointerEvent, TouchEvent } from 'react';
 
 import DanceShortsCandidateCard from '../DanceShortsCandidateCard';
 import DanceShortsRisingCandidateCard from '../DanceShortsRisingCandidateCard';
+import {
+    autoSlideIntervalMs,
+    canStartAutoSlide,
+    detectCardSwipe,
+    nextAutoSlideIndex,
+    previousAutoSlideIndex,
+    selectOptionDirectionForVerticalSwipe,
+} from '../displayCardNavigation';
+import {
+    isNavigableSelectOption,
+    selectLoopedOption,
+    type DanceShortsDisplaySelectGroup,
+    type DanceShortsDisplaySelectGroupKey,
+} from '../displaySelectGroups';
+import { DANCE_SHORTS_RADAR_RELOAD_OPTIONS } from '../inertiaReloadOptions';
 import {
     DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES,
     type DanceShortsDisplayCardField,
@@ -14,11 +30,12 @@ import LoadingDisplayCardField from './LoadingDisplayCardField';
 type DanceShortsDisplayCardFieldProps = {
     displayCardField: DanceShortsDisplayCardField;
     windowRequest: DanceShortsDisplayCardWindowRequest;
+    selectGroups: DanceShortsDisplaySelectGroup[];
+    activeSelectGroup: DanceShortsDisplaySelectGroupKey;
 };
 
 type WindowCache = Record<number, DanceShortsDisplayCardField>;
-
-const cardSwipeDistanceThreshold = 40;
+type AutoSlideDirection = -1 | 1;
 
 /*
  * サーバーから同じ startRank が返ってきても、タブ・並び順・元データが変われば別 window として
@@ -67,6 +84,8 @@ function rankForIndex(field: DanceShortsDisplayCardField, index: number) {
 export default function DanceShortsDisplayCardField({
     displayCardField,
     windowRequest,
+    selectGroups,
+    activeSelectGroup,
 }: DanceShortsDisplayCardFieldProps) {
     const initialWindowKey = useMemo(
         () => cacheKeyFor(displayCardField),
@@ -86,6 +105,12 @@ export default function DanceShortsDisplayCardField({
     const [activeIndex, setActiveIndex] = useState(displayCardField.activeIndex);
     const [isPrefetching, setIsPrefetching] = useState(false);
     const [isWindowSwitching, setIsWindowSwitching] = useState(false);
+    const [autoSlideDirection, setAutoSlideDirection] =
+        useState<AutoSlideDirection | null>(null);
+
+    const stopAutoSlide = useCallback(() => {
+        setAutoSlideDirection(null);
+    }, []);
 
     useEffect(() => {
         windowCacheRef.current = windowCache;
@@ -107,15 +132,22 @@ export default function DanceShortsDisplayCardField({
         setActiveIndex(displayCardField.activeIndex);
         setIsPrefetching(false);
         setIsWindowSwitching(false);
-    }, [displayCardField, initialWindowKey]);
+        stopAutoSlide();
+    }, [displayCardField, initialWindowKey, stopAutoSlide]);
 
     const currentWindow = windowCache[activeStartRank] ?? displayCardField;
     const activeCard = currentWindow.visibleCards[activeIndex];
-    const canMovePrev =
-        activeIndex > 0 || currentWindow.pagination.hasPrev;
+    const canMovePrev = activeIndex > 0 || currentWindow.pagination.hasPrev;
     const canMoveNext =
         activeIndex < currentWindow.visibleCards.length - 1 ||
         currentWindow.pagination.hasNext;
+    const canStartCurrentAutoSlide = canStartAutoSlide(
+        currentWindow.visibleCards.length,
+    );
+    const currentSelectGroup =
+        selectGroups.find((group) => group.key === activeSelectGroup) ??
+        selectGroups[0] ??
+        null;
 
     const loadWindow = useCallback(
         async (startRank: number, mode: 'prefetch' | 'switch') => {
@@ -209,6 +241,55 @@ export default function DanceShortsDisplayCardField({
         void loadWindow(nextStartRank, 'prefetch');
     }, [activeIndex, activeStartRank, currentWindow, loadWindow]);
 
+    useEffect(() => {
+        if (autoSlideDirection === null) {
+            return;
+        }
+
+        if (!canStartAutoSlide(currentWindow.visibleCards.length)) {
+            stopAutoSlide();
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            setActiveIndex((current) =>
+                autoSlideDirection === 1
+                    ? nextAutoSlideIndex(
+                          current,
+                          currentWindow.visibleCards.length,
+                      )
+                    : previousAutoSlideIndex(
+                          current,
+                          currentWindow.visibleCards.length,
+                      ),
+            );
+        }, autoSlideIntervalMs);
+
+        return () => window.clearInterval(intervalId);
+    }, [
+        autoSlideDirection,
+        currentWindow.visibleCards.length,
+        stopAutoSlide,
+    ]);
+
+    useEffect(() => {
+        if (autoSlideDirection === null) {
+            return;
+        }
+
+        const stopOnUserAction = () => stopAutoSlide();
+
+        window.addEventListener('click', stopOnUserAction);
+        window.addEventListener('pointerdown', stopOnUserAction);
+        window.addEventListener('touchstart', stopOnUserAction);
+
+        return () => {
+            window.removeEventListener('click', stopOnUserAction);
+            window.removeEventListener('pointerdown', stopOnUserAction);
+            window.removeEventListener('touchstart', stopOnUserAction);
+        };
+    }, [autoSlideDirection, stopAutoSlide]);
+
     const moveToNext = useCallback(async () => {
         if (!canMoveNext || isWindowSwitching) {
             return;
@@ -291,9 +372,99 @@ export default function DanceShortsDisplayCardField({
         loadWindow,
     ]);
 
+    const visitSelectOptionBySwipe = useCallback(
+        (direction: -1 | 1) => {
+            if (currentSelectGroup === null) {
+                return;
+            }
+
+            const option = selectLoopedOption(
+                currentSelectGroup.options,
+                direction,
+            );
+
+            if (option === null || !isNavigableSelectOption(option)) {
+                return;
+            }
+
+            router.get(option.href, {}, DANCE_SHORTS_RADAR_RELOAD_OPTIONS);
+        },
+        [currentSelectGroup],
+    );
+
+    const onAutoSlideButtonPointerDown = (
+        event: PointerEvent<HTMLButtonElement>,
+    ) => {
+        event.stopPropagation();
+    };
+
+    const onAutoSlideButtonTouchStart = (
+        event: TouchEvent<HTMLButtonElement>,
+    ) => {
+        event.stopPropagation();
+    };
+
+    const onAutoSlideButtonClick = (
+        event: MouseEvent<HTMLButtonElement>,
+        direction: AutoSlideDirection,
+    ) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!canStartCurrentAutoSlide) {
+            return;
+        }
+
+        setAutoSlideDirection((current) =>
+            current === direction ? null : direction,
+        );
+    };
+
+    const thumbnailControls = {
+        topRight: (
+            <button
+                type="button"
+                aria-label="自動右送りを切り替え"
+                aria-pressed={autoSlideDirection === 1}
+                disabled={!canStartCurrentAutoSlide}
+                onPointerDown={onAutoSlideButtonPointerDown}
+                onTouchStart={onAutoSlideButtonTouchStart}
+                onClick={(event) => onAutoSlideButtonClick(event, 1)}
+                className={[
+                    'grid h-7 min-w-11 place-items-center rounded-full border px-2 text-xs font-black text-white shadow-[0_10px_20px_rgba(2,24,45,0.26)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35',
+                    autoSlideDirection === 1
+                        ? 'border-white bg-cyan-400/75'
+                        : 'border-white/36 bg-slate-950/72 hover:bg-slate-900/84',
+                ].join(' ')}
+            >
+                <span aria-hidden="true">&gt;&gt;</span>
+            </button>
+        ),
+        bottomLeft: (
+            <button
+                type="button"
+                aria-label="自動左送りを切り替え"
+                aria-pressed={autoSlideDirection === -1}
+                disabled={!canStartCurrentAutoSlide}
+                onPointerDown={onAutoSlideButtonPointerDown}
+                onTouchStart={onAutoSlideButtonTouchStart}
+                onClick={(event) => onAutoSlideButtonClick(event, -1)}
+                className={[
+                    'grid h-7 min-w-11 place-items-center rounded-full border px-2 text-xs font-black text-white shadow-[0_10px_20px_rgba(2,24,45,0.26)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35',
+                    autoSlideDirection === -1
+                        ? 'border-white bg-cyan-400/75'
+                        : 'border-white/36 bg-slate-950/72 hover:bg-slate-900/84',
+                ].join(' ')}
+            >
+                <span aria-hidden="true">&lt;&lt;</span>
+            </button>
+        ),
+    };
+
     const onTouchStart = (event: TouchEvent<HTMLElement>) => {
         const touch = event.touches[0];
 
+        stopAutoSlide();
         cardTouchStartRef.current = {
             x: touch.clientX,
             y: touch.clientY,
@@ -312,22 +483,31 @@ export default function DanceShortsDisplayCardField({
         const touch = event.changedTouches[0];
         const deltaX = touch.clientX - start.x;
         const deltaY = touch.clientY - start.y;
+        const swipeDirection = detectCardSwipe(deltaX, deltaY);
 
-        if (
-            Math.abs(deltaX) < cardSwipeDistanceThreshold ||
-            Math.abs(deltaX) <= Math.abs(deltaY)
-        ) {
+        if (swipeDirection === null) {
             return;
         }
 
         event.preventDefault();
+        stopAutoSlide();
 
-        if (deltaX < 0) {
+        if (swipeDirection === 'left') {
             void moveToNext();
             return;
         }
 
-        void moveToPrevious();
+        if (swipeDirection === 'right') {
+            void moveToPrevious();
+            return;
+        }
+
+        const selectOptionDirection =
+            selectOptionDirectionForVerticalSwipe(swipeDirection);
+
+        if (selectOptionDirection !== null) {
+            visitSelectOptionBySwipe(selectOptionDirection);
+        }
     };
 
     useEffect(() => {
@@ -343,6 +523,8 @@ export default function DanceShortsDisplayCardField({
                 return;
             }
 
+            stopAutoSlide();
+
             if (event.key === 'ArrowLeft') {
                 event.preventDefault();
                 void moveToPrevious();
@@ -357,7 +539,7 @@ export default function DanceShortsDisplayCardField({
         window.addEventListener('keydown', onKeyDown);
 
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [moveToNext, moveToPrevious]);
+    }, [moveToNext, moveToPrevious, stopAutoSlide]);
 
     if (currentWindow.visibleCards.length === 0) {
         return (
@@ -381,18 +563,21 @@ export default function DanceShortsDisplayCardField({
             id="dance-shorts-card-field"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="relative h-full min-h-0 touch-pan-y overflow-hidden"
+            className="relative h-full min-h-0 touch-none overflow-hidden"
             aria-busy={isWindowSwitching || isPrefetching}
         >
-            <div className="h-full min-h-0">
+            <div className="flex h-full min-h-0 items-start justify-center">
                 {isWindowSwitching ? (
                     <LoadingDisplayCardField />
                 ) : (
-                    <div className="relative mx-auto h-full min-h-0 w-full max-w-md sm:max-w-3xl lg:max-w-4xl">
+                    <div className="relative mx-auto max-h-full min-h-0 w-full max-w-md overflow-hidden landscape:max-w-sm sm:max-w-lg lg:max-w-xl lg:landscape:max-w-xl">
                         <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-30 flex items-center justify-between px-1.5 sm:px-2">
                             <button
                                 type="button"
-                                onClick={() => void moveToPrevious()}
+                                onClick={() => {
+                                    stopAutoSlide();
+                                    void moveToPrevious();
+                                }}
                                 disabled={!canMovePrev || isWindowSwitching}
                                 aria-label="前のカードへ移動"
                                 className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border border-white/36 bg-slate-950/70 text-xl font-bold text-white shadow-[0_14px_26px_rgba(2,24,45,0.24)] backdrop-blur-xl transition hover:bg-slate-900/82 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35"
@@ -401,7 +586,10 @@ export default function DanceShortsDisplayCardField({
                             </button>
                             <button
                                 type="button"
-                                onClick={() => void moveToNext()}
+                                onClick={() => {
+                                    stopAutoSlide();
+                                    void moveToNext();
+                                }}
                                 disabled={!canMoveNext || isWindowSwitching}
                                 aria-label="次のカードへ移動"
                                 className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border border-white/36 bg-slate-950/70 text-xl font-bold text-white shadow-[0_14px_26px_rgba(2,24,45,0.24)] backdrop-blur-xl transition hover:bg-slate-900/82 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35"
@@ -421,6 +609,7 @@ export default function DanceShortsDisplayCardField({
                                 sortKey={windowRequest.sortKey}
                                 rank={rankForIndex(currentWindow, activeIndex)}
                                 isActive
+                                thumbnailControls={thumbnailControls}
                             />
                         ) : currentWindow.type ===
                           DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING &&
@@ -451,6 +640,7 @@ export default function DanceShortsDisplayCardField({
                                 observationNote={activeCard.observation_note}
                                 rank={rankForIndex(currentWindow, activeIndex)}
                                 isActive
+                                thumbnailControls={thumbnailControls}
                             />
                         ) : (
                             <EmptyDisplayCardField message="表示できるカードはまだありません。" />
