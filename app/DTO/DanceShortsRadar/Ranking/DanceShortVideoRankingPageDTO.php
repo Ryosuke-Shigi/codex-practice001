@@ -8,9 +8,9 @@ use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
  * DanceShortsRadar 通常ランキング画面の Query Action 結果 DTO です。
  *
  * この DTO は「画面を描くために Responder が必要とするユースケース結果」を束ねます。
- * rankingList は現在選択中の通常ランキングタブで表示するランキング、allRankingList は「まとめ」タブ用に
- * active region の候補を同じ sortKey でまとめたランキングです。risingCandidateList は
- * US / KR 側で先行して伸びている可能性がある候補を Service が固定順で作った結果です。
+ * rankingList は現在選択中の通常ランキングタブで表示するランキング window、allRankingList は
+ * 「まとめ」タブ選択時のランキング window です。risingCandidateList は上昇候補タブ選択時の
+ * window です。画面の主契約は displayCardField で、全件候補配列を保持する目的では使いません。
  * comparisonDayOptions や sortKeyOptions は画面操作に必要な許可済み選択肢です。
  *
  * Inertia props の最終形、href、表示ラベル、空メッセージは Responder で整えます。

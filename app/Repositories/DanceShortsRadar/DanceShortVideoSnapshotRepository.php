@@ -6,6 +6,9 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotCreateDTO;
 use App\Models\DanceShortVideoSnapshot;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\JoinClause;
+use Illuminate\Support\Facades\DB;
 
 class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotRepositoryInterface
 {
@@ -81,6 +84,179 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
             ->get();
     }
 
+    /**
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsWindowByRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $startRank,
+        int $windowSize,
+    ): array {
+        /*
+         * 通常ランキングの displayCardField は全件候補を Action 側で作らず、
+         * Repository で startRank 位置から必要な window だけを取得します。
+         * windowSize + 1 件にすることで、別 COUNT query を増やさず hasNext を判定できます。
+         */
+        $safeRegionCodes = array_values(array_unique(array_filter(
+            $regionCodes,
+            fn (string $regionCode): bool => $regionCode !== '',
+        )));
+
+        if ($safeRegionCodes === []) {
+            return [];
+        }
+
+        $query = $this->rankingRowsQuery($comparisonDays)
+            ->whereIn('regions.code', $safeRegionCodes);
+
+        $this->orderRankingRows($query, $sortKey);
+
+        return $query
+            ->offset(max(0, $startRank - 1))
+            ->limit($windowSize + 1)
+            ->get()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $sourceRegionCodes
+     * @return array<int, object>
+     */
+    public function risingRowsWindow(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+        int $startRank,
+        int $windowSize,
+    ): array {
+        /*
+         * 上昇候補は「US / KR で伸び、JP では未観測または伸びが小さい」行だけを返します。
+         * JP は比較対象であり source region ではないため、入力に混ざっていても source から外します。
+         * ここでは read model 用の row を返すだけで、DTO 化やカード文言の判断は Strategy に戻します。
+         */
+        $safeSourceRegionCodes = array_values(array_intersect(
+            ['US', 'KR'],
+            array_unique($sourceRegionCodes),
+        ));
+
+        if ($safeSourceRegionCodes === []) {
+            return [];
+        }
+
+        $sourceDeltaExpression = $this->deltaExpression('current_snapshots', 'previous_snapshots');
+        $sourceGrowthExpression = $this->growthRateExpression('current_snapshots', 'previous_snapshots');
+        $sourceViewsPerHourExpression = $this->viewsPerHourExpression('current_snapshots', 'previous_snapshots');
+        $japanDeltaExpression = $this->deltaExpression('japan_current_snapshots', 'japan_previous_snapshots');
+        $japanGrowthExpression = $this->growthRateExpression('japan_current_snapshots', 'japan_previous_snapshots');
+        $japanViewsPerHourExpression = $this->viewsPerHourExpression('japan_current_snapshots', 'japan_previous_snapshots');
+        $uniqueSourceOrder = implode(', ', [
+            $sourceDeltaExpression.' DESC',
+            'CASE WHEN '.$sourceGrowthExpression.' IS NULL THEN 1 ELSE 0 END ASC',
+            $sourceGrowthExpression.' DESC',
+            'CASE WHEN '.$japanDeltaExpression.' IS NULL THEN 0 ELSE 1 END ASC',
+            $japanDeltaExpression.' ASC',
+            'current_snapshots.collected_at DESC',
+            'videos.id ASC',
+        ]);
+
+        $baseQuery = $this->baseCurrentSnapshotQuery($comparisonDays)
+            ->whereIn('regions.code', $safeSourceRegionCodes)
+            ->leftJoin('dance_short_regions as japan_regions', function (JoinClause $join): void {
+                $join->where('japan_regions.code', 'JP')
+                    ->where('japan_regions.is_active', true);
+            })
+            ->leftJoin('dance_short_video_snapshots as japan_current_snapshots', function (JoinClause $join): void {
+                $join->whereRaw(
+                    'japan_current_snapshots.id = ('.$this->latestSnapshotIdSql(
+                        currentAlias: 'current_snapshots',
+                        lookupAlias: 'latest_japan_current_snapshots',
+                        regionIdExpression: 'japan_regions.id',
+                    ).')',
+                );
+            })
+            ->leftJoin('dance_short_video_snapshots as japan_previous_snapshots', function (JoinClause $join) use ($comparisonDays): void {
+                $join->whereRaw(
+                    'japan_previous_snapshots.id = COALESCE(('.
+                    $this->previousAtOrBeforeIdSql(
+                        currentAlias: 'japan_current_snapshots',
+                        lookupAlias: 'japan_previous_cutoff_snapshots',
+                        comparisonDays: $comparisonDays,
+                    ).
+                    '), ('.
+                    $this->previousBeforeIdSql(
+                        currentAlias: 'japan_current_snapshots',
+                        lookupAlias: 'japan_previous_fallback_snapshots',
+                    ).
+                    '))',
+                );
+            })
+            ->whereNotNull('previous_snapshots.id')
+            ->whereRaw($sourceDeltaExpression.' > 0')
+            ->where(function (Builder $query) use ($sourceDeltaExpression, $japanDeltaExpression): void {
+                $query->whereNull('japan_current_snapshots.id')
+                    ->orWhere(function (Builder $query) use ($sourceDeltaExpression, $japanDeltaExpression): void {
+                        $query->whereNotNull('japan_previous_snapshots.id')
+                            ->whereRaw($japanDeltaExpression.' < '.$sourceDeltaExpression);
+                    });
+            })
+            ->select([
+                'videos.id as video_id',
+                'videos.youtube_video_id',
+                'videos.title',
+                'videos.channel_title',
+                'videos.thumbnail_url',
+                'videos.url',
+                'videos.published_at',
+                'regions.code as source_region_code',
+                'regions.name as source_region_name',
+                'current_snapshots.view_count as source_current_view_count',
+                'previous_snapshots.view_count as source_previous_view_count',
+                'current_snapshots.like_count as source_like_count',
+                'current_snapshots.comment_count as source_comment_count',
+                'current_snapshots.collected_at as source_current_collected_at',
+                'previous_snapshots.collected_at as source_previous_collected_at',
+                'japan_current_snapshots.id as japan_current_snapshot_id',
+                'japan_previous_snapshots.id as japan_previous_snapshot_id',
+                'japan_current_snapshots.view_count as japan_current_view_count',
+                'japan_previous_snapshots.view_count as japan_previous_view_count',
+                'japan_current_snapshots.collected_at as japan_current_collected_at',
+                'japan_previous_snapshots.collected_at as japan_previous_collected_at',
+            ])
+            ->selectRaw($sourceDeltaExpression.' as source_view_count_delta')
+            ->selectRaw($sourceGrowthExpression.' as source_view_growth_rate')
+            ->selectRaw($sourceViewsPerHourExpression.' as source_views_per_hour')
+            ->selectRaw($japanDeltaExpression.' as japan_view_count_delta')
+            ->selectRaw($japanGrowthExpression.' as japan_view_growth_rate')
+            ->selectRaw($japanViewsPerHourExpression.' as japan_views_per_hour')
+            ->selectRaw(
+                /*
+                 * 同じ YouTube 動画が US / KR の両方で候補になる場合は、より強い source 側の伸びを
+                 * 代表行にします。Window 関数で source_unique_rank = 1 だけを残し、
+                 * Strategy には重複のない候補 row として渡します。
+                 */
+                'ROW_NUMBER() OVER (PARTITION BY videos.youtube_video_id ORDER BY '.
+                $uniqueSourceOrder.
+                ') as source_unique_rank',
+            );
+
+        return DB::query()
+            ->fromSub($baseQuery, 'rising_candidate_rows')
+            ->where('source_unique_rank', 1)
+            ->orderByDesc('source_view_count_delta')
+            ->orderByRaw('CASE WHEN source_view_growth_rate IS NULL THEN 1 ELSE 0 END ASC')
+            ->orderByDesc('source_view_growth_rate')
+            ->orderByRaw('CASE WHEN japan_view_count_delta IS NULL THEN 0 ELSE 1 END ASC')
+            ->orderBy('japan_view_count_delta')
+            ->orderByDesc('source_current_collected_at')
+            ->orderBy('video_id')
+            ->offset(max(0, $startRank - 1))
+            ->limit($windowSize + 1)
+            ->get()
+            ->all();
+    }
+
     public function latestSnapshotAtOrBefore(
         int $videoId,
         int $regionId,
@@ -98,6 +274,192 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
             ->orderByDesc('collected_at')
             ->orderByDesc('id')
             ->first();
+    }
+
+    private function rankingRowsQuery(int $comparisonDays): Builder
+    {
+        $deltaExpression = $this->deltaExpression('current_snapshots', 'previous_snapshots');
+        $growthExpression = $this->growthRateExpression('current_snapshots', 'previous_snapshots');
+        $viewsPerHourExpression = $this->viewsPerHourExpression('current_snapshots', 'previous_snapshots');
+
+        return $this->baseCurrentSnapshotQuery($comparisonDays)
+            ->select([
+                'videos.id as video_id',
+                'videos.youtube_video_id',
+                'videos.title',
+                'videos.channel_title',
+                'videos.thumbnail_url',
+                'videos.url',
+                'videos.published_at',
+                'regions.code as region_code',
+                'regions.name as region_name',
+                'current_snapshots.view_count as current_view_count',
+                'previous_snapshots.view_count as previous_view_count',
+                'current_snapshots.like_count',
+                'current_snapshots.comment_count',
+                'current_snapshots.collected_at as current_collected_at',
+                'previous_snapshots.collected_at as previous_collected_at',
+                'previous_snapshots.id as previous_snapshot_id',
+            ])
+            ->selectRaw($deltaExpression.' as view_count_delta')
+            ->selectRaw($growthExpression.' as view_growth_rate')
+            ->selectRaw($viewsPerHourExpression.' as views_per_hour');
+    }
+
+    private function baseCurrentSnapshotQuery(int $comparisonDays): Builder
+    {
+        return DB::table('dance_short_video_snapshots as current_snapshots')
+            ->join('dance_short_videos as videos', 'videos.id', '=', 'current_snapshots.video_id')
+            ->join('dance_short_regions as regions', 'regions.id', '=', 'current_snapshots.region_id')
+            ->leftJoin('dance_short_video_snapshots as previous_snapshots', function (JoinClause $join) use ($comparisonDays): void {
+                $join->whereRaw(
+                    'previous_snapshots.id = COALESCE(('.
+                    $this->previousAtOrBeforeIdSql(
+                        currentAlias: 'current_snapshots',
+                        lookupAlias: 'previous_cutoff_snapshots',
+                        comparisonDays: $comparisonDays,
+                    ).
+                    '), ('.
+                    $this->previousBeforeIdSql(
+                        currentAlias: 'current_snapshots',
+                        lookupAlias: 'previous_fallback_snapshots',
+                    ).
+                    '))',
+                );
+            })
+            ->where('videos.tracking_status', 'active')
+            ->where('regions.is_active', true)
+            ->whereNotExists(function (Builder $query): void {
+                $query->selectRaw('1')
+                    ->from('dance_short_video_snapshots as later_snapshots')
+                    ->whereColumn('later_snapshots.video_id', 'current_snapshots.video_id')
+                    ->whereColumn('later_snapshots.region_id', 'current_snapshots.region_id')
+                    ->where(function (Builder $query): void {
+                        $query->whereColumn(
+                            'later_snapshots.collected_at',
+                            '>',
+                            'current_snapshots.collected_at',
+                        )->orWhere(function (Builder $query): void {
+                            $query->whereColumn(
+                                'later_snapshots.collected_at',
+                                'current_snapshots.collected_at',
+                            )->whereColumn('later_snapshots.id', '>', 'current_snapshots.id');
+                        });
+                    });
+            });
+    }
+
+    private function latestSnapshotIdSql(
+        string $currentAlias,
+        string $lookupAlias,
+        string $regionIdExpression,
+    ): string {
+        return sprintf(
+            'select %1$s.id from dance_short_video_snapshots as %1$s '.
+            'where %1$s.video_id = %2$s.video_id '.
+            'and %1$s.region_id = %3$s '.
+            'order by %1$s.collected_at desc, %1$s.id desc limit 1',
+            $lookupAlias,
+            $currentAlias,
+            $regionIdExpression,
+        );
+    }
+
+    private function previousAtOrBeforeIdSql(
+        string $currentAlias,
+        string $lookupAlias,
+        int $comparisonDays,
+    ): string {
+        return sprintf(
+            'select %1$s.id from dance_short_video_snapshots as %1$s '.
+            'where %1$s.video_id = %2$s.video_id '.
+            'and %1$s.region_id = %2$s.region_id '.
+            'and %1$s.collected_at <= %3$s '.
+            'order by %1$s.collected_at desc, %1$s.id desc limit 1',
+            $lookupAlias,
+            $currentAlias,
+            $this->previousCutoffExpression($currentAlias, $comparisonDays),
+        );
+    }
+
+    private function previousBeforeIdSql(string $currentAlias, string $lookupAlias): string
+    {
+        return sprintf(
+            'select %1$s.id from dance_short_video_snapshots as %1$s '.
+            'where %1$s.video_id = %2$s.video_id '.
+            'and %1$s.region_id = %2$s.region_id '.
+            'and (%1$s.collected_at < %2$s.collected_at '.
+            'or (%1$s.collected_at = %2$s.collected_at and %1$s.id < %2$s.id)) '.
+            'order by %1$s.collected_at desc, %1$s.id desc limit 1',
+            $lookupAlias,
+            $currentAlias,
+        );
+    }
+
+    private function previousCutoffExpression(string $currentAlias, int $comparisonDays): string
+    {
+        $safeComparisonDays = max(1, $comparisonDays);
+
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return sprintf("datetime(%s.collected_at, '-%d days')", $currentAlias, $safeComparisonDays);
+        }
+
+        return sprintf('DATE_SUB(%s.collected_at, INTERVAL %d DAY)', $currentAlias, $safeComparisonDays);
+    }
+
+    private function deltaExpression(string $currentAlias, string $previousAlias): string
+    {
+        return sprintf(
+            'CASE WHEN %2$s.id IS NOT NULL THEN %1$s.view_count - %2$s.view_count ELSE NULL END',
+            $currentAlias,
+            $previousAlias,
+        );
+    }
+
+    private function growthRateExpression(string $currentAlias, string $previousAlias): string
+    {
+        return sprintf(
+            'CASE WHEN %2$s.id IS NOT NULL AND %2$s.view_count > 0 '.
+            'THEN (%1$s.view_count - %2$s.view_count) * 1.0 / %2$s.view_count ELSE NULL END',
+            $currentAlias,
+            $previousAlias,
+        );
+    }
+
+    private function viewsPerHourExpression(string $currentAlias, string $previousAlias): string
+    {
+        $hoursExpression = DB::connection()->getDriverName() === 'sqlite'
+            ? sprintf('(julianday(%s.collected_at) - julianday(%s.collected_at)) * 24.0', $currentAlias, $previousAlias)
+            : sprintf('TIMESTAMPDIFF(SECOND, %s.collected_at, %s.collected_at) / 3600.0', $previousAlias, $currentAlias);
+
+        return sprintf(
+            'CASE WHEN %2$s.id IS NOT NULL AND %3$s > 0 '.
+            'THEN (%1$s.view_count - %2$s.view_count) * 1.0 / (%3$s) ELSE NULL END',
+            $currentAlias,
+            $previousAlias,
+            $hoursExpression,
+        );
+    }
+
+    private function orderRankingRows(Builder $query, string $sortKey): void
+    {
+        $deltaExpression = $this->deltaExpression('current_snapshots', 'previous_snapshots');
+        $sortExpression = match ($sortKey) {
+            'view_count_delta' => $deltaExpression,
+            'view_growth_rate' => $this->growthRateExpression('current_snapshots', 'previous_snapshots'),
+            'current_view_count' => 'current_snapshots.view_count',
+            default => $this->viewsPerHourExpression('current_snapshots', 'previous_snapshots'),
+        };
+
+        $query
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NULL THEN 1 ELSE 0 END ASC')
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NOT NULL AND '.$sortExpression.' IS NULL THEN 1 ELSE 0 END ASC')
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NOT NULL THEN '.$sortExpression.' ELSE NULL END DESC')
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NOT NULL THEN '.$deltaExpression.' ELSE NULL END DESC')
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NOT NULL THEN current_snapshots.view_count ELSE NULL END DESC')
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NULL THEN current_snapshots.collected_at ELSE NULL END DESC')
+            ->orderByRaw('CASE WHEN previous_snapshots.id IS NULL THEN current_snapshots.id ELSE NULL END DESC')
+            ->orderBy('videos.id');
     }
 
     public function latestSnapshotBefore(

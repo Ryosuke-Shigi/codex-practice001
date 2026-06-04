@@ -44,6 +44,21 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
         $this->assertSame(11, $window['pagination']->nextStartRank);
     }
 
+    public function test_build_window_from_lookahead_keeps_repository_window_start_rank(): void
+    {
+        $service = new DanceShortDisplayCardWindowService();
+
+        $window = $service->buildWindowFromLookahead(range(6, 11), 6, 5);
+
+        $this->assertSame([6, 7, 8, 9, 10], $window['visibleItems']);
+        $this->assertSame(6, $window['pagination']->startRank);
+        $this->assertSame(5, $window['pagination']->windowSize);
+        $this->assertTrue($window['pagination']->hasPrev);
+        $this->assertTrue($window['pagination']->hasNext);
+        $this->assertSame(1, $window['pagination']->prevStartRank);
+        $this->assertSame(11, $window['pagination']->nextStartRank);
+    }
+
     public function test_active_rank_uses_start_rank_and_active_index_when_card_exists(): void
     {
         $service = new DanceShortDisplayCardWindowService();

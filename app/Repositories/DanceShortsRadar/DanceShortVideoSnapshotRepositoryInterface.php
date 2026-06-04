@@ -29,6 +29,40 @@ interface DanceShortVideoSnapshotRepositoryInterface
     public function latestRankingSnapshotsByRegionCode(string $regionCode): Collection;
 
     /**
+     * displayCardField の通常ランキング window 用 read model を取得します。
+     *
+     * 指定された region code 群に対し、startRank から windowSize 件の表示候補と
+     * hasNext 判定用の1件を取得します。返却される row は current snapshot、previous snapshot、
+     * snapshot 比較 metric を持ちますが、DTO 化や Inertia props 化は Repository では行いません。
+     *
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsWindowByRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $startRank,
+        int $windowSize,
+    ): array;
+
+    /**
+     * displayCardField の上昇候補 window 用 read model を取得します。
+     *
+     * US / KR などの source region に対し、海外側で増加していて、JP 側が未観測または
+     * JP 側の増加量が source より小さい候補だけを startRank から windowSize + 1 件取得します。
+     *
+     * @param  array<int, string>  $sourceRegionCodes
+     * @return array<int, object>
+     */
+    public function risingRowsWindow(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+        int $startRank,
+        int $windowSize,
+    ): array;
+
+    /**
      * previous 候補を取得します。
      *
      * previous は currentCollectedAt - comparisonDays 日以前の最新 snapshot です。

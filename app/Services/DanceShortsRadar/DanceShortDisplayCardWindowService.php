@@ -69,7 +69,26 @@ class DanceShortDisplayCardWindowService
          * 総件数を別途数えなくても hasNext を判定でき、カード本体として React に返すのは
          * visibleItems の最大 windowSize 件だけにできます。
          */
-        $lookaheadItems = array_slice($items, $startRank - 1, $windowSize + 1);
+        return $this->buildWindowFromLookahead(
+            lookaheadItems: array_slice($items, $startRank - 1, $windowSize + 1),
+            startRank: $startRank,
+            windowSize: $windowSize,
+        );
+    }
+
+    /**
+     * @template T
+     *
+     * @param  array<int, T>  $lookaheadItems
+     * @return array{visibleItems: array<int, T>, pagination: DanceShortDisplayCardPaginationDTO}
+     */
+    public function buildWindowFromLookahead(array $lookaheadItems, int $startRank, int $windowSize): array
+    {
+        /*
+         * Repository がすでに startRank から windowSize + 1 件だけ取得した場合の入口です。
+         * Strategy はこのメソッドを使い、Action 内で「全件配列を作ってから slice する」流れへ
+         * 戻さずに pagination だけを共通ルールで作ります。
+         */
         $visibleItems = array_slice($lookaheadItems, 0, $windowSize);
         $hasNext = count($lookaheadItems) > $windowSize;
         $hasPrev = $startRank > 1;

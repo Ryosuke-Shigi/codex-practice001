@@ -51,6 +51,25 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         throw new RuntimeException('Cleanup action should not fetch ranking snapshots.');
     }
 
+    public function rankingRowsWindowByRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $startRank,
+        int $windowSize,
+    ): array {
+        throw new RuntimeException('Cleanup action should not fetch ranking windows.');
+    }
+
+    public function risingRowsWindow(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+        int $startRank,
+        int $windowSize,
+    ): array {
+        throw new RuntimeException('Cleanup action should not fetch rising windows.');
+    }
+
     public function latestSnapshotAtOrBefore(
         int $videoId,
         int $regionId,

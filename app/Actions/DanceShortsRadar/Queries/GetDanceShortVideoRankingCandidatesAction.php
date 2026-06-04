@@ -7,6 +7,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingListDTO;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
+use Carbon\CarbonImmutable;
 
 class GetDanceShortVideoRankingCandidatesAction
 {
@@ -131,13 +132,44 @@ class GetDanceShortVideoRankingCandidatesAction
     }
 
     /**
+     * displayCardField の window 取得用入口です。
+     *
+     * 初期表示と先読み API の Strategy はこのメソッドを使い、DB 側で startRank から
+     * windowSize + 1 件だけ取得した row を DTO へ詰め替えます。既存 execute() は後方互換の
+     * 候補一覧 Query として残し、本画面の主表示はこの window 入口へ寄せます。
+     *
+     * @param  array<int, string>  $regionCodes
+     */
+    public function executeWindowForRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $startRank,
+        int $windowSize,
+    ): DanceShortVideoRankingListDTO {
+        $comparisonDays = $this->snapshotMetricService->normalizeComparisonDays($comparisonDays);
+        $sortKey = $this->snapshotMetricService->normalizeSortKey($sortKey);
+
+        return new DanceShortVideoRankingListDTO(array_map(
+            fn (object $row): DanceShortVideoRankingItemDTO => $this->rankingItemFromWindowRow($row, $comparisonDays),
+            $this->snapshotRepository->rankingRowsWindowByRegionCodes(
+                regionCodes: $regionCodes,
+                comparisonDays: $comparisonDays,
+                sortKey: $sortKey,
+                startRank: $startRank,
+                windowSize: $windowSize,
+            ),
+        ));
+    }
+
+    /**
      * @param  array<int, DanceShortVideoRankingItemDTO>  $items
      * @return array<int, DanceShortVideoRankingItemDTO>
      */
     public function sortedItems(array $items, string $sortKey): array
     {
         /*
-         * Page Action が「まとめ」タブ用に JP / US / KR のランキング DTO を集約するときも、
+         * 既存の一覧 Query 利用側が複数 region の RankingItemDTO を集約するときも、
          * 地域別と同じ ranking sort を使えるよう公開しています。
          * ここでも metric の再計算は行わず、すでに DTO に入っている値だけを比較します。
          */
@@ -221,5 +253,31 @@ class GetDanceShortVideoRankingCandidatesAction
             'current_view_count' => $item->currentViewCount,
             default => $item->viewsPerHour,
         };
+    }
+
+    private function rankingItemFromWindowRow(object $row, int $comparisonDays): DanceShortVideoRankingItemDTO
+    {
+        return new DanceShortVideoRankingItemDTO(
+            videoId: (int) $row->video_id,
+            youtubeVideoId: (string) $row->youtube_video_id,
+            title: (string) $row->title,
+            channelTitle: $row->channel_title === null ? null : (string) $row->channel_title,
+            thumbnailUrl: $row->thumbnail_url === null ? null : (string) $row->thumbnail_url,
+            url: $row->url === null ? null : (string) $row->url,
+            publishedAt: $row->published_at === null ? null : CarbonImmutable::parse((string) $row->published_at, 'UTC'),
+            regionCode: (string) $row->region_code,
+            regionName: (string) $row->region_name,
+            currentViewCount: (int) $row->current_view_count,
+            previousViewCount: $row->previous_view_count === null ? null : (int) $row->previous_view_count,
+            viewCountDelta: $row->view_count_delta === null ? null : (int) $row->view_count_delta,
+            viewGrowthRate: $row->view_growth_rate === null ? null : (float) $row->view_growth_rate,
+            viewsPerHour: $row->views_per_hour === null ? null : (float) $row->views_per_hour,
+            likeCount: $row->like_count === null ? null : (int) $row->like_count,
+            commentCount: $row->comment_count === null ? null : (int) $row->comment_count,
+            currentCollectedAt: CarbonImmutable::parse((string) $row->current_collected_at, 'UTC'),
+            previousCollectedAt: $row->previous_collected_at === null ? null : CarbonImmutable::parse((string) $row->previous_collected_at, 'UTC'),
+            comparisonDays: $comparisonDays,
+            hasPreviousSnapshot: $row->previous_snapshot_id !== null,
+        );
     }
 }

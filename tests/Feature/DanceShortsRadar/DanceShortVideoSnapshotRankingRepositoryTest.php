@@ -66,6 +66,70 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         ], $snapshots->pluck('id')->all());
     }
 
+    public function test_ranking_rows_window_by_region_codes_returns_window_with_one_lookahead(): void
+    {
+        $jp = $this->region('JP', '日本');
+
+        foreach (range(1, 6) as $rank) {
+            $this->rankingVideoWithDelta(
+                region: $jp,
+                youtubeVideoId: sprintf('jp-window-%02d', $rank),
+                delta: 700 - ($rank * 100),
+            );
+        }
+
+        $rows = $this->repository()->rankingRowsWindowByRegionCodes(
+            regionCodes: ['JP'],
+            comparisonDays: 1,
+            sortKey: 'view_count_delta',
+            startRank: 1,
+            windowSize: 5,
+        );
+
+        $this->assertCount(6, $rows);
+        $this->assertSame('jp-window-01', $rows[0]->youtube_video_id);
+        $this->assertSame('jp-window-05', $rows[4]->youtube_video_id);
+        $this->assertSame('jp-window-06', $rows[5]->youtube_video_id);
+        $this->assertSame(600, (int) $rows[0]->view_count_delta);
+    }
+
+    public function test_rising_rows_window_returns_source_candidates_with_japan_status_conditions(): void
+    {
+        $jp = $this->region('JP', '日本');
+        $us = $this->region('US', 'アメリカ');
+        $kr = $this->region('KR', '韓国');
+        $usUnobserved = $this->video('us-unobserved-rising', 'US unobserved rising');
+        $krSmallerJapan = $this->video('kr-smaller-japan-rising', 'KR smaller Japan rising');
+        $notCandidate = $this->video('not-rising', 'Not rising');
+
+        $this->snapshot($usUnobserved, $us, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($usUnobserved, $us, 1800, '2026-06-01 12:00:00');
+
+        $this->snapshot($krSmallerJapan, $kr, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($krSmallerJapan, $kr, 1500, '2026-06-01 12:00:00');
+        $this->snapshot($krSmallerJapan, $jp, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($krSmallerJapan, $jp, 1100, '2026-06-01 12:00:00');
+
+        $this->snapshot($notCandidate, $us, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($notCandidate, $us, 1200, '2026-06-01 12:00:00');
+        $this->snapshot($notCandidate, $jp, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($notCandidate, $jp, 1600, '2026-06-01 12:00:00');
+
+        $rows = $this->repository()->risingRowsWindow(
+            sourceRegionCodes: ['US', 'KR'],
+            comparisonDays: 1,
+            startRank: 1,
+            windowSize: 5,
+        );
+
+        $this->assertCount(2, $rows);
+        $this->assertSame('us-unobserved-rising', $rows[0]->youtube_video_id);
+        $this->assertSame('US', $rows[0]->source_region_code);
+        $this->assertNull($rows[0]->japan_current_snapshot_id);
+        $this->assertSame('kr-smaller-japan-rising', $rows[1]->youtube_video_id);
+        $this->assertSame(100, (int) $rows[1]->japan_view_count_delta);
+    }
+
     public function test_latest_snapshot_at_or_before_returns_latest_snapshot_not_newer_than_cutoff(): void
     {
         $jp = $this->region('JP', '日本');
@@ -169,5 +233,16 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
             'view_count' => $viewCount,
             'collected_at' => $collectedAt,
         ]);
+    }
+
+    private function rankingVideoWithDelta(
+        DanceShortRegion $region,
+        string $youtubeVideoId,
+        int $delta,
+    ): void {
+        $video = $this->video($youtubeVideoId, $youtubeVideoId);
+
+        $this->snapshot($video, $region, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($video, $region, 1000 + $delta, '2026-06-01 12:00:00');
     }
 }
