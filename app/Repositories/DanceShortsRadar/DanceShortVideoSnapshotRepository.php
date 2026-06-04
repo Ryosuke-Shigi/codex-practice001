@@ -122,6 +122,34 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     }
 
     /**
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsByRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+    ): array {
+        $safeRegionCodes = array_values(array_unique(array_filter(
+            $regionCodes,
+            fn (string $regionCode): bool => $regionCode !== '',
+        )));
+
+        if ($safeRegionCodes === []) {
+            return [];
+        }
+
+        $query = $this->rankingRowsQuery($comparisonDays)
+            ->whereIn('regions.code', $safeRegionCodes);
+
+        $this->orderRankingRows($query, $sortKey);
+
+        return $query
+            ->get()
+            ->all();
+    }
+
+    /**
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>
      */
@@ -131,6 +159,43 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
         int $startRank,
         int $windowSize,
     ): array {
+        $query = $this->risingRowsQuery($sourceRegionCodes, $comparisonDays);
+
+        if ($query === null) {
+            return [];
+        }
+
+        return $query
+            ->offset(max(0, $startRank - 1))
+            ->limit($windowSize + 1)
+            ->get()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $sourceRegionCodes
+     * @return array<int, object>
+     */
+    public function risingRows(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+    ): array {
+        $query = $this->risingRowsQuery($sourceRegionCodes, $comparisonDays);
+
+        if ($query === null) {
+            return [];
+        }
+
+        return $query
+            ->get()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $sourceRegionCodes
+     */
+    private function risingRowsQuery(array $sourceRegionCodes, int $comparisonDays): ?Builder
+    {
         /*
          * 上昇候補は「US / KR で伸び、JP では未観測または伸びが小さい」行だけを返します。
          * JP は比較対象であり source region ではないため、入力に混ざっていても source から外します。
@@ -142,7 +207,7 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
         ));
 
         if ($safeSourceRegionCodes === []) {
-            return [];
+            return null;
         }
 
         $sourceDeltaExpression = $this->deltaExpression('current_snapshots', 'previous_snapshots');
@@ -250,11 +315,7 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
             ->orderByRaw('CASE WHEN japan_view_count_delta IS NULL THEN 0 ELSE 1 END ASC')
             ->orderBy('japan_view_count_delta')
             ->orderByDesc('source_current_collected_at')
-            ->orderBy('video_id')
-            ->offset(max(0, $startRank - 1))
-            ->limit($windowSize + 1)
-            ->get()
-            ->all();
+            ->orderBy('video_id');
     }
 
     public function latestSnapshotAtOrBefore(

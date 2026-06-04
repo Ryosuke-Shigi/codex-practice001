@@ -47,6 +47,21 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
+     * displayCardField の選択カード基準 window 用に、通常ランキング全体順の read model を取得します。
+     *
+     * Repository は指定された region code 群と sortKey に従って DB 上の並び順を確定するだけです。
+     * 選択中カードの順位探索や最大5件 window の切り出しは Service / Strategy 側へ残します。
+     *
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsByRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+    ): array;
+
+    /**
      * displayCardField の上昇候補 window 用 read model を取得します。
      *
      * US / KR などの source region に対し、海外側で増加していて、JP 側が未観測または
@@ -60,6 +75,19 @@ interface DanceShortVideoSnapshotRepositoryInterface
         int $comparisonDays,
         int $startRank,
         int $windowSize,
+    ): array;
+
+    /**
+     * displayCardField の選択カード基準 window 用に、上昇候補全体順の read model を取得します。
+     *
+     * Repository は上昇候補 query と既存の並び順だけを扱い、選択カード前後の切り出しは行いません。
+     *
+     * @param  array<int, string>  $sourceRegionCodes
+     * @return array<int, object>
+     */
+    public function risingRows(
+        array $sourceRegionCodes,
+        int $comparisonDays,
     ): array;
 
     /**

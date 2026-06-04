@@ -163,6 +163,33 @@ class GetDanceShortVideoRankingCandidatesAction
     }
 
     /**
+     * displayCardField の選択カード基準 window 用入口です。
+     *
+     * Strategy はこのメソッドでランキング全体順の DTO を受け取り、選択カード前後の最大5件を
+     * DanceShortDisplayCardWindowService に切り出させます。Action は DTO 化だけを担当し、
+     * どのカードを中央に置くかは判断しません。
+     *
+     * @param  array<int, string>  $regionCodes
+     */
+    public function executeForRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+    ): DanceShortVideoRankingListDTO {
+        $comparisonDays = $this->snapshotMetricService->normalizeComparisonDays($comparisonDays);
+        $sortKey = $this->snapshotMetricService->normalizeSortKey($sortKey);
+
+        return new DanceShortVideoRankingListDTO(array_map(
+            fn (object $row): DanceShortVideoRankingItemDTO => $this->rankingItemFromWindowRow($row, $comparisonDays),
+            $this->snapshotRepository->rankingRowsByRegionCodes(
+                regionCodes: $regionCodes,
+                comparisonDays: $comparisonDays,
+                sortKey: $sortKey,
+            ),
+        ));
+    }
+
+    /**
      * @param  array<int, DanceShortVideoRankingItemDTO>  $items
      * @return array<int, DanceShortVideoRankingItemDTO>
      */

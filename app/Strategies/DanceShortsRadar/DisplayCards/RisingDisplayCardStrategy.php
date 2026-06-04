@@ -38,22 +38,40 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
          * active な source region だけで Repository read model を作り、JP との比較条件は
          * Repository の query に閉じます。
          */
-        $rows = $this->snapshotRepository->risingRowsWindow(
-            sourceRegionCodes: $sourceRegionCodes,
-            comparisonDays: $condition->comparisonDays,
-            startRank: $condition->startRank,
-            windowSize: $condition->windowSize,
-        );
+        $rows = $condition->selectedVideoId === null
+            ? $this->snapshotRepository->risingRowsWindow(
+                sourceRegionCodes: $sourceRegionCodes,
+                comparisonDays: $condition->comparisonDays,
+                startRank: $condition->startRank,
+                windowSize: $condition->windowSize,
+            )
+            : $this->snapshotRepository->risingRows(
+                sourceRegionCodes: $sourceRegionCodes,
+                comparisonDays: $condition->comparisonDays,
+            );
         $candidates = array_map(
             fn (object $row): DanceShortVideoRisingCandidateDTO => $this->risingCandidateFromRow($row, $condition->comparisonDays),
             $rows,
         );
-        $window = $this->displayCardWindowService->buildWindowFromLookahead(
-            lookaheadItems: $candidates,
-            startRank: $condition->startRank,
-            windowSize: $condition->windowSize,
-        );
+        $window = $condition->selectedVideoId === null
+            ? $this->displayCardWindowService->buildWindowFromLookahead(
+                lookaheadItems: $candidates,
+                startRank: $condition->startRank,
+                windowSize: $condition->windowSize,
+            )
+            : $this->displayCardWindowService->buildWindowAroundSelectedVideo(
+                items: $candidates,
+                selectedVideoId: $condition->selectedVideoId,
+                windowSize: $condition->windowSize,
+                videoIdResolver: fn (DanceShortVideoRisingCandidateDTO $item): int => $item->videoId,
+            );
         $visibleItems = $window['visibleItems'];
+        $activeIndex = $window['activeIndex'] ?? 0;
+        $activeRank = $window['activeRank'] ?? $this->displayCardWindowService->activeRankFor(
+            startRank: $condition->startRank,
+            activeIndex: 0,
+            hasVisibleCards: count($visibleItems) > 0,
+        );
 
         return new DanceShortDisplayCardWindowDTO(new DanceShortDisplayCardFieldDTO(
             type: DanceShortDisplayCardFieldDTO::TYPE_RISING,
@@ -61,12 +79,8 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
                 fn (DanceShortVideoRisingCandidateDTO $item): DanceShortRisingDisplayCardDTO => new DanceShortRisingDisplayCardDTO($item),
                 $visibleItems,
             )),
-            activeIndex: 0,
-            activeRank: $this->displayCardWindowService->activeRankFor(
-                startRank: $condition->startRank,
-                activeIndex: 0,
-                hasVisibleCards: count($visibleItems) > 0,
-            ),
+            activeIndex: $activeIndex,
+            activeRank: $activeRank,
             pagination: $window['pagination'],
             emptyMessage: count($visibleItems) === 0 ? '表示できる上昇候補はまだありません。' : null,
         ));

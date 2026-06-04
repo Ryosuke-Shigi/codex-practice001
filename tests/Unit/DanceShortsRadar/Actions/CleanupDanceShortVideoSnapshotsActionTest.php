@@ -61,6 +61,14 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         throw new RuntimeException('Cleanup action should not fetch ranking windows.');
     }
 
+    public function rankingRowsByRegionCodes(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+    ): array {
+        throw new RuntimeException('Cleanup action should not fetch ranking rows.');
+    }
+
     public function risingRowsWindow(
         array $sourceRegionCodes,
         int $comparisonDays,
@@ -68,6 +76,13 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         int $windowSize,
     ): array {
         throw new RuntimeException('Cleanup action should not fetch rising windows.');
+    }
+
+    public function risingRows(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+    ): array {
+        throw new RuntimeException('Cleanup action should not fetch rising rows.');
     }
 
     public function latestSnapshotAtOrBefore(

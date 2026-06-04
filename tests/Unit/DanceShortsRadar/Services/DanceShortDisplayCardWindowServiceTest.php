@@ -59,6 +59,57 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
         $this->assertSame(11, $window['pagination']->nextStartRank);
     }
 
+    public function test_build_window_around_selected_video_centers_middle_rank(): void
+    {
+        $service = new DanceShortDisplayCardWindowService();
+
+        $window = $service->buildWindowAroundSelectedVideo(
+            items: range(1, 10),
+            selectedVideoId: 5,
+            windowSize: 5,
+            videoIdResolver: fn (int $videoId): int => $videoId,
+        );
+
+        $this->assertSame([3, 4, 5, 6, 7], $window['visibleItems']);
+        $this->assertSame(3, $window['pagination']->startRank);
+        $this->assertSame(2, $window['activeIndex']);
+        $this->assertSame(5, $window['activeRank']);
+    }
+
+    public function test_build_window_around_selected_video_keeps_head_window_for_first_rank(): void
+    {
+        $service = new DanceShortDisplayCardWindowService();
+
+        $window = $service->buildWindowAroundSelectedVideo(
+            items: range(1, 10),
+            selectedVideoId: 1,
+            windowSize: 5,
+            videoIdResolver: fn (int $videoId): int => $videoId,
+        );
+
+        $this->assertSame([1, 2, 3, 4, 5], $window['visibleItems']);
+        $this->assertSame(1, $window['pagination']->startRank);
+        $this->assertSame(0, $window['activeIndex']);
+        $this->assertSame(1, $window['activeRank']);
+    }
+
+    public function test_build_window_around_selected_video_keeps_tail_window_for_last_rank(): void
+    {
+        $service = new DanceShortDisplayCardWindowService();
+
+        $window = $service->buildWindowAroundSelectedVideo(
+            items: range(1, 10),
+            selectedVideoId: 10,
+            windowSize: 5,
+            videoIdResolver: fn (int $videoId): int => $videoId,
+        );
+
+        $this->assertSame([6, 7, 8, 9, 10], $window['visibleItems']);
+        $this->assertSame(6, $window['pagination']->startRank);
+        $this->assertSame(4, $window['activeIndex']);
+        $this->assertSame(10, $window['activeRank']);
+    }
+
     public function test_active_rank_uses_start_rank_and_active_index_when_card_exists(): void
     {
         $service = new DanceShortDisplayCardWindowService();

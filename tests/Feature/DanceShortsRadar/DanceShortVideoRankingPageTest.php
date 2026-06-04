@@ -246,6 +246,36 @@ class DanceShortVideoRankingPageTest extends TestCase
             ->assertJsonMissingPath('displayCardField.sortKey');
     }
 
+    public function test_display_card_window_api_centers_window_around_selected_video_rank(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $videos = [];
+
+        foreach (range(1, 10) as $rank) {
+            $videos[$rank] = $this->rankingVideoWithDelta(
+                region: $jp,
+                youtubeVideoId: sprintf('jp-selected-window-%02d', $rank),
+                delta: 1100 - ($rank * 100),
+            );
+        }
+
+        $this
+            ->getJson('/api/dance-shorts-radar/display-card-window?tab=JP&comparisonDays=1&sort=view_count_delta&selectedVideoId='.$videos[5]->getKey())
+            ->assertOk()
+            ->assertJsonCount(5, 'displayCardField.visibleCards')
+            ->assertJsonPath('displayCardField.type', 'ranking')
+            ->assertJsonPath('displayCardField.visibleCards.0.youtube_video_id', 'jp-selected-window-03')
+            ->assertJsonPath('displayCardField.visibleCards.2.youtube_video_id', 'jp-selected-window-05')
+            ->assertJsonPath('displayCardField.visibleCards.4.youtube_video_id', 'jp-selected-window-07')
+            ->assertJsonPath('displayCardField.activeIndex', 2)
+            ->assertJsonPath('displayCardField.activeRank', 5)
+            ->assertJsonPath('displayCardField.pagination.startRank', 3)
+            ->assertJsonPath('displayCardField.pagination.windowSize', 5)
+            ->assertJsonPath('displayCardField.pagination.hasPrev', true)
+            ->assertJsonPath('displayCardField.pagination.hasNext', true)
+            ->assertJsonPath('displayCardField.emptyMessage', null);
+    }
+
     public function test_display_card_window_api_safely_normalizes_invalid_start_rank_and_oversized_window(): void
     {
         $jp = $this->region('JP', '日本', 10);
@@ -670,11 +700,13 @@ class DanceShortVideoRankingPageTest extends TestCase
         DanceShortRegion $region,
         string $youtubeVideoId,
         int $delta,
-    ): void {
+    ): DanceShortVideo {
         $video = $this->video($youtubeVideoId, $youtubeVideoId);
 
         $this->snapshot($video, $region, 1000, '2026-05-31 12:00:00');
         $this->snapshot($video, $region, 1000 + $delta, '2026-06-01 12:00:00');
+
+        return $video;
     }
 }
 

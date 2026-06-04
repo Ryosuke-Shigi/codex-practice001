@@ -65,6 +65,7 @@ class GetDanceShortVideoRankingPageAction
                 sortKey: $sortKey,
                 startRank: $startRank,
                 windowSize: $windowSize,
+                selectedVideoId: $input->selectedVideoId,
             ))
             ->displayCardField;
         $rankingList = $this->rankingListFromDisplayCardField($displayCardField);
