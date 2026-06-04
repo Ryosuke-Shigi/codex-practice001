@@ -93,6 +93,29 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         $this->assertSame(600, (int) $rows[0]->view_count_delta);
     }
 
+    public function test_ranking_rows_window_handles_decreased_view_count(): void
+    {
+        $jp = $this->region('JP', '日本');
+        $video = $this->video('jp-decreased-view-count', 'JP decreased view count');
+
+        $this->snapshot($video, $jp, 1000, '2026-05-31 12:00:00');
+        $this->snapshot($video, $jp, 900, '2026-06-01 12:00:00');
+
+        $rows = $this->repository()->rankingRowsWindowByRegionCodes(
+            regionCodes: ['JP'],
+            comparisonDays: 1,
+            sortKey: 'view_count_delta',
+            startRank: 1,
+            windowSize: 5,
+        );
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('jp-decreased-view-count', $rows[0]->youtube_video_id);
+        $this->assertSame(-100, (int) $rows[0]->view_count_delta);
+        $this->assertEqualsWithDelta(-0.1, (float) $rows[0]->view_growth_rate, 0.000001);
+        $this->assertEqualsWithDelta(-100 / 24, (float) $rows[0]->views_per_hour, 0.000001);
+    }
+
     public function test_rising_rows_window_returns_source_candidates_with_japan_status_conditions(): void
     {
         $jp = $this->region('JP', '日本');
