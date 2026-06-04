@@ -8,8 +8,6 @@ import {
     autoSlideIntervalMs,
     canStartAutoSlide,
     detectCardSwipe,
-    nextAutoSlideIndex,
-    previousAutoSlideIndex,
     selectOptionDirectionForVerticalSwipe,
 } from '../displayCardNavigation';
 import {
@@ -246,37 +244,6 @@ export default function DanceShortsDisplayCardField({
             return;
         }
 
-        if (!canStartAutoSlide(currentWindow.visibleCards.length)) {
-            stopAutoSlide();
-            return;
-        }
-
-        const intervalId = window.setInterval(() => {
-            setActiveIndex((current) =>
-                autoSlideDirection === 1
-                    ? nextAutoSlideIndex(
-                          current,
-                          currentWindow.visibleCards.length,
-                      )
-                    : previousAutoSlideIndex(
-                          current,
-                          currentWindow.visibleCards.length,
-                      ),
-            );
-        }, autoSlideIntervalMs);
-
-        return () => window.clearInterval(intervalId);
-    }, [
-        autoSlideDirection,
-        currentWindow.visibleCards.length,
-        stopAutoSlide,
-    ]);
-
-    useEffect(() => {
-        if (autoSlideDirection === null) {
-            return;
-        }
-
         const stopOnUserAction = () => stopAutoSlide();
 
         window.addEventListener('click', stopOnUserAction);
@@ -370,6 +337,44 @@ export default function DanceShortsDisplayCardField({
         currentWindow,
         isWindowSwitching,
         loadWindow,
+    ]);
+
+    useEffect(() => {
+        if (autoSlideDirection === null) {
+            return;
+        }
+
+        if (!canStartAutoSlide(currentWindow.visibleCards.length)) {
+            stopAutoSlide();
+            return;
+        }
+
+        if (
+            (autoSlideDirection === 1 && !canMoveNext) ||
+            (autoSlideDirection === -1 && !canMovePrev)
+        ) {
+            stopAutoSlide();
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            if (autoSlideDirection === 1) {
+                void moveToNext();
+                return;
+            }
+
+            void moveToPrevious();
+        }, autoSlideIntervalMs);
+
+        return () => window.clearInterval(intervalId);
+    }, [
+        autoSlideDirection,
+        canMoveNext,
+        canMovePrev,
+        currentWindow.visibleCards.length,
+        moveToNext,
+        moveToPrevious,
+        stopAutoSlide,
     ]);
 
     const visitSelectOptionBySwipe = useCallback(
