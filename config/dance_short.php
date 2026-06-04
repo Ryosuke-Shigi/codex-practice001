@@ -6,7 +6,7 @@ return [
     | DanceShortsRadar sync and retention settings
     |--------------------------------------------------------------------------
     |
-    | The hourly YouTube sync scheduler is guarded by sync_enabled. The value
+    | The YouTube sync scheduler is guarded by sync_enabled. The value
     | defaults to false so local environments do not enqueue the YouTube sync
     | job or consume API quota unless explicitly enabled.
     |

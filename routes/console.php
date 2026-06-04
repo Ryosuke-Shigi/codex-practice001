@@ -2,7 +2,6 @@
 
 use App\Jobs\ApiCatalog\SyncApiCatalogJob;
 use App\Jobs\DanceShortsRadar\CleanupDanceShortVideoSnapshotsJob;
-use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -27,21 +26,19 @@ Schedule::job(new SyncApiCatalogJob())
 /*
  * DanceShortsRadar の自動同期入口です。
  *
- * この Scheduler は「1時間ごとに同期 Job を Queue へ積むかどうか」だけを担当します。
- * YouTube API 呼び出し、動画保存、snapshot 保存、cleanup 実行は SyncDanceShortVideosJob
+ * この Scheduler は「1日4回、同期 command を呼ぶかどうか」だけを担当します。
+ * YouTube API 呼び出し、動画保存、snapshot 保存、cleanup 実行は dance-short:sync
  * 以降の Action / Service / Repository 側に閉じ、Scheduler へ同期本体の責務を混ぜません。
  *
- * quota は現時点で 3 地域 x 1時間ごと x search.list 1回を上限想定にします。
- * search.list は 1回 100 units のため 1日約 7,200 units、videos.list はバッチ取得前提で少量です。
- * YouTube Data API のデフォルト quota 10,000 units/day を超えないよう、Scheduler 追加と同時に
- * 地域追加、キーワード追加、ページング追加、手動連打対策の拡張は行いません。
+ * search keyword は JP / US / KR 各6件、合計18件です。
+ * 00:00 / 06:00 / 12:00 / 18:00 の4回に抑えることで、search.list は最大72回/日に収めます。
  *
  * local で scheduler コンテナや schedule:run を動かしても YouTube Data API を消費しないように、
- * DANCE_SHORT_SYNC_ENABLED=true を明示した環境だけ dispatch を許可します。
+ * DANCE_SHORT_SYNC_ENABLED=true を明示した環境だけ command 実行を許可します。
  * when() の gate は実行時に評価されるため、schedule:list には表示されても false 時は Job が積まれません。
  */
-Schedule::job(new SyncDanceShortVideosJob())
-    ->hourly()
+Schedule::command('dance-short:sync')
+    ->cron('0 0,6,12,18 * * *')
     ->name('dance-short-video-sync')
     ->withoutOverlapping()
     ->when(fn (): bool => (bool) config('dance_short.sync_enabled'));

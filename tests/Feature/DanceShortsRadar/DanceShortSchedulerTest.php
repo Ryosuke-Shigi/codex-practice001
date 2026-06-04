@@ -4,17 +4,26 @@ namespace Tests\Feature\DanceShortsRadar;
 
 use App\Jobs\DanceShortsRadar\CleanupDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
+use Illuminate\Console\Scheduling\Event;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DanceShortSchedulerTest extends TestCase
 {
-    private const FIRST_SCHEDULED_HOUR = '2026-06-01 04:00:00';
+    private const FIRST_SYNC_SCHEDULED_AT = '2026-06-01 00:00:00';
 
-    private const NEXT_SCHEDULED_HOUR = '2026-06-01 05:00:00';
+    private const UNSCHEDULED_SYNC_HOUR = '2026-06-01 05:00:00';
 
     private const CLEANUP_SCHEDULED_AT = '2026-06-01 04:30:00';
+
+    private const SYNC_SCHEDULED_TIMES = [
+        '2026-06-01 00:00:00',
+        '2026-06-01 06:00:00',
+        '2026-06-01 12:00:00',
+        '2026-06-01 18:00:00',
+    ];
 
     protected function tearDown(): void
     {
@@ -23,34 +32,51 @@ class DanceShortSchedulerTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_scheduler_dispatches_sync_job_when_enabled(): void
+    public function test_schedule_list_shows_sync_quota_safe_windows(): void
     {
         /*
-         * Scheduler は同期本体を実行せず、明示的に有効化された環境で Queue へ Job を積む入口だけを担当します。
-         * ここでは Queue fake で worker 実行を止め、schedule:run から dispatch までの境界だけを確認します。
+         * Scheduler は同期本体を実行せず、明示的に有効化された環境で command を呼ぶ入口だけを担当します。
+         * Job dispatch の境界は DanceShortSyncCommandTest で固定し、ここでは schedule 登録だけを確認します。
          */
-        Queue::fake();
-        config(['dance_short.sync_enabled' => true]);
-        Carbon::setTestNow(Carbon::parse(self::FIRST_SCHEDULED_HOUR));
-
-        $this->artisan('schedule:run')->assertExitCode(0);
-
-        Queue::assertPushed(SyncDanceShortVideosJob::class);
+        $this
+            ->artisan('schedule:list')
+            ->expectsOutputToContain('0  0,6,12,18 * * *')
+            ->assertExitCode(0);
     }
 
-    public function test_scheduler_dispatches_sync_job_each_hour_when_enabled(): void
+    public function test_sync_schedule_is_due_at_each_quota_safe_window(): void
     {
         /*
-         * 04:00 だけの確認だと dailyAt('04:00') でも通ってしまいます。
-         * 次の 05:00 でも dispatch されることを固定し、「1時間ごと」の Scheduler 登録を守ります。
+         * 1時間ごとの同期ではなく、YouTube Data API quota を抑える4つの実行窓だけを固定します。
+         */
+        $event = $this->syncScheduleEvent();
+
+        $this->assertSame('0 0,6,12,18 * * *', $event->getExpression());
+        $this->assertStringContainsString(
+            'artisan dance-short:sync',
+            Event::normalizeCommand($event->command),
+        );
+
+        foreach (self::SYNC_SCHEDULED_TIMES as $scheduledTime) {
+            Carbon::setTestNow(Carbon::parse($scheduledTime));
+
+            $this->assertTrue($event->isDue($this->app));
+        }
+    }
+
+    public function test_scheduler_does_not_dispatch_sync_job_between_quota_safe_windows(): void
+    {
+        /*
+         * 05:00 は以前の hourly() なら dispatch されます。
+         * 非実行に固定し、1時間ごとの同期設定が戻らないことを守ります。
          */
         Queue::fake();
         config(['dance_short.sync_enabled' => true]);
-        Carbon::setTestNow(Carbon::parse(self::NEXT_SCHEDULED_HOUR));
+        Carbon::setTestNow(Carbon::parse(self::UNSCHEDULED_SYNC_HOUR));
 
         $this->artisan('schedule:run')->assertExitCode(0);
 
-        Queue::assertPushed(SyncDanceShortVideosJob::class);
+        Queue::assertNotPushed(SyncDanceShortVideosJob::class);
     }
 
     public function test_scheduler_does_not_dispatch_sync_job_when_disabled(): void
@@ -62,7 +88,7 @@ class DanceShortSchedulerTest extends TestCase
          */
         Queue::fake();
         config(['dance_short.sync_enabled' => false]);
-        Carbon::setTestNow(Carbon::parse(self::FIRST_SCHEDULED_HOUR));
+        Carbon::setTestNow(Carbon::parse(self::FIRST_SYNC_SCHEDULED_AT));
 
         $this->artisan('schedule:run')->assertExitCode(0);
 
@@ -83,5 +109,18 @@ class DanceShortSchedulerTest extends TestCase
 
         Queue::assertPushed(CleanupDanceShortVideoSnapshotsJob::class);
         Queue::assertNotPushed(SyncDanceShortVideosJob::class);
+    }
+
+    private function syncScheduleEvent(): Event
+    {
+        $event = collect($this->app->make(Schedule::class)->events())
+            ->first(fn (Event $event): bool => str_contains(
+                Event::normalizeCommand($event->command ?? ''),
+                'artisan dance-short:sync',
+            ));
+
+        $this->assertInstanceOf(Event::class, $event);
+
+        return $event;
     }
 }
