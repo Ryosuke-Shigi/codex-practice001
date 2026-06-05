@@ -53,6 +53,14 @@ class DanceShortDatabaseTest extends TestCase
 
         $this->assertSame(3, DanceShortRegion::query()->count());
 
+        $usRegion = DanceShortRegion::query()->where('code', 'US')->firstOrFail();
+        DanceShortSearchKeyword::query()->create([
+            'region_id' => $usRegion->getKey(),
+            'keyword' => 'dance shorts',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+
         $this->seed(DanceShortSearchKeywordSeeder::class);
 
         $this->assertDatabaseHas('dance_short_regions', [
@@ -75,10 +83,57 @@ class DanceShortDatabaseTest extends TestCase
         ]);
         $this->assertSame(3, DanceShortRegion::query()->count());
 
-        $keyword = DanceShortSearchKeyword::query()->where('keyword', 'dance shorts')->firstOrFail();
+        $expectedKeywordsByRegionCode = [
+            'JP' => [
+                'やってみた shorts',
+                '検証してみた shorts',
+                'チャレンジ shorts',
+                'リアクション shorts',
+                'ゲーム実況 shorts',
+                '踊ってみた shorts',
+            ],
+            'US' => [
+                'i tried shorts',
+                'challenge shorts',
+                'reaction shorts',
+                'gaming shorts',
+                'POV shorts',
+                'vtuber challenge shorts',
+            ],
+            'KR' => [
+                '해봤어요 shorts',
+                '챌린지 shorts',
+                '리액션 shorts',
+                '게임 shorts',
+                '커버댄스 shorts',
+                '검증해봤어요 shorts',
+            ],
+        ];
 
-        $this->assertNotNull($keyword->region_id);
-        $this->assertSame('US', $keyword->region->code);
+        $this->assertSame(18, DanceShortSearchKeyword::query()->count());
+        $this->assertDatabaseMissing('dance_short_search_keywords', [
+            'keyword' => 'dance shorts',
+        ]);
+
+        foreach ($expectedKeywordsByRegionCode as $regionCode => $expectedKeywords) {
+            $region = DanceShortRegion::query()->where('code', $regionCode)->firstOrFail();
+            $keywords = DanceShortSearchKeyword::query()
+                ->where('region_id', $region->getKey())
+                ->orderBy('sort_order')
+                ->pluck('keyword')
+                ->all();
+
+            $this->assertSame($expectedKeywords, $keywords);
+
+            foreach ($expectedKeywords as $index => $keyword) {
+                $this->assertDatabaseHas('dance_short_search_keywords', [
+                    'region_id' => $region->getKey(),
+                    'keyword' => $keyword,
+                    'sort_order' => ($index + 1) * 10,
+                    'is_active' => true,
+                ]);
+            }
+        }
     }
 
     public function test_database_seeder_calls_dance_short_region_seeder(): void

@@ -1,9 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
+import { useEffect, useMemo, useState } from 'react';
 
 import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayCardField';
 import DanceShortsDisplayHeaderField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayHeaderField';
 import DanceShortsDisplayMessageField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayMessageField';
 import DanceShortsDisplaySelectField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplaySelectField';
+import {
+    createDanceShortsDisplaySelectGroups,
+    type DanceShortsDisplaySelectGroupKey,
+} from '@/Components/Lab/DanceShortsRadar/displaySelectGroups';
 import type {
     DanceShortsDisplayCardField as DanceShortsDisplayCardFieldProps,
     DanceShortsDisplayHeaderField as DanceShortsDisplayHeaderFieldProps,
@@ -29,6 +34,23 @@ export default function DanceShortsRadarIndex({
     displayHeaderField,
     displayCardField,
 }: DanceShortsRadarIndexProps) {
+    const selectGroups = useMemo(
+        () => createDanceShortsDisplaySelectGroups(displaySelectField),
+        [displaySelectField],
+    );
+    const [activeSelectGroup, setActiveSelectGroup] =
+        useState<DanceShortsDisplaySelectGroupKey>('tab');
+
+    useEffect(() => {
+        if (
+            selectGroups.some((group) => group.key === activeSelectGroup)
+        ) {
+            return;
+        }
+
+        setActiveSelectGroup('tab');
+    }, [activeSelectGroup, selectGroups]);
+
     return (
         <PublicLayout className="h-dvh overflow-hidden px-2 py-2 sm:px-3 lg:px-5">
             <Head title="Dance Shorts Radar" />
@@ -46,24 +68,33 @@ export default function DanceShortsRadarIndex({
                     </Link>
                 </header>
 
-                <div className="mx-auto grid min-h-0 w-full max-w-4xl flex-1 grid-rows-[auto_auto_minmax(0,1fr)] gap-1.5 overflow-hidden">
-                    <DanceShortsDisplaySelectField
-                        displaySelectField={displaySelectField}
-                    />
-                    <DanceShortsDisplayMessageField
-                        displayMessageField={displayHeaderField}
-                        showSortKeyOptions={
-                            displaySelectField.showSortKeyOptions
-                        }
-                    />
-                    <DanceShortsDisplayCardField
-                        displayCardField={displayCardField}
-                        windowRequest={{
-                            tab: displaySelectField.selectedTab,
-                            comparisonDays: displaySelectField.comparisonDays,
-                            sortKey: displaySelectField.sortKey,
-                        }}
-                    />
+                <div className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[auto_minmax(0,1fr)] gap-1.5 overflow-hidden sm:gap-2 landscape:grid-cols-[minmax(14rem,0.78fr)_minmax(0,1fr)] landscape:grid-rows-[minmax(0,1fr)] landscape:items-start lg:max-w-6xl">
+                    <div className="grid min-h-0 content-start gap-1.5 overflow-hidden sm:gap-2">
+                        <DanceShortsDisplaySelectField
+                            selectGroups={selectGroups}
+                            activeSelectGroup={activeSelectGroup}
+                            onActiveSelectGroupChange={setActiveSelectGroup}
+                        />
+                        <DanceShortsDisplayMessageField
+                            displayMessageField={displayHeaderField}
+                            showSortKeyOptions={
+                                displaySelectField.showSortKeyOptions
+                            }
+                        />
+                    </div>
+                    <div className="min-h-0 overflow-hidden">
+                        <DanceShortsDisplayCardField
+                            displayCardField={displayCardField}
+                            windowRequest={{
+                                tab: displaySelectField.selectedTab,
+                                comparisonDays:
+                                    displaySelectField.comparisonDays,
+                                sortKey: displaySelectField.sortKey,
+                            }}
+                            selectGroups={selectGroups}
+                            activeSelectGroup={activeSelectGroup}
+                        />
+                    </div>
                 </div>
             </main>
         </PublicLayout>
