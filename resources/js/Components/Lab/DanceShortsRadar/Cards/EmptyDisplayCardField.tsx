@@ -12,8 +12,8 @@ export default function EmptyDisplayCardField({
     message,
 }: EmptyDisplayCardFieldProps) {
     return (
-        <section className="rounded-lg border border-white/18 bg-slate-950/36 p-4 text-white shadow-[0_14px_28px_rgba(4,25,42,0.12)] backdrop-blur-xl">
-            <p className="text-sm font-semibold text-cyan-50/78">{message}</p>
+        <section className="rounded-lg border border-slate-700/[0.08] bg-white/[0.015] p-4 text-slate-800 shadow-[0_14px_28px_rgba(80,105,140,0.04)] backdrop-blur-[3px]">
+            <p className="text-sm font-semibold text-slate-600">{message}</p>
         </section>
     );
 }

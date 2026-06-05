@@ -21,7 +21,7 @@ export default function DanceShortsThumbnailLink({
     mediaClassName,
 }: DanceShortsThumbnailLinkProps) {
     const containerClassName = [
-        'overflow-hidden rounded-lg border border-white/20 bg-slate-950/58',
+        'overflow-hidden rounded-lg border border-slate-700/[0.08] bg-white/[0.02]',
         className,
     ]
         .filter(Boolean)
@@ -78,7 +78,7 @@ export default function DanceShortsThumbnailLink({
             {thumbnail}
             <span
                 aria-hidden="true"
-                className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full border border-white/32 bg-slate-950/70 text-xs font-black text-white shadow-[0_8px_16px_rgba(2,24,45,0.22)]"
+                className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full border border-slate-700/[0.1] bg-white/[0.08] text-xs font-black text-slate-800 shadow-[0_8px_16px_rgba(80,105,140,0.08)]"
             >
                 ↗
             </span>

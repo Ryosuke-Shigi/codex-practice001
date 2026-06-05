@@ -113,37 +113,37 @@ export default function DanceShortsStats({
 
     return (
         <div className="grid gap-2">
-            <p className="truncate text-xs font-semibold tabular-nums text-cyan-50/78">
+            <p className="truncate text-xs font-semibold tabular-nums text-slate-700">
                 いいね {formatOptionalCompactNumber(candidate.like_count)} | コメント{' '}
                 {formatOptionalCompactNumber(candidate.comment_count ?? null)}
             </p>
 
             {primaryMetric.kind === 'single' ? (
-                <dl className="rounded-md border border-cyan-100/18 bg-cyan-100/10 px-2.5 py-2 text-xs">
+                <dl className="rounded-md border border-slate-700/[0.08] bg-white/[0.02] px-2.5 py-2 text-xs">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2">
-                        <dt className="min-w-0 truncate font-semibold text-cyan-50/72">
+                        <dt className="min-w-0 truncate font-semibold text-slate-600">
                             {primaryMetric.label}
                         </dt>
-                        <dd className="shrink-0 font-bold tabular-nums text-white">
+                        <dd className="shrink-0 font-bold tabular-nums text-slate-800">
                             {primaryMetric.value}
                         </dd>
                     </div>
                 </dl>
             ) : (
-                <dl className="rounded-md border border-cyan-100/18 bg-cyan-100/10 px-2.5 py-1.5 text-xs">
+                <dl className="rounded-md border border-slate-700/[0.08] bg-white/[0.02] px-2.5 py-1.5 text-xs">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 py-0.5">
-                        <dt className="min-w-0 truncate font-semibold text-cyan-50/72">
+                        <dt className="min-w-0 truncate font-semibold text-slate-600">
                             現在の視聴数
                         </dt>
-                        <dd className="shrink-0 font-bold tabular-nums text-white">
+                        <dd className="shrink-0 font-bold tabular-nums text-slate-800">
                             {primaryMetric.currentValue}
                         </dd>
                     </div>
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-t border-white/10 py-0.5">
-                        <dt className="min-w-0 truncate font-semibold text-cyan-50/72">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-t border-slate-700/10 py-0.5">
+                        <dt className="min-w-0 truncate font-semibold text-slate-600">
                             前回の視聴数
                         </dt>
-                        <dd className="shrink-0 font-bold tabular-nums text-white">
+                        <dd className="shrink-0 font-bold tabular-nums text-slate-800">
                             {primaryMetric.previousValue}
                         </dd>
                     </div>

@@ -4,10 +4,10 @@
  */
 export default function LoadingDisplayCardField() {
     return (
-        <section className="grid min-h-[14rem] place-items-center rounded-lg border border-white/22 bg-slate-950/44 p-4 text-white shadow-[0_14px_28px_rgba(2,24,45,0.16)] backdrop-blur-xl">
+        <section className="grid min-h-[14rem] place-items-center rounded-lg border border-slate-700/10 bg-white/[0.08] p-4 text-slate-800 shadow-[0_14px_28px_rgba(80,105,140,0.1)] backdrop-blur-xl">
             <div className="grid justify-items-center gap-2">
-                <div className="h-9 w-9 animate-spin rounded-full border-4 border-cyan-100/20 border-t-cyan-200" />
-                <p className="text-sm font-semibold text-cyan-50/78">
+                <div className="h-9 w-9 animate-spin rounded-full border-4 border-sky-700/[0.12] border-t-sky-500" />
+                <p className="text-sm font-semibold text-slate-700">
                     カードを読み込んでいます
                 </p>
             </div>
