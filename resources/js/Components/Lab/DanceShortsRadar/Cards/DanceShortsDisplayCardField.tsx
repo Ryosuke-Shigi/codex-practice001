@@ -436,10 +436,10 @@ export default function DanceShortsDisplayCardField({
                 onTouchStart={onAutoSlideButtonTouchStart}
                 onClick={(event) => onAutoSlideButtonClick(event, 1)}
                 className={[
-                    'grid h-7 min-w-11 place-items-center rounded-full border px-2 text-xs font-black text-white shadow-[0_10px_20px_rgba(2,24,45,0.26)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35',
+                    'grid h-7 min-w-11 place-items-center rounded-full border px-2 text-xs font-black text-white shadow-[0_10px_20px_rgba(14,116,144,0.18)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100/50 disabled:cursor-not-allowed disabled:opacity-35',
                     autoSlideDirection === 1
-                        ? 'border-white bg-cyan-400/75'
-                        : 'border-white/36 bg-slate-950/72 hover:bg-slate-900/84',
+                        ? 'border-white/70 bg-pink-500/75'
+                        : 'border-white/50 bg-sky-500/65 hover:bg-pink-500/70',
                 ].join(' ')}
             >
                 <span aria-hidden="true">&gt;&gt;</span>
@@ -455,10 +455,10 @@ export default function DanceShortsDisplayCardField({
                 onTouchStart={onAutoSlideButtonTouchStart}
                 onClick={(event) => onAutoSlideButtonClick(event, -1)}
                 className={[
-                    'grid h-7 min-w-11 place-items-center rounded-full border px-2 text-xs font-black text-white shadow-[0_10px_20px_rgba(2,24,45,0.26)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35',
+                    'grid h-7 min-w-11 place-items-center rounded-full border px-2 text-xs font-black text-white shadow-[0_10px_20px_rgba(14,116,144,0.18)] backdrop-blur-xl transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100/50 disabled:cursor-not-allowed disabled:opacity-35',
                     autoSlideDirection === -1
-                        ? 'border-white bg-cyan-400/75'
-                        : 'border-white/36 bg-slate-950/72 hover:bg-slate-900/84',
+                        ? 'border-white/70 bg-pink-500/75'
+                        : 'border-white/50 bg-sky-500/65 hover:bg-pink-500/70',
                 ].join(' ')}
             >
                 <span aria-hidden="true">&lt;&lt;</span>
@@ -585,7 +585,7 @@ export default function DanceShortsDisplayCardField({
                                 }}
                                 disabled={!canMovePrev || isWindowSwitching}
                                 aria-label="前のカードへ移動"
-                                className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border border-white/36 bg-slate-950/70 text-xl font-bold text-white shadow-[0_14px_26px_rgba(2,24,45,0.24)] backdrop-blur-xl transition hover:bg-slate-900/82 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35"
+                                className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border border-white/50 bg-sky-500/70 text-xl font-bold text-white shadow-[0_14px_26px_rgba(14,116,144,0.22)] backdrop-blur-xl transition hover:bg-pink-500/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100/50 disabled:cursor-not-allowed disabled:opacity-35"
                             >
                                 <span aria-hidden="true">&lt;</span>
                             </button>
@@ -597,7 +597,7 @@ export default function DanceShortsDisplayCardField({
                                 }}
                                 disabled={!canMoveNext || isWindowSwitching}
                                 aria-label="次のカードへ移動"
-                                className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border border-white/36 bg-slate-950/70 text-xl font-bold text-white shadow-[0_14px_26px_rgba(2,24,45,0.24)] backdrop-blur-xl transition hover:bg-slate-900/82 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-35"
+                                className="pointer-events-auto grid h-10 w-10 place-items-center rounded-full border border-white/50 bg-sky-500/70 text-xl font-bold text-white shadow-[0_14px_26px_rgba(14,116,144,0.22)] backdrop-blur-xl transition hover:bg-pink-500/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100/50 disabled:cursor-not-allowed disabled:opacity-35"
                             >
                                 <span aria-hidden="true">&gt;</span>
                             </button>

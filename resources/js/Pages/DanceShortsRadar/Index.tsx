@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
+import BackgroundTraceEffect from '@/Components/Effects/BackgroundTraceEffect/BackgroundTraceEffect';
 import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayCardField';
 import DanceShortsDisplayHeaderField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayHeaderField';
 import DanceShortsDisplayMessageField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayMessageField';
@@ -52,17 +53,19 @@ export default function DanceShortsRadarIndex({
     }, [activeSelectGroup, selectGroups]);
 
     return (
-        <PublicLayout className="h-dvh overflow-hidden px-2 py-2 sm:px-3 lg:px-5">
+        <PublicLayout className="relative h-dvh overflow-hidden px-2 py-2 sm:px-3 lg:px-5">
             <Head title="Dance Shorts Radar" />
 
-            <main className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-1.5 overflow-hidden">
+            <BackgroundTraceEffect />
+
+            <main className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-1.5 overflow-hidden">
                 <header className="flex shrink-0 items-center justify-between gap-3">
                     <DanceShortsDisplayHeaderField
                         displayHeaderField={displayHeaderField}
                     />
                     <Link
                         href="/lab"
-                        className="inline-flex min-h-8 shrink-0 items-center rounded-md border border-white/25 bg-white/10 px-2.5 text-xs font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                        className="inline-flex min-h-8 shrink-0 items-center rounded-md border border-slate-700/[0.16] bg-white/[0.18] px-2.5 text-xs font-semibold text-slate-800 shadow-[0_8px_18px_rgba(80,105,140,0.1)] backdrop-blur-xl transition hover:bg-white/[0.26] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-200/[0.45]"
                     >
                         Labへ戻る
                     </Link>

@@ -92,18 +92,18 @@ export default function DanceShortsDisplaySelectField({
         <section
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="grid touch-pan-y gap-1 rounded-lg border border-white/18 bg-slate-950/38 p-1 text-white shadow-[0_10px_22px_rgba(4,25,42,0.12)] backdrop-blur-xl"
+            className="grid touch-pan-y gap-1 rounded-lg border border-slate-700/[0.08] bg-white/[0.015] p-1 text-slate-800 shadow-[0_10px_22px_rgba(80,105,140,0.04)] backdrop-blur-[3px]"
         >
             <div className="grid grid-cols-[2rem_minmax(0,1fr)_2rem] items-center gap-1">
                 <button
                     type="button"
                     aria-label="選択ジャンルを前へ"
                     onClick={() => onMoveGroup(-1)}
-                    className="grid h-7 w-7 place-items-center rounded-md border border-white/18 bg-white/8 text-sm font-black text-cyan-50 transition hover:bg-white/14 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                    className="grid h-7 w-7 place-items-center rounded-md border border-white/50 bg-sky-500/60 text-sm font-black text-white shadow-[0_8px_16px_rgba(14,116,144,0.16)] transition hover:bg-pink-500/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100/50"
                 >
                     <span aria-hidden="true">&lt;</span>
                 </button>
-                <div className="min-w-0 rounded-md border border-cyan-100/22 bg-cyan-100/12 px-2 py-0.5 text-center text-xs font-bold text-white">
+                <div className="min-w-0 rounded-md border border-sky-700/[0.1] bg-white/[0.025] px-2 py-0.5 text-center text-xs font-bold text-slate-700">
                     <span className="sm:hidden">
                         {currentGroup.shortLabel}
                     </span>
@@ -115,7 +115,7 @@ export default function DanceShortsDisplaySelectField({
                     type="button"
                     aria-label="選択ジャンルを次へ"
                     onClick={() => onMoveGroup(1)}
-                    className="grid h-7 w-7 place-items-center rounded-md border border-white/18 bg-white/8 text-sm font-black text-cyan-50 transition hover:bg-white/14 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
+                    className="grid h-7 w-7 place-items-center rounded-md border border-white/50 bg-sky-500/60 text-sm font-black text-white shadow-[0_8px_16px_rgba(14,116,144,0.16)] transition hover:bg-pink-500/70 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100/50"
                 >
                     <span aria-hidden="true">&gt;</span>
                 </button>
@@ -136,8 +136,8 @@ export default function DanceShortsDisplaySelectField({
                         className={[
                             'min-h-7 min-w-0 truncate rounded-md border px-1 text-[10px] font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 sm:text-xs',
                             option.isActive
-                                ? 'border-white bg-white text-slate-950 shadow-[0_8px_16px_rgba(255,255,255,0.16)]'
-                                : 'border-white/16 bg-white/8 text-cyan-50/82 hover:bg-white/14',
+                                ? 'border-white/60 bg-sky-500/75 text-white shadow-[0_8px_16px_rgba(14,116,144,0.16)]'
+                                : 'border-slate-700/[0.08] bg-white/[0.02] text-slate-600 hover:bg-white/[0.08]',
                         ].join(' ')}
                     >
                         {option.label}

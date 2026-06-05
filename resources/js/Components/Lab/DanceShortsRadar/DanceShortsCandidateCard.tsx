@@ -39,17 +39,17 @@ export default function DanceShortsCandidateCard({
         <article
             aria-current={isActive ? 'true' : undefined}
             className={[
-                'flex max-h-full min-h-0 flex-col gap-1.5 overflow-hidden rounded-lg border p-2 text-white shadow-[0_14px_28px_rgba(2,24,45,0.16)] backdrop-blur-xl sm:gap-2 sm:p-2.5',
+                'flex max-h-full min-h-0 flex-col gap-1.5 overflow-hidden rounded-lg border p-2 text-slate-800 shadow-[0_14px_28px_rgba(80,105,140,0.08)] backdrop-blur-[3px] sm:gap-2 sm:p-2.5',
                 isActive
-                    ? 'border-cyan-200/72 bg-slate-900/72 shadow-[0_16px_34px_rgba(34,211,238,0.16)]'
-                    : 'border-white/18 bg-slate-950/44',
+                    ? 'border-sky-400/[0.28] bg-white/[0.012] shadow-[0_16px_34px_rgba(56,189,248,0.05)]'
+                    : 'border-slate-700/[0.08] bg-white/[0.01]',
             ].join(' ')}
         >
             <div className="flex min-w-0 items-center justify-between gap-2">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-100/30 bg-cyan-100/12 text-xs font-black tabular-nums text-cyan-50">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-sky-700/[0.16] bg-sky-100/[0.38] text-xs font-black tabular-nums text-slate-800">
                     {rank}
                 </span>
-                <span className="truncate rounded-md border border-white/18 bg-white/8 px-2 py-0.5 text-[11px] font-bold text-cyan-50/78">
+                <span className="truncate rounded-md border border-slate-700/[0.08] bg-white/[0.02] px-2 py-0.5 text-[11px] font-bold text-slate-700">
                     {candidate.region}
                 </span>
             </div>
@@ -79,15 +79,15 @@ export default function DanceShortsCandidateCard({
 
             <div className="flex min-h-0 min-w-0 flex-col gap-1 sm:gap-1.5">
                 <div className="grid min-w-0 gap-1 sm:gap-1.5">
-                    <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-white sm:text-base">
+                    <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-800 sm:text-base">
                         {candidate.title}
                     </h3>
                     {candidate.channel_title !== undefined && (
-                        <p className="truncate text-[11px] font-semibold text-cyan-50/68 sm:text-xs">
+                        <p className="truncate text-[11px] font-semibold text-slate-600 sm:text-xs">
                             {candidate.channel_title ?? 'チャンネル名未設定'}
                         </p>
                     )}
-                    <p className="text-[11px] font-semibold leading-snug text-cyan-50/62">
+                    <p className="text-[11px] font-semibold leading-snug text-slate-600">
                         投稿 {formatDateTime(candidate.published_at)} | 収集{' '}
                         {formatDateTime(candidate.collected_at)}
                     </p>
