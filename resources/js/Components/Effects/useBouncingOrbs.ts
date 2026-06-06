@@ -28,9 +28,8 @@ const initialOrbSeeds = [
 const defaultOrbSize = 108;
 
 /*
- * The hook tracks orb centers as viewport percentages. That makes the motion
- * independent from the actual pixel size of the Welcome screen, while each
- * render still returns pixel sizes for the circular buttons.
+ * orb の中心座標は viewport percentage として扱います。
+ * Welcome 画面の実 pixel サイズに依存せず動かしつつ、各 render では円形 button 用の pixel size も返します。
  */
 function resolveOrbSize() {
     if (typeof window === 'undefined') {
@@ -93,9 +92,8 @@ export default function useBouncingOrbs({
 
     useEffect(() => {
         /*
-         * Rebuild on resize because the same pixel-sized orb occupies a
-         * different percentage of the viewport on mobile, tablet, and desktop.
-         * Clamping here prevents an orb from being born half outside the screen.
+         * 同じ pixel size の orb でも、mobile / tablet / desktop では viewport に占める割合が変わります。
+         * resize 時に作り直して clamp し、画面外に半分出た状態で生まれないようにします。
          */
         const rebuildOrbs = () => {
             const nextOrbs = buildInitialOrbs(count, resolveOrbSize()).map((orb) =>
@@ -130,8 +128,8 @@ export default function useBouncingOrbs({
 
         const tick = (timestamp: number) => {
             /*
-             * Velocities are percentage points per second. Capping delta avoids
-             * a huge jump after a background tab resumes or the device wakes up.
+             * velocity は1秒あたりの percentage point として扱います。
+             * background tab 復帰や端末復帰直後に大きく飛ばないよう delta を上限付きにします。
              */
             const deltaSeconds = Math.min((timestamp - previousTimestamp) / 1000, 0.05);
 

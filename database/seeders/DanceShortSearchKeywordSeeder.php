@@ -9,7 +9,7 @@ use Illuminate\Database\Seeder;
 class DanceShortSearchKeywordSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * DanceShortsRadar の地域別検索 keyword を投入します。
      */
     public function run(): void
     {

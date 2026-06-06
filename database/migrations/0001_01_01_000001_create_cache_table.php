@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Laravel cache と cache lock の保存テーブルを作成します。
      */
     public function up(): void
     {
@@ -25,7 +25,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * cache 関連テーブルを削除します。
      */
     public function down(): void
     {

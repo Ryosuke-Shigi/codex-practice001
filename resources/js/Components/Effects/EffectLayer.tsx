@@ -25,11 +25,10 @@ type EffectPatternDefinition = {
 };
 
 /*
- * This list is the public background catalog. Add a new selectable effect here
- * with its real background component and compact preview data, and the Welcome
- * selector will automatically render one more orb. Keeping the catalog in
- * EffectLayer avoids page-level imports such as WaterBackground/Caustics in
- * Welcome, so pages only deal with EffectName values.
+ * 公開ページ用背景の catalog です。
+ * 選択可能な effect は実 background component と小さな preview data をここへ追加します。
+ * Welcome 側は EffectName だけを扱い、WaterBackground や CausticsBackground などの
+ * 実 component import を page file へ広げないようにします。
  */
 export const effectPatterns = [
     {
@@ -80,9 +79,8 @@ export const effectPatterns = [
         Component: AquaParticlesBackground,
         preview: {
             /*
-             * Preview data is CSS-only on purpose. The orb must be cheap and
-             * circular, while the full background component can use a richer
-             * layered animation when it is selected.
+             * preview data は意図的に CSS-only にしています。
+             * orb は軽量な円形 preview に留め、選択時の本体 component だけが豊かな layer animation を持ちます。
              */
             baseBackground:
                 'linear-gradient(150deg, rgba(236,254,255,0.78), rgba(45,212,191,0.5) 42%, rgba(4,19,44,0.82) 100%)',
@@ -117,10 +115,9 @@ export const defaultEffectName: EffectName = 'water';
 export const effectNames = effectPatterns.map((pattern) => pattern.key) as EffectName[];
 
 /*
- * Welcome is the only page with explicit effect-switch controls, but START is a
- * normal Inertia navigation. sessionStorage gives the public layout a small
- * browser-local preference so the selected title effect can continue into Lab
- * without adding query parameters, backend props, or page-specific effect code.
+ * effect の明示的な切替 UI は Welcome だけが持ちます。
+ * START は通常の Inertia navigation なので、sessionStorage に browser-local な preference を置き、
+ * query parameter、backend props、page 固有 effect code を増やさず Lab へ選択を引き継ぎます。
  */
 const effectPreferenceStorageKey = 'portfolio.backgroundEffect';
 
@@ -141,9 +138,8 @@ export function readPreferredEffectName(): EffectName | null {
         const storedEffect = window.sessionStorage.getItem(effectPreferenceStorageKey);
 
         /*
-         * Stored values are outside React's type system. Validate against the
-         * canonical effectNames list so stale browser data cannot ask
-         * EffectLayer to render a component that does not exist anymore.
+         * 保存値は React の型システム外にあります。
+         * canonical な effectNames で検証し、古い browser data が存在しない component 描画を要求しないようにします。
          */
         return storedEffect === null ? null : resolveEffectName(storedEffect);
     } catch {
@@ -160,9 +156,9 @@ export function storePreferredEffectName(effect: EffectName) {
         window.sessionStorage.setItem(effectPreferenceStorageKey, effect);
     } catch {
         /*
-         * The background choice is decorative. Private browsing, storage quotas,
-         * or blocked storage should only drop the preference, never block START
-         * navigation or the page's real content.
+         * 背景選択は装飾設定です。
+         * private browsing、storage quota、storage block では preference を失うだけにし、
+         * START navigation やページ本体の表示は止めません。
          */
     }
 }
@@ -181,10 +177,9 @@ type EffectLayerProps = {
 };
 
 /*
- * EffectLayer is the single entrance to the background system. Pages pass an
- * effect name, and this component decides which concrete effect component to
- * render. That keeps page files focused on UI/state instead of importing every
- * visual experiment directly.
+ * EffectLayer は背景システムの単一入口です。
+ * page は effect name だけを渡し、どの concrete effect component を描画するかはここで決めます。
+ * page file は UI / state に集中し、背景実験の import を直接持たないようにします。
  */
 export default function EffectLayer({
     effect = 'water',
@@ -197,24 +192,22 @@ export default function EffectLayer({
 
     return (
         /*
-         * Layer order:
-         * - ColorShiftBackground: z-0, always visible as the deepest color wash
-         * - active effect: z-10, or z-20 for the cursor-responsive layer
-         * - readability veil: z-20, subtle contrast support for text
+         * layer 順序:
+         * - ColorShiftBackground: z-0、最背面の色面として常時表示
+         * - active effect: z-10、cursor-responsive layer のみ z-20
+         * - readability veil: z-20、文字用の控えめな contrast 補助
          * - PublicLayout children: z-30
          *
-         * pointer-events-none makes the entire stack visual-only, so START and
-         * Lab cards remain clickable even when effects fill the viewport.
+         * pointer-events-none により stack 全体を visual-only にし、effect が viewport を覆っても
+         * START や Lab card を click できる状態にします。
          */
         <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-slate-950">
             <ColorShiftBackground />
 
             <AnimatePresence mode="wait" initial={false}>
                 {/*
-                    The key changes when effect changes, so AnimatePresence can
-                    fade the old layer out before fading the new one in. A simple
-                    opacity transition teaches the switching flow without making
-                    the whole page flash.
+                    effect 変更時に key も変わるため、AnimatePresence が旧 layer を fade out してから
+                    新 layer を fade in できます。opacity だけの遷移にして、画面全体の flash を避けます。
                 */}
                 <motion.div
                     key={resolvedEffect}
@@ -225,11 +218,8 @@ export default function EffectLayer({
                     transition={{ duration: 0.45, ease: 'easeInOut' }}
                 >
                     {/*
-                        Water has strength variants because the same water
-                        direction must serve both title/entry screens and dense
-                        practical screens. Other effects currently expose only
-                        one tuned presentation, so they render through the shared
-                        effect map without extra page-level branching.
+                        Water はタイトル/入口画面と情報量の多い実用画面の両方で使うため strength variant を持ちます。
+                        他の effect は現時点で tuned presentation が1つなので、page 側の分岐を増やさず共通 map から描画します。
                     */}
                     {resolvedEffect === 'water' ? (
                         <WaterBackground intensity={effectIntensity} />
@@ -240,9 +230,8 @@ export default function EffectLayer({
             </AnimatePresence>
 
             {/*
-                The veil sits above visual effects but below real page content.
-                It keeps white text, START, and Lab cards readable while still
-                letting the slow color shift show through.
+                veil は visual effect より上、実 page content より下に置きます。
+                遅い色変化を見せつつ、白文字、START、Lab card の読みやすさを保ちます。
             */}
             <div className="absolute inset-0 z-20 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.24),rgba(255,255,255,0)_42%),linear-gradient(180deg,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_34%,rgba(1,8,23,0.52)_100%)]" />
             <div className="absolute inset-0 z-20 bg-slate-950/10" />

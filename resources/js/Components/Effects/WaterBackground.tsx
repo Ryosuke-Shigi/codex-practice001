@@ -3,16 +3,14 @@ import $ from 'jquery';
 import 'jquery.ripples';
 
 /*
- * jquery.ripples is an imperative jQuery plugin, while the app is otherwise
- * declarative React/Inertia. Keeping the import and DOM manipulation in this
- * component prevents jQuery assumptions from spreading into pages, app.tsx,
- * body, or #app.
+ * jquery.ripples は imperative な jQuery plugin です。
+ * アプリ本体は React / Inertia の宣言的 UI なので、import と DOM 操作をこの component に閉じ、
+ * page、app.tsx、body、#app へ jQuery 前提を広げないようにします。
  */
 
 /*
- * The plugin does not ship TypeScript types. We describe only the options and
- * methods this component actually calls, so the type escape stays local to the
- * React/jQuery bridge instead of weakening the whole codebase.
+ * plugin は TypeScript 型を提供していません。
+ * この component が実際に呼ぶ options / methods だけを定義し、型の逃げ道を React / jQuery bridge に閉じます。
  */
 type RipplesOptions = {
     imageUrl: string;
@@ -35,10 +33,9 @@ type WaterBackgroundProps = {
 };
 
 /*
- * The water direction is shared across public pages, but the page density is
- * not. showcase keeps the entrance screens lively; subtle keeps the same bright
- * aqua identity while reducing opacity, ripple count, and distortion for forms,
- * lists, and search-heavy pages.
+ * 水面表現の方向性は公開ページで共有しますが、ページ密度は同じではありません。
+ * showcase は入口画面を動的に見せ、subtle は明るい aqua の方向性を保ちながら
+ * form / list / search が多い画面向けに opacity、ripple 数、歪みを抑えます。
  */
 const waterIntensitySettings: Record<
     WaterBackgroundIntensity,
@@ -82,17 +79,16 @@ const waterIntensitySettings: Record<
 };
 
 /*
- * This translucent fallback is both a design baseline and a safety net. If
- * WebGL or jquery.ripples fails, the page still has a water-themed surface, and
- * ColorShiftBackground can still show through from behind.
+ * 半透明の fallback は design baseline と安全網を兼ねます。
+ * WebGL や jquery.ripples が失敗しても水面系の見た目を保ち、背面の ColorShiftBackground も透けて見えます。
  */
 const fallbackBackground =
     'radial-gradient(circle at 22% 12%, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0) 32%), radial-gradient(circle at 74% 20%, rgba(207,250,254,0.48) 0%, rgba(207,250,254,0) 30%), linear-gradient(155deg, rgba(255,255,255,0.7) 0%, rgba(207,250,254,0.62) 26%, rgba(165,243,252,0.48) 52%, rgba(103,232,249,0.32) 76%, rgba(45,212,191,0.2) 100%)';
 
 /*
- * jquery.ripples distorts an image texture. The SVG stays intentionally
- * semi-transparent; an opaque texture would cover the ColorShiftBackground and
- * make the "reflected sky color" layer impossible to see.
+ * jquery.ripples は画像 texture を歪ませます。
+ * SVG は意図的に半透明にし、不透明 texture が ColorShiftBackground を覆って
+ * 「反射した空色」layer を見えなくするのを避けます。
  */
 const waterTexture = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="none">
@@ -139,8 +135,8 @@ export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroun
     const settings = waterIntensitySettings[intensity];
 
     /*
-     * useRef gives jQuery one stable DOM node after React has rendered it. That
-     * avoids querying body or #app, so the plugin only controls this water layer.
+     * useRef により、React 描画後の安定した DOM node を jQuery に渡します。
+     * body や #app を探さないため、plugin の制御範囲はこの water layer に限定されます。
      */
     const rippleRef = useRef<HTMLDivElement>(null);
 
@@ -156,9 +152,8 @@ export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroun
         let firstDropTimer: number | undefined;
 
         /*
-         * Plugin pointer interactivity is disabled because the background should
-         * not compete with START or Lab card clicks. Programmatic drops keep the
-         * water visibly alive while preserving normal React UI interaction.
+         * 背景が START や Lab card の click と競合しないよう、plugin の pointer interactivity は無効にします。
+         * programmatic drop だけで水面の動きを維持し、通常の React UI 操作を守ります。
          */
         const addDrop = () => {
             const bounds = element.getBoundingClientRect();
@@ -169,10 +164,8 @@ export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroun
 
             try {
                 /*
-                 * More ripples should read as "active water", not as a storm.
-                 * Use extra small drops instead of one large high-strength drop
-                 * so the surface has more motion while text and controls remain
-                 * visually stable above the background layer.
+                 * ripple を増やす目的は「生きた水面」に見せることで、荒れた水面にすることではありません。
+                 * 大きな高強度 drop ではなく小さな drop を追加し、文字と操作部品の安定感を保ちます。
                  */
                 for (let index = 0; index < settings.dropsPerPulse; index += 1) {
                     $water.ripples(
@@ -189,10 +182,8 @@ export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroun
         };
 
         /*
-         * useEffect runs after the DOM node exists and has real dimensions, which
-         * jquery.ripples needs before creating its WebGL canvas. try/catch keeps
-         * devices without the required WebGL support on the translucent CSS
-         * fallback instead of breaking the page.
+         * useEffect は DOM node が実寸を持った後に動くため、jquery.ripples の WebGL canvas 作成に必要な前提を満たします。
+         * try/catch により、WebGL 非対応環境ではページを壊さず半透明 CSS fallback に留めます。
          */
         try {
             $water.ripples({
@@ -211,9 +202,8 @@ export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroun
 
         return () => {
             /*
-             * Inertia can swap pages without a full browser reload. Destroying the
-             * plugin and timers prevents duplicate canvases, stale handlers, and
-             * unnecessary animation work when this layer unmounts.
+             * Inertia は full browser reload なしにページを差し替えます。
+             * unmount 時に plugin と timer を破棄し、canvas 重複、古い handler、不要な animation を残さないようにします。
              */
             window.clearTimeout(firstDropTimer);
             window.clearInterval(dropTimer);
@@ -229,9 +219,8 @@ export default function WaterBackground({ intensity = 'subtle' }: WaterBackgroun
     return (
         <div className="absolute inset-0 overflow-hidden">
             {/*
-                The water layer must stay translucent. A solid bg-color or fully
-                opaque gradient here would hide ColorShiftBackground even though
-                the layer order is technically correct.
+                water layer は半透明を維持します。
+                ここを solid bg-color や完全不透明 gradient にすると、layer 順序が正しくても ColorShiftBackground が隠れます。
             */}
             <div
                 ref={rippleRef}

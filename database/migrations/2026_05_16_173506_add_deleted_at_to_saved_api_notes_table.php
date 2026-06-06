@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * 保存メモを soft delete できるよう deleted_at を追加します。
      */
     public function up(): void
     {
@@ -17,7 +17,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * 保存メモの deleted_at を削除します。
      */
     public function down(): void
     {

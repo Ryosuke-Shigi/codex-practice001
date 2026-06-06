@@ -1,16 +1,13 @@
 export default function SurfaceShimmerBackground() {
     return (
         /*
-         * SurfaceShimmer is the subtle reflection layer: thin moving highlights
-         * imply a water surface without becoming the focal point. Opacity stays
-         * restrained so the START button and Lab cards remain easy to read.
+         * SurfaceShimmer は控えめな反射 layer です。
+         * 細い highlight で水面感だけを足し、START button や Lab card の読みやすさを優先します。
          */
         <div className="absolute inset-0 overflow-hidden bg-[linear-gradient(160deg,rgba(216,252,255,0.22)_0%,rgba(108,221,234,0.18)_30%,rgba(12,118,152,0.22)_56%,rgba(4,23,51,0.4)_100%)]">
             {/*
-                Both shimmer layers use CSS keyframes for the same reason as
-                CausticsBackground: these are continuous texture animations, not
-                UI state transitions. Keeping them in CSS avoids Motion restart
-                edge cases when the user cycles effects or enters Lab.
+                shimmer layer は UI state transition ではなく連続 texture animation です。
+                CSS keyframes に閉じることで、effect 切替や Lab への遷移時に Motion animation が再起動する問題を避けます。
             */}
             <style>
                 {`

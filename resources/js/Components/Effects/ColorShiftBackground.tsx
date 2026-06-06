@@ -1,9 +1,8 @@
 import { motion } from 'motion/react';
 
 /*
- * ColorShiftBackground only owns the slow color cycle. Water, caustics, shimmer,
- * and cursor effects are separate layers above it, so each component has one
- * visual responsibility and can be tuned independently.
+ * ColorShiftBackground は遅い色変化だけを担当します。
+ * water / caustics / shimmer / cursor effect は上位 layer に分け、各 component が個別に調整できるようにします。
  */
 const colorLayers = [
     {
@@ -35,15 +34,13 @@ const colorLayers = [
 export default function ColorShiftBackground() {
     return (
         /*
-         * This is the deepest layer in EffectLayer. The emerald -> aqua -> deep
-         * blue -> pale violet cycle suggests changing sky color reflected through
-         * water, while the layers above add surface-specific texture.
+         * EffectLayer の最背面 layer です。
+         * emerald -> aqua -> deep-blue -> pale-violet の循環で、水面に映る空色の変化を表現します。
          */
         <div className="pointer-events-none absolute inset-0 z-0 bg-emerald-500">
             {/*
-                Cross-fading real layers is more reliable than trying to interpolate
-                complex gradient strings directly. pointer-events-none keeps this
-                full-screen wash from intercepting START or Lab card clicks.
+                複雑な gradient 文字列を直接補間するより、実 layer を cross-fade する方が安定します。
+                pointer-events-none により、START や Lab card の click を奪わないようにします。
             */}
             {colorLayers.map((layer) => (
                 <motion.div

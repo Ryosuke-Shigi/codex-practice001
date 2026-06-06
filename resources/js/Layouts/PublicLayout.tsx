@@ -15,13 +15,9 @@ type PublicLayoutProps = PropsWithChildren<{
 }>;
 
 /*
- * PublicLayout is only for public, login-free pages such as Welcome and Lab.
- * The important render order is:
- *   1. EffectLayer as the fixed background
- *   2. children as the actual page content
- *
- * Keeping those responsibilities separate lets the page content stay ordinary
- * React/Inertia UI while the visual experiments evolve behind it.
+ * PublicLayout は Welcome や Lab など、ログイン不要の公開ページ専用レイアウトです。
+ * 描画順は「固定背景の EffectLayer」->「実ページ内容の children」に固定します。
+ * 背景実験とページ本体を分けることで、各ページは通常の React / Inertia UI に集中できます。
  */
 export default function PublicLayout({
     children,
@@ -30,10 +26,9 @@ export default function PublicLayout({
     effectIntensity = 'subtle',
 }: PublicLayoutProps) {
     /*
-     * Read the saved effect once when the layout mounts. If we read storage on
-     * every render, ordinary page state updates could unexpectedly change the
-     * background under the user. An explicit effect prop still wins for pages
-     * that intentionally choose a domain-specific or quiet background.
+     * 保存済み effect は mount 時に一度だけ読みます。
+     * render のたびに storage を読むと、通常の画面 state 更新で背景が不意に変わる可能性があります。
+     * ページが明示的に effect を指定した場合は、そのページ固有の背景指定を優先します。
      */
     const [preferredEffect] = useState<EffectName>(
         () => readPreferredEffectName() ?? defaultEffectName,
@@ -42,22 +37,20 @@ export default function PublicLayout({
 
     return (
         /*
-         * Do not lock vertical overflow at layout level. Welcome controls its own
-         * 100dvh scene, while Lab and other public pages may need normal scroll.
+         * 縦スクロールの制御は layout では固定しません。
+         * Welcome は自分で 100dvh scene を制御し、Lab などは通常スクロールを必要とします。
          */
         <div className="relative min-h-dvh overflow-x-hidden text-white">
             {/*
-                effect and effectIntensity are normal React props. Welcome and
-                entry pages can make water a little more present, while content
-                pages keep the same direction with a quieter supporting layer.
-                If a page omits effect, the latest Welcome selection is reused.
+                effect と effectIntensity は通常の React props として扱います。
+                Welcome や入口ページは水面を強めにし、内容が多いページは同じ方向性のまま控えめにできます。
+                effect を省略したページでは、直近の Welcome 選択を再利用します。
             */}
             <EffectLayer effect={resolvedEffect} effectIntensity={effectIntensity} />
 
             {/*
-                z-30 keeps links, buttons, and cards above every background layer.
-                This is what makes the effect stack decorative rather than
-                something that competes with page interaction.
+                z-30 により、リンク、ボタン、カードをすべての背景 layer より上に置きます。
+                背景 effect を操作対象ではなく装飾として保つための境界です。
             */}
             <main className={`relative z-30 min-h-dvh ${className}`}>{children}</main>
         </div>

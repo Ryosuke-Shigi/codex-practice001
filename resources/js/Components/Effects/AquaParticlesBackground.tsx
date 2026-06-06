@@ -1,18 +1,15 @@
 import type { CSSProperties } from 'react';
 
 /*
- * AquaParticles should read as illuminated matter moving through water without
- * becoming the most expensive background in the set. Keep the particle field
- * sparse and CSS-only so it remains distinct from surface effects while staying
- * compatible with the shared decorative EffectLayer contract.
+ * AquaParticles は水中を漂う光粒として見せつつ、背景群の中で最も重い実装にならないようにします。
+ * particle field は sparse かつ CSS-only にして、EffectLayer の装飾専用契約に合わせます。
  */
 export default function AquaParticlesBackground() {
     return (
         <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_18%_18%,rgba(125,211,252,0.46),rgba(255,255,255,0)_30%),linear-gradient(150deg,rgba(6,182,212,0.32)_0%,rgba(20,184,166,0.28)_34%,rgba(14,116,144,0.34)_58%,rgba(2,6,23,0.72)_100%)]">
             {/*
-                Particle travel uses vh, not percentages. Percent transforms are
-                based on each small particle's own box, which can leave the
-                animation visually stuck near the bottom of the viewport.
+                particle の移動量は percentage ではなく vh で指定します。
+                percentage transform は各粒子自身の box 基準になるため、画面下部で詰まって見えることがあります。
             */}
             <style>
                 {`
@@ -52,11 +49,9 @@ export default function AquaParticlesBackground() {
             </style>
 
             {/*
-                Particles use deterministic positions instead of Math.random().
-                That keeps server/client render output stable while still
-                producing a scattered, organic-looking field. The count is kept
-                deliberately low because the glowing particle shadows are the
-                most noticeable cost in this effect.
+                particle 位置は Math.random() ではなく決定的に作ります。
+                server / client の render 差分を避けつつ、散らばった見た目を作るためです。
+                光る shadow がこの effect の主な負荷なので、粒子数は意図的に抑えます。
             */}
             {Array.from({ length: 16 }, (_, index) => {
                 const left = 8 + ((index * 19) % 84);
@@ -64,9 +59,8 @@ export default function AquaParticlesBackground() {
                 const duration = 6.8 + (index % 6) * 0.72;
                 const delay = -(index * 0.56);
                 /*
-                 * Keep horizontal motion modest. The effect should feel like
-                 * particles buoyantly wavering upward, not like a full-screen
-                 * current sweeping across the title.
+                 * 横揺れは控えめにします。
+                 * タイトル全体を流す水流ではなく、粒子が浮き上がる揺らぎとして見せるためです。
                  */
                 const swayValue = 4 + (index % 4) * 1.4;
                 const sway = `${index % 2 === 0 ? '' : '-'}${swayValue}vw`;
@@ -83,9 +77,7 @@ export default function AquaParticlesBackground() {
                             left: `${left}%`,
                             width: size,
                             /*
-                             * A custom property lets each particle share the
-                             * same keyframes while swaying by a small individual
-                             * horizontal amount.
+                             * custom property により、同じ keyframes を共有しながら粒子ごとに小さく横揺れさせます。
                              */
                             '--particle-sway': sway,
                             '--particle-return-sway': returnSway,
@@ -95,8 +87,7 @@ export default function AquaParticlesBackground() {
             })}
 
             {/*
-                The sheen layer is separate from the particles so brightness can
-                pulse without forcing every particle to change opacity together.
+                sheen layer は particle と分け、全粒子の opacity を同時に変えずに明るさだけを pulse させます。
             */}
             <div
                 className="absolute inset-[-12%] opacity-[0.42] mix-blend-screen"

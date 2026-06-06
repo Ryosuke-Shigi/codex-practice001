@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * YouTube category を地域別に保持するテーブルを作成します。
      */
     public function up(): void
     {
@@ -26,7 +26,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * DanceShortsRadar の video category テーブルを削除します。
      */
     public function down(): void
     {

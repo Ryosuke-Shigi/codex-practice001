@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * YouTube 動画本体の metadata を保持するテーブルを作成します。
      */
     public function up(): void
     {
@@ -35,7 +35,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * DanceShortsRadar の動画本体テーブルを削除します。
      */
     public function down(): void
     {
