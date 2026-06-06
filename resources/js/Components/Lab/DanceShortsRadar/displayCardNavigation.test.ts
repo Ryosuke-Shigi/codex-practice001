@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+    cardFieldTransitionClassNames,
     canStartAutoSlide,
     detectCardSwipe,
     selectOptionDirectionForVerticalSwipe,
@@ -27,5 +28,25 @@ describe('displayCardNavigation', () => {
         expect(selectOptionDirectionForVerticalSwipe('up')).toBe(-1);
         expect(selectOptionDirectionForVerticalSwipe('left')).toBeNull();
         expect(selectOptionDirectionForVerticalSwipe('right')).toBeNull();
+    });
+
+    it('builds card field transition classes for manual and auto directions', () => {
+        expect(
+            cardFieldTransitionClassNames({
+                direction: 1,
+                mode: 'manual',
+            }),
+        ).toBe(
+            'dance-shorts-card-transition dance-shorts-card-transition--manual dance-shorts-card-transition--right',
+        );
+        expect(
+            cardFieldTransitionClassNames({
+                direction: -1,
+                mode: 'auto',
+            }),
+        ).toBe(
+            'dance-shorts-card-transition dance-shorts-card-transition--auto dance-shorts-card-transition--left',
+        );
+        expect(cardFieldTransitionClassNames(null)).toBe('');
     });
 });

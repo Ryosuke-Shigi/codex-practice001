@@ -6,9 +6,12 @@ import DanceShortsCandidateCard from '../DanceShortsCandidateCard';
 import DanceShortsRisingCandidateCard from '../DanceShortsRisingCandidateCard';
 import {
     autoSlideIntervalMs,
+    cardFieldTransitionClassNames,
     canStartAutoSlide,
     detectCardSwipe,
     selectOptionDirectionForVerticalSwipe,
+    type CardFieldTransitionDirection,
+    type CardFieldTransitionMode,
 } from '../displayCardNavigation';
 import {
     isNavigableSelectOption,
@@ -33,7 +36,12 @@ type DanceShortsDisplayCardFieldProps = {
 };
 
 type WindowCache = Record<number, DanceShortsDisplayCardField>;
-type AutoSlideDirection = -1 | 1;
+type AutoSlideDirection = CardFieldTransitionDirection;
+type CardFieldTransitionState = {
+    direction: CardFieldTransitionDirection;
+    mode: CardFieldTransitionMode;
+    sequence: number;
+};
 
 /*
  * サーバーから同じ startRank が返ってきても、タブ・並び順・元データが変われば別 window として
@@ -105,10 +113,26 @@ export default function DanceShortsDisplayCardField({
     const [isWindowSwitching, setIsWindowSwitching] = useState(false);
     const [autoSlideDirection, setAutoSlideDirection] =
         useState<AutoSlideDirection | null>(null);
+    const [cardFieldTransition, setCardFieldTransition] =
+        useState<CardFieldTransitionState | null>(null);
 
     const stopAutoSlide = useCallback(() => {
         setAutoSlideDirection(null);
     }, []);
+
+    const triggerCardFieldTransition = useCallback(
+        (
+            direction: CardFieldTransitionDirection,
+            mode: CardFieldTransitionMode,
+        ) => {
+            setCardFieldTransition((current) => ({
+                direction,
+                mode,
+                sequence: (current?.sequence ?? 0) + 1,
+            }));
+        },
+        [],
+    );
 
     useEffect(() => {
         windowCacheRef.current = windowCache;
@@ -130,6 +154,7 @@ export default function DanceShortsDisplayCardField({
         setActiveIndex(displayCardField.activeIndex);
         setIsPrefetching(false);
         setIsWindowSwitching(false);
+        setCardFieldTransition(null);
         stopAutoSlide();
     }, [displayCardField, initialWindowKey, stopAutoSlide]);
 
@@ -257,12 +282,15 @@ export default function DanceShortsDisplayCardField({
         };
     }, [autoSlideDirection, stopAutoSlide]);
 
-    const moveToNext = useCallback(async () => {
+    const moveToNext = useCallback(async (
+        transitionMode: CardFieldTransitionMode = 'manual',
+    ) => {
         if (!canMoveNext || isWindowSwitching) {
             return;
         }
 
         if (activeIndex < currentWindow.visibleCards.length - 1) {
+            triggerCardFieldTransition(1, transitionMode);
             setActiveIndex((current) => current + 1);
             return;
         }
@@ -276,6 +304,7 @@ export default function DanceShortsDisplayCardField({
         const cachedWindow = windowCacheRef.current[nextStartRank];
 
         if (cachedWindow !== undefined) {
+            triggerCardFieldTransition(1, transitionMode);
             setActiveStartRank(nextStartRank);
             setActiveIndex(cachedWindow.activeIndex);
             return;
@@ -285,6 +314,7 @@ export default function DanceShortsDisplayCardField({
         const loadedWindow = await loadWindow(nextStartRank, 'switch');
 
         if (loadedWindow !== null) {
+            triggerCardFieldTransition(1, transitionMode);
             setActiveStartRank(nextStartRank);
             setActiveIndex(loadedWindow.activeIndex);
         }
@@ -296,14 +326,18 @@ export default function DanceShortsDisplayCardField({
         currentWindow,
         isWindowSwitching,
         loadWindow,
+        triggerCardFieldTransition,
     ]);
 
-    const moveToPrevious = useCallback(async () => {
+    const moveToPrevious = useCallback(async (
+        transitionMode: CardFieldTransitionMode = 'manual',
+    ) => {
         if (!canMovePrev || isWindowSwitching) {
             return;
         }
 
         if (activeIndex > 0) {
+            triggerCardFieldTransition(-1, transitionMode);
             setActiveIndex((current) => current - 1);
             return;
         }
@@ -317,6 +351,7 @@ export default function DanceShortsDisplayCardField({
         const cachedWindow = windowCacheRef.current[prevStartRank];
 
         if (cachedWindow !== undefined) {
+            triggerCardFieldTransition(-1, transitionMode);
             setActiveStartRank(prevStartRank);
             setActiveIndex(Math.max(0, cachedWindow.visibleCards.length - 1));
             return;
@@ -326,6 +361,7 @@ export default function DanceShortsDisplayCardField({
         const loadedWindow = await loadWindow(prevStartRank, 'switch');
 
         if (loadedWindow !== null) {
+            triggerCardFieldTransition(-1, transitionMode);
             setActiveStartRank(prevStartRank);
             setActiveIndex(Math.max(0, loadedWindow.visibleCards.length - 1));
         }
@@ -337,6 +373,7 @@ export default function DanceShortsDisplayCardField({
         currentWindow,
         isWindowSwitching,
         loadWindow,
+        triggerCardFieldTransition,
     ]);
 
     useEffect(() => {
@@ -359,11 +396,11 @@ export default function DanceShortsDisplayCardField({
 
         const intervalId = window.setInterval(() => {
             if (autoSlideDirection === 1) {
-                void moveToNext();
+                void moveToNext('auto');
                 return;
             }
 
-            void moveToPrevious();
+            void moveToPrevious('auto');
         }, autoSlideIntervalMs);
 
         return () => window.clearInterval(intervalId);
@@ -563,6 +600,11 @@ export default function DanceShortsDisplayCardField({
         );
     }
 
+    const cardFieldTransitionClassName =
+        cardFieldTransitionClassNames(cardFieldTransition);
+    const cardShellClassName = 'w-full max-h-full min-h-0';
+    const cardFieldTransitionKey = cardFieldTransition?.sequence ?? 0;
+
     return (
         <section
             id="dance-shorts-card-field"
@@ -602,54 +644,68 @@ export default function DanceShortsDisplayCardField({
                                 <span aria-hidden="true">&gt;</span>
                             </button>
                         </div>
-                        {currentWindow.type ===
-                        DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RANKING &&
-                        'region' in activeCard ? (
-                            <DanceShortsCandidateCard
-                                key={
-                                    activeCard.youtube_video_id ??
-                                    `${activeCard.region}-${activeCard.title}-${activeIndex}`
-                                }
-                                candidate={activeCard}
-                                sortKey={windowRequest.sortKey}
-                                rank={rankForIndex(currentWindow, activeIndex)}
-                                isActive
-                                thumbnailControls={thumbnailControls}
-                            />
-                        ) : currentWindow.type ===
-                          DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING &&
-                          'source_region' in activeCard ? (
-                            <DanceShortsRisingCandidateCard
-                                key={
-                                    activeCard.youtube_video_id ??
-                                    `${activeCard.source_region}-${activeCard.title}-${activeIndex}`
-                                }
-                                title={activeCard.title}
-                                publishedAt={activeCard.published_at}
-                                sourceRegion={activeCard.source_region}
-                                sourceRegionLabel={
-                                    activeCard.source_region_label
-                                }
-                                sourceCollectedAt={
-                                    activeCard.source_collected_at
-                                }
-                                japanStatus={activeCard.japan_status}
-                                viewCountDelta={activeCard.view_count_delta}
-                                viewGrowthRate={activeCard.view_growth_rate}
-                                japanViewCountDelta={
-                                    activeCard.japan_view_count_delta ?? null
-                                }
-                                thumbnailUrl={activeCard.thumbnail_url}
-                                youtubeUrl={activeCard.youtube_url}
-                                tags={activeCard.tags}
-                                observationNote={activeCard.observation_note}
-                                rank={rankForIndex(currentWindow, activeIndex)}
-                                isActive
-                                thumbnailControls={thumbnailControls}
-                            />
-                        ) : (
-                            <EmptyDisplayCardField message="表示できるカードはまだありません。" />
-                        )}
+                        <div className={cardShellClassName}>
+                            {currentWindow.type ===
+                            DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RANKING &&
+                            'region' in activeCard ? (
+                                <DanceShortsCandidateCard
+                                    candidate={activeCard}
+                                    sortKey={windowRequest.sortKey}
+                                    rank={rankForIndex(
+                                        currentWindow,
+                                        activeIndex,
+                                    )}
+                                    isActive
+                                    thumbnailControls={thumbnailControls}
+                                    contentTransitionClassName={
+                                        cardFieldTransitionClassName
+                                    }
+                                    contentTransitionKey={
+                                        cardFieldTransitionKey
+                                    }
+                                />
+                            ) : currentWindow.type ===
+                              DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES.RISING &&
+                              'source_region' in activeCard ? (
+                                <DanceShortsRisingCandidateCard
+                                    title={activeCard.title}
+                                    publishedAt={activeCard.published_at}
+                                    sourceRegion={activeCard.source_region}
+                                    sourceRegionLabel={
+                                        activeCard.source_region_label
+                                    }
+                                    sourceCollectedAt={
+                                        activeCard.source_collected_at
+                                    }
+                                    japanStatus={activeCard.japan_status}
+                                    viewCountDelta={activeCard.view_count_delta}
+                                    viewGrowthRate={activeCard.view_growth_rate}
+                                    japanViewCountDelta={
+                                        activeCard.japan_view_count_delta ?? null
+                                    }
+                                    thumbnailUrl={activeCard.thumbnail_url}
+                                    youtubeUrl={activeCard.youtube_url}
+                                    tags={activeCard.tags}
+                                    observationNote={
+                                        activeCard.observation_note
+                                    }
+                                    rank={rankForIndex(
+                                        currentWindow,
+                                        activeIndex,
+                                    )}
+                                    isActive
+                                    thumbnailControls={thumbnailControls}
+                                    contentTransitionClassName={
+                                        cardFieldTransitionClassName
+                                    }
+                                    contentTransitionKey={
+                                        cardFieldTransitionKey
+                                    }
+                                />
+                            ) : (
+                                <EmptyDisplayCardField message="表示できるカードはまだありません。" />
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

@@ -23,6 +23,8 @@ type DanceShortsRisingCandidateCardProps = {
         topRight: ReactNode;
         bottomLeft: ReactNode;
     };
+    contentTransitionClassName?: string;
+    contentTransitionKey?: number;
 };
 
 const numberFormatter = new Intl.NumberFormat('ja-JP');
@@ -74,7 +76,13 @@ export default function DanceShortsRisingCandidateCard({
     rank,
     isActive,
     thumbnailControls,
+    contentTransitionClassName,
+    contentTransitionKey = 0,
 }: DanceShortsRisingCandidateCardProps) {
+    const contentClassName = [contentTransitionClassName]
+        .filter(Boolean)
+        .join(' ');
+
     return (
         <article
             aria-current={isActive ? 'true' : undefined}
@@ -85,7 +93,15 @@ export default function DanceShortsRisingCandidateCard({
                     : 'border-slate-700/[0.08] bg-white/[0.01]',
             ].join(' ')}
         >
-            <div className="flex min-w-0 items-center justify-between gap-2">
+            <div
+                key={`rising-summary-${contentTransitionKey}`}
+                className={[
+                    'flex min-w-0 items-center justify-between gap-2',
+                    contentClassName,
+                ]
+                    .filter(Boolean)
+                    .join(' ')}
+            >
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-sky-700/[0.16] bg-sky-100/[0.38] text-xs font-black tabular-nums text-slate-800">
                     {rank}
                 </span>
@@ -117,7 +133,15 @@ export default function DanceShortsRisingCandidateCard({
                 )}
             </div>
 
-            <div className="flex min-h-0 min-w-0 flex-col gap-1 sm:gap-1.5">
+            <div
+                key={`rising-detail-${contentTransitionKey}`}
+                className={[
+                    'flex min-h-0 min-w-0 flex-col gap-1 sm:gap-1.5',
+                    contentClassName,
+                ]
+                    .filter(Boolean)
+                    .join(' ')}
+            >
                 <div className="grid min-w-0 gap-1 sm:gap-1.5">
                     <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-slate-800 sm:text-base">
                         {title}
