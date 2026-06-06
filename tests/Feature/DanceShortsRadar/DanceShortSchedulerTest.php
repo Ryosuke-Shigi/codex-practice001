@@ -20,9 +20,13 @@ class DanceShortSchedulerTest extends TestCase
 
     private const SYNC_SCHEDULED_TIMES = [
         '2026-06-01 00:00:00',
+        '2026-06-01 03:00:00',
         '2026-06-01 06:00:00',
+        '2026-06-01 09:00:00',
         '2026-06-01 12:00:00',
+        '2026-06-01 15:00:00',
         '2026-06-01 18:00:00',
+        '2026-06-01 21:00:00',
     ];
 
     protected function tearDown(): void
@@ -40,18 +44,18 @@ class DanceShortSchedulerTest extends TestCase
          */
         $this
             ->artisan('schedule:list')
-            ->expectsOutputToContain('0  0,6,12,18 * * *')
+            ->expectsOutputToContain('0  */3 * * *')
             ->assertExitCode(0);
     }
 
     public function test_sync_schedule_is_due_at_each_quota_safe_window(): void
     {
         /*
-         * 1時間ごとの同期ではなく、YouTube Data API quota を抑える4つの実行窓だけを固定します。
+         * 1時間ごとの同期ではなく、YouTube Data API quota を抑える3時間ごとの実行窓だけを固定します。
          */
         $event = $this->syncScheduleEvent();
 
-        $this->assertSame('0 0,6,12,18 * * *', $event->getExpression());
+        $this->assertSame('0 */3 * * *', $event->getExpression());
         $this->assertStringContainsString(
             'artisan dance-short:sync',
             Event::normalizeCommand($event->command),
@@ -68,7 +72,7 @@ class DanceShortSchedulerTest extends TestCase
     {
         /*
          * 05:00 は以前の hourly() なら dispatch されます。
-         * 非実行に固定し、1時間ごとの同期設定が戻らないことを守ります。
+         * 非実行に固定し、1時間ごとや任意時刻の同期設定が戻らないことを守ります。
          */
         Queue::fake();
         config(['dance_short.sync_enabled' => true]);

@@ -25,6 +25,8 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
 {
     private const TIMEOUT_SECONDS = 10;
 
+    private const VIDEOS_LIST_MAX_IDS = 50;
+
     /**
      * search.list を呼び、検索結果の候補動画を DTO 配列に変換します。
      *
@@ -69,13 +71,19 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             return [];
         }
 
-        $payload = $this->getJson('videos.list', 'videos', [
-            'key' => $this->apiKey(),
-            'part' => 'snippet,contentDetails,statistics,status',
-            'id' => implode(',', $ids),
-        ]);
+        $details = [];
 
-        return $this->mapDetailItems($payload);
+        foreach (array_chunk($ids, self::VIDEOS_LIST_MAX_IDS) as $chunkedIds) {
+            $payload = $this->getJson('videos.list', 'videos', [
+                'key' => $this->apiKey(),
+                'part' => 'snippet,contentDetails,statistics,status',
+                'id' => implode(',', $chunkedIds),
+            ]);
+
+            array_push($details, ...$this->mapDetailItems($payload));
+        }
+
+        return $details;
     }
 
     /**

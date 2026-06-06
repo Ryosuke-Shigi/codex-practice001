@@ -132,6 +132,81 @@ class YouTubeVideoApiRepositoryTest extends TestCase
         });
     }
 
+    public function test_fetch_video_details_splits_ids_into_fifty_id_chunks_and_merges_detail_items(): void
+    {
+        $this->configureYoutubeApi();
+        $requestedChunks = [];
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => function (Request $request) use (&$requestedChunks) {
+                $query = $this->queryFromRequest($request);
+                $ids = explode(',', $query['id']);
+                $requestedChunks[] = $ids;
+
+                return Http::response([
+                    'items' => array_map(
+                        fn (string $youtubeVideoId): array => $this->detailItemPayload($youtubeVideoId),
+                        $ids,
+                    ),
+                ], 200);
+            },
+        ]);
+
+        $youtubeVideoIds = array_map(
+            fn (int $number): string => sprintf('detail-video-%03d', $number),
+            range(1, 120),
+        );
+
+        $items = $this->repository()->fetchVideoDetails($youtubeVideoIds);
+
+        $this->assertCount(120, $items);
+        $this->assertSame($youtubeVideoIds[0], $items[0]->youtubeVideoId);
+        $this->assertSame($youtubeVideoIds[119], $items[119]->youtubeVideoId);
+        $this->assertSame([
+            array_slice($youtubeVideoIds, 0, 50),
+            array_slice($youtubeVideoIds, 50, 50),
+            array_slice($youtubeVideoIds, 100, 20),
+        ], $requestedChunks);
+        Http::assertSentCount(3);
+    }
+
+    public function test_fetch_video_details_does_not_send_duplicate_or_empty_ids(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => Http::response([
+                'items' => [],
+            ], 200),
+        ]);
+
+        $this->repository()->fetchVideoDetails([
+            ' detail-video-001 ',
+            '',
+            'detail-video-001',
+            ' ',
+            'detail-video-002',
+        ]);
+
+        Http::assertSent(function (Request $request): bool {
+            $query = $this->queryFromRequest($request);
+
+            return $query['id'] === 'detail-video-001,detail-video-002';
+        });
+        Http::assertSentCount(1);
+    }
+
+    public function test_fetch_video_details_does_not_send_request_when_ids_are_empty(): void
+    {
+        $this->configureYoutubeApi();
+        Http::preventStrayRequests();
+
+        $items = $this->repository()->fetchVideoDetails(['', ' ', '   ']);
+
+        $this->assertSame([], $items);
+        Http::assertNothingSent();
+    }
+
     public function test_fetch_video_details_handles_missing_like_and_comment_counts(): void
     {
         $this->configureYoutubeApi();
@@ -267,6 +342,28 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             publishedAfter: CarbonImmutable::parse('2026-05-24 00:00:00', 'UTC'),
             videoDuration: 'short',
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function detailItemPayload(string $youtubeVideoId): array
+    {
+        return [
+            'id' => $youtubeVideoId,
+            'snippet' => [
+                'title' => sprintf('Dance detail %s', $youtubeVideoId),
+            ],
+            'contentDetails' => [
+                'duration' => 'PT58S',
+            ],
+            'statistics' => [
+                'viewCount' => '1000',
+            ],
+            'status' => [
+                'embeddable' => true,
+            ],
+        ];
     }
 
     /**
