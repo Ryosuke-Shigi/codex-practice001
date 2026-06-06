@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * DanceShortsRadar の追跡状態を動画本体に追加します。
      */
     public function up(): void
     {
@@ -24,7 +24,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * DanceShortsRadar の追跡状態カラムを削除します。
      */
     public function down(): void
     {

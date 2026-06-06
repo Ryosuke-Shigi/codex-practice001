@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 class DanceShortRegionSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * DanceShortsRadar の地域マスタを投入します。
      */
     public function run(): void
     {

@@ -11,7 +11,9 @@ class ApisGuruRepository implements ApisGuruRepositoryInterface
     private const LIST_URL = 'https://api.apis.guru/v2/list.json';
 
     /**
-     * Fetch the APIs.guru API catalog list.
+     * APIs.guru の catalog list を取得します。
+     *
+     * 外部 API への HTTP 通信だけを担当し、payload の意味づけや DB 保存判断は Service 側へ渡します。
      *
      * @return array<string, mixed>
      */

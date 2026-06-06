@@ -11,6 +11,10 @@ type DanceShortsThumbnailLinkProps = DanceShortsThumbnailDisplayData & {
     mediaClassName?: string;
 };
 
+/*
+ * title / thumbnailUrl / youtubeUrl は常に同じ時点の表示単位として扱います。
+ * 画像だけ先に差し替わるとリンク先とサムネイルがずれるため、3値を1つの data object にまとめます。
+ */
 export function createDanceShortsThumbnailDisplayData(
     title: string,
     thumbnailUrl: string | null,
@@ -23,6 +27,10 @@ export function createDanceShortsThumbnailDisplayData(
     };
 }
 
+/*
+ * 非同期画像読み込みの完了時に、読み込み開始時点と現在要求中の表示単位が同じかを確認します。
+ * object identity ではなく値比較にし、同じ props から作り直した data object でも一致扱いにします。
+ */
 export function areDanceShortsThumbnailDisplayDataEqual(
     left: DanceShortsThumbnailDisplayData | null,
     right: DanceShortsThumbnailDisplayData | null,
@@ -38,6 +46,10 @@ export function areDanceShortsThumbnailDisplayDataEqual(
     );
 }
 
+/*
+ * 新しい thumbnailUrl が必要な場合だけ先読み queue を作ります。
+ * URL が同じで title / link だけ変わる場合は画像読み込みを待たず、表示単位を即時更新します。
+ */
 export function shouldQueueDanceShortsThumbnailLoad(
     displayedData: DanceShortsThumbnailDisplayData,
     requestedData: DanceShortsThumbnailDisplayData,
@@ -48,6 +60,10 @@ export function shouldQueueDanceShortsThumbnailLoad(
     );
 }
 
+/*
+ * onLoad / onError / transition 完了の callback が、現在も有効な要求に対応しているかを判定します。
+ * 古い画像読み込み結果が後から返ってきても、最新カードのサムネイルやリンクを巻き戻さないための guard です。
+ */
 export function isDanceShortsThumbnailRequestCurrent(
     candidateData: DanceShortsThumbnailDisplayData | null,
     requestedData: DanceShortsThumbnailDisplayData,
@@ -98,6 +114,10 @@ export default function DanceShortsThumbnailLink({
     const crossFadeDataRef =
         useRef<DanceShortsThumbnailDisplayData | null>(null);
 
+    /*
+     * image onLoad や transition callback は、render 時点より後に呼ばれます。
+     * ref に最新要求を入れておき、callback 内で stale closure の state を信じないようにします。
+     */
     requestedDataRef.current = requestedData;
     pendingDataRef.current = pendingData;
     crossFadeDataRef.current = crossFadeData;
@@ -129,6 +149,10 @@ export default function DanceShortsThumbnailLink({
         }
 
         if (shouldQueueDanceShortsThumbnailLoad(displayedData, nextData)) {
+            /*
+             * 画像が変わる場合は、見えているサムネイルとリンクを維持したまま hidden img で先読みします。
+             * 読み込み完了後だけ cross-fade に進むことで、壊れた中間状態をユーザーへ見せません。
+             */
             setPendingData((current) =>
                 areDanceShortsThumbnailDisplayDataEqual(current, nextData)
                     ? current
@@ -168,6 +192,10 @@ export default function DanceShortsThumbnailLink({
     const commitPendingThumbnail = (
         loadedData: DanceShortsThumbnailDisplayData,
     ) => {
+        /*
+         * 連続でカードを送った場合、古い hidden img の onLoad が最新要求より後に来ることがあります。
+         * pending / requested / loaded がすべて同じ場合だけ cross-fade 対象として採用します。
+         */
         if (
             !isDanceShortsThumbnailRequestCurrent(
                 pendingDataRef.current,
@@ -185,6 +213,10 @@ export default function DanceShortsThumbnailLink({
     const discardPendingThumbnail = (
         failedData: DanceShortsThumbnailDisplayData,
     ) => {
+        /*
+         * 読み込み失敗も現在の pending だけを捨てます。
+         * 古い失敗 callback で新しい pending を消さないよう、成功時と同じ guard を使います。
+         */
         if (
             !isDanceShortsThumbnailRequestCurrent(
                 pendingDataRef.current,
@@ -198,6 +230,10 @@ export default function DanceShortsThumbnailLink({
         setPendingData(null);
     };
     function finishCrossFade(finishedData: DanceShortsThumbnailDisplayData) {
+        /*
+         * transitionEnd と timeout fallback のどちらから呼ばれても、現在の crossFadeData だけを確定します。
+         * これにより、次のカードへ移った後の古い fade 完了が displayedData を戻すことを防ぎます。
+         */
         if (
             !isDanceShortsThumbnailRequestCurrent(
                 crossFadeDataRef.current,

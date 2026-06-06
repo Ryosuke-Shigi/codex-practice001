@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * 取得時点ごとの YouTube 公開指標を snapshot として保存するテーブルを作成します。
      */
     public function up(): void
     {
@@ -32,7 +32,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * DanceShortsRadar の snapshot テーブルを削除します。
      */
     public function down(): void
     {

@@ -17,9 +17,8 @@ export default function EffectPatternSelector({
     className = '',
 }: EffectPatternSelectorProps) {
     /*
-     * Selector owns the collection-level behavior only: which patterns exist,
-     * where their orbs currently are, and which effect should be selected on
-     * click/tap. The actual circular visual state lives in EffectPatternOrb.
+     * Selector は pattern 一覧、現在の orb 位置、click / tap 時の選択だけを担当します。
+     * 円形の見た目状態は EffectPatternOrb 側へ分けます。
      */
     const orbPositions = useBouncingOrbs({ count: effectPatterns.length });
 
@@ -30,9 +29,8 @@ export default function EffectPatternSelector({
             className={`pointer-events-none absolute inset-0 z-10 overflow-hidden ${className}`}
         >
             {/*
-                These keyframes animate the miniature previews inside each orb.
-                They do not move the orbs themselves; viewport movement and edge
-                reflection stay inside useBouncingOrbs.
+                この keyframes は各 orb 内の小さな preview だけを動かします。
+                orb 自体の viewport 移動と端での反射は useBouncingOrbs に閉じます。
             */}
             <style>
                 {`

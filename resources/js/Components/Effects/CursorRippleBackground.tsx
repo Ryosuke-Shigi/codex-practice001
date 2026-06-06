@@ -8,18 +8,16 @@ type PointerPosition = {
 
 export default function CursorRippleBackground() {
     /*
-     * This effect owns only the cursor-responsive ripple position. React state is
-     * enough here because the visual state is tiny, and Motion can turn that
-     * state into a soft animated highlight without involving jquery.ripples.
+     * この effect は cursor に反応する ripple 位置だけを担当します。
+     * 見た目 state が小さいため React state で十分で、jquery.ripples を使わず Motion の highlight に変換します。
      */
     const [position, setPosition] = useState<PointerPosition>({ x: 50, y: 48 });
     const frameRef = useRef<number | undefined>(undefined);
 
     useEffect(() => {
         /*
-         * The outer EffectLayer has pointer-events-none so it never blocks clicks.
-         * Listening on window lets the ripple follow pointer movement as a visual
-         * response while normal UI elements keep receiving the actual interaction.
+         * 外側の EffectLayer は pointer-events-none なので click を塞ぎません。
+         * window で pointer movement だけを聞き、通常の UI 要素は実際の操作を受け取り続けます。
          */
         const handlePointerMove = (event: PointerEvent) => {
             if (frameRef.current !== undefined) {

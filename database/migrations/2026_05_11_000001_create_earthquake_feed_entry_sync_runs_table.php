@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * 地震 feed entry 同期の状態表示に使う sync run テーブルを作成します。
      */
     public function up(): void
     {
@@ -29,7 +29,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * 地震 feed entry sync run テーブルを削除します。
      */
     public function down(): void
     {

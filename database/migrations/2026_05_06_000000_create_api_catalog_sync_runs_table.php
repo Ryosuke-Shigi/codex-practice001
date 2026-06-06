@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * API catalog 同期の状態表示に使う sync run テーブルを作成します。
      */
     public function up(): void
     {
@@ -32,7 +32,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * API catalog sync run テーブルを削除します。
      */
     public function down(): void
     {

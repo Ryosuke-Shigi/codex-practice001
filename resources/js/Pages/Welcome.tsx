@@ -14,8 +14,8 @@ import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function Welcome() {
     /*
-     * Welcome owns the selection interaction, while the selected effect is also
-     * saved as a shared visual preference so START can carry it into Lab.
+     * Welcome は effect 選択の操作だけを担当します。
+     * 選択結果は共有の見た目 preference として保存し、START 後の Lab でも同じ背景を引き継げるようにします。
      */
     const [currentEffect, setCurrentEffect] = useState<EffectName>(
         () => readPreferredEffectName() ?? defaultEffectName,
@@ -23,9 +23,8 @@ export default function Welcome() {
 
     useEffect(() => {
         /*
-         * Persist after React accepts the state change. The selector is the only
-         * Welcome interaction now, and START can reuse this browser-local choice
-         * after the Inertia visit to Lab.
+         * React が state 変更を受け入れた後に保存します。
+         * Welcome の操作は selector に限定し、Inertia で Lab へ移動した後も browser-local な選択を再利用します。
          */
         storePreferredEffectName(currentEffect);
     }, [currentEffect]);
@@ -40,9 +39,8 @@ export default function Welcome() {
 
             <section className="relative h-full min-h-full w-full overflow-hidden px-6 text-center">
                 {/*
-                    The selector sits between the background and the title. It is
-                    interactive, but title/START remain higher z-index targets so
-                    the entrance screen keeps its primary reading order.
+                    selector は背景とタイトルの間に置きます。
+                    操作可能ですが、title / START はより高い z-index にして入口画面の読み順を保ちます。
                 */}
                 <EffectPatternSelector
                     activeEffect={currentEffect}
@@ -51,9 +49,8 @@ export default function Welcome() {
                 />
 
                 {/*
-                    Keep the title physically centered and large. The current
-                    effect name is shown here rather than on the moving orb layer
-                    so the selected state remains readable while the orbs drift.
+                    タイトルは画面中央で大きく固定します。
+                    現在の effect 名は移動する orb ではなくここに表示し、orb が動いても選択状態を読み取れるようにします。
                 */}
                 <div className="pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 [@media(orientation:landscape)_and_(max-height:520px)]:top-[31%] [@media(orientation:landscape)_and_(max-height:520px)]:px-4">
                     <motion.div
@@ -92,9 +89,8 @@ export default function Welcome() {
                             className="group relative inline-flex min-h-[68px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/22 px-11 py-4 text-lg font-bold uppercase tracking-[0.26em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-18px_36px_rgba(18,99,131,0.24),0_20px_46px_rgba(2,35,63,0.34)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-white/30 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-h-[76px] sm:min-w-[232px] sm:text-xl [@media(orientation:landscape)_and_(max-height:520px)]:min-h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:px-8 [@media(orientation:landscape)_and_(max-height:520px)]:py-2 [@media(orientation:landscape)_and_(max-height:520px)]:text-base"
                         >
                             {/*
-                                Inertia Link keeps this as a client-side page visit
-                                instead of a full reload, so the Laravel/Inertia shell
-                                remains intact when moving from Welcome to Lab.
+                                Inertia Link により full reload ではなく client-side visit にします。
+                                Welcome から Lab へ移動しても Laravel / Inertia shell を維持できます。
                             */}
                             <span className="absolute inset-x-5 top-2 h-5 rounded-full bg-white/35 blur-md transition duration-300 group-hover:bg-white/45" />
                             <span className="relative">START</span>

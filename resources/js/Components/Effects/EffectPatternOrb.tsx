@@ -18,9 +18,8 @@ export default function EffectPatternOrb({
 }: EffectPatternOrbProps) {
     return (
         /*
-         * The wrapper receives pointer-events-none so empty space around moving
-         * orbs never blocks START. The button itself restores pointer events and
-         * remains the only interactive target in this visual layer.
+         * wrapper は pointer-events-none にし、移動する orb 周辺の空白が START を塞がないようにします。
+         * button 本体だけ pointer events を戻し、この visual layer の唯一の操作対象にします。
          */
         <div
             className="pointer-events-none absolute"
@@ -53,10 +52,8 @@ export default function EffectPatternOrb({
                 transition={{ duration: 0.22, ease: 'easeOut' }}
             >
                 {/*
-                    Orb previews use the EffectLayer catalog data instead of
-                    importing full background components. That keeps previews
-                    lightweight and lets new effects join the selector through
-                    one definition entry.
+                    orb preview は full background component ではなく EffectLayer の catalog data を使います。
+                    preview を軽量に保ち、新しい effect は定義1件の追加で selector に参加できます。
                 */}
                 <span
                     aria-hidden="true"

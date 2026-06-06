@@ -39,7 +39,7 @@ use Illuminate\Support\ServiceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Repository interface と実装の対応をアプリ全体で固定します。
      */
     public function register(): void
     {
@@ -83,7 +83,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * 起動時に追加初期化が必要になった場合の入口です。
      */
     public function boot(): void
     {

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * APIs.guru 同期結果を一覧検索用に保持する cache テーブルを作成します。
      */
     public function up(): void
     {
@@ -38,7 +38,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * API catalog cache テーブルを削除します。
      */
     public function down(): void
     {
