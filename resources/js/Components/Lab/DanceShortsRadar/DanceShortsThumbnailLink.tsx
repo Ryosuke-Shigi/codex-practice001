@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 
+export type DanceShortsThumbnailLoadStatus =
+    | 'empty'
+    | 'loading'
+    | 'loaded'
+    | 'error';
+
 type DanceShortsThumbnailLinkProps = {
     title: string;
     thumbnailUrl: string | null;
@@ -7,6 +13,24 @@ type DanceShortsThumbnailLinkProps = {
     className?: string;
     mediaClassName?: string;
 };
+
+type DanceShortsThumbnailLoadState = {
+    thumbnailUrl: string | null;
+    status: DanceShortsThumbnailLoadStatus;
+};
+
+export function initialDanceShortsThumbnailLoadStatus(
+    thumbnailUrl: string | null,
+): DanceShortsThumbnailLoadStatus {
+    return thumbnailUrl === null ? 'empty' : 'loading';
+}
+
+export function shouldRenderDanceShortsThumbnailImage(
+    thumbnailUrl: string | null,
+    status: DanceShortsThumbnailLoadStatus,
+): boolean {
+    return thumbnailUrl !== null && status !== 'empty' && status !== 'error';
+}
 
 /*
  * サムネイルから YouTube を開くための専用コンポーネントです。
@@ -22,15 +46,50 @@ export default function DanceShortsThumbnailLink({
     className,
     mediaClassName,
 }: DanceShortsThumbnailLinkProps) {
-    const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState(
+    const [thumbnailLoadState, setThumbnailLoadState] =
+        useState<DanceShortsThumbnailLoadState>(() => ({
+            thumbnailUrl,
+            status: initialDanceShortsThumbnailLoadStatus(thumbnailUrl),
+        }));
+    const thumbnailLoadStatus =
+        thumbnailLoadState.thumbnailUrl === thumbnailUrl
+            ? thumbnailLoadState.status
+            : initialDanceShortsThumbnailLoadStatus(thumbnailUrl);
+    const shouldRenderThumbnailImage = shouldRenderDanceShortsThumbnailImage(
         thumbnailUrl,
+        thumbnailLoadStatus,
     );
-    const [previousThumbnailUrl, setPreviousThumbnailUrl] = useState<
-        string | null
-    >(null);
-    const [isCurrentThumbnailLoaded, setIsCurrentThumbnailLoaded] = useState(
-        thumbnailUrl === null,
-    );
+    const isCurrentThumbnailLoaded = thumbnailLoadStatus === 'loaded';
+    const placeholderClassName = [
+        'grid aspect-video w-full place-items-center bg-slate-900 text-sm font-semibold text-cyan-50/74',
+        mediaClassName,
+    ]
+        .filter(Boolean)
+        .join(' ');
+    const loadingPlaceholderClassName = [
+        'absolute inset-0 bg-slate-900 transition-opacity duration-150',
+        isCurrentThumbnailLoaded ? 'opacity-0' : 'opacity-100',
+    ].join(' ');
+
+    useEffect(() => {
+        setThumbnailLoadState({
+            thumbnailUrl,
+            status: initialDanceShortsThumbnailLoadStatus(thumbnailUrl),
+        });
+    }, [thumbnailUrl]);
+
+    const markThumbnailLoaded = (loadedThumbnailUrl: string) => {
+        setThumbnailLoadState({
+            thumbnailUrl: loadedThumbnailUrl,
+            status: 'loaded',
+        });
+    };
+    const markThumbnailError = (failedThumbnailUrl: string) => {
+        setThumbnailLoadState({
+            thumbnailUrl: failedThumbnailUrl,
+            status: 'error',
+        });
+    };
     const containerClassName = [
         'relative overflow-hidden rounded-lg border border-slate-700/[0.08] bg-white/[0.02]',
         className,
@@ -43,65 +102,18 @@ export default function DanceShortsThumbnailLink({
     ]
         .filter(Boolean)
         .join(' ');
-
-    useEffect(() => {
-        if (thumbnailUrl === currentThumbnailUrl) {
-            return;
-        }
-
-        setPreviousThumbnailUrl((currentPreviousThumbnailUrl) =>
-            isCurrentThumbnailLoaded
-                ? currentThumbnailUrl
-                : currentPreviousThumbnailUrl,
-        );
-        setCurrentThumbnailUrl(thumbnailUrl);
-        setIsCurrentThumbnailLoaded(thumbnailUrl === null);
-    }, [currentThumbnailUrl, isCurrentThumbnailLoaded, thumbnailUrl]);
-
-    useEffect(() => {
-        if (!isCurrentThumbnailLoaded || previousThumbnailUrl === null) {
-            return;
-        }
-
-        const timeoutId = window.setTimeout(() => {
-            setPreviousThumbnailUrl(null);
-        }, 180);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [isCurrentThumbnailLoaded, previousThumbnailUrl]);
-
-    const thumbnail = currentThumbnailUrl === null ? (
-        <div
-            className={[
-                'grid aspect-video w-full place-items-center bg-slate-900 text-sm font-semibold text-cyan-50/74',
-                mediaClassName,
-            ]
-                .filter(Boolean)
-                .join(' ')}
-        >
-            No Thumbnail
-        </div>
+    const thumbnail = !shouldRenderThumbnailImage || thumbnailUrl === null ? (
+        <div className={placeholderClassName}>No Thumbnail</div>
     ) : (
         <div className="relative aspect-video w-full overflow-hidden">
-            {previousThumbnailUrl !== null &&
-                previousThumbnailUrl !== currentThumbnailUrl && (
-                    <img
-                        src={previousThumbnailUrl}
-                        alt=""
-                        aria-hidden="true"
-                        className={[
-                            'absolute inset-0 h-full w-full object-cover transition-opacity duration-150',
-                            isCurrentThumbnailLoaded
-                                ? 'opacity-0'
-                                : 'opacity-100',
-                        ].join(' ')}
-                    />
-                )}
+            <div aria-hidden="true" className={loadingPlaceholderClassName} />
             <img
-                src={currentThumbnailUrl}
+                key={thumbnailUrl}
+                src={thumbnailUrl}
                 alt={`${title} のサムネイル`}
                 loading="lazy"
-                onLoad={() => setIsCurrentThumbnailLoaded(true)}
+                onLoad={() => markThumbnailLoaded(thumbnailUrl)}
+                onError={() => markThumbnailError(thumbnailUrl)}
                 className={[
                     thumbnailClassName,
                     isCurrentThumbnailLoaded ? 'opacity-100' : 'opacity-0',
