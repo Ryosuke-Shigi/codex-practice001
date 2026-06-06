@@ -2,27 +2,34 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import DanceShortsThumbnailLink, {
-    initialDanceShortsThumbnailLoadStatus,
-    shouldRenderDanceShortsThumbnailImage,
+    areDanceShortsThumbnailDisplayDataEqual,
+    createDanceShortsThumbnailDisplayData,
+    isDanceShortsPendingThumbnailCurrent,
+    shouldQueueDanceShortsThumbnailLoad,
 } from './DanceShortsThumbnailLink';
 
 describe('DanceShortsThumbnailLink', () => {
-    it('keeps a new thumbnail hidden until load without image transform classes', () => {
+    it('renders the displayed thumbnail and YouTube link from the same data set', () => {
         const markup = renderToStaticMarkup(
             <DanceShortsThumbnailLink
-                title="Dance thumbnail"
-                thumbnailUrl="https://example.test/thumb.jpg"
-                youtubeUrl="https://www.youtube.com/shorts/example"
+                title="Current dance"
+                thumbnailUrl="https://example.test/current-thumb.jpg"
+                youtubeUrl="https://www.youtube.com/shorts/current"
             />,
         );
 
-        expect(markup).toContain('opacity-0');
+        expect(markup).toContain(
+            'href="https://www.youtube.com/shorts/current"',
+        );
+        expect(markup).toContain('src="https://example.test/current-thumb.jpg"');
+        expect(markup).toContain('alt="Current dance のサムネイル"');
         expect(markup).toContain('transition-opacity');
+        expect(markup).not.toContain('bg-slate-900');
         expect(markup).not.toContain('scale-');
         expect(markup).not.toContain('translate');
     });
 
-    it('renders a placeholder when there is no thumbnail source', () => {
+    it('renders a placeholder when there is no displayed thumbnail source', () => {
         const markup = renderToStaticMarkup(
             <DanceShortsThumbnailLink
                 title="Dance thumbnail"
@@ -35,30 +42,75 @@ describe('DanceShortsThumbnailLink', () => {
         expect(markup).not.toContain('<img');
     });
 
-    it('falls back to placeholder display state after thumbnail load error', () => {
-        expect(initialDanceShortsThumbnailLoadStatus(null)).toBe('empty');
+    it('queues a new thumbnail only when a different image source must load first', () => {
+        const displayedData = createDanceShortsThumbnailDisplayData(
+            'Current dance',
+            'https://example.test/current-thumb.jpg',
+            'https://www.youtube.com/shorts/current',
+        );
+        const nextData = createDanceShortsThumbnailDisplayData(
+            'Next dance',
+            'https://example.test/next-thumb.jpg',
+            'https://www.youtube.com/shorts/next',
+        );
+        const sameImageNextLinkData = createDanceShortsThumbnailDisplayData(
+            'Next dance',
+            'https://example.test/current-thumb.jpg',
+            'https://www.youtube.com/shorts/next',
+        );
+        const noThumbnailData = createDanceShortsThumbnailDisplayData(
+            'Next dance',
+            null,
+            'https://www.youtube.com/shorts/next',
+        );
+
+        expect(shouldQueueDanceShortsThumbnailLoad(displayedData, nextData)).toBe(
+            true,
+        );
         expect(
-            initialDanceShortsThumbnailLoadStatus(
-                'https://example.test/thumb.jpg',
+            shouldQueueDanceShortsThumbnailLoad(
+                displayedData,
+                sameImageNextLinkData,
             ),
-        ).toBe('loading');
+        ).toBe(false);
         expect(
-            shouldRenderDanceShortsThumbnailImage(
-                'https://example.test/thumb.jpg',
-                'loading',
-            ),
+            shouldQueueDanceShortsThumbnailLoad(displayedData, noThumbnailData),
+        ).toBe(false);
+    });
+
+    it('commits a pending thumbnail only when it is still the current request', () => {
+        const oldData = createDanceShortsThumbnailDisplayData(
+            'Old dance',
+            'https://example.test/old-thumb.jpg',
+            'https://www.youtube.com/shorts/old',
+        );
+        const nextData = createDanceShortsThumbnailDisplayData(
+            'Next dance',
+            'https://example.test/next-thumb.jpg',
+            'https://www.youtube.com/shorts/next',
+        );
+        const newerData = createDanceShortsThumbnailDisplayData(
+            'Newer dance',
+            'https://example.test/newer-thumb.jpg',
+            'https://www.youtube.com/shorts/newer',
+        );
+
+        expect(
+            areDanceShortsThumbnailDisplayDataEqual(nextData, {
+                ...nextData,
+            }),
         ).toBe(true);
         expect(
-            shouldRenderDanceShortsThumbnailImage(
-                'https://example.test/thumb.jpg',
-                'loaded',
-            ),
+            isDanceShortsPendingThumbnailCurrent(nextData, nextData, nextData),
         ).toBe(true);
         expect(
-            shouldRenderDanceShortsThumbnailImage(
-                'https://example.test/thumb.jpg',
-                'error',
-            ),
+            isDanceShortsPendingThumbnailCurrent(nextData, newerData, nextData),
+        ).toBe(false);
+        expect(
+            isDanceShortsPendingThumbnailCurrent(nextData, nextData, oldData),
+        ).toBe(false);
+        expect(
+            isDanceShortsPendingThumbnailCurrent(null, nextData, nextData),
         ).toBe(false);
     });
 });
