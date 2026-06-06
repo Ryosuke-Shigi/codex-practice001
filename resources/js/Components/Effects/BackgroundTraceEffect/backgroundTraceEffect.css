@@ -110,22 +110,55 @@
 }
 
 .background-trace-effect__light-trail {
-    stroke-dasharray: var(--trace-trail-length) var(--trace-trail-gap);
+    mix-blend-mode: screen;
     stroke-linecap: round;
 }
 
 .background-trace-effect__light-trail--glow {
-    --trace-visible-opacity: 0.42;
+    --trace-visible-opacity: 0.44;
 
-    filter: drop-shadow(0 0 7px rgba(255, 88, 172, 0.46));
+    filter:
+        blur(1.2px)
+        drop-shadow(0 0 8px rgba(255, 88, 172, 0.5))
+        drop-shadow(0 0 18px rgba(91, 196, 255, 0.32));
+    stroke-dasharray: var(--trace-trail-length) var(--trace-trail-gap);
     stroke-width: var(--trace-glow-width);
 }
 
 .background-trace-effect__light-trail--core {
-    --trace-visible-opacity: 0.86;
+    --trace-visible-opacity: 0.84;
 
-    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.28));
-    stroke-width: var(--trace-trail-width);
+    filter:
+        blur(0.28px)
+        drop-shadow(0 0 5px rgba(255, 102, 172, 0.42));
+    stroke-dasharray: var(--trace-core-length) var(--trace-trail-gap);
+    stroke-width: var(--trace-core-width);
+}
+
+.background-trace-effect__light--circle .background-trace-effect__light-trail {
+    animation-name:
+        background-trace-light-run,
+        background-trace-color-cycle,
+        background-trace-circle-presence;
+}
+
+.background-trace-effect__light--circle.background-trace-effect__light--reverse .background-trace-effect__light-trail {
+    animation-name:
+        background-trace-light-run-reverse,
+        background-trace-color-cycle,
+        background-trace-circle-presence;
+}
+
+.background-trace-effect__light--circle .background-trace-effect__light-trail--glow {
+    --trace-visible-opacity: 0.64;
+
+    stroke-dasharray: 52 136;
+}
+
+.background-trace-effect__light--circle .background-trace-effect__light-trail--core {
+    --trace-visible-opacity: 0.96;
+
+    stroke-dasharray: 7 181;
 }
 
 @keyframes background-trace-gradient-drift {
@@ -175,14 +208,28 @@
 
 @keyframes background-trace-trail-presence {
     0%,
-    8%,
-    94%,
+    3%,
+    98%,
     100% {
         opacity: 0;
     }
 
-    18%,
-    84% {
+    8%,
+    94% {
+        opacity: var(--trace-visible-opacity);
+    }
+}
+
+@keyframes background-trace-circle-presence {
+    0%,
+    4%,
+    98%,
+    100% {
+        opacity: 0;
+    }
+
+    10%,
+    92% {
         opacity: var(--trace-visible-opacity);
     }
 }
@@ -208,11 +255,19 @@
     }
 
     .background-trace-effect__pattern--mobile .background-trace-effect__line {
-        stroke: rgba(255, 255, 255, 0.038);
+        stroke: rgba(255, 255, 255, 0.026);
     }
 
     .background-trace-effect__pattern--mobile .background-trace-effect__circle {
-        stroke: rgba(255, 255, 255, 0.052);
+        stroke: rgba(255, 255, 255, 0.034);
+    }
+
+    .background-trace-effect__pattern--mobile .background-trace-effect__light-trail--glow {
+        --trace-visible-opacity: 0.76;
+    }
+
+    .background-trace-effect__pattern--mobile .background-trace-effect__light-trail--core {
+        --trace-visible-opacity: 0.9;
     }
 }
 

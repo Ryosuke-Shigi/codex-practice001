@@ -80,9 +80,10 @@ function lightStyle(light: TraceLight, index: number): CSSProperties {
         '--trace-core-length': backgroundTraceConfig.lights.coreLength * 100,
         '--trace-delay': `${timing.delay}s`,
         '--trace-duration': `${timing.duration}s`,
+        '--trace-core-width': size.trailWidth * 0.62,
         '--trace-offset-end': `${-backgroundTraceConfig.lights.trailLength * 100}`,
         '--trace-offset-start': `${100 + backgroundTraceConfig.lights.trailLength * 100}`,
-        '--trace-glow-width': size.trailWidth * 1.35,
+        '--trace-glow-width': size.trailWidth * 2.25,
         '--trace-trail-gap': 180,
         '--trace-trail-length': backgroundTraceConfig.lights.trailLength * 100,
         '--trace-trail-width': size.trailWidth,
@@ -115,7 +116,13 @@ function renderLightTarget(
         light.direction === 'reverse'
             ? 'background-trace-effect__light--reverse'
             : '';
-    const className = `background-trace-effect__light ${directionClass}`;
+    const targetClass =
+        'r' in target
+            ? 'background-trace-effect__light--circle'
+            : 'd' in target
+              ? 'background-trace-effect__light--route'
+              : 'background-trace-effect__light--line';
+    const className = `background-trace-effect__light ${directionClass} ${targetClass}`;
 
     return (
         <g key={light.id} className={className} style={lightStyle(light, index)}>
