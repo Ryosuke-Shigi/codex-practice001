@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 type DanceShortsThumbnailLinkProps = {
     title: string;
     thumbnailUrl: string | null;
@@ -20,20 +22,55 @@ export default function DanceShortsThumbnailLink({
     className,
     mediaClassName,
 }: DanceShortsThumbnailLinkProps) {
+    const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState(
+        thumbnailUrl,
+    );
+    const [previousThumbnailUrl, setPreviousThumbnailUrl] = useState<
+        string | null
+    >(null);
+    const [isCurrentThumbnailLoaded, setIsCurrentThumbnailLoaded] = useState(
+        thumbnailUrl === null,
+    );
     const containerClassName = [
-        'overflow-hidden rounded-lg border border-slate-700/[0.08] bg-white/[0.02]',
+        'relative overflow-hidden rounded-lg border border-slate-700/[0.08] bg-white/[0.02]',
         className,
     ]
         .filter(Boolean)
         .join(' ');
     const thumbnailClassName = [
-        'aspect-video w-full object-cover transition duration-300 group-hover:scale-[1.03]',
+        'aspect-video w-full object-cover transition-opacity duration-150',
         mediaClassName,
     ]
         .filter(Boolean)
         .join(' ');
 
-    const thumbnail = thumbnailUrl === null ? (
+    useEffect(() => {
+        if (thumbnailUrl === currentThumbnailUrl) {
+            return;
+        }
+
+        setPreviousThumbnailUrl((currentPreviousThumbnailUrl) =>
+            isCurrentThumbnailLoaded
+                ? currentThumbnailUrl
+                : currentPreviousThumbnailUrl,
+        );
+        setCurrentThumbnailUrl(thumbnailUrl);
+        setIsCurrentThumbnailLoaded(thumbnailUrl === null);
+    }, [currentThumbnailUrl, isCurrentThumbnailLoaded, thumbnailUrl]);
+
+    useEffect(() => {
+        if (!isCurrentThumbnailLoaded || previousThumbnailUrl === null) {
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            setPreviousThumbnailUrl(null);
+        }, 180);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [isCurrentThumbnailLoaded, previousThumbnailUrl]);
+
+    const thumbnail = currentThumbnailUrl === null ? (
         <div
             className={[
                 'grid aspect-video w-full place-items-center bg-slate-900 text-sm font-semibold text-cyan-50/74',
@@ -45,12 +82,32 @@ export default function DanceShortsThumbnailLink({
             No Thumbnail
         </div>
     ) : (
-        <img
-            src={thumbnailUrl}
-            alt={`${title} のサムネイル`}
-            loading="lazy"
-            className={thumbnailClassName}
-        />
+        <div className="relative aspect-video w-full overflow-hidden">
+            {previousThumbnailUrl !== null &&
+                previousThumbnailUrl !== currentThumbnailUrl && (
+                    <img
+                        src={previousThumbnailUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className={[
+                            'absolute inset-0 h-full w-full object-cover transition-opacity duration-150',
+                            isCurrentThumbnailLoaded
+                                ? 'opacity-0'
+                                : 'opacity-100',
+                        ].join(' ')}
+                    />
+                )}
+            <img
+                src={currentThumbnailUrl}
+                alt={`${title} のサムネイル`}
+                loading="lazy"
+                onLoad={() => setIsCurrentThumbnailLoaded(true)}
+                className={[
+                    thumbnailClassName,
+                    isCurrentThumbnailLoaded ? 'opacity-100' : 'opacity-0',
+                ].join(' ')}
+            />
+        </div>
     );
 
     if (youtubeUrl === null) {

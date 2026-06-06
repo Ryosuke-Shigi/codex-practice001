@@ -1,4 +1,10 @@
 export type CardSwipeDirection = 'left' | 'right' | 'up' | 'down';
+export type CardFieldTransitionDirection = -1 | 1;
+export type CardFieldTransitionMode = 'manual' | 'auto';
+export type CardFieldTransition = {
+    direction: CardFieldTransitionDirection;
+    mode: CardFieldTransitionMode;
+};
 
 export const autoSlideIntervalMs = 1300;
 export const cardSwipeDistanceThreshold = 40;
@@ -41,4 +47,27 @@ export function selectOptionDirectionForVerticalSwipe(
     }
 
     return null;
+}
+
+export function cardFieldTransitionClassNames(
+    transition: CardFieldTransition | null,
+) {
+    if (transition === null) {
+        return '';
+    }
+
+    const modeClassName =
+        transition.mode === 'auto'
+            ? 'dance-shorts-card-transition--auto'
+            : 'dance-shorts-card-transition--manual';
+    const directionClassName =
+        transition.direction === 1
+            ? 'dance-shorts-card-transition--right'
+            : 'dance-shorts-card-transition--left';
+
+    return [
+        'dance-shorts-card-transition',
+        modeClassName,
+        directionClassName,
+    ].join(' ');
 }
