@@ -17,28 +17,19 @@ class DanceShortSearchKeywordSeeder extends Seeder
 
         $keywordsByRegionCode = [
             'JP' => [
-                'やってみた shorts',
-                '検証してみた shorts',
-                'チャレンジ shorts',
-                'リアクション shorts',
-                'ゲーム実況 shorts',
                 '踊ってみた shorts',
+                '踊ってみた',
+                'TikTok 踊ってみた shorts',
             ],
             'US' => [
-                'i tried shorts',
-                'challenge shorts',
-                'reaction shorts',
-                'gaming shorts',
-                'POV shorts',
-                'vtuber challenge shorts',
+                'dance cover shorts',
+                'dance cover',
+                'TikTok dance cover shorts',
             ],
             'KR' => [
-                '해봤어요 shorts',
-                '챌린지 shorts',
-                '리액션 shorts',
-                '게임 shorts',
                 '커버댄스 shorts',
-                '검증해봤어요 shorts',
+                '커버댄스',
+                '틱톡 커버댄스 shorts',
             ],
         ];
 

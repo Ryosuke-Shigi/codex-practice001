@@ -54,6 +54,10 @@ Repository に業務判断を置かないようにします。
 
 Repository は「どのデータを取得・保存するか」を扱い、「そのデータをどう判断するか」は Service 側に置きます。
 
+DanceShortsRadar の YouTube API Repository は search.list / videos.list の呼び出しと DTO 変換だけを担当します。videos.list は YouTube Data API の上限に合わせて動画IDを50件単位に分割し、取得した DTO を集約して Action へ返します。
+
+DanceShortsRadar の YouTube API 同期 Scheduler は、`DANCE_SHORT_SYNC_ENABLED` の config / env gate で明示的に有効化した環境だけが3時間ごとに同期 command を実行します。検索キーワードは JP / US / KR 各3件、合計9件とし、1日8回の実行で search.list は最大72回/日に収めます。
+
 ## DTO / ListDTO の責務
 
 DTO はレイヤー間の境界線として扱います。

@@ -31,7 +31,7 @@ class SyncDanceShortVideosActionTest extends TestCase
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
         config([
-            'services.youtube.discover_max_results' => 25,
+            'services.youtube.discover_max_results' => 50,
             'services.youtube.discover_published_after_days' => 7,
         ]);
 
@@ -98,7 +98,7 @@ class SyncDanceShortVideosActionTest extends TestCase
         ));
         $this->assertSame('JP', $youtubeRepository->searchConditions[0]->regionCode);
         $this->assertSame('ja', $youtubeRepository->searchConditions[0]->relevanceLanguage);
-        $this->assertSame(25, $youtubeRepository->searchConditions[0]->maxResults);
+        $this->assertSame(50, $youtubeRepository->searchConditions[0]->maxResults);
         $this->assertSame('2026-05-24T12:00:00+00:00', $youtubeRepository->searchConditions[0]->toArray()['publishedAfter']);
         $this->assertSame([['short-video-001', 'long-video-001']], $youtubeRepository->fetchVideoIdsCalls);
 
@@ -123,7 +123,7 @@ class SyncDanceShortVideosActionTest extends TestCase
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
         config([
-            'services.youtube.discover_max_results' => 25,
+            'services.youtube.discover_max_results' => 50,
             'services.youtube.discover_published_after_days' => 7,
             'dance_short.snapshot_retention_days' => 35,
         ]);

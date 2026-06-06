@@ -63,6 +63,12 @@ class DanceShortDatabaseTest extends TestCase
 
         $this->seed(DanceShortSearchKeywordSeeder::class);
 
+        /*
+         * DanceShortSearchKeywordSeeder は地域ごとに既存 keyword を整理してから投入します。
+         * 再実行しても古い keyword や重複 keyword が残らないことを固定します。
+         */
+        $this->seed(DanceShortSearchKeywordSeeder::class);
+
         $this->assertDatabaseHas('dance_short_regions', [
             'code' => 'JP',
             'name' => '日本',
@@ -85,32 +91,23 @@ class DanceShortDatabaseTest extends TestCase
 
         $expectedKeywordsByRegionCode = [
             'JP' => [
-                'やってみた shorts',
-                '検証してみた shorts',
-                'チャレンジ shorts',
-                'リアクション shorts',
-                'ゲーム実況 shorts',
                 '踊ってみた shorts',
+                '踊ってみた',
+                'TikTok 踊ってみた shorts',
             ],
             'US' => [
-                'i tried shorts',
-                'challenge shorts',
-                'reaction shorts',
-                'gaming shorts',
-                'POV shorts',
-                'vtuber challenge shorts',
+                'dance cover shorts',
+                'dance cover',
+                'TikTok dance cover shorts',
             ],
             'KR' => [
-                '해봤어요 shorts',
-                '챌린지 shorts',
-                '리액션 shorts',
-                '게임 shorts',
                 '커버댄스 shorts',
-                '검증해봤어요 shorts',
+                '커버댄스',
+                '틱톡 커버댄스 shorts',
             ],
         ];
 
-        $this->assertSame(18, DanceShortSearchKeyword::query()->count());
+        $this->assertSame(9, DanceShortSearchKeyword::query()->count());
         $this->assertDatabaseMissing('dance_short_search_keywords', [
             'keyword' => 'dance shorts',
         ]);

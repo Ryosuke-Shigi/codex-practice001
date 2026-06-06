@@ -278,7 +278,7 @@ class SyncDanceShortVideosAction
 
     private function discoverMaxResults(): int
     {
-        $maxResults = (int) config('services.youtube.discover_max_results', 25);
+        $maxResults = (int) config('services.youtube.discover_max_results', 50);
 
         /*
          * YouTube search.list の maxResults は 1..50 の範囲です。

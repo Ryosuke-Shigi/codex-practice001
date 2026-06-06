@@ -118,6 +118,8 @@ Repository は DB 操作の抽象を扱うため、取得条件や保存結果�
 - 検索条件や並び順が壊れていないか
 - Repository に業務判断が混ざっていないか
 
+DanceShortsRadar の YouTube API Repository では、videos.list に送る動画IDが50件単位に分割されること、重複IDや空IDを送らないこと、空配列では HTTP 通信しないことを確認します。
+
 ## Action テスト
 
 Action はユースケースの手順を扱うため、処理順序と連携をテストします。
@@ -139,6 +141,8 @@ Job は非同期処理や同期処理を扱うため、実行結果をテスト�
 - 同期処理の結果が記録されるか
 - 失敗時の状態やエラーメッセージが扱えるか
 - 再実行しても破綻しないか
+
+DanceShortsRadar の Scheduler は、`DANCE_SHORT_SYNC_ENABLED` が true の場合だけ3時間ごとの同期対象になり、false の場合は同期 Job を dispatch しないことを Feature テストで固定します。
 
 ## Responder / Inertia props テスト
 
