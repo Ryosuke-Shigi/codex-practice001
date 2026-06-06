@@ -48,16 +48,22 @@ export function shouldQueueDanceShortsThumbnailLoad(
     );
 }
 
-export function isDanceShortsPendingThumbnailCurrent(
-    pendingData: DanceShortsThumbnailDisplayData | null,
+export function isDanceShortsThumbnailRequestCurrent(
+    candidateData: DanceShortsThumbnailDisplayData | null,
     requestedData: DanceShortsThumbnailDisplayData,
-    completedData: DanceShortsThumbnailDisplayData,
+    resolvedData: DanceShortsThumbnailDisplayData,
 ): boolean {
     return (
-        pendingData !== null &&
-        areDanceShortsThumbnailDisplayDataEqual(pendingData, requestedData) &&
-        areDanceShortsThumbnailDisplayDataEqual(pendingData, completedData)
+        candidateData !== null &&
+        areDanceShortsThumbnailDisplayDataEqual(candidateData, requestedData) &&
+        areDanceShortsThumbnailDisplayDataEqual(candidateData, resolvedData)
     );
+}
+
+export function shouldDisableDanceShortsThumbnailLink(
+    crossFadeData: DanceShortsThumbnailDisplayData | null,
+): boolean {
+    return crossFadeData !== null;
 }
 
 /*
@@ -83,14 +89,18 @@ export default function DanceShortsThumbnailLink({
         useState<DanceShortsThumbnailDisplayData>(requestedData);
     const [pendingData, setPendingData] =
         useState<DanceShortsThumbnailDisplayData | null>(null);
-    const [shouldFadeDisplayedThumbnailIn, setShouldFadeDisplayedThumbnailIn] =
-        useState(false);
+    const [crossFadeData, setCrossFadeData] =
+        useState<DanceShortsThumbnailDisplayData | null>(null);
+    const [isCrossFadeVisible, setIsCrossFadeVisible] = useState(false);
     const requestedDataRef =
         useRef<DanceShortsThumbnailDisplayData>(requestedData);
     const pendingDataRef = useRef<DanceShortsThumbnailDisplayData | null>(null);
+    const crossFadeDataRef =
+        useRef<DanceShortsThumbnailDisplayData | null>(null);
 
     requestedDataRef.current = requestedData;
     pendingDataRef.current = pendingData;
+    crossFadeDataRef.current = crossFadeData;
 
     useEffect(() => {
         const nextData = createDanceShortsThumbnailDisplayData(
@@ -101,7 +111,21 @@ export default function DanceShortsThumbnailLink({
 
         if (areDanceShortsThumbnailDisplayDataEqual(displayedData, nextData)) {
             setPendingData(null);
+            setCrossFadeData(null);
+            setIsCrossFadeVisible(false);
             return;
+        }
+
+        if (
+            crossFadeData !== null &&
+            areDanceShortsThumbnailDisplayDataEqual(crossFadeData, nextData)
+        ) {
+            return;
+        }
+
+        if (crossFadeData !== null) {
+            setCrossFadeData(null);
+            setIsCrossFadeVisible(false);
         }
 
         if (shouldQueueDanceShortsThumbnailLoad(displayedData, nextData)) {
@@ -115,26 +139,37 @@ export default function DanceShortsThumbnailLink({
 
         setPendingData(null);
         setDisplayedData(nextData);
-        setShouldFadeDisplayedThumbnailIn(false);
-    }, [displayedData, thumbnailUrl, title, youtubeUrl]);
+    }, [crossFadeData, displayedData, thumbnailUrl, title, youtubeUrl]);
 
     useEffect(() => {
-        if (!shouldFadeDisplayedThumbnailIn) {
+        if (crossFadeData === null) {
             return;
         }
 
         const animationFrameId = window.requestAnimationFrame(() => {
-            setShouldFadeDisplayedThumbnailIn(false);
+            setIsCrossFadeVisible(true);
         });
 
         return () => window.cancelAnimationFrame(animationFrameId);
-    }, [displayedData.thumbnailUrl, shouldFadeDisplayedThumbnailIn]);
+    }, [crossFadeData]);
+
+    useEffect(() => {
+        if (crossFadeData === null || !isCrossFadeVisible) {
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            finishCrossFade(crossFadeData);
+        }, 180);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [crossFadeData, isCrossFadeVisible]);
 
     const commitPendingThumbnail = (
         loadedData: DanceShortsThumbnailDisplayData,
     ) => {
         if (
-            !isDanceShortsPendingThumbnailCurrent(
+            !isDanceShortsThumbnailRequestCurrent(
                 pendingDataRef.current,
                 requestedDataRef.current,
                 loadedData,
@@ -143,15 +178,15 @@ export default function DanceShortsThumbnailLink({
             return;
         }
 
-        setDisplayedData(loadedData);
         setPendingData(null);
-        setShouldFadeDisplayedThumbnailIn(true);
+        setCrossFadeData(loadedData);
+        setIsCrossFadeVisible(false);
     };
     const discardPendingThumbnail = (
         failedData: DanceShortsThumbnailDisplayData,
     ) => {
         if (
-            !isDanceShortsPendingThumbnailCurrent(
+            !isDanceShortsThumbnailRequestCurrent(
                 pendingDataRef.current,
                 requestedDataRef.current,
                 failedData,
@@ -161,19 +196,34 @@ export default function DanceShortsThumbnailLink({
         }
 
         setPendingData(null);
-        setShouldFadeDisplayedThumbnailIn(false);
     };
+    function finishCrossFade(finishedData: DanceShortsThumbnailDisplayData) {
+        if (
+            !isDanceShortsThumbnailRequestCurrent(
+                crossFadeDataRef.current,
+                requestedDataRef.current,
+                finishedData,
+            )
+        ) {
+            return;
+        }
+
+        setDisplayedData(finishedData);
+        setCrossFadeData(null);
+        setIsCrossFadeVisible(false);
+    }
     const containerClassName = [
         'relative overflow-hidden rounded-lg border border-slate-700/[0.08] bg-white/[0.02]',
         className,
     ]
         .filter(Boolean)
         .join(' ');
+    const isLinkDisabled = shouldDisableDanceShortsThumbnailLink(crossFadeData);
     const thumbnailFrameClassName =
         'relative aspect-video w-full overflow-hidden bg-white/[0.02]';
     const thumbnailClassName = [
         'h-full w-full object-cover transition-opacity duration-150',
-        shouldFadeDisplayedThumbnailIn ? 'opacity-0' : 'opacity-100',
+        'opacity-100',
         mediaClassName,
     ]
         .filter(Boolean)
@@ -186,6 +236,10 @@ export default function DanceShortsThumbnailLink({
         .join(' ');
     const pendingThumbnailClassName =
         'pointer-events-none absolute inset-0 h-full w-full object-cover opacity-0';
+    const crossFadeThumbnailClassName = [
+        'pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-150',
+        isCrossFadeVisible ? 'opacity-100' : 'opacity-0',
+    ].join(' ');
     const thumbnail = (
         <div className={thumbnailFrameClassName}>
             {displayedData.thumbnailUrl === null ? (
@@ -211,6 +265,17 @@ export default function DanceShortsThumbnailLink({
                         className={pendingThumbnailClassName}
                     />
                 )}
+            {crossFadeData?.thumbnailUrl !== null &&
+                crossFadeData?.thumbnailUrl !== undefined && (
+                    <img
+                        src={crossFadeData.thumbnailUrl}
+                        alt=""
+                        aria-hidden="true"
+                        loading="eager"
+                        onTransitionEnd={() => finishCrossFade(crossFadeData)}
+                        className={crossFadeThumbnailClassName}
+                    />
+                )}
         </div>
     );
 
@@ -227,22 +292,27 @@ export default function DanceShortsThumbnailLink({
 
     return (
         <a
-            href={displayedData.youtubeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={isLinkDisabled ? undefined : displayedData.youtubeUrl}
+            target={isLinkDisabled ? undefined : '_blank'}
+            rel={isLinkDisabled ? undefined : 'noopener noreferrer'}
+            aria-disabled={isLinkDisabled ? true : undefined}
             aria-label={`${displayedData.title}をYouTubeで開く`}
+            tabIndex={isLinkDisabled ? -1 : undefined}
             className={[
                 'group relative block focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/40',
+                isLinkDisabled ? 'cursor-default' : '',
                 containerClassName,
             ].join(' ')}
         >
             {thumbnail}
-            <span
-                aria-hidden="true"
-                className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full border border-slate-700/[0.1] bg-white/[0.08] text-xs font-black text-slate-800 shadow-[0_8px_16px_rgba(80,105,140,0.08)]"
-            >
-                ↗
-            </span>
+            {!isLinkDisabled && (
+                <span
+                    aria-hidden="true"
+                    className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full border border-slate-700/[0.1] bg-white/[0.08] text-xs font-black text-slate-800 shadow-[0_8px_16px_rgba(80,105,140,0.08)]"
+                >
+                    ↗
+                </span>
+            )}
         </a>
     );
 }

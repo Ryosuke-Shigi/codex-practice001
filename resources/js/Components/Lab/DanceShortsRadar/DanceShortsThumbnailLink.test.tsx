@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import DanceShortsThumbnailLink, {
     areDanceShortsThumbnailDisplayDataEqual,
     createDanceShortsThumbnailDisplayData,
-    isDanceShortsPendingThumbnailCurrent,
+    isDanceShortsThumbnailRequestCurrent,
+    shouldDisableDanceShortsThumbnailLink,
     shouldQueueDanceShortsThumbnailLoad,
 } from './DanceShortsThumbnailLink';
 
@@ -101,16 +102,27 @@ describe('DanceShortsThumbnailLink', () => {
             }),
         ).toBe(true);
         expect(
-            isDanceShortsPendingThumbnailCurrent(nextData, nextData, nextData),
+            isDanceShortsThumbnailRequestCurrent(nextData, nextData, nextData),
         ).toBe(true);
         expect(
-            isDanceShortsPendingThumbnailCurrent(nextData, newerData, nextData),
+            isDanceShortsThumbnailRequestCurrent(nextData, newerData, nextData),
         ).toBe(false);
         expect(
-            isDanceShortsPendingThumbnailCurrent(nextData, nextData, oldData),
+            isDanceShortsThumbnailRequestCurrent(nextData, nextData, oldData),
         ).toBe(false);
         expect(
-            isDanceShortsPendingThumbnailCurrent(null, nextData, nextData),
+            isDanceShortsThumbnailRequestCurrent(null, nextData, nextData),
         ).toBe(false);
+    });
+
+    it('disables link operation while a loaded thumbnail is cross fading', () => {
+        const nextData = createDanceShortsThumbnailDisplayData(
+            'Next dance',
+            'https://example.test/next-thumb.jpg',
+            'https://www.youtube.com/shorts/next',
+        );
+
+        expect(shouldDisableDanceShortsThumbnailLink(nextData)).toBe(true);
+        expect(shouldDisableDanceShortsThumbnailLink(null)).toBe(false);
     });
 });
