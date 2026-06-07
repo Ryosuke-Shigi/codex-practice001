@@ -40,6 +40,13 @@ class DanceShortSnapshotCleanupCommandTest extends TestCase
                 $this->failBecauseYouTubeApiShouldNotBeCalled();
             }
 
+            public function searchVideoPage(
+                \App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO $condition,
+                ?string $pageToken = null,
+            ): \App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO {
+                $this->failBecauseYouTubeApiShouldNotBeCalled();
+            }
+
             public function fetchVideoDetails(array $youtubeVideoIds): array
             {
                 $this->failBecauseYouTubeApiShouldNotBeCalled();

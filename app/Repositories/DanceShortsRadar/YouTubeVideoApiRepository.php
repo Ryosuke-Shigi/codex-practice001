@@ -5,6 +5,7 @@ namespace App\Repositories\DanceShortsRadar;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -38,13 +39,27 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
      */
     public function searchVideos(DanceShortSearchConditionDTO $condition): array
     {
+        return $this->searchVideoPage($condition)->items;
+    }
+
+    /**
+     * search.list を呼び、候補動画 DTO と次ページ token を返します。
+     */
+    public function searchVideoPage(
+        DanceShortSearchConditionDTO $condition,
+        ?string $pageToken = null,
+    ): YouTubeVideoSearchResultDTO
+    {
         $payload = $this->getJson('search.list', 'search', array_merge([
             'key' => $this->apiKey(),
             'part' => 'snippet',
             'type' => 'video',
-        ], $condition->toArray()));
+        ], $condition->toArray(), $this->pageTokenQuery($pageToken)));
 
-        return $this->mapSearchItems($payload);
+        return new YouTubeVideoSearchResultDTO(
+            items: $this->mapSearchItems($payload),
+            nextPageToken: $this->stringValue($payload, ['nextPageToken']),
+        );
     }
 
     /**
@@ -145,6 +160,16 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             rtrim((string) config('services.youtube.base_url'), '/'),
             ltrim($path, '/'),
         );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function pageTokenQuery(?string $pageToken): array
+    {
+        $pageToken = is_string($pageToken) ? trim($pageToken) : '';
+
+        return $pageToken === '' ? [] : ['pageToken' => $pageToken];
     }
 
     /**

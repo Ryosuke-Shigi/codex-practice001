@@ -44,6 +44,18 @@ Schedule::command('dance-short:sync')
     ->when(fn (): bool => (bool) config('dance_short.sync_enabled'));
 
 /*
+ * DanceShortsRadar の page2 同期入口です。
+ *
+ * 通常同期の検索条件は崩さず、DB 上で expanded 扱いにした keyword だけを1日2回 page2 以降まで
+ * 追加取得します。06:30 / 18:30 は通常同期の 3時間ごとの実行窓と重ならない時刻です。
+ */
+Schedule::command('dance-short:sync-page2')
+    ->twiceDailyAt(6, 18, 30)
+    ->name('dance-short-video-page2-sync')
+    ->withoutOverlapping()
+    ->when(fn (): bool => (bool) config('dance_short.sync_enabled'));
+
+/*
  * DanceShortsRadar の snapshot cleanup 入口です。
  *
  * cleanup は YouTube API を呼ばない DB maintenance なので、同期 Job の env gate とは切り離して

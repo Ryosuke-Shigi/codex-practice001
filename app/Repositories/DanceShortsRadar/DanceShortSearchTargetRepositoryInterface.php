@@ -17,4 +17,9 @@ interface DanceShortSearchTargetRepositoryInterface
      * @return Collection<int, DanceShortSearchKeyword>
      */
     public function activeKeywordsForRegion(DanceShortRegion $region): Collection;
+
+    /**
+     * @return Collection<int, DanceShortSearchKeyword>
+     */
+    public function activeExpandedKeywordsForRegion(DanceShortRegion $region): Collection;
 }

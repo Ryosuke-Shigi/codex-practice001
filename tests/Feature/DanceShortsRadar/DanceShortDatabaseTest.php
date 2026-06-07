@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\DanceShortsRadar;
 
+use App\Enums\DanceShortsRadar\DanceShortSearchScope;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
@@ -39,6 +40,8 @@ class DanceShortDatabaseTest extends TestCase
         $this->assertTrue(Schema::hasColumn('dance_short_videos', 'tracking_disabled_at'));
         $this->assertTrue(Schema::hasColumn('dance_short_videos', 'archived_at'));
         $this->assertTrue(Schema::hasColumn('dance_short_videos', 'tracking_reason'));
+        $this->assertTrue(Schema::hasColumn('dance_short_search_keywords', 'search_scope'));
+        $this->assertTrue(Schema::hasColumn('dance_short_search_keywords', 'max_search_pages'));
     }
 
     public function test_region_and_keyword_seeders_create_minimum_observation_data(): void
@@ -53,19 +56,11 @@ class DanceShortDatabaseTest extends TestCase
 
         $this->assertSame(3, DanceShortRegion::query()->count());
 
-        $usRegion = DanceShortRegion::query()->where('code', 'US')->firstOrFail();
-        DanceShortSearchKeyword::query()->create([
-            'region_id' => $usRegion->getKey(),
-            'keyword' => 'dance shorts',
-            'sort_order' => 10,
-            'is_active' => true,
-        ]);
-
         $this->seed(DanceShortSearchKeywordSeeder::class);
 
         /*
-         * DanceShortSearchKeywordSeeder は地域ごとに既存 keyword を整理してから投入します。
-         * 再実行しても古い keyword や重複 keyword が残らないことを固定します。
+         * DanceShortSearchKeywordSeeder は region / keyword 単位で updateOrCreate します。
+         * 再実行しても9件の標準 keyword が重複しないことを固定します。
          */
         $this->seed(DanceShortSearchKeywordSeeder::class);
 
@@ -91,28 +86,33 @@ class DanceShortDatabaseTest extends TestCase
 
         $expectedKeywordsByRegionCode = [
             'JP' => [
-                '踊ってみた shorts',
-                '踊ってみた',
-                'TikTok 踊ってみた shorts',
+                ['keyword' => '踊ってみた shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
+                ['keyword' => '踊ってみた', 'scope' => DanceShortSearchScope::Expanded, 'pages' => 2],
+                ['keyword' => 'TikTok 踊ってみた shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
             ],
             'US' => [
-                'dance cover shorts',
-                'dance cover',
-                'TikTok dance cover shorts',
+                ['keyword' => 'dance cover shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
+                ['keyword' => 'dance cover', 'scope' => DanceShortSearchScope::Expanded, 'pages' => 2],
+                ['keyword' => 'TikTok dance cover shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
             ],
             'KR' => [
-                '커버댄스 shorts',
-                '커버댄스',
-                '틱톡 커버댄스 shorts',
+                ['keyword' => '커버댄스 shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
+                ['keyword' => '커버댄스', 'scope' => DanceShortSearchScope::Expanded, 'pages' => 2],
+                ['keyword' => '틱톡 커버댄스 shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
             ],
         ];
 
         $this->assertSame(9, DanceShortSearchKeyword::query()->count());
-        $this->assertDatabaseMissing('dance_short_search_keywords', [
-            'keyword' => 'dance shorts',
-        ]);
+        $this->assertSame(3, DanceShortSearchKeyword::query()
+            ->where('search_scope', DanceShortSearchScope::Expanded->value)
+            ->where('max_search_pages', 2)
+            ->count());
+        $this->assertSame(6, DanceShortSearchKeyword::query()
+            ->where('search_scope', DanceShortSearchScope::Standard->value)
+            ->where('max_search_pages', 1)
+            ->count());
 
-        foreach ($expectedKeywordsByRegionCode as $regionCode => $expectedKeywords) {
+        foreach ($expectedKeywordsByRegionCode as $regionCode => $expectedKeywordDefinitions) {
             $region = DanceShortRegion::query()->where('code', $regionCode)->firstOrFail();
             $keywords = DanceShortSearchKeyword::query()
                 ->where('region_id', $region->getKey())
@@ -120,17 +120,55 @@ class DanceShortDatabaseTest extends TestCase
                 ->pluck('keyword')
                 ->all();
 
-            $this->assertSame($expectedKeywords, $keywords);
+            $this->assertSame(array_column($expectedKeywordDefinitions, 'keyword'), $keywords);
 
-            foreach ($expectedKeywords as $index => $keyword) {
+            foreach ($expectedKeywordDefinitions as $index => $keywordDefinition) {
                 $this->assertDatabaseHas('dance_short_search_keywords', [
                     'region_id' => $region->getKey(),
-                    'keyword' => $keyword,
+                    'keyword' => $keywordDefinition['keyword'],
+                    'search_scope' => $keywordDefinition['scope']->value,
+                    'max_search_pages' => $keywordDefinition['pages'],
                     'sort_order' => ($index + 1) * 10,
                     'is_active' => true,
                 ]);
             }
         }
+    }
+
+    public function test_keyword_seeder_updates_existing_keywords_without_deleting_other_rows(): void
+    {
+        $this->seed(DanceShortRegionSeeder::class);
+        $jpRegion = DanceShortRegion::query()->where('code', 'JP')->firstOrFail();
+        $existingKeyword = DanceShortSearchKeyword::query()->create([
+            'region_id' => $jpRegion->getKey(),
+            'keyword' => '踊ってみた',
+            'search_scope' => DanceShortSearchScope::Standard->value,
+            'max_search_pages' => 1,
+            'sort_order' => 99,
+            'is_active' => false,
+        ]);
+        DanceShortSearchKeyword::query()->create([
+            'region_id' => $jpRegion->getKey(),
+            'keyword' => 'manual keep keyword',
+            'search_scope' => DanceShortSearchScope::Standard->value,
+            'max_search_pages' => 1,
+            'sort_order' => 100,
+            'is_active' => false,
+        ]);
+
+        $this->seed(DanceShortSearchKeywordSeeder::class);
+
+        $existingKeyword->refresh();
+
+        $this->assertSame(DanceShortSearchScope::Expanded, $existingKeyword->search_scope);
+        $this->assertSame(2, $existingKeyword->max_search_pages);
+        $this->assertSame(20, $existingKeyword->sort_order);
+        $this->assertTrue($existingKeyword->is_active);
+        $this->assertDatabaseHas('dance_short_search_keywords', [
+            'region_id' => $jpRegion->getKey(),
+            'keyword' => 'manual keep keyword',
+            'is_active' => false,
+        ]);
     }
 
     public function test_database_seeder_calls_dance_short_region_seeder(): void

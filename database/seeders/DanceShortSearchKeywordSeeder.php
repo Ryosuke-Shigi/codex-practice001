@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DanceShortsRadar\DanceShortSearchScope;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use Illuminate\Database\Seeder;
@@ -17,19 +18,19 @@ class DanceShortSearchKeywordSeeder extends Seeder
 
         $keywordsByRegionCode = [
             'JP' => [
-                '踊ってみた shorts',
-                '踊ってみた',
-                'TikTok 踊ってみた shorts',
+                ['keyword' => '踊ってみた shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
+                ['keyword' => '踊ってみた', 'scope' => DanceShortSearchScope::Expanded, 'pages' => 2],
+                ['keyword' => 'TikTok 踊ってみた shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
             ],
             'US' => [
-                'dance cover shorts',
-                'dance cover',
-                'TikTok dance cover shorts',
+                ['keyword' => 'dance cover shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
+                ['keyword' => 'dance cover', 'scope' => DanceShortSearchScope::Expanded, 'pages' => 2],
+                ['keyword' => 'TikTok dance cover shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
             ],
             'KR' => [
-                '커버댄스 shorts',
-                '커버댄스',
-                '틱톡 커버댄스 shorts',
+                ['keyword' => '커버댄스 shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
+                ['keyword' => '커버댄스', 'scope' => DanceShortSearchScope::Expanded, 'pages' => 2],
+                ['keyword' => '틱톡 커버댄스 shorts', 'scope' => DanceShortSearchScope::Standard, 'pages' => 1],
             ],
         ];
 
@@ -40,17 +41,19 @@ class DanceShortSearchKeywordSeeder extends Seeder
                 continue;
             }
 
-            DanceShortSearchKeyword::query()
-                ->where('region_id', $region->getKey())
-                ->delete();
-
-            foreach ($keywords as $index => $keyword) {
-                DanceShortSearchKeyword::query()->create([
-                    'region_id' => $region->getKey(),
-                    'keyword' => $keyword,
-                    'sort_order' => ($index + 1) * 10,
-                    'is_active' => true,
-                ]);
+            foreach ($keywords as $index => $keywordDefinition) {
+                DanceShortSearchKeyword::query()->updateOrCreate(
+                    [
+                        'region_id' => $region->getKey(),
+                        'keyword' => $keywordDefinition['keyword'],
+                    ],
+                    [
+                        'search_scope' => $keywordDefinition['scope']->value,
+                        'max_search_pages' => $keywordDefinition['pages'],
+                        'sort_order' => ($index + 1) * 10,
+                        'is_active' => true,
+                    ],
+                );
             }
         }
     }
