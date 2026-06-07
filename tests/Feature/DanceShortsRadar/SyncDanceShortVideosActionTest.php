@@ -6,6 +6,7 @@ use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
@@ -244,6 +245,13 @@ class FakeDanceShortYouTubeVideoApiRepository implements YouTubeVideoApiReposito
         };
     }
 
+    public function searchVideoPage(
+        DanceShortSearchConditionDTO $condition,
+        ?string $pageToken = null,
+    ): YouTubeVideoSearchResultDTO {
+        throw new RuntimeException('Regular sync should not call page-aware search.');
+    }
+
     /**
      * @param  array<int, string>  $youtubeVideoIds
      * @return array<int, YouTubeVideoDetailDTO>
@@ -323,6 +331,13 @@ class FailingSearchDanceShortYouTubeVideoApiRepository implements YouTubeVideoAp
     public function searchVideos(DanceShortSearchConditionDTO $condition): array
     {
         throw new RuntimeException('YouTube search failed.');
+    }
+
+    public function searchVideoPage(
+        DanceShortSearchConditionDTO $condition,
+        ?string $pageToken = null,
+    ): YouTubeVideoSearchResultDTO {
+        throw new RuntimeException('Regular sync should not call page-aware search.');
     }
 
     public function fetchVideoDetails(array $youtubeVideoIds): array

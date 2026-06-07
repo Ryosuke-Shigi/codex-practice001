@@ -2,6 +2,7 @@
 
 namespace App\Repositories\DanceShortsRadar;
 
+use App\Enums\DanceShortsRadar\DanceShortSearchScope;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,6 +39,26 @@ class DanceShortSearchTargetRepository implements DanceShortSearchTargetReposito
         return DanceShortSearchKeyword::query()
             ->where('region_id', $region->getKey())
             ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * @return Collection<int, DanceShortSearchKeyword>
+     */
+    public function activeExpandedKeywordsForRegion(DanceShortRegion $region): Collection
+    {
+        /*
+         * page2 同期は DB 上で expanded 扱いにした keyword だけを対象にします。
+         * Action は page 進行を担当し、expanded / max_search_pages の Eloquent 条件は
+         * Repository の検索境界へ閉じます。
+         */
+        return DanceShortSearchKeyword::query()
+            ->where('region_id', $region->getKey())
+            ->where('is_active', true)
+            ->where('search_scope', DanceShortSearchScope::Expanded->value)
+            ->where('max_search_pages', '>=', 2)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

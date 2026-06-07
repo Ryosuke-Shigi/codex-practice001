@@ -2,20 +2,11 @@
 
 namespace Tests\Feature\DanceShortsRadar;
 
+use App\Actions\DanceShortsRadar\Commands\SyncDanceShortPage2VideosAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
-use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
-use App\Factories\DanceShortsRadar\DanceShortVideoSaveDTOFactory;
-use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
+use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
-use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
-use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
-use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
-use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
-use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
-use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
-use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
-use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -24,10 +15,6 @@ class DanceShortSyncCommandTest extends TestCase
 {
     public function test_command_dispatches_sync_job(): void
     {
-        /*
-         * Command の仕様は「同期依頼を Queue に積んで終了する」ことです。
-         * Queue fake で worker 実行を止め、artisan 入口が正しい Job を投入する点だけを固定します。
-         */
         Queue::fake();
 
         $this
@@ -40,23 +27,12 @@ class DanceShortSyncCommandTest extends TestCase
 
     public function test_command_does_not_execute_sync_action_directly(): void
     {
-        /*
-         * Command に Action 呼び出しが混ざると、手動実行時に同期本体まで同期的に走ってしまいます。
-         * Action を例外化して container に差し替え、Command が本体を直接触らない境界を守ります。
-         */
         Queue::fake();
-        $this->app->instance(SyncDanceShortVideosAction::class, new class(
-            $this->youtubeRepository(),
-            $this->searchTargetRepository(),
-            $this->videoRepository(),
-            $this->snapshotRepository(),
-            new DanceShortVideoEligibilityService(),
-            new DanceShortSnapshotMetricService(),
-            new DanceShortVideoTrackingService(),
-            new DanceShortVideoSaveDTOFactory(),
-            new DanceShortVideoSnapshotCreateDTOFactory(),
-            $this->cleanupAction(),
-        ) extends SyncDanceShortVideosAction {
+        $this->app->instance(SyncDanceShortVideosAction::class, new class extends SyncDanceShortVideosAction {
+            public function __construct()
+            {
+            }
+
             public function execute(): DanceShortVideoSyncResultDTO
             {
                 throw new RuntimeException('Command should only dispatch the sync job.');
@@ -71,31 +47,37 @@ class DanceShortSyncCommandTest extends TestCase
         Queue::assertPushed(SyncDanceShortVideosJob::class);
     }
 
-    private function youtubeRepository(): YouTubeVideoApiRepositoryInterface
+    public function test_page2_command_dispatches_page2_sync_job(): void
     {
-        return $this->createStub(YouTubeVideoApiRepositoryInterface::class);
+        Queue::fake();
+
+        $this
+            ->artisan('dance-short:sync-page2')
+            ->expectsOutput('DanceShortsRadar page 2 sync job dispatched.')
+            ->assertExitCode(0);
+
+        Queue::assertPushed(SyncDanceShortPage2VideosJob::class);
     }
 
-    private function searchTargetRepository(): DanceShortSearchTargetRepositoryInterface
+    public function test_page2_command_does_not_execute_page2_sync_action_directly(): void
     {
-        return $this->createStub(DanceShortSearchTargetRepositoryInterface::class);
-    }
+        Queue::fake();
+        $this->app->instance(SyncDanceShortPage2VideosAction::class, new class extends SyncDanceShortPage2VideosAction {
+            public function __construct()
+            {
+            }
 
-    private function videoRepository(): DanceShortVideoRepositoryInterface
-    {
-        return $this->createStub(DanceShortVideoRepositoryInterface::class);
-    }
+            public function execute(): DanceShortVideoSyncResultDTO
+            {
+                throw new RuntimeException('Command should only dispatch the page2 sync job.');
+            }
+        });
 
-    private function snapshotRepository(): DanceShortVideoSnapshotRepositoryInterface
-    {
-        return $this->createStub(DanceShortVideoSnapshotRepositoryInterface::class);
-    }
+        $this
+            ->artisan('dance-short:sync-page2')
+            ->expectsOutput('DanceShortsRadar page 2 sync job dispatched.')
+            ->assertExitCode(0);
 
-    private function cleanupAction(): CleanupDanceShortVideoSnapshotsAction
-    {
-        return new CleanupDanceShortVideoSnapshotsAction(
-            $this->snapshotRepository(),
-            new DanceShortSnapshotRetentionService(),
-        );
+        Queue::assertPushed(SyncDanceShortPage2VideosJob::class);
     }
 }

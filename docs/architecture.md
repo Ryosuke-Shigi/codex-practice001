@@ -56,7 +56,11 @@ Repository は「どのデータを取得・保存するか」を扱い、「そ
 
 DanceShortsRadar の YouTube API Repository は search.list / videos.list の呼び出しと DTO 変換だけを担当します。videos.list は YouTube Data API の上限に合わせて動画IDを50件単位に分割し、取得した DTO を集約して Action へ返します。
 
-DanceShortsRadar の YouTube API 同期 Scheduler は、`DANCE_SHORT_SYNC_ENABLED` の config / env gate で明示的に有効化した環境だけが3時間ごとに同期 command を実行します。検索キーワードは JP / US / KR 各3件、合計9件とし、1日8回の実行で search.list は最大72回/日に収めます。
+DanceShortsRadar の検索 keyword は `dance_short_search_keywords.search_scope` と `max_search_pages` で取得範囲を管理します。`search_scope` は PHP enum の `standard` / `expanded` で扱い、通常同期は active keyword 全件の page1 だけを対象にします。page2 同期では Repository が `expanded` かつ `max_search_pages >= 2` の active keyword だけを取得し、Action は page 番号と `nextPageToken` の進行だけを担当します。Repository に Shorts 判定や保存可否判断は置きません。
+
+DanceShortsRadar の通常 YouTube API 同期は `dance-short:sync` / `SyncDanceShortVideosJob` / `SyncDanceShortVideosAction` を入口にし、`DANCE_SHORT_SYNC_ENABLED` の config / env gate で明示的に有効化した環境だけが3時間ごとに実行します。検索キーワードは JP / US / KR 各3件、合計9件とし、1日8回の実行で search.list は最大72回/日に収めます。
+
+DanceShortsRadar の page2 同期は通常同期とは別の `dance-short:sync-page2` / `SyncDanceShortPage2VideosJob` / `SyncDanceShortPage2VideosAction` を入口にし、06:30 / 18:30 の1日2回だけ実行します。通常同期の `0 */3 * * *` と重ならない時刻にし、`DANCE_SHORT_SYNC_ENABLED` gate と `withoutOverlapping()` を通常同期と同じく維持します。page2 Action は expanded keyword の page2 以降の動画ID収集を担当し、動画詳細取得後の保存、Shorts 判定、必須項目判定、video upsert、snapshot 作成、cleanup は通常同期と同じ `PersistDanceShortVideoDetailsAction` と既存 Action / Service / Repository へ委譲します。page2 同期は `order=date` / `order=viewCount` を導入せず、通常同期と同じ `relevance` 条件のまま、DB で `expanded` 扱いにした keyword だけを page2 以降まで追加取得します。
 
 ## DTO / ListDTO の責務
 

@@ -11,7 +11,7 @@ use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Throwable;
 
-class SyncDanceShortVideosAction
+class SyncDanceShortPage2VideosAction
 {
     public function __construct(
         private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
@@ -25,9 +25,8 @@ class SyncDanceShortVideosAction
     public function execute(): DanceShortVideoSyncResultDTO
     {
         /*
-         * 通常同期は active region / active keyword の page1 だけを検索します。
-         * 動画詳細取得後の保存判定と snapshot 保存は共通 Action に委譲し、page2 同期と
-         * Shorts 判定・必須項目判定・upsert・snapshot 作成の実装を共有します。
+         * page2 同期は expanded かつ max_search_pages >= 2 の keyword だけを検索します。
+         * page1 は nextPageToken を得るために読むだけで、保存候補IDとしては page2 以降だけを集めます。
          */
         $executedAt = CarbonImmutable::now();
         $collectedAt = $executedAt->utc();
@@ -47,10 +46,15 @@ class SyncDanceShortVideosAction
         $failedCount = 0;
 
         foreach ($regions as $region) {
-            $keywords = $this->searchTargetRepository->activeKeywordsForRegion($region);
+            $keywords = $this->searchTargetRepository->activeExpandedKeywordsForRegion($region);
             $searchedKeywordCount += $keywords->count();
 
-            $youtubeVideoIds = $this->collectYoutubeVideoIds($region, $keywords, $executedAt, $failedCount);
+            $youtubeVideoIds = $this->collectPage2AndLaterYoutubeVideoIds(
+                region: $region,
+                keywords: $keywords,
+                executedAt: $executedAt,
+                failedCount: $failedCount,
+            );
             $fetchedVideoCount += count($youtubeVideoIds);
 
             $persistenceResult = $this->persistVideoDetailsAction->execute(
@@ -97,7 +101,7 @@ class SyncDanceShortVideosAction
      * @param  iterable<int, DanceShortSearchKeyword>  $keywords
      * @return array<int, string>
      */
-    private function collectYoutubeVideoIds(
+    private function collectPage2AndLaterYoutubeVideoIds(
         DanceShortRegion $region,
         iterable $keywords,
         CarbonImmutable $executedAt,
@@ -106,21 +110,41 @@ class SyncDanceShortVideosAction
         $youtubeVideoIds = [];
 
         foreach ($keywords as $keyword) {
+            $condition = $this->searchConditionFactory->fromRegionAndKeyword($region, $keyword, $executedAt);
+
             try {
-                $items = $this->youTubeVideoApiRepository->searchVideos(
-                    $this->searchConditionFactory->fromRegionAndKeyword($region, $keyword, $executedAt),
-                );
+                $currentPage = $this->youTubeVideoApiRepository->searchVideoPage($condition);
             } catch (Throwable) {
                 $failedCount++;
                 continue;
             }
 
-            foreach ($items as $item) {
-                $youtubeVideoId = trim($item->youtubeVideoId);
+            $nextPageToken = $currentPage->nextPageToken;
+            $maxSearchPages = max(1, (int) $keyword->max_search_pages);
 
-                if ($youtubeVideoId !== '') {
-                    $youtubeVideoIds[$youtubeVideoId] = $youtubeVideoId;
+            for ($pageNumber = 2; $pageNumber <= $maxSearchPages; $pageNumber++) {
+                $nextPageToken = is_string($nextPageToken) ? trim($nextPageToken) : '';
+
+                if ($nextPageToken === '') {
+                    break;
                 }
+
+                try {
+                    $currentPage = $this->youTubeVideoApiRepository->searchVideoPage($condition, $nextPageToken);
+                } catch (Throwable) {
+                    $failedCount++;
+                    break;
+                }
+
+                foreach ($currentPage->items as $item) {
+                    $youtubeVideoId = trim($item->youtubeVideoId);
+
+                    if ($youtubeVideoId !== '') {
+                        $youtubeVideoIds[$youtubeVideoId] = $youtubeVideoId;
+                    }
+                }
+
+                $nextPageToken = $currentPage->nextPageToken;
             }
         }
 

@@ -5,6 +5,7 @@ namespace Tests\Unit\DanceShortsRadar\Repositories;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
@@ -65,6 +66,42 @@ class YouTubeVideoApiRepositoryTest extends TestCase
                 && $query['maxResults'] === '25'
                 && $query['publishedAfter'] === '2026-05-24T00:00:00+00:00'
                 && $query['videoDuration'] === 'short';
+        });
+    }
+
+    public function test_search_video_page_sends_page_token_and_returns_next_page_token(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/search*' => Http::response([
+                'nextPageToken' => 'next-token',
+                'items' => [
+                    [
+                        'id' => [
+                            'kind' => 'youtube#video',
+                            'videoId' => 'page-video-001',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $result = $this->repository()->searchVideoPage($this->condition(), ' current-token ');
+
+        $this->assertInstanceOf(YouTubeVideoSearchResultDTO::class, $result);
+        $this->assertSame('next-token', $result->nextPageToken);
+        $this->assertCount(1, $result->items);
+        $this->assertSame('page-video-001', $result->items[0]->youtubeVideoId);
+
+        Http::assertSent(function (Request $request): bool {
+            $query = $this->queryFromRequest($request);
+
+            return str_starts_with($request->url(), 'https://www.googleapis.test/youtube/v3/search')
+                && $request->method() === 'GET'
+                && $query['pageToken'] === 'current-token'
+                && $query['part'] === 'snippet'
+                && $query['type'] === 'video';
         });
     }
 

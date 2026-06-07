@@ -16,6 +16,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoSnapshot;
@@ -719,6 +720,15 @@ class ThrowingRankingPageYouTubeVideoApiRepository implements YouTubeVideoApiRep
      */
     public function searchVideos(DanceShortSearchConditionDTO $condition): array
     {
+        $this->callCount++;
+
+        throw new RuntimeException('Ranking page should not call YouTube search.');
+    }
+
+    public function searchVideoPage(
+        DanceShortSearchConditionDTO $condition,
+        ?string $pageToken = null,
+    ): YouTubeVideoSearchResultDTO {
         $this->callCount++;
 
         throw new RuntimeException('Ranking page should not call YouTube search.');
