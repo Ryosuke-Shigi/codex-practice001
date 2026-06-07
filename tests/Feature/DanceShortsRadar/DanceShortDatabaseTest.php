@@ -135,6 +135,24 @@ class DanceShortDatabaseTest extends TestCase
         }
     }
 
+    public function test_search_keyword_defaults_to_standard_single_page_when_scope_is_not_set(): void
+    {
+        $region = DanceShortRegion::query()->create([
+            'code' => 'JP',
+            'name' => '日本',
+        ]);
+
+        $keyword = DanceShortSearchKeyword::query()->create([
+            'region_id' => $region->getKey(),
+            'keyword' => 'default scope keyword',
+        ]);
+
+        $keyword->refresh();
+
+        $this->assertSame(DanceShortSearchScope::Standard, $keyword->search_scope);
+        $this->assertSame(1, $keyword->max_search_pages);
+    }
+
     public function test_keyword_seeder_updates_existing_keywords_without_deleting_other_rows(): void
     {
         $this->seed(DanceShortRegionSeeder::class);

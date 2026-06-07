@@ -109,6 +109,20 @@ class DanceShortSchedulerTest extends TestCase
         $this->assertFalse($event->filtersPass($this->app));
     }
 
+    public function test_regular_sync_schedule_keeps_without_overlapping_and_sync_enabled_gate(): void
+    {
+        $event = $this->syncScheduleEvent();
+
+        $this->assertSame('dance-short-video-sync', $event->description);
+        $this->assertTrue($event->withoutOverlapping);
+
+        config(['dance_short.sync_enabled' => true]);
+        $this->assertTrue($event->filtersPass($this->app));
+
+        config(['dance_short.sync_enabled' => false]);
+        $this->assertFalse($event->filtersPass($this->app));
+    }
+
     public function test_scheduler_does_not_dispatch_sync_job_between_quota_safe_windows(): void
     {
         /*
@@ -171,10 +185,12 @@ class DanceShortSchedulerTest extends TestCase
     private function syncScheduleEvent(): Event
     {
         $event = collect($this->app->make(Schedule::class)->events())
-            ->first(fn (Event $event): bool => str_contains(
-                Event::normalizeCommand($event->command ?? ''),
-                'artisan dance-short:sync',
-            ));
+            ->first(function (Event $event): bool {
+                $command = Event::normalizeCommand($event->command ?? '');
+
+                return str_contains($command, 'artisan dance-short:sync')
+                    && ! str_contains($command, 'artisan dance-short:sync-page2');
+            });
 
         $this->assertInstanceOf(Event::class, $event);
 

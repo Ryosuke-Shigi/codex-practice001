@@ -122,7 +122,9 @@ DanceShortsRadar の YouTube API Repository では、videos.list に送る動画
 
 DanceShortsRadar の検索 keyword では、migration で `search_scope` / `max_search_pages` が存在すること、enum 値が `standard` / `expanded` から変わらないこと、Seeder が3件だけ `expanded / 2`、残り6件を `standard / 1` にすることをテストで固定します。Repository テストでは page2 同期対象として active かつ expanded かつ `max_search_pages >= 2` の keyword だけを取得し、inactive / standard / 1ページ設定を除外することを確認します。
 
-DanceShortsRadar の page2 同期では、YouTube API Repository が `nextPageToken` と `pageToken` を扱えること、Action が page1 から token を取得して page2 以降だけを保存候補にすること、`max_search_pages` を超えて取得しないことを確認します。動画保存、snapshot 保存、Shorts 判定、必須項目判定は通常同期と共通の保存処理を使う前提で、Page2 Action テストでは expanded keyword の選別、ID 重複除外、共通保存処理への受け渡しを固定します。
+DanceShortsRadar の page2 同期では、migration が `Schema::table` による追加だけであること、通常 Sync Action が active keyword 全件の page1 だけを検索すること、YouTube API Repository が `nextPageToken` と `pageToken` を扱えること、Page2 Action が page1 から token を取得して expanded keyword の page2 以降だけを保存候補にすること、`max_search_pages` を超えて取得しないことを確認します。動画保存、snapshot 保存、Shorts 判定、必須項目判定は通常同期と共通の保存処理を使う前提で、Page2 Action テストでは expanded keyword の選別、ID 重複除外、共通保存処理への受け渡しを固定します。
+
+DanceShortsRadar の Command / Job テストでは、`dance-short:sync-page2` が `SyncDanceShortPage2VideosJob` を dispatch するだけで同期本体を直接実行しないこと、page2 Job が `SyncDanceShortPage2VideosAction` を呼ぶこと、通常同期 Job と同じ timeout / tries を持つことを確認します。
 
 ## Action テスト
 
