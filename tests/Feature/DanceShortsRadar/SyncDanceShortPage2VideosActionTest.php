@@ -10,6 +10,7 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Enums\DanceShortsRadar\DanceShortSearchScope;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
+use App\Models\DanceShortVideo;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -69,6 +70,20 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
         $this->assertDatabaseHas('dance_short_videos', [
             'youtube_video_id' => 'jp-page2-video-001',
             'title' => 'Saved jp-page2-video-001',
+        ]);
+        $jpVideo = DanceShortVideo::query()->where('youtube_video_id', 'jp-page2-video-001')->firstOrFail();
+        $usVideo = DanceShortVideo::query()->where('youtube_video_id', 'us-page2-video-001')->firstOrFail();
+        $this->assertDatabaseHas('dance_short_video_regions', [
+            'video_id' => $jpVideo->getKey(),
+            'region_id' => $jp->getKey(),
+            'first_detected_at' => '2026-06-01 12:00:00',
+            'last_detected_at' => '2026-06-01 12:00:00',
+        ]);
+        $this->assertDatabaseHas('dance_short_video_regions', [
+            'video_id' => $usVideo->getKey(),
+            'region_id' => $us->getKey(),
+            'first_detected_at' => '2026-06-01 12:00:00',
+            'last_detected_at' => '2026-06-01 12:00:00',
         ]);
         $this->assertDatabaseHas('dance_short_video_snapshots', [
             'region_id' => $jp->getKey(),

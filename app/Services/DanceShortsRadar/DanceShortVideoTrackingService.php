@@ -56,19 +56,4 @@ class DanceShortVideoTrackingService
         return self::STATUS_ACTIVE;
     }
 
-    /**
-     * @param  array<int, int>  $activeRegionIds
-     * @return array<int, int>
-     */
-    public function snapshotRefreshRegionIds(array $activeRegionIds): array
-    {
-        /*
-         * 現状は動画と地域を結びつける正規テーブルがありません。
-         * snapshot は観測結果なので、再作成対象 region の根拠にはせず、active region を使います。
-         */
-        return array_values(array_unique(array_filter(
-            array_map(fn (int $regionId): int => $regionId, $activeRegionIds),
-            fn (int $regionId): bool => $regionId > 0,
-        )));
-    }
 }

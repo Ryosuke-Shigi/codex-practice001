@@ -18,6 +18,8 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepository;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepository;
@@ -67,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DanceShortSearchTargetRepositoryInterface::class, DanceShortSearchTargetRepository::class);
         $this->app->bind(DanceShortVideoCategoryRepositoryInterface::class, DanceShortVideoCategoryRepository::class);
         $this->app->bind(DanceShortVideoRepositoryInterface::class, DanceShortVideoRepository::class);
+        $this->app->bind(DanceShortVideoRegionRepositoryInterface::class, DanceShortVideoRegionRepository::class);
         $this->app->bind(DanceShortVideoSnapshotRepositoryInterface::class, DanceShortVideoSnapshotRepository::class);
         $this->app->bind(YouTubeVideoApiRepositoryInterface::class, YouTubeVideoApiRepository::class);
 

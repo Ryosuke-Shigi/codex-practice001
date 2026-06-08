@@ -3,9 +3,7 @@
 namespace Tests\Feature\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSaveDTO;
-use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
-use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -84,63 +82,9 @@ class DanceShortVideoRepositoryTest extends TestCase
         $this->assertNull($this->repository()->findByYoutubeVideoIdAndTrackingStatus('inactive-video', 'active'));
     }
 
-    public function test_snapshot_refresh_targets_by_tracking_status_returns_active_videos_without_requiring_snapshots(): void
-    {
-        $jp = DanceShortRegion::query()->create(['code' => 'JP', 'name' => '日本']);
-        $us = DanceShortRegion::query()->create(['code' => 'US', 'name' => 'アメリカ']);
-        $noSnapshot = $this->createVideo('active-no-snapshot', 'active', '2026-06-01 13:00:00');
-        $oldest = $this->createVideo('active-oldest', 'active', '2026-06-01 08:00:00');
-        $newerPublishedTie = $this->createVideo('active-newer-published', 'active', '2026-06-01 10:00:00');
-        $olderPublishedTie = $this->createVideo('active-older-published', 'active', '2026-06-01 09:00:00');
-        $inactive = $this->createVideo('inactive-oldest', 'inactive', '2026-06-01 12:00:00');
-
-        $this->snapshot($oldest, $jp, '2026-05-31 00:00:00');
-        $this->snapshot($oldest, $us, '2026-05-30 00:00:00');
-        $this->snapshot($newerPublishedTie, $jp, '2026-06-01 00:00:00');
-        $this->snapshot($olderPublishedTie, $jp, '2026-06-01 00:00:00');
-        $this->snapshot($inactive, $jp, '2026-05-01 00:00:00');
-
-        $targets = $this->repository()->snapshotRefreshTargetsByTrackingStatus(
-            trackingStatus: 'active',
-            maxVideosPerRun: 3,
-            regionIds: [(int) $jp->getKey(), (int) $us->getKey()],
-        );
-
-        $this->assertCount(3, $targets);
-        $this->assertSame('active-no-snapshot', $targets[0]->youtube_video_id);
-        $this->assertSame([(int) $jp->getKey(), (int) $us->getKey()], $targets[0]->region_ids);
-        $this->assertSame((int) $noSnapshot->getKey(), $targets[0]->video_id);
-        $this->assertSame('active-oldest', $targets[1]->youtube_video_id);
-        $this->assertSame([(int) $jp->getKey(), (int) $us->getKey()], $targets[1]->region_ids);
-        $this->assertSame('active-newer-published', $targets[2]->youtube_video_id);
-    }
-
     private function repository(): DanceShortVideoRepositoryInterface
     {
         return app(DanceShortVideoRepositoryInterface::class);
-    }
-
-    private function createVideo(
-        string $youtubeVideoId,
-        string $trackingStatus,
-        string $publishedAt,
-    ): DanceShortVideo {
-        return DanceShortVideo::query()->create([
-            'youtube_video_id' => $youtubeVideoId,
-            'title' => 'Dance short '.$youtubeVideoId,
-            'published_at' => $publishedAt,
-            'tracking_status' => $trackingStatus,
-        ]);
-    }
-
-    private function snapshot(DanceShortVideo $video, DanceShortRegion $region, string $collectedAt): DanceShortVideoSnapshot
-    {
-        return DanceShortVideoSnapshot::query()->create([
-            'video_id' => $video->getKey(),
-            'region_id' => $region->getKey(),
-            'view_count' => 100,
-            'collected_at' => $collectedAt,
-        ]);
     }
 
     private function dto(string $youtubeVideoId, string $title): DanceShortVideoSaveDTO

@@ -36,4 +36,12 @@ class DanceShortRegion extends Model
     {
         return $this->hasMany(DanceShortVideoSnapshot::class, 'region_id');
     }
+
+    /**
+     * @return HasMany<DanceShortVideoRegion>
+     */
+    public function videoRegions(): HasMany
+    {
+        return $this->hasMany(DanceShortVideoRegion::class, 'region_id');
+    }
 }

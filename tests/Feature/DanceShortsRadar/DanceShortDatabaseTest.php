@@ -7,6 +7,7 @@ use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoCategory;
+use App\Models\DanceShortVideoRegion;
 use App\Models\DanceShortVideoSnapshot;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DanceShortRegionSeeder;
@@ -26,8 +27,10 @@ class DanceShortDatabaseTest extends TestCase
         $this->assertTrue(Schema::hasTable('dance_short_search_keywords'));
         $this->assertTrue(Schema::hasTable('dance_short_video_categories'));
         $this->assertTrue(Schema::hasTable('dance_short_videos'));
+        $this->assertTrue(Schema::hasTable('dance_short_video_regions'));
         $this->assertTrue(Schema::hasTable('dance_short_video_snapshots'));
 
+        $this->assertFalse(Schema::hasColumn('dance_short_videos', 'region_id'));
         $this->assertFalse(Schema::hasColumn('dance_short_video_snapshots', 'view_count_delta'));
         $this->assertFalse(Schema::hasColumn('dance_short_video_snapshots', 'view_growth_rate'));
         $this->assertFalse(Schema::hasColumn('dance_short_videos', 'view_count'));
@@ -42,6 +45,10 @@ class DanceShortDatabaseTest extends TestCase
         $this->assertTrue(Schema::hasColumn('dance_short_videos', 'tracking_reason'));
         $this->assertTrue(Schema::hasColumn('dance_short_search_keywords', 'search_scope'));
         $this->assertTrue(Schema::hasColumn('dance_short_search_keywords', 'max_search_pages'));
+        $this->assertTrue(Schema::hasColumn('dance_short_video_regions', 'video_id'));
+        $this->assertTrue(Schema::hasColumn('dance_short_video_regions', 'region_id'));
+        $this->assertTrue(Schema::hasColumn('dance_short_video_regions', 'first_detected_at'));
+        $this->assertTrue(Schema::hasColumn('dance_short_video_regions', 'last_detected_at'));
     }
 
     public function test_region_and_keyword_seeders_create_minimum_observation_data(): void
@@ -322,6 +329,37 @@ class DanceShortDatabaseTest extends TestCase
             'like_count' => 789,
             'comment_count' => 12,
             'collected_at' => '2026-05-31 10:30:00',
+        ]);
+    }
+
+    public function test_video_region_keeps_video_and_detected_region_relation(): void
+    {
+        $region = DanceShortRegion::query()->create([
+            'code' => 'JP',
+            'name' => '日本',
+        ]);
+        $video = DanceShortVideo::query()->create([
+            'youtube_video_id' => 'short-video-region-001',
+            'title' => 'Region relation target short',
+        ]);
+
+        $relation = DanceShortVideoRegion::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => '2026-05-31 10:30:00',
+            'last_detected_at' => '2026-05-31 12:30:00',
+        ]);
+
+        $this->assertSame((int) $video->getKey(), $relation->video_id);
+        $this->assertSame((int) $region->getKey(), $relation->region_id);
+        $this->assertSame('2026-05-31 10:30:00', $relation->first_detected_at->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-05-31 12:30:00', $relation->last_detected_at->format('Y-m-d H:i:s'));
+
+        $this->assertDatabaseHas('dance_short_video_regions', [
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => '2026-05-31 10:30:00',
+            'last_detected_at' => '2026-05-31 12:30:00',
         ]);
     }
 }

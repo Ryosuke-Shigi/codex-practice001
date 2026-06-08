@@ -3,7 +3,6 @@
 namespace App\Repositories\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSaveDTO;
-use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotRefreshTargetDTO;
 use App\Models\DanceShortVideo;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -34,59 +33,6 @@ class DanceShortVideoRepository implements DanceShortVideoRepositoryInterface
             ->where('youtube_video_id', $youtubeVideoId)
             ->where('tracking_status', $trackingStatus)
             ->first();
-    }
-
-    /**
-     * @return array<int, DanceShortVideoSnapshotRefreshTargetDTO>
-     */
-    public function snapshotRefreshTargetsByTrackingStatus(
-        string $trackingStatus,
-        int $maxVideosPerRun,
-        array $regionIds,
-    ): array {
-        /*
-         * snapshot 専用同期では、保存済み動画本体を tracking_status 条件で再取得します。
-         * snapshot は観測結果なので、snapshot の存在を対象取得の必須条件にはしません。
-         *
-         * region_id は呼び出し側が決定した保存対象 region を使い、同じ動画を複数地域で観測しても
-         * YouTube ID は1回だけ fetch できる形で DTO にまとめます。
-         */
-        $limit = max(1, $maxVideosPerRun);
-        $safeRegionIds = array_values(array_unique(array_filter(
-            array_map(fn (int $regionId): int => $regionId, $regionIds),
-            fn (int $regionId): bool => $regionId > 0,
-        )));
-
-        $videos = DanceShortVideo::query()
-            ->select('dance_short_videos.*')
-            ->selectSub(function ($query): void {
-                $query->from('dance_short_video_snapshots')
-                    ->selectRaw('MAX(collected_at)')
-                    ->whereColumn('dance_short_video_snapshots.video_id', 'dance_short_videos.id');
-            }, 'latest_snapshot_collected_at')
-            ->where('tracking_status', $trackingStatus)
-            ->orderBy('latest_snapshot_collected_at')
-            ->orderByDesc('published_at')
-            ->orderBy('id')
-            ->limit($limit)
-            ->get();
-
-        if ($safeRegionIds === [] || $videos->isEmpty()) {
-            return [];
-        }
-
-        return $videos
-            ->map(function (DanceShortVideo $video) use ($safeRegionIds): DanceShortVideoSnapshotRefreshTargetDTO {
-                $videoId = (int) $video->getKey();
-
-                return new DanceShortVideoSnapshotRefreshTargetDTO(
-                    video_id: $videoId,
-                    youtube_video_id: (string) $video->youtube_video_id,
-                    region_ids: $safeRegionIds,
-                );
-            })
-            ->values()
-            ->all();
     }
 
     /**
