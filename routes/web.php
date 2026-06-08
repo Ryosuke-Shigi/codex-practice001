@@ -57,16 +57,6 @@ Route::get('/lab', function () {
             'href' => '/api-catalog',
         ],
         [
-            // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
-            // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
-            'id' => 'quakewave-preview',
-            'title' => 'Japan Quake Wave Map 地図表示',
-            'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
-            'status' => 'Preview',
-            'category' => 'PROJECT',
-            'href' => '/quakewave-preview/map',
-        ],
-        [
             /*
              * Dance Shorts Radar の本画面です。
              * 保存済み snapshot から通常ランキングを表示し、YouTube API 疎通前モックや
@@ -85,6 +75,16 @@ Route::get('/lab', function () {
                 'Ranking',
                 'JP / US / KR',
             ],
+        ],
+        [
+            // QuakeWave Map は DB 保存済み地震ピンを地図へ表示する、完成寄りの Preview 入口です。
+            // Lab の完成寄り入口として、DB pins を読む地図画面へ直接入ります。
+            'id' => 'quakewave-preview',
+            'title' => 'Japan Quake Wave Map 地図表示',
+            'summary' => '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認する地震情報可視化画面です。',
+            'status' => 'Preview',
+            'category' => 'PROJECT',
+            'href' => '/quakewave-preview/map',
         ],
         [
             /*
@@ -111,28 +111,6 @@ Route::get('/lab', function () {
         ],
         [
             /*
-             * 地震マップも本体機能へ直接入る前に、XML取得、解析、pin生成、部分失敗管理などの
-             * 技術的な見どころを説明するLPへ案内します。防災サービスではなくポートフォリオの
-             * 可視化機能であることも、この紹介ページ側で明示します。
-             */
-            'id' => 'quake-wave-map-idea-board',
-            'title' => 'Japan Quake Wave Map',
-            'summary' => '気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能の紹介ページです。',
-            'status' => '完成済み',
-            'category' => 'IDEA-BOARD',
-            'href' => '/lab/quake-wave-map-idea-board',
-            'actionLabel' => '紹介LPを見る',
-            'tags' => [
-                '気象庁XML',
-                '地図表示',
-                'Queue',
-                'Job',
-                'status API',
-                '部分失敗',
-            ],
-        ],
-        [
-            /*
              * Dance Shorts Radar は、YouTube Data API を使った次のポートフォリオ候補です。
              * まだ本体処理やDB保存は持たせず、IDEA-BOARD として API 方針、snapshot 設計、
              * 断定しない分析UIの見せ方を整理する入口に限定します。
@@ -155,30 +133,47 @@ Route::get('/lab', function () {
             ],
         ],
         [
-            /*
-             * 工事発注は今回の主対象ではありませんが、アイデアボードカテゴリの並び順を
-             * 固定するために API / 地震LPの後ろへ置きます。本体やモック側の内容には触れません。
-             */
-            'id' => 'construction-order-workflow-idea-board',
-            'title' => '工事発注管理・請求システム',
-            'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
-            'status' => 'アイデアボード',
+            'id' => 'dance-shorts-analyzer-idea-board',
+            'title' => 'Dance Shorts Analyzer',
+            'summary' => 'DanceShortsRadar が保存した動画と snapshot を使い、複数動画を選択して比較分析する画面構想です。',
+            'status' => '構想・設計中',
             'category' => 'IDEA-BOARD',
-            'href' => '/lab/construction-order-workflow-idea-board',
+            'href' => '/lab/dance-shorts-analyzer-idea-board',
             'actionLabel' => '構想を見る',
             'tags' => [
-                '工事発注',
-                '請求',
-                'CSV連携',
-                '画像管理',
-                '工程管理',
-                '帳票',
+                'YouTube Shorts',
+                'Snapshot',
+                '複数比較',
+                'ECharts',
+                'Inertia',
+                'ADR',
+            ],
+        ],
+        [
+            /*
+             * 地震マップも本体機能へ直接入る前に、XML取得、解析、pin生成、部分失敗管理などの
+             * 技術的な見どころを説明するLPへ案内します。防災サービスではなくポートフォリオの
+             * 可視化機能であることも、この紹介ページ側で明示します。
+             */
+            'id' => 'quake-wave-map-idea-board',
+            'title' => 'Japan Quake Wave Map',
+            'summary' => '気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能の紹介ページです。',
+            'status' => '完成済み',
+            'category' => 'IDEA-BOARD',
+            'href' => '/lab/quake-wave-map-idea-board',
+            'actionLabel' => '紹介LPを見る',
+            'tags' => [
+                '気象庁XML',
+                '地図表示',
+                'Queue',
+                'Job',
+                'status API',
+                '部分失敗',
             ],
         ],
         [
             /*
              * Spec Flow Trainer は構想中の開発補助ツールです。
-             * 今回はAPI / 地震LPを先頭に出す目的なので4番目へ移動しますが、
              * 既存ページのURLと導線は維持し、仕様外の本体機能追加は行いません。
              */
             'id' => 'spec-flow-trainer',
@@ -201,6 +196,27 @@ Route::get('/lab', function () {
             ],
         ],
         [
+            /*
+             * 工事発注は今回の主対象ではありませんが、アイデアボードカテゴリの構想枠として残します。
+             * 本体やモック側の内容には触れません。
+             */
+            'id' => 'construction-order-workflow-idea-board',
+            'title' => '工事発注管理・請求システム',
+            'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
+            'status' => 'アイデアボード',
+            'category' => 'IDEA-BOARD',
+            'href' => '/lab/construction-order-workflow-idea-board',
+            'actionLabel' => '構想を見る',
+            'tags' => [
+                '工事発注',
+                '請求',
+                'CSV連携',
+                '画像管理',
+                '工程管理',
+                '帳票',
+            ],
+        ],
+        [
             // API Preview は本体同期とは切り離した、外部API疎通確認用のモック入口です。
             'id' => 'api-preview',
             'title' => 'API Preview',
@@ -208,26 +224,6 @@ Route::get('/lab', function () {
             'status' => 'Mock',
             'category' => 'MOCK',
             'href' => '/api-preview',
-        ],
-        [
-            // QuakeWave Preview はモック、部品確認、XML確認、同期確認をまとめた開発確認入口です。
-            // Lab からモック確認へ行きたい場合は、個別の勝手なページではなくこの入口へ戻します。
-            'id' => 'quakewave-preview-tools',
-            'title' => 'QuakeWave Preview',
-            'summary' => '地震マップのモック、ピン・波紋の部品、XML取得、同期状態を確認する開発用入口です。',
-            'status' => 'Mock',
-            'category' => 'MOCK',
-            'href' => '/quakewave-preview',
-        ],
-        [
-            // 工事発注管理・請求システムの見た目確認用モックです。
-            // DB 接続、CSV 取込、S3 保存、PDF 生成は行わず、画面内 state のみで確認します。
-            'id' => 'construction-order-workflow-mock',
-            'title' => '工事発注管理・請求システム モック',
-            'summary' => '発注登録、画像、工程、請求、履歴の業務フローを仮データだけで確認する画面モックです。',
-            'status' => 'Mock',
-            'category' => 'MOCK',
-            'href' => '/lab/construction-order-workflow-mock',
         ],
         [
             /*
@@ -248,6 +244,26 @@ Route::get('/lab', function () {
                 '差分表示',
                 'API未接続',
             ],
+        ],
+        [
+            // QuakeWave Preview はモック、部品確認、XML確認、同期確認をまとめた開発確認入口です。
+            // Lab からモック確認へ行きたい場合は、個別の勝手なページではなくこの入口へ戻します。
+            'id' => 'quakewave-preview-tools',
+            'title' => 'QuakeWave Preview',
+            'summary' => '地震マップのモック、ピン・波紋の部品、XML取得、同期状態を確認する開発用入口です。',
+            'status' => 'Mock',
+            'category' => 'MOCK',
+            'href' => '/quakewave-preview',
+        ],
+        [
+            // 工事発注管理・請求システムの見た目確認用モックです。
+            // DB 接続、CSV 取込、S3 保存、PDF 生成は行わず、画面内 state のみで確認します。
+            'id' => 'construction-order-workflow-mock',
+            'title' => '工事発注管理・請求システム モック',
+            'summary' => '発注登録、画像、工程、請求、履歴の業務フローを仮データだけで確認する画面モックです。',
+            'status' => 'Mock',
+            'category' => 'MOCK',
+            'href' => '/lab/construction-order-workflow-mock',
         ],
     ];
 
@@ -292,6 +308,10 @@ Route::get('/lab/dance-shorts-radar-idea-board', function () {
      */
     return Inertia::render('Lab/DanceShortsRadar');
 })->name('lab.dance-shorts-radar-idea-board');
+
+Route::get('/lab/dance-shorts-analyzer-idea-board', function () {
+    return Inertia::render('Lab/DanceShortsAnalyzer');
+})->name('lab.dance-shorts-analyzer-idea-board');
 
 Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class)
     ->name('lab.dance-shorts-radar-mock');
