@@ -4,17 +4,20 @@ namespace Tests\Unit\DanceShortsRadar\Jobs;
 
 use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use App\Actions\DanceShortsRadar\Commands\PersistDanceShortVideoDetailsAction;
+use App\Actions\DanceShortsRadar\Commands\RefreshDanceShortVideoSnapshotsAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortPage2VideosAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortSearchConditionDTOFactory;
 use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
+use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Database\Eloquent\Collection;
 use PHPUnit\Framework\TestCase;
 
@@ -68,6 +71,30 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertTrue($action->called);
     }
 
+    public function test_snapshot_handle_calls_refresh_snapshot_action(): void
+    {
+        $action = new class extends RefreshDanceShortVideoSnapshotsAction {
+            public bool $called = false;
+
+            public function __construct()
+            {
+            }
+
+            public function execute(): DanceShortVideoSyncResultDTO
+            {
+                $this->called = true;
+
+                return new DanceShortVideoSyncResultDTO(
+                    executedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
+                );
+            }
+        };
+
+        (new SyncDanceShortVideoSnapshotsJob())->handle($action);
+
+        $this->assertTrue($action->called);
+    }
+
     public function test_action_returns_initial_sync_result_dto(): void
     {
         $result = (new SyncDanceShortVideosAction(
@@ -112,6 +139,19 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertSame(1, $job->tries);
         $this->assertSame(300, $job->timeout);
         $this->assertTrue($job->failOnTimeout);
+        $this->assertTrue(method_exists($job, 'failed'));
+    }
+
+    public function test_snapshot_job_has_queue_runtime_settings_and_fixed_unique_id(): void
+    {
+        $job = new SyncDanceShortVideoSnapshotsJob();
+
+        $this->assertInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertSame(1, $job->tries);
+        $this->assertSame(600, $job->timeout);
+        $this->assertTrue($job->failOnTimeout);
+        $this->assertSame(1800, $job->uniqueFor);
+        $this->assertSame('dance-short-video-snapshots-refresh', $job->uniqueId());
         $this->assertTrue(method_exists($job, 'failed'));
     }
 

@@ -4,8 +4,10 @@ namespace Tests\Feature\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortPage2VideosAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
+use App\Actions\DanceShortsRadar\Commands\RefreshDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
+use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
@@ -79,5 +81,39 @@ class DanceShortSyncCommandTest extends TestCase
             ->assertExitCode(0);
 
         Queue::assertPushed(SyncDanceShortPage2VideosJob::class);
+    }
+
+    public function test_snapshot_command_dispatches_snapshot_sync_job(): void
+    {
+        Queue::fake();
+
+        $this
+            ->artisan('dance-short:sync-snapshots')
+            ->expectsOutput('DanceShortsRadar snapshot sync job dispatched.')
+            ->assertExitCode(0);
+
+        Queue::assertPushed(SyncDanceShortVideoSnapshotsJob::class);
+    }
+
+    public function test_snapshot_command_does_not_execute_snapshot_action_directly(): void
+    {
+        Queue::fake();
+        $this->app->instance(RefreshDanceShortVideoSnapshotsAction::class, new class extends RefreshDanceShortVideoSnapshotsAction {
+            public function __construct()
+            {
+            }
+
+            public function execute(): DanceShortVideoSyncResultDTO
+            {
+                throw new RuntimeException('Command should only dispatch the snapshot sync job.');
+            }
+        });
+
+        $this
+            ->artisan('dance-short:sync-snapshots')
+            ->expectsOutput('DanceShortsRadar snapshot sync job dispatched.')
+            ->assertExitCode(0);
+
+        Queue::assertPushed(SyncDanceShortVideoSnapshotsJob::class);
     }
 }
