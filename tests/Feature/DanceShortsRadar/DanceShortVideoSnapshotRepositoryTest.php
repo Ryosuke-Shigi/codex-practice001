@@ -80,6 +80,103 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
         $this->assertTrue($latest->is($found));
     }
 
+    public function test_update_latest_in_period_or_create_updates_only_latest_snapshot_in_period(): void
+    {
+        $region = $this->region();
+        $video = $this->video();
+        $olderInPeriod = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 100,
+            'like_count' => 10,
+            'comment_count' => 1,
+            'collected_at' => '2026-05-31 16:00:00',
+        ]);
+        $latestInPeriod = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 200,
+            'like_count' => 20,
+            'comment_count' => 2,
+            'collected_at' => '2026-06-01 01:00:00',
+        ]);
+        $outsidePeriod = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 300,
+            'collected_at' => '2026-06-01 04:00:00',
+        ]);
+
+        $saved = $this->repository()->updateLatestInPeriodOrCreate(
+            new DanceShortVideoSnapshotCreateDTO(
+                video_id: (int) $video->getKey(),
+                region_id: (int) $region->getKey(),
+                view_count: 456,
+                like_count: 45,
+                comment_count: 6,
+                collected_at: CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'),
+            ),
+            CarbonImmutable::parse('2026-05-31 15:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-06-01 03:00:00', 'UTC'),
+        );
+
+        $this->assertTrue($latestInPeriod->is($saved));
+        $this->assertDatabaseCount('dance_short_video_snapshots', 3);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $latestInPeriod->getKey(),
+            'view_count' => 456,
+            'like_count' => 45,
+            'comment_count' => 6,
+            'collected_at' => '2026-06-01 02:30:00',
+        ]);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $olderInPeriod->getKey(),
+            'view_count' => 100,
+            'collected_at' => '2026-05-31 16:00:00',
+        ]);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $outsidePeriod->getKey(),
+            'view_count' => 300,
+            'collected_at' => '2026-06-01 04:00:00',
+        ]);
+    }
+
+    public function test_update_latest_in_period_or_create_creates_when_period_has_no_snapshot(): void
+    {
+        $region = $this->region();
+        $video = $this->video();
+        DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 100,
+            'collected_at' => '2026-05-31 14:59:59',
+        ]);
+
+        $saved = $this->repository()->updateLatestInPeriodOrCreate(
+            new DanceShortVideoSnapshotCreateDTO(
+                video_id: (int) $video->getKey(),
+                region_id: (int) $region->getKey(),
+                view_count: 789,
+                like_count: 70,
+                comment_count: 8,
+                collected_at: CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'),
+            ),
+            CarbonImmutable::parse('2026-05-31 15:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-06-01 03:00:00', 'UTC'),
+        );
+
+        $this->assertDatabaseCount('dance_short_video_snapshots', 2);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $saved->getKey(),
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 789,
+            'like_count' => 70,
+            'comment_count' => 8,
+            'collected_at' => '2026-06-01 02:30:00',
+        ]);
+    }
+
     public function test_delete_collected_before_physically_deletes_only_old_snapshots(): void
     {
         $region = $this->region();

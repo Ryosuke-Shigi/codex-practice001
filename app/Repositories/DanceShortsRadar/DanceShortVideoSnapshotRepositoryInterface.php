@@ -11,6 +11,12 @@ interface DanceShortVideoSnapshotRepositoryInterface
 {
     public function create(DanceShortVideoSnapshotCreateDTO $dto): DanceShortVideoSnapshot;
 
+    public function updateLatestInPeriodOrCreate(
+        DanceShortVideoSnapshotCreateDTO $dto,
+        CarbonInterface $periodStartAt,
+        CarbonInterface $periodEndAt,
+    ): DanceShortVideoSnapshot;
+
     public function latestForVideoAndRegion(int $videoId, int $regionId): ?DanceShortVideoSnapshot;
 
     /**

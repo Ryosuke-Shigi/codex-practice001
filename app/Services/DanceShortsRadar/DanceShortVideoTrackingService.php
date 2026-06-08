@@ -46,4 +46,13 @@ class DanceShortVideoTrackingService
          */
         return $trackingStatus === self::STATUS_ACTIVE;
     }
+
+    public function snapshotRefreshTargetStatus(): string
+    {
+        /*
+         * snapshot 専用同期の対象条件も「今後も観測する動画」と同じ active に揃えます。
+         * Repository へはこの文字列を条件として渡し、Repository 側では active の意味判断を行いません。
+         */
+        return self::STATUS_ACTIVE;
+    }
 }

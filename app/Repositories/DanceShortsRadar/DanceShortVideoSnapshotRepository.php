@@ -22,6 +22,40 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
         return DanceShortVideoSnapshot::query()->create($dto->toArray());
     }
 
+    public function updateLatestInPeriodOrCreate(
+        DanceShortVideoSnapshotCreateDTO $dto,
+        CarbonInterface $periodStartAt,
+        CarbonInterface $periodEndAt,
+    ): DanceShortVideoSnapshot {
+        /*
+         * JST12時間枠内に同じ video_id + region_id の snapshot がある場合は、
+         * collected_at DESC / id DESC の最新1件だけを更新します。
+         * 同枠内の他の既存 snapshot は触らず、枠内に候補がない場合だけ新規作成します。
+         */
+        $snapshot = DanceShortVideoSnapshot::query()
+            ->where('video_id', $dto->video_id)
+            ->where('region_id', $dto->region_id)
+            ->where('collected_at', '>=', $periodStartAt->toDateTimeString())
+            ->where('collected_at', '<', $periodEndAt->toDateTimeString())
+            ->orderByDesc('collected_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($snapshot === null) {
+            return $this->create($dto);
+        }
+
+        $snapshot->fill([
+            'view_count' => $dto->view_count,
+            'like_count' => $dto->like_count,
+            'comment_count' => $dto->comment_count,
+            'collected_at' => $dto->collected_at->toDateTimeString(),
+        ]);
+        $snapshot->save();
+
+        return $snapshot->refresh();
+    }
+
     public function latestForVideoAndRegion(int $videoId, int $regionId): ?DanceShortVideoSnapshot
     {
         /*

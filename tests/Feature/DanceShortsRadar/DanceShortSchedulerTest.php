@@ -4,6 +4,7 @@ namespace Tests\Feature\DanceShortsRadar;
 
 use App\Jobs\DanceShortsRadar\CleanupDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
+use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
@@ -37,6 +38,13 @@ class DanceShortSchedulerTest extends TestCase
         '2026-06-01 18:30:00',
     ];
 
+    private const SNAPSHOT_SYNC_SCHEDULED_TIMES = [
+        '2026-06-01 00:15:00',
+        '2026-06-01 00:45:00',
+        '2026-06-01 12:15:00',
+        '2026-06-01 12:45:00',
+    ];
+
     protected function tearDown(): void
     {
         Carbon::setTestNow();
@@ -52,6 +60,7 @@ class DanceShortSchedulerTest extends TestCase
          */
         $this->assertSame('0 */3 * * *', $this->syncScheduleEvent()->getExpression());
         $this->assertSame('30 6,18 * * *', $this->page2SyncScheduleEvent()->getExpression());
+        $this->assertSame('15,45 * * * *', $this->snapshotSyncScheduleEvent()->getExpression());
     }
 
     public function test_sync_schedule_is_due_at_each_quota_safe_window(): void
@@ -99,6 +108,43 @@ class DanceShortSchedulerTest extends TestCase
     public function test_page2_sync_schedule_keeps_without_overlapping_and_sync_enabled_gate(): void
     {
         $event = $this->page2SyncScheduleEvent();
+
+        $this->assertTrue($event->withoutOverlapping);
+
+        config(['dance_short.sync_enabled' => true]);
+        $this->assertTrue($event->filtersPass($this->app));
+
+        config(['dance_short.sync_enabled' => false]);
+        $this->assertFalse($event->filtersPass($this->app));
+    }
+
+    public function test_snapshot_sync_schedule_is_due_at_15_and_45_minutes_only(): void
+    {
+        $event = $this->snapshotSyncScheduleEvent();
+
+        $this->assertSame('15,45 * * * *', $event->getExpression());
+        $this->assertSame('dance-short-video-snapshot-sync', $event->description);
+        $this->assertStringContainsString(
+            'artisan dance-short:sync-snapshots',
+            Event::normalizeCommand($event->command),
+        );
+
+        foreach (self::SNAPSHOT_SYNC_SCHEDULED_TIMES as $scheduledTime) {
+            Carbon::setTestNow(Carbon::parse($scheduledTime));
+
+            $this->assertTrue($event->isDue($this->app));
+        }
+
+        Carbon::setTestNow(Carbon::parse('2026-06-01 12:00:00'));
+        $this->assertFalse($event->isDue($this->app));
+
+        Carbon::setTestNow(Carbon::parse('2026-06-01 12:30:00'));
+        $this->assertFalse($event->isDue($this->app));
+    }
+
+    public function test_snapshot_sync_schedule_keeps_without_overlapping_and_sync_enabled_gate(): void
+    {
+        $event = $this->snapshotSyncScheduleEvent();
 
         $this->assertTrue($event->withoutOverlapping);
 
@@ -166,6 +212,17 @@ class DanceShortSchedulerTest extends TestCase
         Queue::assertNotPushed(SyncDanceShortVideosJob::class);
     }
 
+    public function test_scheduler_does_not_dispatch_snapshot_sync_job_when_disabled(): void
+    {
+        Queue::fake();
+        config(['dance_short.sync_enabled' => false]);
+        Carbon::setTestNow(Carbon::parse(self::SNAPSHOT_SYNC_SCHEDULED_TIMES[0]));
+
+        $this->artisan('schedule:run')->assertExitCode(0);
+
+        Queue::assertNotPushed(SyncDanceShortVideoSnapshotsJob::class);
+    }
+
     public function test_scheduler_dispatches_snapshot_cleanup_job_daily_even_when_sync_is_disabled(): void
     {
         /*
@@ -189,7 +246,8 @@ class DanceShortSchedulerTest extends TestCase
                 $command = Event::normalizeCommand($event->command ?? '');
 
                 return str_contains($command, 'artisan dance-short:sync')
-                    && ! str_contains($command, 'artisan dance-short:sync-page2');
+                    && ! str_contains($command, 'artisan dance-short:sync-page2')
+                    && ! str_contains($command, 'artisan dance-short:sync-snapshots');
             });
 
         $this->assertInstanceOf(Event::class, $event);
@@ -203,6 +261,19 @@ class DanceShortSchedulerTest extends TestCase
             ->first(fn (Event $event): bool => str_contains(
                 Event::normalizeCommand($event->command ?? ''),
                 'artisan dance-short:sync-page2',
+            ));
+
+        $this->assertInstanceOf(Event::class, $event);
+
+        return $event;
+    }
+
+    private function snapshotSyncScheduleEvent(): Event
+    {
+        $event = collect($this->app->make(Schedule::class)->events())
+            ->first(fn (Event $event): bool => str_contains(
+                Event::normalizeCommand($event->command ?? ''),
+                'artisan dance-short:sync-snapshots',
             ));
 
         $this->assertInstanceOf(Event::class, $event);

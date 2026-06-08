@@ -41,6 +41,14 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         throw new RuntimeException('Cleanup action should not create snapshots.');
     }
 
+    public function updateLatestInPeriodOrCreate(
+        DanceShortVideoSnapshotCreateDTO $dto,
+        CarbonInterface $periodStartAt,
+        CarbonInterface $periodEndAt,
+    ): DanceShortVideoSnapshot {
+        throw new RuntimeException('Cleanup action should not save snapshots.');
+    }
+
     public function latestForVideoAndRegion(int $videoId, int $regionId): ?DanceShortVideoSnapshot
     {
         throw new RuntimeException('Cleanup action should not fetch latest snapshots.');

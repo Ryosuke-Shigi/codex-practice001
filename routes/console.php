@@ -56,6 +56,21 @@ Schedule::command('dance-short:sync-page2')
     ->when(fn (): bool => (bool) config('dance_short.sync_enabled'));
 
 /*
+ * DanceShortsRadar の snapshot 専用同期入口です。
+ *
+ * 保存済み active 動画を videos.list で継続観測するための command を、毎時15分・45分に Queue へ
+ * 投入します。既存 search 同期の 00分、page2 同期の 30分とは重ならない実行窓にします。
+ *
+ * videos.list も YouTube Data API quota を使うため、既存の DANCE_SHORT_SYNC_ENABLED gate で
+ * 明示的に有効化した環境だけ command 実行を許可します。
+ */
+Schedule::command('dance-short:sync-snapshots')
+    ->cron((string) config('dance_short.snapshot_refresh.cron'))
+    ->name('dance-short-video-snapshot-sync')
+    ->withoutOverlapping()
+    ->when(fn (): bool => (bool) config('dance_short.sync_enabled'));
+
+/*
  * DanceShortsRadar の snapshot cleanup 入口です。
  *
  * cleanup は YouTube API を呼ばない DB maintenance なので、同期 Job の env gate とは切り離して

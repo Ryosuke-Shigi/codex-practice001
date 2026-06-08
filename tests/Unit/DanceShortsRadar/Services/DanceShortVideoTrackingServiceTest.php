@@ -28,4 +28,12 @@ class DanceShortVideoTrackingServiceTest extends TestCase
             DanceShortVideoTrackingService::STATUS_ARCHIVED,
         ], $service->allowedStatuses());
     }
+
+    public function test_snapshot_refresh_target_status_is_active(): void
+    {
+        $this->assertSame(
+            DanceShortVideoTrackingService::STATUS_ACTIVE,
+            (new DanceShortVideoTrackingService())->snapshotRefreshTargetStatus(),
+        );
+    }
 }

@@ -178,6 +178,60 @@ class SyncDanceShortVideosActionTest extends TestCase
         ]);
     }
 
+    public function test_execute_updates_snapshot_in_same_jst_12_hour_period_instead_of_creating_another_row(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:00:00', 'UTC'));
+        config([
+            'services.youtube.discover_max_results' => 50,
+            'services.youtube.discover_published_after_days' => 7,
+        ]);
+
+        $region = DanceShortRegion::query()->create([
+            'code' => 'JP',
+            'name' => '日本',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        DanceShortSearchKeyword::query()->create([
+            'region_id' => $region->getKey(),
+            'keyword' => 'dance shorts',
+            'sort_order' => 10,
+            'is_active' => true,
+        ]);
+        $video = DanceShortVideo::query()->create([
+            'youtube_video_id' => 'short-video-001',
+            'title' => 'Saved dance short',
+            'tracking_status' => 'active',
+        ]);
+        $existingSnapshot = DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 100,
+            'like_count' => 10,
+            'comment_count' => 1,
+            'collected_at' => '2026-05-31 16:00:00',
+        ]);
+
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository());
+
+        $result = app(SyncDanceShortVideosAction::class)->execute();
+
+        $this->assertSame(1, $result->savedSnapshotCount);
+        $this->assertSame(1, DanceShortVideoSnapshot::query()
+            ->where('video_id', $video->getKey())
+            ->where('region_id', $region->getKey())
+            ->count());
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'id' => $existingSnapshot->getKey(),
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 123456,
+            'like_count' => 789,
+            'comment_count' => 12,
+            'collected_at' => '2026-06-01 02:00:00',
+        ]);
+    }
+
     public function test_execute_counts_search_api_failure_as_sync_failure_without_saving_data(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));

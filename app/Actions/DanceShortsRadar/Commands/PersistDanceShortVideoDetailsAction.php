@@ -9,7 +9,7 @@ use App\Models\DanceShortRegion;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
-use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
+use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonInterface;
@@ -22,7 +22,7 @@ class PersistDanceShortVideoDetailsAction
         private readonly DanceShortVideoRepositoryInterface $videoRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoEligibilityService $eligibilityService,
-        private readonly DanceShortSnapshotMetricService $snapshotMetricService,
+        private readonly DanceShortSnapshotPeriodService $snapshotPeriodService,
         private readonly DanceShortVideoTrackingService $trackingService,
         private readonly DanceShortVideoSaveDTOFactory $videoSaveDTOFactory,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
@@ -41,6 +41,8 @@ class PersistDanceShortVideoDetailsAction
         if ($youtubeVideoIds === []) {
             return new DanceShortVideoSyncResultDTO(executedAt: $executedAt);
         }
+
+        $snapshotPeriod = $this->snapshotPeriodService->jstTwelveHourPeriod($executedAt);
 
         try {
             $details = $this->youTubeVideoApiRepository->fetchVideoDetails($youtubeVideoIds);
@@ -89,10 +91,6 @@ class PersistDanceShortVideoDetailsAction
                     continue;
                 }
 
-                $previousSnapshot = $this->snapshotRepository->latestForVideoAndRegion(
-                    (int) $video->getKey(),
-                    (int) $region->getKey(),
-                );
                 $snapshotDTO = $this->snapshotCreateDTOFactory->fromYouTubeVideoDetail(
                     detail: $detail,
                     videoId: (int) $video->getKey(),
@@ -100,16 +98,11 @@ class PersistDanceShortVideoDetailsAction
                     collectedAt: $collectedAt,
                 );
 
-                if ($previousSnapshot !== null) {
-                    $this->snapshotMetricService->calculateSnapshotMetrics(
-                        previousViewCount: $previousSnapshot->view_count,
-                        previousCollectedAt: $previousSnapshot->collected_at,
-                        currentViewCount: $snapshotDTO->view_count,
-                        currentCollectedAt: $snapshotDTO->collected_at,
-                    );
-                }
-
-                $this->snapshotRepository->create($snapshotDTO);
+                $this->snapshotRepository->updateLatestInPeriodOrCreate(
+                    dto: $snapshotDTO,
+                    periodStartAt: $snapshotPeriod['start'],
+                    periodEndAt: $snapshotPeriod['end'],
+                );
                 $savedSnapshotCount++;
             } catch (Throwable) {
                 $failedCount++;
