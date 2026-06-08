@@ -36,4 +36,12 @@ class DanceShortVideoTrackingServiceTest extends TestCase
             (new DanceShortVideoTrackingService())->snapshotRefreshTargetStatus(),
         );
     }
+
+    public function test_snapshot_refresh_region_ids_use_active_region_ids_without_snapshot_state(): void
+    {
+        $this->assertSame(
+            [1, 3],
+            (new DanceShortVideoTrackingService())->snapshotRefreshRegionIds([1, 0, 3, 3]),
+        );
+    }
 }

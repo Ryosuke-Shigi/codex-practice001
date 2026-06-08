@@ -5,6 +5,7 @@ namespace App\Actions\DanceShortsRadar\Commands;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotRefreshTargetDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
+use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
@@ -19,6 +20,7 @@ class RefreshDanceShortVideoSnapshotsAction
 
     public function __construct(
         private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
+        private readonly DanceShortSearchTargetRepositoryInterface $searchTargetRepository,
         private readonly DanceShortVideoRepositoryInterface $videoRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
@@ -37,9 +39,16 @@ class RefreshDanceShortVideoSnapshotsAction
         $executedAt = CarbonImmutable::now();
         $collectedAt = $executedAt->utc();
         $snapshotPeriod = $this->snapshotPeriodService->jstTwelveHourPeriod($executedAt);
+        $regionIds = $this->trackingService->snapshotRefreshRegionIds(
+            $this->searchTargetRepository->activeRegions()
+                ->pluck('id')
+                ->map(fn (mixed $regionId): int => (int) $regionId)
+                ->all(),
+        );
         $targets = $this->videoRepository->snapshotRefreshTargetsByTrackingStatus(
             trackingStatus: $this->trackingService->snapshotRefreshTargetStatus(),
             maxVideosPerRun: $this->maxVideosPerRun(),
+            regionIds: $regionIds,
         );
 
         if ($targets === []) {

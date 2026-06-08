@@ -118,6 +118,44 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         ]);
     }
 
+    public function test_execute_creates_snapshots_for_active_videos_after_all_snapshots_are_deleted(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+
+        $region = $this->region();
+        $active = $this->video('active-without-snapshot', 'active');
+        $inactive = $this->video('inactive-without-snapshot', 'inactive');
+        $archived = $this->video('archived-without-snapshot', 'archived');
+
+        $this->assertDatabaseCount('dance_short_video_snapshots', 0);
+
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+
+        $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
+
+        $this->assertSame(1, $result->fetchedVideoCount);
+        $this->assertSame(1, $result->fetchedVideoDetailCount);
+        $this->assertSame(1, $result->savedSnapshotCount);
+        $this->assertSame([['active-without-snapshot']], $youtubeRepository->fetchVideoIdsCalls);
+        $this->assertSame(0, $youtubeRepository->searchVideosCallCount);
+        $this->assertSame(0, $youtubeRepository->searchVideoPageCallCount);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'video_id' => $active->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 1234,
+            'like_count' => 123,
+            'comment_count' => 12,
+            'collected_at' => '2026-06-01 02:30:00',
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $inactive->getKey(),
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $archived->getKey(),
+        ]);
+    }
+
     private function region(): DanceShortRegion
     {
         return DanceShortRegion::query()->create([
