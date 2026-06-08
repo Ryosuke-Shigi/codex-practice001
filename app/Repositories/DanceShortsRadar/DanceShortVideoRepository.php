@@ -7,7 +7,6 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotRefreshTargetDTO;
 use App\Models\DanceShortVideo;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
-use Illuminate\Support\Facades\DB;
 
 class DanceShortVideoRepository implements DanceShortVideoRepositoryInterface
 {
@@ -43,13 +42,20 @@ class DanceShortVideoRepository implements DanceShortVideoRepositoryInterface
     public function snapshotRefreshTargetsByTrackingStatus(
         string $trackingStatus,
         int $maxVideosPerRun,
+        array $regionIds,
     ): array {
         /*
-         * snapshot 専用同期では、既に観測地域がある動画だけを videos.list で再取得します。
-         * region_id は既存 snapshot から拾い、同じ動画を複数地域で観測している場合でも
+         * snapshot 専用同期では、保存済み動画本体を tracking_status 条件で再取得します。
+         * snapshot は観測結果なので、snapshot の存在を対象取得の必須条件にはしません。
+         *
+         * region_id は呼び出し側が決定した保存対象 region を使い、同じ動画を複数地域で観測しても
          * YouTube ID は1回だけ fetch できる形で DTO にまとめます。
          */
         $limit = max(1, $maxVideosPerRun);
+        $safeRegionIds = array_values(array_unique(array_filter(
+            array_map(fn (int $regionId): int => $regionId, $regionIds),
+            fn (int $regionId): bool => $regionId > 0,
+        )));
 
         $videos = DanceShortVideo::query()
             ->select('dance_short_videos.*')
@@ -59,51 +65,26 @@ class DanceShortVideoRepository implements DanceShortVideoRepositoryInterface
                     ->whereColumn('dance_short_video_snapshots.video_id', 'dance_short_videos.id');
             }, 'latest_snapshot_collected_at')
             ->where('tracking_status', $trackingStatus)
-            ->whereExists(function ($query): void {
-                $query->selectRaw('1')
-                    ->from('dance_short_video_snapshots')
-                    ->whereColumn('dance_short_video_snapshots.video_id', 'dance_short_videos.id');
-            })
             ->orderBy('latest_snapshot_collected_at')
             ->orderByDesc('published_at')
             ->orderBy('id')
             ->limit($limit)
             ->get();
 
-        $videoIds = $videos
-            ->pluck('id')
-            ->map(fn (mixed $videoId): int => (int) $videoId)
-            ->all();
-
-        if ($videoIds === []) {
+        if ($safeRegionIds === [] || $videos->isEmpty()) {
             return [];
         }
 
-        $regionIdsByVideoId = [];
-        $regionRows = DB::table('dance_short_video_snapshots')
-            ->select(['video_id', 'region_id'])
-            ->whereIn('video_id', $videoIds)
-            ->distinct()
-            ->orderBy('video_id')
-            ->orderBy('region_id')
-            ->get();
-
-        foreach ($regionRows as $regionRow) {
-            $videoId = (int) $regionRow->video_id;
-            $regionIdsByVideoId[$videoId][] = (int) $regionRow->region_id;
-        }
-
         return $videos
-            ->map(function (DanceShortVideo $video) use ($regionIdsByVideoId): DanceShortVideoSnapshotRefreshTargetDTO {
+            ->map(function (DanceShortVideo $video) use ($safeRegionIds): DanceShortVideoSnapshotRefreshTargetDTO {
                 $videoId = (int) $video->getKey();
 
                 return new DanceShortVideoSnapshotRefreshTargetDTO(
                     video_id: $videoId,
                     youtube_video_id: (string) $video->youtube_video_id,
-                    region_ids: array_values($regionIdsByVideoId[$videoId] ?? []),
+                    region_ids: $safeRegionIds,
                 );
             })
-            ->filter(fn (DanceShortVideoSnapshotRefreshTargetDTO $target): bool => $target->region_ids !== [])
             ->values()
             ->all();
     }
