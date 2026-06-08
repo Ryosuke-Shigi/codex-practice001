@@ -21,6 +21,16 @@ class DanceShortsRadarTest extends TestCase
             );
     }
 
+    public function test_dance_shorts_analyzer_idea_board_page_is_available(): void
+    {
+        $this
+            ->get('/lab/dance-shorts-analyzer-idea-board')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Lab/DanceShortsAnalyzer', false)
+            );
+    }
+
     public function test_dance_shorts_radar_mock_page_is_available_with_sorted_mock_candidates(): void
     {
         /*
