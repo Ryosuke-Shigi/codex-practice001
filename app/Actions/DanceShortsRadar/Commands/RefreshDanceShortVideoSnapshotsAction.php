@@ -5,8 +5,7 @@ namespace App\Actions\DanceShortsRadar\Commands;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotRefreshTargetDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
-use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
-use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
@@ -20,8 +19,7 @@ class RefreshDanceShortVideoSnapshotsAction
 
     public function __construct(
         private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
-        private readonly DanceShortSearchTargetRepositoryInterface $searchTargetRepository,
-        private readonly DanceShortVideoRepositoryInterface $videoRepository,
+        private readonly DanceShortVideoRegionRepositoryInterface $videoRegionRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
         private readonly DanceShortSnapshotPeriodService $snapshotPeriodService,
@@ -32,23 +30,16 @@ class RefreshDanceShortVideoSnapshotsAction
     public function execute(): DanceShortVideoSyncResultDTO
     {
         /*
-         * snapshot 専用同期は保存済み active 動画の継続観測だけを行います。
+         * snapshot 専用同期は保存済み video-region 関係に基づく継続観測だけを行います。
          * search.list は呼ばず、active 条件の決定、50件単位の videos.list 取得、
          * JST12時間枠 update/create の手順をこの Action に閉じます。
          */
         $executedAt = CarbonImmutable::now();
         $collectedAt = $executedAt->utc();
         $snapshotPeriod = $this->snapshotPeriodService->jstTwelveHourPeriod($executedAt);
-        $regionIds = $this->trackingService->snapshotRefreshRegionIds(
-            $this->searchTargetRepository->activeRegions()
-                ->pluck('id')
-                ->map(fn (mixed $regionId): int => (int) $regionId)
-                ->all(),
-        );
-        $targets = $this->videoRepository->snapshotRefreshTargetsByTrackingStatus(
+        $targets = $this->videoRegionRepository->snapshotRefreshTargetsByTrackingStatus(
             trackingStatus: $this->trackingService->snapshotRefreshTargetStatus(),
             maxVideosPerRun: $this->maxVideosPerRun(),
-            regionIds: $regionIds,
         );
 
         if ($targets === []) {

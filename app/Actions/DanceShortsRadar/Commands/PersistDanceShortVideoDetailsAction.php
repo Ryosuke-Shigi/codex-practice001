@@ -3,14 +3,17 @@
 namespace App\Actions\DanceShortsRadar\Commands;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
+use App\DTO\DanceShortsRadar\Sync\DanceShortVideoRegionSaveDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSaveDTOFactory;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
 use App\Models\DanceShortRegion;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
 use App\Services\DanceShortsRadar\DanceShortVideoEligibilityService;
+use App\Services\DanceShortsRadar\DanceShortVideoRegionService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonInterface;
 use Throwable;
@@ -20,9 +23,11 @@ class PersistDanceShortVideoDetailsAction
     public function __construct(
         private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
         private readonly DanceShortVideoRepositoryInterface $videoRepository,
+        private readonly DanceShortVideoRegionRepositoryInterface $videoRegionRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoEligibilityService $eligibilityService,
         private readonly DanceShortSnapshotPeriodService $snapshotPeriodService,
+        private readonly DanceShortVideoRegionService $videoRegionService,
         private readonly DanceShortVideoTrackingService $trackingService,
         private readonly DanceShortVideoSaveDTOFactory $videoSaveDTOFactory,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
@@ -85,6 +90,16 @@ class PersistDanceShortVideoDetailsAction
                 };
 
                 $video = $saveResult['video'];
+                $videoId = (int) $video->getKey();
+                $regionId = (int) $region->getKey();
+
+                if ($this->videoRegionService->shouldSaveVideoRegion($videoId, $regionId)) {
+                    $this->videoRegionRepository->upsert(new DanceShortVideoRegionSaveDTO(
+                        video_id: $videoId,
+                        region_id: $regionId,
+                        detected_at: $collectedAt,
+                    ));
+                }
 
                 if (! $this->trackingService->isSnapshotSaveTarget($video->tracking_status)) {
                     $skippedSnapshotByTrackingCount++;
@@ -93,8 +108,8 @@ class PersistDanceShortVideoDetailsAction
 
                 $snapshotDTO = $this->snapshotCreateDTOFactory->fromYouTubeVideoDetail(
                     detail: $detail,
-                    videoId: (int) $video->getKey(),
-                    regionId: (int) $region->getKey(),
+                    videoId: $videoId,
+                    regionId: $regionId,
                     collectedAt: $collectedAt,
                 );
 

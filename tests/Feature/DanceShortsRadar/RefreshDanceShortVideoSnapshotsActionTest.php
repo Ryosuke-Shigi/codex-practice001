@@ -9,6 +9,7 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
+use App\Models\DanceShortVideoRegion;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
@@ -39,16 +40,19 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
             $youtubeVideoId = sprintf('active-video-%03d', $index);
             $activeYoutubeVideoIds[] = $youtubeVideoId;
             $this->snapshot(
-                $this->video($youtubeVideoId, 'active'),
+                $video = $this->video($youtubeVideoId, 'active'),
                 $region,
                 '2026-05-31 00:00:00',
             );
+            $this->videoRegion($video, $region, '2026-05-31 00:00:00');
         }
 
         $inactive = $this->video('inactive-video', 'inactive');
         $archived = $this->video('archived-video', 'archived');
         $this->snapshot($inactive, $region, '2026-05-31 00:00:00');
         $this->snapshot($archived, $region, '2026-05-31 00:00:00');
+        $this->videoRegion($inactive, $region, '2026-05-31 00:00:00');
+        $this->videoRegion($archived, $region, '2026-05-31 00:00:00');
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
@@ -80,6 +84,8 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $region = $this->region();
         $updateTarget = $this->video('same-period-video', 'active');
         $createTarget = $this->video('new-period-video', 'active');
+        $this->videoRegion($updateTarget, $region, '2026-05-31 16:00:00');
+        $this->videoRegion($createTarget, $region, '2026-05-31 14:59:59');
 
         $existingInPeriod = $this->snapshot($updateTarget, $region, '2026-05-31 16:00:00', 100);
         $outsidePeriod = $this->snapshot($createTarget, $region, '2026-05-31 14:59:59', 200);
@@ -126,6 +132,9 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $active = $this->video('active-without-snapshot', 'active');
         $inactive = $this->video('inactive-without-snapshot', 'inactive');
         $archived = $this->video('archived-without-snapshot', 'archived');
+        $this->videoRegion($active, $region, '2026-06-01 00:00:00');
+        $this->videoRegion($inactive, $region, '2026-06-01 00:00:00');
+        $this->videoRegion($archived, $region, '2026-06-01 00:00:00');
 
         $this->assertDatabaseCount('dance_short_video_snapshots', 0);
 
@@ -156,11 +165,84 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         ]);
     }
 
-    private function region(): DanceShortRegion
+    public function test_execute_creates_snapshots_only_for_regions_stored_in_video_regions(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+
+        $jp = $this->region('JP', '日本');
+        $us = $this->region('US', 'アメリカ');
+        $kr = $this->region('KR', '韓国');
+        $jpOnly = $this->video('jp-only-video', 'active');
+        $jpUs = $this->video('jp-us-video', 'active');
+
+        $this->videoRegion($jpOnly, $jp, '2026-06-01 00:00:00');
+        $this->videoRegion($jpUs, $jp, '2026-06-01 00:00:00');
+        $this->videoRegion($jpUs, $us, '2026-06-01 00:00:00');
+
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+
+        $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
+
+        $this->assertSame(2, $result->fetchedVideoCount);
+        $this->assertSame(2, $result->fetchedVideoDetailCount);
+        $this->assertSame(3, $result->savedSnapshotCount);
+        $this->assertSame([['jp-only-video', 'jp-us-video']], $youtubeRepository->fetchVideoIdsCalls);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'video_id' => $jpOnly->getKey(),
+            'region_id' => $jp->getKey(),
+            'view_count' => 1234,
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $jpOnly->getKey(),
+            'region_id' => $us->getKey(),
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $jpOnly->getKey(),
+            'region_id' => $kr->getKey(),
+        ]);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'video_id' => $jpUs->getKey(),
+            'region_id' => $jp->getKey(),
+            'view_count' => 1234,
+        ]);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'video_id' => $jpUs->getKey(),
+            'region_id' => $us->getKey(),
+            'view_count' => 1234,
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $jpUs->getKey(),
+            'region_id' => $kr->getKey(),
+        ]);
+    }
+
+    public function test_execute_returns_zero_when_video_regions_are_empty(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+
+        $this->region();
+        $this->video('active-without-relation', 'active');
+
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+
+        $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
+
+        $this->assertSame(0, $result->fetchedVideoCount);
+        $this->assertSame(0, $result->fetchedVideoDetailCount);
+        $this->assertSame(0, $result->savedSnapshotCount);
+        $this->assertSame([], $youtubeRepository->fetchVideoIdsCalls);
+        $this->assertSame(0, $youtubeRepository->searchVideosCallCount);
+        $this->assertSame(0, $youtubeRepository->searchVideoPageCallCount);
+        $this->assertDatabaseCount('dance_short_video_snapshots', 0);
+    }
+
+    private function region(string $code = 'JP', string $name = '日本'): DanceShortRegion
     {
         return DanceShortRegion::query()->create([
-            'code' => 'JP',
-            'name' => '日本',
+            'code' => $code,
+            'name' => $name,
         ]);
     }
 
@@ -187,6 +269,19 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
             'like_count' => 10,
             'comment_count' => 1,
             'collected_at' => $collectedAt,
+        ]);
+    }
+
+    private function videoRegion(
+        DanceShortVideo $video,
+        DanceShortRegion $region,
+        string $detectedAt,
+    ): DanceShortVideoRegion {
+        return DanceShortVideoRegion::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => $detectedAt,
+            'last_detected_at' => $detectedAt,
         ]);
     }
 }

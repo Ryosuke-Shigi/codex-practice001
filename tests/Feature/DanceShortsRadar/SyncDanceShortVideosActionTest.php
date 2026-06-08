@@ -10,6 +10,7 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
+use App\Models\DanceShortVideoRegion;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
@@ -108,6 +109,13 @@ class SyncDanceShortVideosActionTest extends TestCase
             'title' => 'Saved dance short',
             'duration' => 'PT58S',
         ]);
+        $video = DanceShortVideo::query()->where('youtube_video_id', 'short-video-001')->firstOrFail();
+        $this->assertDatabaseHas('dance_short_video_regions', [
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => '2026-05-31 12:00:00',
+            'last_detected_at' => '2026-05-31 12:00:00',
+        ]);
         $this->assertDatabaseMissing('dance_short_videos', [
             'youtube_video_id' => 'long-video-001',
         ]);
@@ -172,6 +180,12 @@ class SyncDanceShortVideosActionTest extends TestCase
             'youtube_video_id' => 'short-video-001',
             'tracking_status' => 'inactive',
         ]);
+        $this->assertDatabaseHas('dance_short_video_regions', [
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => '2026-05-31 12:00:00',
+            'last_detected_at' => '2026-05-31 12:00:00',
+        ]);
         $this->assertDatabaseMissing('dance_short_video_snapshots', [
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
@@ -211,12 +225,29 @@ class SyncDanceShortVideosActionTest extends TestCase
             'comment_count' => 1,
             'collected_at' => '2026-05-31 16:00:00',
         ]);
+        $existingRelation = DanceShortVideoRegion::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => '2026-05-31 16:00:00',
+            'last_detected_at' => '2026-05-31 16:00:00',
+        ]);
 
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository());
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
 
         $this->assertSame(1, $result->savedSnapshotCount);
+        $this->assertSame(1, DanceShortVideoRegion::query()
+            ->where('video_id', $video->getKey())
+            ->where('region_id', $region->getKey())
+            ->count());
+        $this->assertDatabaseHas('dance_short_video_regions', [
+            'id' => $existingRelation->getKey(),
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'first_detected_at' => '2026-05-31 16:00:00',
+            'last_detected_at' => '2026-06-01 02:00:00',
+        ]);
         $this->assertSame(1, DanceShortVideoSnapshot::query()
             ->where('video_id', $video->getKey())
             ->where('region_id', $region->getKey())
