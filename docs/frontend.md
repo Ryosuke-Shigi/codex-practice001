@@ -169,6 +169,53 @@ Laravel側ではFormRequest / Requestによるバックエンドバリデーシ�
 
 同じ入力条件を扱う場合も、バックエンドの検証を省略しません。
 
+## TypeScriptの関数宣言方針
+
+名前を持つ主要処理と、内部コールバックの役割が読み分けられるように、関数宣言とアロー関数を使い分けます。
+
+関数宣言を使う対象:
+
+- Page Component
+- 共通Component
+- カスタムHook
+- 共通Utilityなど、ファイル外から役割が分かる名前付き処理
+- ファイル内でも、独立した責務を持ち、他の処理から再利用する名前付き関数
+
+例:
+
+```ts
+export default function Welcome() {
+    // Page Component
+}
+
+function shouldIgnoreSwipeTarget(target: EventTarget | null) {
+    // 独立した判定処理
+}
+```
+
+アロー関数を使う対象:
+
+- `useEffect`、`map`、`filter` などへ渡すコールバック
+- `onClick`、`onChange` などのイベントハンドラー
+- ComponentやHook内部だけで使う短い処理
+- クロージャとして外側のpropsやstateを参照する処理
+
+例:
+
+```ts
+useEffect(() => {
+    // 副作用処理
+}, []);
+
+const handleTouchStart = (event: TouchEvent) => {
+    // Hook内部のイベント処理
+};
+```
+
+同じ責務の処理で、関数宣言とアロー関数を理由なく混在させません。既存ファイルをこのルールだけのために一括変換せず、新規追加・対象ファイルの修正時に揃えます。
+
+`this` の固定を目的としてアロー関数を選ぶ必要は、Reactの関数Componentでは原則ありません。宣言形式は、処理の責務と利用範囲で判断します。
+
 ## アクセシビリティと操作性
 
 - ボタンとして操作する要素は、ボタンとして実装する
