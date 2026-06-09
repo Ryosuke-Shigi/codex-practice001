@@ -12,6 +12,7 @@
 - 設計方針・責務境界に関わる変更を行う場合は `docs/architecture.md` を確認する
 - テスト追加・更新、または仕様破壊確認が関わる変更を行う場合は `docs/testing.md` を確認する
 - 通常コメント・PHPDoc・JSDocを追加または更新する場合は `docs/commenting.md` を確認する
+- ログ追加・更新・保存先変更を行う場合は `docs/logging.md` を確認する
 - プロトタイプの作成・修正・削除・本番化を行う場合は `docs/prototype-policy.md` を確認する
 - 指定された演出・機能・成功条件・対象ファイルがある作業では `skills/no-alternative-implementation/SKILL.md` を確認する
 - 判断に迷う場合は、実装前に `docs/architecture.md` と `docs/testing.md` の両方を確認する
