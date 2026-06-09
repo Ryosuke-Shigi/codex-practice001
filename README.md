@@ -351,46 +351,14 @@ Pull Request では、少なくとも以下を確認します。
 - 秘密情報混入がないこと
 - 責務境界に違反していないこと
 
-## Docs / Skills
+## Documentation / Skills
 
 README は外部向けの概要説明です。  
-AIエージェント向けの固定ルール、設計方針、テスト方針、作業時の停止条件は別ファイルに分けています。
+詳細資料はリポジトリ内の Markdown として管理し、コード変更と同じく Pull Request で差分確認できるようにしています。
 
-主なドキュメント:
-
-- `AGENTS.md`
-- `docs/architecture.md`
-- `docs/testing.md`
-
-主なスキル:
-
-- `skills/no-alternative-implementation/SKILL.md`
-
-### AGENTS.md
-
-CodexApp / AIエージェント向けの作業ルールです。
-
-主に以下を扱います。
-
-- AIを丸投げ実装者として扱わない方針
-- 参照すべき docs / skills
-- ADR / レイヤード構成の責務境界
-- DTO / ListDTO 方針
-- Git運用ルール
-- コメント方針
-- テスト追加方針
-- レビュー観点
-
-### docs/architecture.md
-
-ADR / レイヤード構成と各レイヤーの責務境界をまとめています。
-
-### docs/testing.md
-
-テスト方針、優先順位、AI駆動開発でのテスト活用方針をまとめています。
-
-### skills/no-alternative-implementation/SKILL.md
-
-指定された要件を満たせない場合に、AIエージェントが勝手に代替実装へ進むことを防ぐためのルールです。
-
-指定された演出・機能・成功条件・対象ファイルがある作業では、要件未達のまま完了扱いにせず、停止して報告することを定義しています。
+- [AGENTS.md](AGENTS.md): CodexApp / AIエージェント向けの固定ルール
+- [Architecture](docs/architecture.md): ADR / レイヤード構成と責務境界
+- [Testing](docs/testing.md): テスト方針、優先順位、AI駆動開発でのテスト活用
+- [Commenting](docs/commenting.md): 通常コメント、PHPDoc、JSDocの運用方針
+- [Prototype Policy](docs/prototype-policy.md): プロトタイプの分離、削除、本番化ルール
+- [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時に代替実装へ進まず停止・報告するためのSkill
