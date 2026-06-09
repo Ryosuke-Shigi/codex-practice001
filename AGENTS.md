@@ -15,6 +15,7 @@
 - ログ追加・更新・保存先変更を行う場合は `docs/logging.md` を確認する
 - 秘密情報、本番接続、AI権限、破壊的操作、外部公開に関わる変更を行う場合は `docs/security.md` を確認する
 - React / Inertia / TypeScript の画面、Component、props、レスポンシブ表示、演出に関わる変更を行う場合は `docs/frontend.md` を確認する
+- UIの見た目、操作、共通Component、Common配置、モバイル表示に関わる変更を行う場合は `docs/ui.md` を確認する
 - プロトタイプの作成・修正・削除・本番化を行う場合は `docs/prototype-policy.md` を確認する
 - 指定された演出・機能・成功条件・対象ファイルがある作業では `skills/no-alternative-implementation/SKILL.md` を確認する
 - 判断に迷う場合は、実装前に `docs/architecture.md` と `docs/testing.md` の両方を確認する

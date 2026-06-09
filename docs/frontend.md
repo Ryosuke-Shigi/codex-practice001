@@ -6,6 +6,8 @@
 
 バックエンドの ADR / レイヤード責務をフロントエンドで崩さず、モバイル・横置き・PCで破綻しない画面を作ることを目的とします。
 
+UIの見た目、操作、共通Component、Common配置の詳細は `docs/ui.md` に従います。
+
 ## 基本方針
 
 - フロントエンドは React / Inertia / TypeScript を前提とする
@@ -64,7 +66,7 @@ Componentへ置かないもの:
 
 Page Component は、ページ全体の構成と、そのページ固有のUI状態を担当します。
 
-繰り返し使う表示・操作は共通Componentへ分離します。
+複数機能で実際に使う業務非依存の表示・操作は `Components/Common` へ分離します。
 
 共通化の対象例:
 
@@ -72,13 +74,12 @@ Page Component は、ページ全体の構成と、そのページ固有のUI状
 - Button
 - Field
 - Modal
-- SearchButtons
-- SelectField
-- CardsField
+- Loading
 - ページ間で共通するナビゲーション
-- 背景エフェクトの選択UI
 
-ただし、見た目が似ているだけで目的や操作が異なるものを、無理に1つへ統合しません。共通化によってpropsや条件分岐が肥大化する場合は、用途別Componentとして分けます。
+見た目が似ているだけで目的や操作が異なるものを、無理に1つへ統合しません。共通化によってpropsや条件分岐が肥大化する場合は、用途別Componentとして分けます。
+
+Commonへ入れる条件、入れてはいけない責務、共通UIの状態は `docs/ui.md` に従います。
 
 ## props の方針
 
@@ -105,29 +106,31 @@ UI状態は、画面内の表示・操作のための状態です。
 
 DBへ保存する状態、複数画面や再読込後も維持すべき状態、業務上のステータスは、UI状態だけで完結させません。Laravel側のAction / Service / Repositoryを通じて扱います。
 
-## UI と Effects の分離
+## Common・Feature・Effects の分離
 
-通常のUI部品と背景・演出は分離します。
+共通UI、機能固有UI、背景・演出を分離します。
 
 例:
 
 ```text
 resources/js/
 ├── Components/
-│   ├── UI/
-│   └── Effects/
+│   ├── Common/
+│   ├── Effects/
+│   └── <Feature>/
 ├── Layouts/
 ├── Pages/
 └── theme/
 ```
 
-- `Components/UI` は、カード、ボタン、入力、選択、モーダルなどの操作部品を扱う
+- `Components/Common` は、複数機能で使う業務非依存のカード、ボタン、入力、モーダルなどを扱う
+- `Components/<Feature>` は、機能固有の表示・操作を扱う
 - `Components/Effects` は、背景、水面、波紋、パーティクル、光の軌跡などの演出を扱う
 - `Layouts` は、ページ間で共通する配置と枠組みを扱う
-- `Pages` は、ページ固有の構成を扱う
+- `Pages` は、ページ全体の組み立てとページ固有のUI状態を扱う
 - `theme` は、共通の色、サイズ、UI定義を扱う
 
-Effects Componentは、画面の業務データや保存処理へ依存させません。
+Common Componentは業務固有のDTO、状態遷移、API通信へ依存させません。Effects Componentは画面の業務データや保存処理へ依存させません。
 
 ## 背景エフェクトと演出
 
@@ -247,8 +250,9 @@ const handleTouchStart = (event: TouchEvent) => {
 - Page Componentへ業務判断を追加していないか
 - ComponentへDB・外部API責務を持ち込んでいないか
 - propsが過剰になっていないか
-- 共通Componentへ用途別の条件分岐を詰め込みすぎていないか
-- UIとEffectsが分離されているか
+- Commonへ業務固有の条件分岐を入れていないか
+- Feature ComponentとCommon Componentの責務が分かれているか
+- Common・Feature・Effectsが分離されているか
 - モバイル縦向きだけでなく横向きも確認したか
 - ラフ画像に含まれる要素を勝手に実装していないか
 - バックエンドバリデーションを省略していないか
