@@ -6,7 +6,7 @@
 
 ## このドキュメントの目的
 
-このドキュメントは、発想から本実装までの段階、各段階の完成条件、次へ進む条件、Product実装の基本手順を定めます。
+このドキュ�!ントは、発想から本実装までの段階、各段階の完成条件、次へ進む条件、Product実装の基本手順を定めます。
 
 MOCK / Prototypeのディレクトリ、Route、削除、Productとの物理的分離は `docs/prototype-policy.md` を正本とします。
 
@@ -92,7 +92,7 @@ MOCKで確認したUIを使い、画面遷移、操作手順、簡易的なデ�
 - 本番APIへの更新・削除
 - Productと同等の完成判定
 
-速度を優先して一気に作ってよいのはPrototypeまでです。ただし、速く作れたことを完成の根拠にしません。
+速度を優先して一気に作ってよいのはPrototypeまでです。ただし、速く作れたことを完成の根� にしません。
 
 Prototypeの完成条件:
 
@@ -122,14 +122,14 @@ Product化前に固定するもの:
 ```text
 1目的
 1機能または1ユースケース
-1責務境界
-1ブランチ
+必要なレイヤー一式
+1ホランチ
 1Pull Request
 必要なテスト
 必要なdocs更新
 ```
 
-同じ目的を成立させるために不可分なDTO、Service、Repository、Responder、Component、Testは同じPRへ含めてよいものとします。複数目的は混ぜません。
+同じ目的を成立させるために不可分なAction、Service、Repository、DTO、Responder、Component、Testは同じPRへ含めてよいものとします。複数目的は混ぜません。
 
 ## Product実装の基本手順
 
