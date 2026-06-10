@@ -59,7 +59,7 @@ docs/index.md
 
 - DanceShortsRadar: `docs/features/dance-shorts-radar.md`
 
-実行時刻、API quota、特定テーブル条件、enum、Seeder、Job名、Command名、機能固有テストはfeature docsへ置きます。
+実行時刻、API quota、特定テーブル条件、enum、Seeder、Job名、Artisan Command名、機能固有テストはfeature docsへ置きます。
 
 feature docsは共通ルールを上書きできません。
 
@@ -67,7 +67,7 @@ feature docsは共通ルールを上書きできません。
 
 対象機能に関係する範囲だけを確認します。
 
-- Route / Command / Scheduler
+- Route / Artisan Command / Scheduler
 - Controller / Request
 - Action / Service
 - Repository
@@ -243,7 +243,7 @@ GPT情報源へ入れる資料は、長期間有効な共通前提に限定し�
 Status: active / archived / superseded
 Scope: 適用対象
 Last reviewed: YYYY-MM-DD
-Canonical source: 正本となるdocs
+Canonical source: 用途ごとの正本となるdocs・コード・テスト
 Supersedes: 置き換えた旧資料
 ```
 
@@ -257,7 +257,7 @@ Supersedes: 置き換えた旧資料
 
 - 全体ルール・禁止事項: `AGENTS.md` と共通docs
 - 実装済みの現在挙動: コード・Migration・設定・成功テスト
-- 機能固有の意図・条件: feature docsと関連テスト
+- 機能固有の意図・制約: feature docsと関連テスト
 - 外部説明: README
 - 作業経緯・理解回収: Notion・GPT情報源・理解再起動用まとめ
 
