@@ -1,23 +1,49 @@
 # Architecture
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このドキュメントの目的
 
-このドキュメントは、このプロジェクトで採用している ADR / レイヤード構成の責務境界を明文化するためのものです。
+このドキュメントは、このプロジェクトで採用しているADR Pattern / レイヤード構成の責務境界を明文化するためのものです。
 
-AIエージェントや人間が機能追加・修正を行う際に、Action / Service / Repository / DTO / Responder / Component などの責務が混ざらないようにすることを目的とします。
+AIエージェントや人間が機能追加・修正を行う際に、Controller / Request / Action / Service / Repository / DTO / Responder / Componentなどの責務が混ざらないようにすることを目的とします。
+
+機能固有の実行条件、API制約、DB条件、テスト固定内容は `docs/features/` に置き、この文書には共通原則だけを置きます。
+
+## 用語
+
+### ADR Pattern
+
+このプロジェクトでいうADR Patternは、次を指します。
+
+```text
+Action - Domain - Responder
+```
+
+- Action: ユースケースの手順
+- Domain: Service、Repository、DTO、Factory、Strategy、Event / Listenerなど
+- Responder: HTTPレスポンスやInertia propsの出力整形
+
+### Decision Record
+
+重要な設計判断と、その理由・却下案・影響を残す記録です。
+
+Architecture Decision RecordとADR Patternを混同しないため、設計判断の記録は `Decision Record` または `設計判断記録` と表記します。
 
 ## 基本方針
 
-このプロジェクトでは、AIを丸投げ実装者として扱いません。
+- 人間が仕様・責務・設計境界・レビュー観点を決める
+- AIは実装補助・調査・差分修正・レビュー補助として使う
+- レイヤーはクラス数を増やすためではなく、変更理由と責務を分けるために使う
+- 単純処理へ不要なService、Factory、Strategyを増やさない
+- 機能固有仕様は共通docsへ混ぜず `docs/features/` に分離する
 
-人間が仕様・責務・設計境界・レビュー観点を決め、AIは実装補助・調査・差分修正・レビュー補助として使います。
+## 採用している責務
 
-設計では ADR / レイヤード構成を基準とし、各レイヤーの責務を分離します。
-
-## 採用している構成
-
-このプロジェクトでは、以下の責務分離を前提とします。
-
+- Controller
+- Request
 - Action
 - Service
 - Repository
@@ -26,142 +52,310 @@ AIエージェントや人間が機能追加・修正を行う際に、Action / 
 - Factory
 - Strategy
 - Event / Listener
+- Job
 - Component
+
+すべての機能で全責務を必ず作るわけではありません。必要な責務だけを使います。
+
+## Controller の責務
+
+ControllerはHTTPの入口を担当します。
+
+- Requestを受け取る
+- DTOを生成する、または生成処理へ渡す
+- Actionを呼ぶ
+- Responderの結果を返す
+
+Controllerへ置かないもの:
+
+- 業務判断
+- DB直接操作
+- 外部API通信
+- 複雑なレスポンス整形
+
+## Request の責務
+
+Requestは入力形式のバリデーションを担当します。
+
+- 必須
+- 型
+- 文字数
+- 形式
+- 許可値
+
+業務上の可否判断はServiceへ置きます。
 
 ## Action の責務
 
-Action はユースケースの手順を扱います。
+Actionは1ユースケースの手順を扱います。
 
-Request から作られた DTO を受け取り、Service や Repository を呼び出して処理の流れを制御します。
+Requestから作られたDTOを受け取り、ServiceやRepositoryを呼び出して処理順序を制御します。
 
-Action には業務判断そのものを置きすぎず、処理順序の制御を主な責務とします。
+Actionへ置いてよいもの:
+
+- ユースケース開始から完了までの手順
+- Service / Repositoryの呼び出し
+- ResultDTOへの集約
+- Transaction境界の調整
+
+Actionへ置かないもの:
+
+- 大きな業務判断
+- Eloquentクエリ
+- HTTPレスポンス整形
 
 ## Service の責務
 
-Service は業務判断・ドメインルールを扱います。
+Serviceは業務判断・ドメインルールを扱います。
 
-条件分岐、判定、変換方針、同期方針など、アプリケーションの意味を持つ判断は Service に置きます。
+- 条件分岐
+- 判定
+- 計算
+- 状態遷移の可否
+- 同期・保存・表示に関する業務上の意味づけ
 
-Service に DB 直接操作は置かず、永続化が必要な場合は Repository を経由します。
+ServiceへDB直接操作を置かず、データソースとのやり取りはRepositoryを経由します。
+
+ServiceへHTTP都合や画面表示都合を混ぜません。
 
 ## Repository の責務
 
-Repository は DB 操作の抽象を扱います。
+Repositoryは、DBまたは外部データソースとの境界を扱います。
 
-取得条件、保存、更新、削除など、永続化層とのやり取りを担当します。
+### DB Repository
 
-Repository に業務判断を置かないようにします。
+- Eloquent / Query Builderによる取得
+- 保存
+- 更新
+- 削除
+- 並び順・絞り込み条件
 
-Repository は「どのデータを取得・保存するか」を扱い、「そのデータをどう判断するか」は Service 側に置きます。
+### External API Repository
 
-DanceShortsRadar の YouTube API Repository は search.list / videos.list の呼び出しと DTO 変換だけを担当します。videos.list は YouTube Data API の上限に合わせて動画IDを50件単位に分割し、取得した DTO を集約して Action へ返します。
+- 外部API通信
+- API制約に合わせたrequest分割
+- 外部レスポンスの取得
+- 外部レスポンスからDTOへの変換
 
-DanceShortsRadar の検索 keyword は `dance_short_search_keywords.search_scope` と `max_search_pages` で取得範囲を管理します。`search_scope` は PHP enum の `standard` / `expanded` で扱い、通常同期は active keyword 全件の page1 だけを対象にします。page2 同期では Repository が `expanded` かつ `max_search_pages >= 2` の active keyword だけを取得し、Action は page 番号と `nextPageToken` の進行だけを担当します。Repository に Shorts 判定や保存可否判断は置きません。
+Repositoryへ置かないもの:
 
-DanceShortsRadar の通常 YouTube API 同期は `dance-short:sync` / `SyncDanceShortVideosJob` / `SyncDanceShortVideosAction` を入口にし、`DANCE_SHORT_SYNC_ENABLED` の config / env gate で明示的に有効化した環境だけが3時間ごとに実行します。検索キーワードは JP / US / KR 各3件、合計9件とし、1日8回の実行で search.list は最大72回/日に収めます。
+- 業務判断
+- 保存可否判断
+- 画面表示判断
+- HTTPレスポンス整形
+- ユースケース全体の手順
 
-DanceShortsRadar の page2 同期は通常同期とは別の `dance-short:sync-page2` / `SyncDanceShortPage2VideosJob` / `SyncDanceShortPage2VideosAction` を入口にし、06:30 / 18:30 の1日2回だけ実行します。通常同期の `0 */3 * * *` と重ならない時刻にし、`DANCE_SHORT_SYNC_ENABLED` gate と `withoutOverlapping()` を通常同期と同じく維持します。page2 Action は expanded keyword の page2 以降の動画ID収集を担当し、動画詳細取得後の保存、Shorts 判定、必須項目判定、video upsert、snapshot 作成、cleanup は通常同期と同じ `PersistDanceShortVideoDetailsAction` と既存 Action / Service / Repository へ委譲します。page2 同期は `order=date` / `order=viewCount` を導入せず、通常同期と同じ `relevance` 条件のまま、DB で `expanded` 扱いにした keyword だけを page2 以降まで追加取得します。
+Repositoryは「どのデータソースから、どの条件で取得・保存するか」を扱い、「そのデータを業務上どう判断するか」はServiceへ置きます。
 
 ## DTO / ListDTO の責務
 
-DTO はレイヤー間の境界線として扱います。
+DTOはレイヤー間のデータ境界として扱います。
 
-単体DTOは1件分のデータキャリアとして扱います。
+- 単体DTOは1件分のデータキャリア
+- ListDTOは複数DTOを束ねるデータキャリア
+- 必要に応じて `toArray()` を持ってよい
 
-ListDTOは複数件のDTOを束ねるデータキャリアとして扱います。
+`toArray()` は配列変換までに限定します。
 
-DTO には必要に応じて toArray() を実装してよいです。
+DTO / ListDTOへ置かないもの:
 
-DTO の toArray() は配列変換までに限定し、JSONレスポンス整形・HTTP出力整形・画面表示判断は行いません。
-
-ListDTO の toArray() は、保持している各 DTO の toArray() を呼び出して配列化する責務に限定します。
-
-toJson() やレスポンス生成は DTO / ListDTO ではなく Responder / Component 側の責務とします。
-
-DTO / ListDTO には業務判断・DB操作・HTTPレスポンス生成・画面表示判断を持たせません。
+- 業務判断
+- DB操作
+- 外部API通信
+- HTTPレスポンス生成
+- JSONレスポンス整形
+- 画面表示判断
 
 ## Responder の責務
 
-Responder は出力整形を扱います。
+Responderは出力整形を扱います。
 
-Action や Service から受け取った DTO / ListDTO を、Inertia props やレスポンス用の形に変換します。
+- Inertia props
+- JSON response
+- CSV / Excel / PDF
+- StreamDownload
+- 保存結果の表示用整形
 
-HTTPレスポンス生成や画面表示に近い整形は Responder 側に寄せます。
+ActionやServiceから受け取ったDTO / ListDTOを、利用先に必要な形へ変換します。
 
-DTO にレスポンス責務を持たせないため、Responder を境界として使います。
+業務判断はResponderへ置きません。
 
 ## Factory の責務
 
-Factory は生成・選択を扱います。
+Factoryは生成・選択を扱います。
 
-DTO生成、Strategy選択、Responder選択など、生成や選択に関する処理を担当します。
+- DTO生成
+- Strategy選択
+- Responder選択
+- 実装クラスの選択
 
-Factory に業務判断を置きすぎないようにし、判断の本体は Service または Strategy に分けます。
+Factoryへ業務判断本体を置きすぎず、判断の意味はService、処理差分はStrategyへ分けます。
 
 ## Strategy の責務
 
-Strategy はアルゴリズム差分を扱います。
+Strategyは、同じ目的に対するアルゴリズムや処理差分を扱います。
 
-条件ごとに処理内容が変わる場合、if 文を肥大化させず、Strategy として分離します。
+Strategyを検討する例:
 
-Strategy は同じ目的に対する処理差分を表現するために使います。
+- 条件ごとに同じ目的の処理が変わる
+- if / switchが増え、各処理の独立性が高い
+- 処理差分を個別にテストしたい
 
-DanceShortsRadar のランキング表示では、`RISING`、`ALL`、地域別ランキングの取得差分を Strategy / Factory で選択します。`selectedVideoId` が指定された display-card-window では、選択中タブ、比較日数、並び順でランキング全体順を先に確定し、選択カードの順位を基準に前後を含む最大5件を Service で切り出します。Repository は全体順の read model 取得だけを担当し、選択カードの探索や window 表示判断は行いません。
+条件分岐が小さい場合は、無理にStrategy化しません。
 
 ## Event / Listener の責務
 
-Event は発生した事実を表します。
+Eventは発生した事実を表します。
 
-Listener はその事実に対して実行する後続処理を扱います。
+Listenerは、その事実に対する副作用を扱います。
 
-Event は 1 つの事実を表し、Listener は必要に応じて複数に分けます。
+例:
 
-Listener 同士の実行順序に依存しすぎない設計を優先します。
+- 通知
+- ログ
+- 外部連携
+- 後処理
+
+原則:
+
+- 1事実1Event
+- Listener同士の強い順序依存を避ける
+- ユースケース本体をListenerへ隠さない
+
+## Job の責務
+
+Jobは非同期実行またはQueue実行の単位を担当します。
+
+JobはActionを呼び出す入口とし、業務ロジック本体を持たせません。
+
+Jobへ置いてよいもの:
+
+- timeout / tries
+- Queue設定
+- Action呼び出し
+- 実行境界のログ
 
 ## Component の責務
 
-Component は画面表示を扱います。
+Componentは画面表示、ユーザー操作、UI状態を担当します。
 
-props を受け取り、表示・操作・UI状態を管理します。
+Componentへ置いてよいもの:
 
-業務判断やDB操作は Component に置きません。
+- propsの表示
+- タブ・モーダル・選択状態
+- クリック・タップ・スワイプ
+- 画面内で完結する表示順や開閉
 
-画面表示に必要な整形は、可能な限り Responder 側で整えてから Component に渡します。
+Componentへ置かないもの:
+
+- DB操作
+- 外部APIの業務判断
+- 権限判断
+- 状態遷移の可否判断
+- Laravel側で確定すべき業務ルール
+
+画面表示に必要な形は、可能な限りResponderで整えてから渡します。
 
 ## Command / Query の分離
 
-状態を変更する処理は Command として扱います。
+状態を変更する処理はCommandとして扱います。
 
-データを取得して表示する処理は Query として扱います。
+例:
 
-Command では Service を経由し、業務判断と永続化の境界を明確にします。
+- 登録
+- 更新
+- 削除
+- 同期開始
 
-Query では必要に応じて Repository から取得し、Responder を通じて表示用データに整形します。
+データを取得して表示する処理はQueryとして扱います。
+
+例:
+
+- 一覧
+- 詳細
+- 検索
+- ランキング
+
+Command / Queryの分離は、読み書きの責務を明確にするために使います。
+
+このプロジェクト全体を完全なCQRSとして扱うとは限りません。CQRS採用を断定せず、必要なユースケースでCommand / Queryを分離します。
+
+## 依存方向
+
+基本の流れ:
+
+```text
+Route / Command / Scheduler
+        ↓
+Controller / Job
+        ↓
+Request / Input DTO
+        ↓
+Action
+        ↓
+Service / Repository / Strategy
+        ↓
+Output DTO / ListDTO
+        ↓
+Responder
+        ↓
+Page / Feature Component
+        ↓
+Common Component
+```
+
+呼び出し方向を逆転させ、Common ComponentやDTOからRepositoryを呼ぶような構成にしません。
+
+## 機能固有仕様の配置
+
+次は共通docsではなく `docs/features/` に置きます。
+
+- Scheduler実行時刻
+- API quota
+- 特定テーブルの条件
+- 特定enum値
+- Seeder件数
+- 特定画面の表示順
+- 機能固有のJob / Command名
+- 機能固有のテスト固定内容
+
+共通docsからは、該当するfeature文書へ参照を張ります。
+
+## Decision Record を残す条件
+
+次のような重要判断では、必要に応じて設計判断記録を残します。
+
+- 責務境界を変更する
+- 永続化方式を変更する
+- 外部API境界を変更する
+- 複数案から将来影響の大きい案を選ぶ
+- 後から理由を説明できないと再変更される可能性が高い
+
+文言修正や小さな実装差分ごとにDecision Recordを作りません。
 
 ## AI駆動開発における責務境界
 
-AIは実装補助・調査・差分修正・レビュー補助として使います。
+AIへ作業を依頼する場合も、次を守ります。
 
-仕様、責務、設計境界、レビュー観点、最終判断は人間が行います。
-
-AIに作業させる場合でも、以下を守ります。
-
-- 仕様にない機能追加を勝手に行わない
-- 変更対象ファイルを明確にする
+- 仕様にない機能を追加しない
+- 変更対象を明確にする
 - 最小差分で修正する
 - 責務境界を崩さない
-- 実装後に差分確認を行う
-- 必要に応じてテスト追加・更新を検討する
+- 必要なテストを追加・更新する
+- 差分とテスト結果を人間が確認する
 
-## 機能追加時の判断基準
+仕様、責務境界、完成判定、merge、本番反映は人間が判断します。
 
-機能追加や修正を行う場合は、以下を確認します。
+## 変更時の確認
 
-- その処理はどのレイヤーの責務か
-- DTO / ListDTO の形は妥当か
-- Repository に業務判断が入っていないか
-- Service に DB 直接操作が入っていないか
-- DTO に表示判断やレスポンス生成が入っていないか
-- Component に業務判断が入りすぎていないか
-- 既存仕様を壊していないか
-- テスト追加・更新が必要か
+- Controllerへ業務判断が入っていないか
+- Requestへ業務判断が入っていないか
+- Actionへ大きな業務ロジックが入っていないか
+- ServiceへDB直接操作が入っていないか
+- Repositoryへ業務判断・表示判断が入っていないか
+- DTOへ処理・レスポンス生成が入っていないか
+- Responderへ業務判断が入っていないか
+- ComponentへLaravel側の業務ルールが入っていないか
+- 不要なFactory / Strategy / Eventを増やしていないか
+- 機能固有仕様を共通docsへ混ぜていないか
+- 必要なテストが追加・更新されているか

@@ -1,8 +1,12 @@
 # プロトタイプ運用ルール
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## 目的
 
-このドキュメントは、MOCKとPROTOTYPEの役割、配置、許可する処理、本番化時の境界を明文化するためのものです。
+このドキュメントは、MOCKとPROTOTYPEの役割、配置、許可する処理、Product化時の境界を明文化します。
 
 全体の開発段階は `docs/development-flow.md` に従います。
 
@@ -38,11 +42,9 @@ MOCKは、UI部品、レイアウト、状態表示、操作感を確認する�
 - 業務判断
 - 権限判断
 - 正式な状態遷移
-- 本番用のAction / Service / Repository
+- 本番用Action / Service / Repository
 
 MOCKはUIの種類や目的ごとにタブで整理します。
-
-例:
 
 ```text
 Layout
@@ -59,15 +61,14 @@ Effects
 
 ## PROTOTYPEの役割
 
-PROTOTYPEは、MOCKで確認したUIを使い、画面遷移、操作手順、簡易的なデータの流れを動かして検証するための一時実装です。
+PROTOTYPEは、MOCKで確認したUIを使い、画面遷移、操作手順、簡易的なデータの流れを動かして検証する一時実装です。
 
 扱ってよいもの:
 
 - MOCKと同じUI、デザイン、Common Component
 - 仮データ
 - 簡易的な状態変化
-- 検証用ルート
-- 検証用Controller
+- 検証用Route / Controller
 - 簡易通信
 - 画面遷移
 - 操作フロー
@@ -76,13 +77,15 @@ PROTOTYPEは、MOCKで確認したUIを使い、画面遷移、操作手順、�
 
 - 本番業務ロジック
 - 正式なDB設計
-- 本番データの更新
+- 本番データ更新
 - 本番APIへの更新・削除
 - Productと同等の完成判定
 
-速度を優先して一気に作ってよいのはPrototypeまでです。ただし、速く作れたことを完成判定に使いません。
+速度を優先して一気に作ってよいのはPrototypeまでです。
 
-## MOCKとPROTOTYPEのUI共有
+ただし、速く作れたことを完成判定に使いません。
+
+## UI共有
 
 MOCKとPROTOTYPEは、同じ見た目やCommon Componentを使ってよいものとします。
 
@@ -99,23 +102,22 @@ MOCKとPROTOTYPEは、同じ見た目やCommon Componentを使ってよいもの
 - MOCKの固定データ
 - Prototypeの簡易処理
 - 機能固有の仮条件
-- 本番業務ロジック
+- Productの業務ロジック
 
 Common Componentの責務は `docs/ui.md`、React / Inertia / TypeScriptの実装責務は `docs/frontend.md` に従います。
 
 ## 基本ルール
 
 - MOCKとPrototypeのコードはProductコードと分離する
-- Prototype用ルートは本番ルートと分離する
+- Prototype用Routeは本番Routeと分離する
 - MOCKとPrototypeは簡単に削除できる構成にする
 - PrototypeコードをそのままProductへ流用しない
-- Product化する場合は、確認できた仕様だけを抽出して実装し直す
+- Product化では確認できた仕様だけを抽出し、実装し直す
 - 本番化の判断は人間が行う
 - Prototypeで省略した責務・テスト・バリデーションをProductへ持ち越さない
+- Prototypeの簡易処理をCommonへ移さない
 
 ## ディレクトリ方針
-
-MOCKとPrototypeは専用ディレクトリに配置します。
 
 例:
 
@@ -134,16 +136,14 @@ MOCK専用、Prototype専用、Product専用の処理をCommonへ移しません
 
 ## ルーティング方針
 
-Prototype用ルートは `routes/prototypes.php` に定義します。
-
-`routes/web.php` では、必要に応じてPrototype用ルートを読み込みます。
+Prototype用Routeは `routes/prototypes.php` に定義します。
 
 ```php
 // routes/web.php
 require __DIR__ . '/prototypes.php';
 ```
 
-Prototype URLは `/prototypes/...` 配下に配置します。
+Prototype URLは `/prototypes/...` 配下へ配置します。
 
 ```php
 Route::prefix('prototypes')
@@ -168,15 +168,11 @@ MOCKとPrototypeは、関連ファイルを削除するだけで取り除ける�
 - 固定データ・仮データ
 - 検証用メモ
 
-削除時に、無関係なProductコードやCommon Componentを変更しません。
+削除時に無関係なProductコードやCommon Componentを変更しません。
 
 Common Componentを削除する場合は、Productを含む利用箇所を確認します。
 
-## Product化方針
-
-PrototypeコードをそのままProductへ昇格しません。
-
-Product化する場合は、次の内容を抽出します。
+## Product化前に抽出する仕様
 
 - 目的
 - 入力
@@ -191,27 +187,53 @@ Product化する場合は、次の内容を抽出します。
 - 権限
 - テスト観点
 
-そのうえで、1機能・1ユースケース単位に分解し、正式なADR / レイヤード構成で実装します。
+そのうえで1機能・1ユースケース単位に分解し、正式なADR Pattern / レイヤード構成で実装します。
+
+設計判断の理由を残す必要がある場合は、ADRと略さず `Decision Record` または `設計判断記録` と呼びます。
 
 ## Productにおける責務
 
-Productでは、以下の責務境界を守ります。
-
-- Controller: HTTP入口のみ
-- Request: 入力形式バリデーションのみ
-- Action: ユースケースの流れ
+- Controller: HTTP入口
+- Request: 入力形式バリデーション
+- Action: ユースケース手順
 - Service: 業務判断・ドメインルール
-- Repository: DB操作・永続化
-- DTO: レイヤー間データ保持
+- DB Repository: DB操作・永続化
+- External API Repository: 外部通信・外部レスポンスDTO化
+- DTO / ListDTO: レイヤー間データ保持
 - Responder: レスポンス整形
 - Factory: 生成・選択
 - Strategy: 処理差分
 - Event: 発生した事実
 - Listener: Event後の副作用
+- Job: 非同期実行の入口
 - Feature Component: 機能固有の表示・操作
 - Common Component: 業務非依存の表示・操作
 
+必要な責務だけを使い、単純処理へ不要な層を追加しません。
+
 必要なテストは `docs/testing.md`、実装手順は `docs/development-flow.md` に従います。
+
+機能固有の条件は該当する `docs/features/` に従います。
+
+## 完成判定
+
+MOCK:
+
+- UI、状態、操作感を判断できる
+- 固定データだけで成立する
+- 業務処理を持たない
+
+Prototype:
+
+- 画面遷移と操作フローを判断できる
+- Product化する機能を分割できる
+- 仮処理と正式仕様を区別できる
+
+Product:
+
+- 仕様・責務・DTO・テストが固定されている
+- 必要なCIとレビューが完了している
+- 変更理由と影響範囲を説明できる
 
 ## 原則
 
