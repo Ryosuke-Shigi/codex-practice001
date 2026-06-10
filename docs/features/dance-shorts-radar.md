@@ -100,6 +100,37 @@ page2 Actionは、expanded keywordのpage2以降の動画ID収集を担当しま
 
 page2同期でも検索順は通常同期と同じ `relevance` を使い、`order=date` や `order=viewCount` は導入しません。
 
+## snapshot専用同期
+
+入口:
+
+```text
+dance-short:sync-snapshots
+    ↓
+SyncDanceShortVideoSnapshotsJob
+    ↓
+RefreshDanceShortVideoSnapshotsAction
+```
+
+実行条件:
+
+- `DANCE_SHORT_SYNC_ENABLED` が有効な環境だけで動作する
+- `15,45 * * * *` により毎時15分・45分に実行する
+- Schedulerの `withoutOverlapping()` を維持する
+- Jobは `ShouldBeUnique` と固定値 `dance-short-video-snapshots-refresh` により、snapshot専用同期全体の同時実行を防ぐ
+- Jobのunique lockは1800秒とする
+
+snapshot専用同期は、保存済み動画の継続観測だけを担当します。
+
+- `search.list` は呼ばない
+- tracking statusがactiveの保存済みvideo-region関係だけを対象にする
+- activeの意味判断はServiceが行い、Repositoryは渡されたtracking status条件で取得する
+- `videos.list` は動画IDを50件単位に分割して取得する
+- 1回の最大対象件数は `snapshot_refresh.max_videos_per_run` で管理し、現在の初期値は8000件とする
+- snapshotはJSTの `00:00-11:59` / `12:00-23:59` の12時間枠で扱う
+- 同じ12時間枠に既存snapshotがある場合は最新レコードを更新し、ない場合は新規作成する
+- `collected_at` とRepositoryへ渡す期間境界はUTCで扱う
+
 ## ランキング表示
 
 ランキング表示はStrategy / Factoryで取得差分を選択します。
@@ -156,18 +187,33 @@ inactive、standard、1ページ設定は除外します。
 - 動画IDの重複を除外する
 - 共通保存処理へ正しく渡す
 
+### snapshot専用同期Action
+
+- tracking statusがactiveの保存済み動画だけを対象にする
+- `search.list` を呼ばず、`videos.list` だけを呼ぶ
+- 動画IDを50件単位で取得する
+- 取得対象が空の場合は外部API通信しない
+- view countがない動画はsnapshot保存をskipする
+- JST12時間枠をServiceで決定する
+- 同じ枠では最新snapshotを更新し、存在しない場合だけ作成する
+- activeの意味判断をRepositoryへ置かない
+
 ### Artisan Command / Job
 
 - `dance-short:sync-page2` のArtisan CommandはJobをdispatchするだけで、同期本体を直接実行しない
 - page2 Jobは `SyncDanceShortPage2VideosAction` を呼ぶ
 - page2 Jobは通常同期Jobと同じtimeout / triesを持つ
+- `dance-short:sync-snapshots` のArtisan Commandはsnapshot専用Jobをdispatchするだけで、同期本体を直接実行しない
+- snapshot専用Jobは `RefreshDanceShortVideoSnapshotsAction` を呼ぶ
+- snapshot専用Jobは固定uniqueIdで同期全体の同時実行を防ぐ
 
 ### Scheduler
 
-- `DANCE_SHORT_SYNC_ENABLED=true` の場合だけ通常同期・page2同期をdispatchする
+- `DANCE_SHORT_SYNC_ENABLED=true` の場合だけ通常同期・page2同期・snapshot専用同期をdispatchする
 - falseの場合は同期Jobをdispatchしない
-- page2 Artisan Commandは通常同期と別名にする
-- `withoutOverlapping()` とenv gateを持つ
+- page2 Artisan Commandとsnapshot専用Artisan Commandは通常同期と別名にする
+- 各同期入口は `withoutOverlapping()` とenv gateを持つ
+- snapshot専用同期は毎時15分・45分に実行し、通常同期の00分とpage2同期の30分を避ける
 
 ### ランキング
 
@@ -182,8 +228,8 @@ inactive、standard、1ページ設定は除外します。
 この機能を変更する場合は、最低限次を確認します。
 
 - API quotaへ影響しないか
-- 通常同期とpage2同期の役割が混ざっていないか
-- Repositoryへ保存判断・表示判断が入っていないか
+- 通常同期・page2同期・snapshot専用同期の役割が混ざっていないか
+- Repositoryへ保存判断・表示判断・tracking statusの意味判断が入っていないか
 - 共通保存処理を重複実装していないか
 - Schedulerの実行時刻が競合しないか
 - snapshot・ranking・window表示の既存テストを壊していないか
