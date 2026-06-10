@@ -304,27 +304,67 @@ Command Action / Query Actionの分離は、読み書きの責務を明確にす
 
 ## 依存方向
 
-基本の流れ:
+入口ごとに処理フローを分けます。HTTP、Artisan Command、QueueのすべてがRequest、Responder、Pageを通るわけではありません。
+
+### HTTP / Inertia / JSON
 
 ```text
-Route / Artisan Command / Scheduler
-        ↓
-Controller / Job
-        ↓
+Route
+    ↓
+Controller
+    ↓
 Request / Input DTO
-        ↓
+    ↓
 Action
-        ↓
+    ↓
 Service / Repository / Strategy
-        ↓
+    ↓
 Output DTO / ListDTO
-        ↓
+    ↓
 Responder
-        ↓
+    ↓
 Page / Feature Component
-        ↓
+    ↓
 Common Component
 ```
+
+### Artisan Command
+
+```text
+Scheduler / Manual CLI
+    ↓
+Artisan Command
+    ↓
+Jobをdispatch または Input DTOを生成してActionを呼ぶ
+    ↓
+Action
+    ↓
+Service / Repository / Strategy
+    ↓
+ResultDTO / exit code / 実行結果メッセージ
+```
+
+### Queue
+
+```text
+Scheduler / Artisan Command / アプリケーション入口
+    ↓
+Jobをdispatch
+    ↓
+Queue worker
+    ↓
+Job
+    ↓
+Action
+    ↓
+Service / Repository / Strategy
+    ↓
+ResultDTO
+```
+
+RequestはHTTP入力の形式検証に使います。Artisan CommandやJobへ機械的にRequestを通しません。
+
+ResponderはHTTP、Inertia、JSON、CSV、PDF、Download等の出力整形が必要な場合に使います。コンソールやQueue処理へPageやHTTP Responderを機械的に追加しません。
 
 呼び出し方向を逆転させ、Common ComponentやDTOからRepositoryを呼ぶような構成にしません。
 
