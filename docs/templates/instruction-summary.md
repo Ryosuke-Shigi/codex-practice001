@@ -56,13 +56,13 @@
 
 責務分離：
 - Controller / Request：<入口・形式検証>
-- Action：<ユースケース手順>
+- Command Action / Query Action：<状態変更または参照ユースケースの手順>
 - Service：<業務判断>
 - DB Repository：<DB取得・保存・更新・削除>
 - External API Repository：<外部通信・外部レスポンスDTO化>
 - DTO / ListDTO：<受け渡すデータ>
 - Responder：<出力整形>
-- Job / Command / Scheduler：<実行入口>
+- Job / Artisan Command / Scheduler：<実行入口>
 - Feature Component：<機能固有UI>
 - Common Component：<業務非依存UI>
 - <使わない責務は削除する。不要な層は追加しない>
@@ -129,6 +129,8 @@ README / docs 更新要否：
 - ADR PatternはAction - Domain - Responderを指す
 - 設計判断記録はDecision Recordと呼ぶ
 - Architecture Decision Recordの意味でADRとだけ書かない
+- 状態変更のActionはCommand Action、参照処理のActionはQuery Actionと呼ぶ
+- Laravelのコンソール入口はArtisan Commandと呼ぶ
 
 ## 注意
 
