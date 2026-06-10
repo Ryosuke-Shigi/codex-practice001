@@ -102,14 +102,14 @@ AGENTS.md / docs/index.mdで参照先を決める
 ```text
 1目的
 1機能または1ユースケース
-1責務境界
+必要なレイヤー一式
 1ブランチ
 1Pull Request
 ```
 
 複数目的は分割します。
 
-同じ目的を成立させるために不可分なDTO・Service・Repository・Responder・Component・Test・docs更新は同じタスクへ含めてよいものとします。
+同じ目的を成立させるために不可分なAction・Service・Repository・DTO・Responder・Component・Test・docs更新は同じタスクへ含めてよいものとします。
 
 ## 指示用まとめの圧縮
 
