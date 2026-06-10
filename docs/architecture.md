@@ -32,6 +32,14 @@ Action - Domain - Responder
 
 Architecture Decision RecordとADR Patternを混同しないため、設計判断の記録は `Decision Record` または `設計判断記録` と表記します。
 
+### Command Action / Query Action / Artisan Command
+
+- `Command Action`: 登録・更新・削除・同期開始など、状態を変更するユースケースのAction
+- `Query Action`: 一覧・詳細・検索・ランキングなど、参照するユースケースのAction
+- `Artisan Command`: Laravelのコンソール実行入口
+
+Command Action / Query ActionはActionの分類です。Artisan CommandはJobをdispatchするかActionを呼ぶ入口であり、業務ロジック本体を持ちません。
+
 ## 基本方針
 
 - 人間が仕様・責務・設計境界・レビュー観点を決める
@@ -53,6 +61,7 @@ Architecture Decision RecordとADR Patternを混同しないため、設計判�
 - Strategy
 - Event / Listener
 - Job
+- Artisan Command
 - Component
 
 すべての機能で全責務を必ず作るわけではありません。必要な責務だけを使います。
@@ -89,7 +98,7 @@ Requestは入力形式のバリデーションを担当します。
 
 Actionは1ユースケースの手順を扱います。
 
-Requestから作られたDTOを受け取り、ServiceやRepositoryを呼び出して処理順序を制御します。
+Requestから作られたDTOを受け取り、ServiceやRepositoryを呼び出して処理順序を制御します。状態変更はCommand Action、参照処理はQuery Actionとして必要に応じて分離します。
 
 Actionへ置いてよいもの:
 
@@ -235,6 +244,19 @@ Jobへ置いてよいもの:
 - Action呼び出し
 - 実行境界のログ
 
+## Artisan Command の責務
+
+Artisan Commandはコンソール実行の入口を担当します。
+
+Artisan Commandへ置いてよいもの:
+
+- 引数・optionの受け取り
+- Jobのdispatch
+- Action呼び出し
+- exit codeと実行結果メッセージ
+
+Artisan Commandへ業務判断、DB直接操作、同期本体を置きません。
+
 ## Component の責務
 
 Componentは画面表示、ユーザー操作、UI状態を担当します。
@@ -256,9 +278,9 @@ Componentへ置かないもの:
 
 画面表示に必要な形は、可能な限りResponderで整えてから渡します。
 
-## Command / Query の分離
+## Command Action / Query Action の分離
 
-状態を変更する処理はCommandとして扱います。
+状態を変更する処理はCommand Actionとして扱います。
 
 例:
 
@@ -267,7 +289,7 @@ Componentへ置かないもの:
 - 削除
 - 同期開始
 
-データを取得して表示する処理はQueryとして扱います。
+データを取得して表示する処理はQuery Actionとして扱います。
 
 例:
 
@@ -276,16 +298,16 @@ Componentへ置かないもの:
 - 検索
 - ランキング
 
-Command / Queryの分離は、読み書きの責務を明確にするために使います。
+Command Action / Query Actionの分離は、読み書きの責務を明確にするために使います。
 
-このプロジェクト全体を完全なCQRSとして扱うとは限りません。CQRS採用を断定せず、必要なユースケースでCommand / Queryを分離します。
+このプロジェクト全体を完全なCQRSとして扱うとは限りません。CQRS採用を断定せず、必要なユースケースでCommand Action / Query Actionを分離します。
 
 ## 依存方向
 
 基本の流れ:
 
 ```text
-Route / Command / Scheduler
+Route / Artisan Command / Scheduler
         ↓
 Controller / Job
         ↓
@@ -316,7 +338,7 @@ Common Component
 - 特定enum値
 - Seeder件数
 - 特定画面の表示順
-- 機能固有のJob / Command名
+- 機能固有のJob / Artisan Command名
 - 機能固有のテスト固定内容
 
 共通docsからは、該当するfeature文書へ参照を張ります。
@@ -355,6 +377,7 @@ AIへ作業を依頼する場合も、次を守ります。
 - Repositoryへ業務判断・表示判断が入っていないか
 - DTOへ処理・レスポンス生成が入っていないか
 - Responderへ業務判断が入っていないか
+- Artisan Commandへ業務ロジックが入っていないか
 - ComponentへLaravel側の業務ルールが入っていないか
 - 不要なFactory / Strategy / Eventを増やしていないか
 - 機能固有仕様を共通docsへ混ぜていないか
