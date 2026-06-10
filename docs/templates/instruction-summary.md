@@ -1,10 +1,14 @@
 # 指示用まとめテンプレート
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このテンプレートの目的
 
 このテンプレートは、CodexAppへ渡す実装前ゲートとして、今回固有の目的・範囲・成功条件・失敗条件・責務・テスト観点を1ブロックへ圧縮するためのものです。
 
-共通ルールを毎回全文コピーせず、`AGENTS.md` と必要なdocsを参照します。
+共通ルールを毎回全文コピーせず、`AGENTS.md`、`docs/index.md`、必要な共通docs・feature docsを参照します。
 
 ## 出力ルール
 
@@ -19,6 +23,7 @@
 - 推測や未確認事項を断定しない
 - 共通方針は文書参照で済ませる
 - 現状分析や会話用の補足を混ぜない
+- 機能固有条件は該当する `docs/features/` を参照する
 
 ## テンプレート
 
@@ -32,8 +37,9 @@
 - <何を成立させるか>
 
 前提：
-- 共通方針は `AGENTS.md` に従う
-- <今回読む必要があるdocs>
+- 共通方針は `AGENTS.md` と `docs/index.md` に従う
+- <今回読む必要がある共通docs>
+- <今回読む必要があるdocs/features>
 - <検証済みの現在状態>
 
 作業ブランチ：
@@ -52,9 +58,11 @@
 - Controller / Request：<入口・形式検証>
 - Action：<ユースケース手順>
 - Service：<業務判断>
-- Repository：<DB・外部データ境界>
+- DB Repository：<DB取得・保存・更新・削除>
+- External API Repository：<外部通信・外部レスポンスDTO化>
 - DTO / ListDTO：<受け渡すデータ>
 - Responder：<出力整形>
+- Job / Command / Scheduler：<実行入口>
 - Feature Component：<機能固有UI>
 - Common Component：<業務非依存UI>
 - <使わない責務は削除する。不要な層は追加しない>
@@ -70,7 +78,10 @@ TDD / テスト観点：
 - <テスト不要の場合は理由>
 
 README / docs 更新要否：
-- <更新する文書と内容、または不要な理由>
+- README：<更新内容または不要な理由>
+- 共通docs：<更新内容または不要な理由>
+- feature docs：<更新内容または不要な理由>
+- AGENTS.md：<更新内容または不要な理由>
 
 確認コマンド：
 - `<command>`
@@ -84,6 +95,7 @@ README / docs 更新要否：
 - 変更ファイル
 - 各ファイルの責務
 - 実行した確認コマンドと結果
+- CI / status checkの状態
 - 未完了事項
 - docs更新内容
 - 次に読む場所
@@ -110,6 +122,13 @@ README / docs 更新要否：
 - 共通コメント方針
 - 共通セキュリティ方針
 - MOCK / Prototype / Productの共通定義
+- 機能固有の長い仕様
+
+## 用語
+
+- ADR PatternはAction - Domain - Responderを指す
+- 設計判断記録はDecision Recordと呼ぶ
+- Architecture Decision Recordの意味でADRとだけ書かない
 
 ## 注意
 
