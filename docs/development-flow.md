@@ -122,14 +122,14 @@ Product化前に固定するもの:
 ```text
 1目的
 1機能または1ユースケース
-1責務境界
+必要なレイヤー一式
 1ブランチ
 1Pull Request
 必要なテスト
 必要なdocs更新
 ```
 
-同じ目的を成立させるために不可分なDTO、Service、Repository、Responder、Component、Testは同じPRへ含めてよいものとします。複数目的は混ぜません。
+同じ目的を成立させるために不可分なAction、Service、Repository、DTO、Responder、Component、Testは同じPRへ含めてよいものとします。複数目的は混ぜません。
 
 ## Product実装の基本手順
 

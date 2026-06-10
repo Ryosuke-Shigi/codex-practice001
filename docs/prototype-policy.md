@@ -13,21 +13,21 @@
 ## 配置
 
 ```text
-resources/js/Pages/Mocks/
-resources/js/Components/Mocks/
-resources/js/Pages/Prototypes/
-resources/js/Components/Prototypes/
-app/Http/Controllers/Prototype/
-routes/prototypes.php
+src/resources/js/Pages/Mocks/
+src/resources/js/Components/Mocks/
+src/resources/js/Pages/Prototypes/
+src/resources/js/Components/Prototypes/
+src/app/Http/Controllers/Prototype/
+src/routes/prototypes.php
 ```
 
-複数段階で実際に使う業務非依存UIは `resources/js/Components/Common/` に置きます。
+複数段階で実際に使う業務非依存UIは `src/resources/js/Components/Common/` に置きます。
 
 既存の配置が異なる場合は、並行する新構成を増やさず、現在のコードと `docs/ui.md` を確認します。
 
 ## Route
 
-Prototype用Routeは `routes/prototypes.php` に分離します。
+Prototype用Routeは `src/routes/prototypes.php` に分離します。
 
 - URLは `/prototypes/...` 配下
 - Route名は `prototypes.` 配下
