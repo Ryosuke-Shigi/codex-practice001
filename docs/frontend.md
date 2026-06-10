@@ -1,5 +1,9 @@
 # Frontend
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このドキュメントの目的
 
 このドキュメントは、このプロジェクトの React / Inertia / TypeScript 側における、画面責務、Component分割、props、UI状態、レスポンシブ表示、演出の境界を明文化するためのものです。

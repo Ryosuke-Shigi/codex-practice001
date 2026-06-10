@@ -1,5 +1,9 @@
 # UI
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このドキュメントの目的
 
 このドキュメントは、このプロジェクトにおけるUIの見た目、操作、レスポンシブ表示、共通Component配置の基準を明文化するためのものです。

@@ -12,6 +12,10 @@
 
 ## 配置
 
+以下の配置は、Docker構成側の作業ルートから見たパスです。
+Laravel本体は `src/` 配下にあります。
+GitHub上の `codex-practice001` リポジトリ単体では、`app/`、`resources/`、`routes/` がリポジトリ直下にあります。
+
 ```text
 src/resources/js/Pages/Mocks/
 src/resources/js/Components/Mocks/
