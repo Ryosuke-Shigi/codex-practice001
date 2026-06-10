@@ -1,297 +1,428 @@
 # Testing
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このドキュメントの目的
 
-このドキュメントは、このプロジェクトにおけるテスト方針を明文化するためのものです。
+このドキュメントは、このプロジェクトにおける共通テスト方針を明文化するためのものです。
 
-テストは、既存仕様の破壊を検知するために使います。
+テストは、既存仕様の破壊を検知し、AIエージェントへ毎回コード全体を説明する必要を減らすための実行可能な仕様として扱います。
 
-また、AI駆動開発において、CodexApp / AIエージェントへの説明量を減らし、修正対象と影響範囲を絞るための実行可能な仕様として扱います。
+機能固有のテスト固定内容は `docs/features/` に置き、この文書には複数機能へ共通する基準だけを置きます。
 
 ## 基本方針
 
-このプロジェクトでは、機能追加や修正を行う場合、必要に応じてテスト追加・更新を検討します。
+- テストはコードレビューの代替ではない
+- テスト数ではなく、守っている仕様・境界・失敗条件を評価する
+- 重要な境界は実装前または実装と同時に固定する
+- 細かい仕様は、挙動が明確になった後に固定テストを追加してよい
+- テストを通すために責務境界を崩さない
+- 共通テスト方針と機能固有仕様を分ける
 
-テストにも ADR / レイヤードアーキテクチャを適用します。
+テストで主に確認するのは「期待する仕様が壊れていないか」です。
 
-テストはコードレビューの代替ではありません。
+「責務分離が崩れていないか」「不要な抽象化が増えていないか」は、差分レビューで確認します。
 
-テストで確認できるのは主に「期待する仕様が壊れていないか」です。
+## テストにも責務境界を適用する
 
-「責務分離が崩れていないか」「設計が汚れていないか」は、別途レビューで確認します。
+テストコードも、何のレイヤー・何の仕様を確認しているか分かる単位へ分けます。
 
-## テストにもレイヤードアーキテクチャを適用する
+基本分類:
 
-このプロジェクトでは、テストコードもアプリケーション本体と同じく、責務境界を意識して配置・作成します。
+- Unit: DTO / ListDTO / Service / Factory / Strategy / Utility
+- Repository: DB条件、保存条件、外部API通信境界
+- Feature: HTTP、Action、Job、Command、Scheduler、Inertia props、DB反映
+- React: 表示・操作・UI状態・純粋Utility
 
-テストは「動けばよい確認コード」ではなく、どのレイヤーのどの仕様を固定しているかが分かる状態にします。
+1つのテストファイルへ、Serviceの業務判断、RepositoryのDB条件、Responderの出力整形を無理に混ぜません。
 
-基本方針は以下です。
-
-- Unit テストは、Service / DTO / ListDTO / Factory / Strategy など、単体の責務確認を対象にする
-- Feature テストは、Action / Job / HTTP経由 / Inertia props / DB反映など、ユースケース単位の確認を対象にする
-- Repository テストは、DB取得条件・保存条件・並び順・検索条件の確認を対象にする
-- Responder / Inertia props テストは、画面へ渡す出力形式の確認を対象にする
-- React Component テストは、表示仕様・操作仕様が複雑になった段階で追加を検討する
-
-テストファイルは、何のレイヤー・何の仕様を確認しているかが分かる単位で分けます。
-
-1つのテストファイルに、Service の業務判断、Repository のDB条件、Responder の表示整形を無理に混ぜません。
-
-テストを通すために、本来の責務境界を崩してはいけません。
-
-責務が崩れている場合は、テスト側で無理に吸収せず、実装側の設計を見直します。
+責務が崩れている場合は、テスト側で吸収せず実装側を見直します。
 
 ## テストを追加する理由
 
-テストを追加する理由は以下です。
-
-- php artisan test で既存仕様の破壊を検知できる
-- CodexApp に毎回コード全体を読ませる必要を減らせる
-- 失敗したテスト結果を元に、修正範囲を絞れる
-- AIへの指示を「このテストを通す範囲で修正」にできる
-- 仕様説明・影響範囲確認・手戻り調査のトークン消費を減らせる
-- ADR / レイヤード構成の責務境界を固定しやすくなる
+- `php artisan test` で既存仕様の破壊を検知できる
+- AIへ毎回コード全体を読ませる必要を減らせる
+- 失敗したテストから修正範囲を絞れる
+- 「このテストを通す範囲で修正」と指示できる
+- 仕様説明・影響調査・手戻りのトークンを減らせる
+- DTO、Repository、Service、Action、Responderの境界を固定できる
+- PRレビューで見るべき場所を絞れる
 
 ## テストで守る対象
 
-このプロジェクトでは、以下の破壊を検知するためにテストを使います。
+- 入力形式とバリデーション
+- DTO / ListDTOの構造
+- Repositoryの取得・保存・通信条件
+- Serviceの業務判断
+- Actionのユースケース手順
+- Job / Command / Schedulerの実行境界
+- Event / Listenerの副作用境界
+- Responderの出力形式
+- Inertia props
+- React Utilityの純粋処理
+- 複雑なComponentの表示・操作
+- DB状態の変化
+- 失敗・例外・空データ・重複・境界値
 
-- DTO / ListDTO の形が壊れていないか
-- Repository の取得条件が壊れていないか
-- Service の判定が壊れていないか
-- Action の処理順序が壊れていないか
-- Job の実行結果が壊れていないか
-- Responder が渡す Inertia props が壊れていないか
-- 保存APIやメモ機能が壊れていないか
-- 地震データ取得・保存・ピン再生成が壊れていないか
-- 同期処理の結果集計が壊れていないか
+## 優先順位
 
-## 優先してテストするレイヤー
+基本の優先順位:
 
-テスト追加の優先順位は以下とします。
-
-1. Service
-2. DTO / ListDTO
-3. Repository
-4. Action
-5. Job
+1. Serviceの業務判断
+2. DTO / ListDTOのデータ境界
+3. RepositoryのDB・外部データソース境界
+4. Actionのユースケース手順
+5. Job / Command / Scheduler
 6. Responder / Inertia props
-7. React Component
+7. React Utility
+8. 複雑なReact Component
 
-まず Laravel 側のデータ取得・変換・保存・DTO化・Responder までを優先します。
+ただし、変更内容に直接関係する境界を最優先します。
 
-React Component のテストは、表示仕様や操作仕様が複雑になった段階で追加を検討します。
+## Request / Validation テスト
 
-## Service テスト
+確認する観点:
 
-Service は業務判断・ドメインルールを扱うため、優先してテストします。
+- 必須項目
+- 型
+- 文字数
+- 形式
+- 許可値
+- 境界値
+- 不正入力時のエラー
+- フロントを通らない直接リクエスト
 
-確認する観点は以下です。
-
-- 条件分岐が正しいか
-- 判定結果が正しいか
-- DTO / ListDTO への変換方針が正しいか
-- Repository に渡す条件が正しいか
-- 異常系・空データ時の挙動が正しいか
+フロントエンドバリデーションだけで安全とは判断しません。
 
 ## DTO / ListDTO テスト
 
-DTO / ListDTO はレイヤー間の境界線として扱うため、優先してテストします。
+確認する観点:
 
-確認する観点は以下です。
+- 値を正しく保持する
+- nullable / enum / 日時 / 数値の境界
+- `toArray()` の出力形式
+- ListDTOが複数DTOを保持する
+- ListDTOの `toArray()` が各DTOを配列化する
+- 業務判断・DB操作・レスポンス生成を持たない
 
-- プロパティの値が正しく保持されるか
-- toArray() の出力形式が正しいか
-- ListDTO が複数DTOを正しく保持できるか
-- ListDTO の toArray() が各DTOの toArray() を呼び出して配列化できるか
-- DTO / ListDTO に業務判断・DB操作・レスポンス生成が混ざっていないか
+DTOの項目を変更した場合は、受け取り側のResponder・TypeScript型・テストも確認します。
+
+## Service テスト
+
+Serviceは業務判断・ドメインルールを扱うため、優先してテストします。
+
+確認する観点:
+
+- 条件分岐
+- 判定結果
+- 計算
+- 状態遷移の可否
+- 空データ・境界値
+- 異常系
+- Repositoryへ渡す条件
+- DTOへの変換方針
+
+DBやHTTP通信は必要に応じてFake / Mockへ置き換え、業務判断だけを確認します。
 
 ## Repository テスト
 
-Repository は DB 操作の抽象を扱うため、取得条件や保存結果をテストします。
+RepositoryはDBまたは外部データソースとの境界を扱います。
 
-確認する観点は以下です。
+### DB Repository
 
-- 期待する条件でデータを取得できるか
-- 保存・更新・削除が正しく行われるか
-- 検索条件や並び順が壊れていないか
-- Repository に業務判断が混ざっていないか
+確認する観点:
 
-DanceShortsRadar の YouTube API Repository では、videos.list に送る動画IDが50件単位に分割されること、重複IDや空IDを送らないこと、空配列では HTTP 通信しないことを確認します。
+- 取得条件
+- 保存・更新・削除
+- 並び順
+- filter / search
+- soft delete
+- unique / duplicate
+- transactionが必要な境界
+- 業務判断が混ざっていない
 
-DanceShortsRadar の検索 keyword では、migration で `search_scope` / `max_search_pages` が存在すること、enum 値が `standard` / `expanded` から変わらないこと、Seeder が3件だけ `expanded / 2`、残り6件を `standard / 1` にすることをテストで固定します。Repository テストでは page2 同期対象として active かつ expanded かつ `max_search_pages >= 2` の keyword だけを取得し、inactive / standard / 1ページ設定を除外することを確認します。
+### External API Repository
 
-DanceShortsRadar の page2 同期では、migration が `Schema::table` による追加だけであること、通常 Sync Action が active keyword 全件の page1 だけを検索すること、YouTube API Repository が `nextPageToken` と `pageToken` を扱えること、Page2 Action が page1 から token を取得して expanded keyword の page2 以降だけを保存候補にすること、`max_search_pages` を超えて取得しないことを確認します。動画保存、snapshot 保存、Shorts 判定、必須項目判定は通常同期と共通の保存処理を使う前提で、Page2 Action テストでは expanded keyword の選別、ID 重複除外、共通保存処理への受け渡しを固定します。
+確認する観点:
 
-DanceShortsRadar の Command / Job テストでは、`dance-short:sync-page2` が `SyncDanceShortPage2VideosJob` を dispatch するだけで同期本体を直接実行しないこと、page2 Job が `SyncDanceShortPage2VideosAction` を呼ぶこと、通常同期 Job と同じ timeout / tries を持つことを確認します。
+- URL、query、header、method
+- API制約に合わせた分割
+- timeout / failure
+- 空入力時に通信しない
+- 重複・不正な入力を送らない
+- 外部レスポンスをDTOへ変換する
+- 保存可否や業務判断を持たない
+
+外部APIは `Http::fake()` 等を使い、実通信へ依存しないテストを基本とします。
 
 ## Action テスト
 
-Action はユースケースの手順を扱うため、処理順序と連携をテストします。
+Actionはユースケースの手順を扱います。
 
-確認する観点は以下です。
+確認する観点:
 
-- Request / DTO から期待する処理が開始されるか
-- Service / Repository / Responder の呼び出し順が妥当か
-- 正常系の結果が期待通りか
-- 異常系で適切な結果になるか
+- Input DTOから処理が開始される
+- Service / Repositoryの呼び出し
+- 呼び出し順序
+- Transaction境界
+- 正常系のResultDTO
+- 異常系・部分失敗
+- 重複実行時の挙動
+- Actionへ業務判断が集まりすぎていない
 
-## Job テスト
+必要に応じてFeatureテストまたは単体テストを選びます。
 
-Job は非同期処理や同期処理を扱うため、実行結果をテストします。
+## Job / Command / Scheduler テスト
 
-確認する観点は以下です。
+### Job
 
-- Job が期待する Service を呼び出すか
-- 同期処理の結果が記録されるか
-- 失敗時の状態やエラーメッセージが扱えるか
-- 再実行しても破綻しないか
+- 期待するActionを呼ぶ
+- timeout / tries
+- Queue設定
+- 失敗時の記録
+- 再実行時の安全性
+- Jobへ業務ロジックを持たせない
 
-DanceShortsRadar の Scheduler は、`DANCE_SHORT_SYNC_ENABLED` が true の場合だけ3時間ごとの通常同期と1日2回の page2 同期が対象になり、false の場合は同期 Job を dispatch しないことを Feature テストで固定します。page2 command は通常同期と別名にし、`withoutOverlapping()` と env gate を持つことも確認します。
+### Command
+
+- 引数・option
+- Job dispatchまたはAction呼び出し
+- exit code
+- 表示メッセージ
+- Commandへ業務ロジックを持たせない
+
+### Scheduler
+
+- 実行時刻
+- env / config gate
+- `withoutOverlapping()`
+- 対象Command / Job
+- 無効時に実行しない
+
+具体的な時刻・Command名・Job名は該当する `docs/features/` に記載します。
+
+## Event / Listener テスト
+
+Event / Listenerを使う場合は、次を確認します。
+
+- Eventが1つの事実を表している
+- 必要なタイミングでdispatchされる
+- Listenerが通知・ログ・外部連携などの副作用に限定される
+- Listenerの順序依存が強くない
+- 失敗時の扱いが明確
 
 ## Responder / Inertia props テスト
 
-Responder は出力整形を扱うため、Inertia props の形をテスト対象にします。
+確認する観点:
 
-確認する観点は以下です。
+- propsのキー
+- DTO / ListDTOの変換結果
+- nullable / empty状態
+- pagination
+- URL・表示補助情報
+- Component側で業務判断を再構築しなくてよい形
+- DB Modelや不要な内部カラムを渡していない
+- Responderへ業務判断が入っていない
 
-- Component に渡す props のキーが正しいか
-- DTO / ListDTO の toArray() 結果を正しく渡しているか
-- 不要な業務判断が Responder に入っていないか
-- Component 側で過剰な変換が不要な形になっているか
+## React Utility テスト
+
+DOMへ依存しない純粋処理はVitestで確認します。
+
+例:
+
+- URL生成
+- query組み立て
+- 表示用変換
+- 配列切り出し
+- 日付・数値の表示補助
+- スワイプ対象除外判定
+
+純粋処理をComponentから分離できる場合に優先します。
 
 ## React Component テスト
 
-React Component のテストは、現時点では優先度を低めにします。
+Componentテストは、次の場合に追加を検討します。
 
-まずは Laravel 側の仕様とデータ境界を固めます。
+- 表示切替が複雑
+- ボタン・フィルタ・タブ操作が多い
+- loading / error / empty / selectedを固定したい
+- props変更による表示崩れを検知したい
+- モバイル専用の表示条件がある
+- 自動送り・スワイプ・Modalなどの操作仕様が重要
 
-React Component のテストは、以下の場合に追加を検討します。
+CSSの細かな見た目だけを固定するために、壊れやすいテストを大量に追加しません。
 
-- 表示切替が複雑になった場合
-- ボタン操作やフィルタ操作が増えた場合
-- props の形式変更による表示崩れを検知したい場合
-- モバイル表示や折りたたみUIの仕様を固定したい場合
+## Feature テスト
 
-## テスト追加が必要な変更
+HTTPまたは画面/API経由のユースケースを確認します。
 
-以下の変更では、テスト追加・更新を検討します。
+- status code
+- validation error
+- redirect
+- Inertia component / props
+- JSON shape
+- DB状態
+- 認証・所有確認
+- soft delete
+- success / failure / partial failure
 
-- Service の判定を変更した場合
-- DTO / ListDTO の構造を変更した場合
-- toArray() の出力形式を変更した場合
-- Repository の取得条件を変更した場合
-- Action の処理順序を変更した場合
-- Job の実行内容を変更した場合
-- Responder の Inertia props を変更した場合
-- 保存API・メモ機能・同期処理・地震データ処理を変更した場合
+FeatureテストへServiceの細かい全分岐を重複して書きません。
 
-## テスト追加が不要な変更
+## 開発中テストと後追い固定テスト
 
-以下の変更では、テスト追加が不要な場合があります。
+### 開発中テスト
 
-- 文言修正のみ
-- README や docs のみの修正
-- CSS や見た目のみの軽微な調整
-- コメント修正のみ
-- 既存テストで十分に守られている範囲の軽微な修正
+壊れると影響が大きい境界を先に固定します。
 
-ただし、見た目の変更でも props や表示条件に影響する場合は、テスト追加・更新を検討します。
+- Service
+- DTO
+- Repository条件
+- Action手順
+- Request validation
+- Job実行境界
 
-## テストコメント方針
+### 後追い固定テスト
 
-テストには、必要に応じてコメントを残します。
+実装後に仕様が見えた段階で、細かい挙動を固定します。
 
-コメントは、テスト手順の逐語説明ではなく、何の仕様を守るテストなのかを説明するために使います。
+- 並び順
+- pagination props
+- return URL
+- 表示補助データ
+- empty / selected状態
+- モバイル固有操作
 
-コメントを検討する箇所は以下です。
+すべてを最初から完全なTDDにする必要はありませんが、すべてを後回しにもしません。
 
-- 正常系だけでは意図が読み取りにくいテスト
-- 異常系・境界値・空データ・重複データを扱うテスト
-- 外部API失敗・タイムアウト・非同期処理の部分失敗を扱うテスト
-- なぜその期待値になるのか、実装だけでは分かりにくいテスト
-- 将来変更されやすい仕様を固定しているテスト
+## Fixture / Fake / Mock
 
-テスト名だけで意図が十分に伝わる場合は、不要なコメントを追加しません。
+テスト本体へ長いXML・JSON・巨大payload・複雑な匿名クラスを書きすぎません。
 
-コメントで曖昧なテストを正当化してはいけません。
+次の場合は分離を検討します。
 
-期待値が不明確な場合は、コメント追加ではなく、テスト設計や仕様整理を見直します。
+- テスト準備が本文の大部分を占める
+- 同じ外部レスポンスを複数回使う
+- 失敗再現用の匿名クラスが長い
+- 外部仕様変更時の修正箇所が散らばる
 
-実装変更時は、テストコメントが古い仕様を説明していないか確認します。
+配置例:
 
-## 長いXML・匿名クラス・Fake実装の扱い
+```text
+tests/Fixtures/
+tests/Fakes/
+```
 
-テスト本体に、長い XML 文字列・大きな匿名クラス・複雑な Fake 実装を直接書きすぎないようにします。
+小さく1回だけ使うデータまで機械的に分離しません。
 
-これらはテスト準備として必要になる場合がありますが、増えすぎるとテスト本体の目的が見えにくくなります。
+## テストコメント
 
-特に以下の場合は、fixture 化・helper 化・Fake クラス化を検討します。
+コメントは手順の逐語説明ではなく、何の仕様を守るテストか説明するために使います。
 
-- XML 文字列が長く、テスト本体の大部分を占めている
-- 同じような XML を複数テストで使い回している
-- 匿名クラスの実装が長く、何の失敗を再現しているか読み取りにくい
-- テストの主目的よりも、準備コードの解読に時間がかかる
-- 外部APIレスポンスの構造変更時に、修正箇所が複数テストへ散らばりそうな場合
+コメントを検討する対象:
 
-XML などの外部レスポンス例は、必要に応じて `tests/Fixtures` などへ分離します。
+- 境界値
+- 異常系
+- 部分失敗
+- 外部API失敗
+- 将来変更されやすい仕様
+- 期待値の理由がコードだけでは分かりにくい
 
-失敗条件を再現する Repository や外部APIの代替実装は、必要に応じて Fake クラスとして分離します。
+テスト名で意図が十分に伝わる場合は、不要なコメントを追加しません。
 
-テスト本体では、できるだけ以下の流れが読み取れる状態を優先します。
+古い仕様を説明するコメントが残っていないか、実装変更時に確認します。
 
-1. 前提データを用意する
-2. 外部APIやRepositoryの振る舞いを差し替える
-3. 対象処理を実行する
-4. 仕様として守りたい結果を検証する
+## テスト追加・更新を検討する変更
 
-ただし、最初からすべてを fixture 化・Fake クラス化する必要はありません。
+- Serviceの判断変更
+- DTO / ListDTOの構造変更
+- Repository条件・外部API通信変更
+- Action手順変更
+- Job / Command / Scheduler変更
+- Event / Listener変更
+- Responder / Inertia props変更
+- Request validation変更
+- DB保存・更新・削除条件変更
+- React Utility変更
+- 重要なUI操作・表示条件変更
 
-1つのテストだけで使う小さなXMLや短い匿名クラスであれば、テスト内に書いてもよいです。
+## テスト追加が不要な場合
 
-同じ形式の長いXMLや匿名クラスが複数回出てきた段階で、読みやすさと保守性を優先して分離を検討します。
+次はテスト追加が不要な場合があります。
 
-## CodexApp / AIエージェントでの使い方
+- docsのみ
+- READMEのみ
+- コメントのみ
+- 文言のみ
+- propsや表示条件へ影響しない軽微なCSS
+- 既存テストで十分に固定されている変更
 
-CodexApp / AIエージェントに修正を依頼する場合、可能な限りテスト結果を起点にします。
+不要な場合も理由をPRへ記載します。
 
-例：
+## 実行順
 
-- php artisan test の失敗内容を確認する
-- 失敗しているテスト名を特定する
-- 失敗原因に関係するファイルだけを確認する
-- 「このテストを通す範囲で修正してください」と指示する
-- 既存仕様を変えず、最小差分で修正する
+変更時は、対象範囲から全体へ広げます。
 
-これにより、毎回コード全体を読ませる必要を減らし、トークン消費を抑えます。
+```text
+対象テスト
+    ↓
+関連Unit / Feature
+    ↓
+Laravel全体
+    ↓
+Vitest
+    ↓
+Frontend build
+```
 
-## 実行コマンド
+## 基本コマンド
 
-Laravel 側のテスト実行は以下を基本とします。
+Laravel:
 
+```bash
 php artisan test
-
-特定のテストだけ実行する場合は、対象ファイルを指定します。
-
-php artisan test tests/Unit/ExampleTest.php
-
-必要に応じて、Feature / Unit を分けて実行します。
-
-php artisan test tests/Feature
 php artisan test tests/Unit
+php artisan test tests/Feature
+php artisan test tests/Unit/ExampleTest.php
+```
+
+Frontend:
+
+```bash
+npm run test:run
+npm run build
+```
+
+Docker構成から実行する場合は、リポジトリの運用手順に従います。
+
+## AIエージェントでの使い方
+
+- 失敗テスト名を特定する
+- 失敗原因に関係するファイルだけを読む
+- 仕様を変えず、テストを通す最小差分を作る
+- テスト自体が正しいか人間が確認する
+- 実装をテストへ無理に合わせて責務を崩さない
+
+テストが落ちた場合は、次を区別します。
+
+- 実装の不具合
+- 既存仕様の破壊
+- 正式な仕様変更
+- 古いテスト
+- テスト環境の問題
+
+AIの判断だけで期待値を書き換えません。
 
 ## テストとレビューの関係
 
-テストは仕様破壊を検知するための補助です。
+テスト成功後も、次をレビューします。
 
-テストが通っていても、責務分離が崩れている可能性はあります。
-
-そのため、実装後は以下も確認します。
-
-- Action / Service / Repository / DTO / Responder / Component の責務が混ざっていないか
-- DTO / ListDTO に業務判断やレスポンス生成が入っていないか
-- Repository に業務判断が入っていないか
-- Service に DB 直接操作が入っていないか
-- Component に業務判断が入りすぎていないか
-- 不要な依存や過剰な抽象化が増えていないか
+- Controller / Request / Action / Service / Repository / DTO / Responder / Componentの責務
+- Repositoryへ業務判断が入っていないか
+- ServiceへDB直接操作が入っていないか
+- DTOへレスポンス生成が入っていないか
+- Componentへ業務判断が入っていないか
+- 不要な依存・過剰な抽象化
+- 機能固有仕様が共通docsへ混ざっていないか
+- テストが実装詳細ではなく仕様を固定しているか
