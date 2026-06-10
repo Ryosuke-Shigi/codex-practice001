@@ -3,7 +3,7 @@
 - Status: active
 - Scope: API Discovery Hub
 - Last reviewed: 2026-06-10
-- Canonical source: current code, migrations, configuration, and successful tests
+- Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
 
