@@ -1,5 +1,9 @@
 # Security
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このドキュメントの目的
 
 このドキュメントは、このプロジェクトにおける秘密情報、本番環境、AIエージェント、破壊的操作、外部公開、ログ出力の安全境界を明文化するためのものです。

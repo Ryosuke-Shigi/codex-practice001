@@ -1,5 +1,9 @@
 # Commenting
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 このドキュメントは、通常コメント・PHPDoc・JSDocの書き方を固定するためのものです。
 
 コメントは、初見の人が主要処理の目的・責務・判断理由・制約を追えるようにするために使います。処理内容を変えたり、テストや設計整理の代替にしたりしません。
