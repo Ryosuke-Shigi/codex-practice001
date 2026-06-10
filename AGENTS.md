@@ -9,6 +9,7 @@
 ## 参照ドキュメント
 
 - 作業開始時に AGENTS.md を確認する
+- コンテキストの読み込み範囲、トークン・調査コストの抑制、理解再起動、指示用まとめの圧縮に関わる場合は `docs/context-management.md` を確認する
 - IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階判断、Product化、開発手順に関わる場合は `docs/development-flow.md` を確認する
 - 設計方針・責務境界に関わる変更を行う場合は `docs/architecture.md` を確認する
 - テスト追加・更新、または仕様破壊確認が関わる変更を行う場合は `docs/testing.md` を確認する
@@ -18,8 +19,9 @@
 - React / Inertia / TypeScript の画面、Component、props、レスポンシブ表示、演出に関わる変更を行う場合は `docs/frontend.md` を確認する
 - UIの見た目、操作、共通Component、Common配置、モバイル表示に関わる変更を行う場合は `docs/ui.md` を確認する
 - MOCKまたはPrototypeの作成・修正・削除・Product化を行う場合は `docs/prototype-policy.md` を確認する
+- 指示用まとめを作る場合は `docs/templates/instruction-summary.md` を確認する
 - 指定された演出・機能・成功条件・対象ファイルがある作業では `skills/no-alternative-implementation/SKILL.md` を確認する
-- Product実装で判断に迷う場合は、実装前に `docs/development-flow.md`、`docs/architecture.md`、`docs/testing.md` を確認する
+- Product実装で判断に迷う場合は、実装前に `docs/context-management.md`、`docs/development-flow.md`、`docs/architecture.md`、`docs/testing.md` を確認する
 - README.md は外部向け概要説明として扱い、設計・テスト・AI作業ルールの詳細は各ドキュメントを参照する
 
 ## アーキテクチャ方針
@@ -70,6 +72,16 @@
 - コメントの詳細ルールは `docs/commenting.md` に従う
 - コメントで処理変更や責務違反を正当化しない
 
+## コンテキスト管理
+
+- 作業開始時に、今回の目的・対象機能・必要なdocsを特定する
+- リポジトリ全体や全docsを毎回読み込まない
+- 名前、Route、Class、テスト名、エラーメッセージで検索してから必要なファイルだけを読む
+- 共通方針は貼り直さず、`AGENTS.md` と該当docsの参照で済ませる
+- 不明な前提を推測で補わない
+- 複数目的が見つかった場合は、1タスクへ混ぜず分割する
+- 継続作業では、現在地・決定事項・変更ファイル・テスト結果・未完了・次に読む場所を圧縮して残す
+
 ## 作業ルール
 
 - 実装前に変更対象ファイルと変更方針を確認する
@@ -108,6 +120,9 @@
 - 現在の段階がIDEA BOARD / MOCK / PROTOTYPE / PRODUCTのどれか明確か
 - PrototypeコードをProductへ直接流用していないか
 - Productが1機能・1ユースケース単位になっているか
+- 作業に不要なdocs・ファイルを広く読み込んでいないか
+- 共通方針を指示文へ重複記載していないか
+- 次回の理解再起動に必要な現在地と検証結果が残っているか
 - 責務境界が崩れていないか
 - 不要な依存が増えていないか
 - DTO / Repository / Service / Action の役割が混ざっていないか
