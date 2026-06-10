@@ -28,7 +28,7 @@ PHPでは、次の箇所にコメント追加を検討します。
 - 公開メソッドの目的、引数、返り値、例外がシグネチャだけでは読み取りにくい箇所
 - 業務判断、状態判断、DB境界、外部API境界を扱う箇所
 - Action / Service / Repository / Responder / DTO の責務境界を読み違えやすい箇所
-- Job / Event / Listener / Command の処理順や再実行時の前提を残す必要がある箇所
+- Job / Event / Listener / Artisan Command の処理順や再実行時の前提を残す必要がある箇所
 
 DTO / ListDTO には、データキャリアとしての責務を説明するコメントは置いてよいです。ただし、DBアクセス、業務判断、HTTPレスポンス生成、JSONレスポンス生成、View / Inertia / React 用の表示判断を正当化するコメントは書きません。
 

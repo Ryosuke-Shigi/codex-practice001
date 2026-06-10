@@ -33,7 +33,7 @@
 
 - Unit: DTO / ListDTO / Service / Factory / Strategy / Utility
 - Repository: DB条件、保存条件、外部API通信境界
-- Feature: HTTP、Action、Job、Command、Scheduler、Inertia props、DB反映
+- Feature: HTTP、Action、Job、Artisan Command、Scheduler、Inertia props、DB反映
 - React: 表示・操作・UI状態・純粋Utility
 
 1つのテストファイルへ、Serviceの業務判断、RepositoryのDB条件、Responderの出力整形を無理に混ぜません。
@@ -57,7 +57,7 @@
 - Repositoryの取得・保存・通信条件
 - Serviceの業務判断
 - Actionのユースケース手順
-- Job / Command / Schedulerの実行境界
+- Job / Artisan Command / Schedulerの実行境界
 - Event / Listenerの副作用境界
 - Responderの出力形式
 - Inertia props
@@ -74,7 +74,7 @@
 2. DTO / ListDTOのデータ境界
 3. RepositoryのDB・外部データソース境界
 4. Actionのユースケース手順
-5. Job / Command / Scheduler
+5. Job / Artisan Command / Scheduler
 6. Responder / Inertia props
 7. React Utility
 8. 複雑なReact Component
@@ -94,7 +94,7 @@
 - 不正入力時のエラー
 - フロントを通らない直接リクエスト
 
-フロントエンドバリデーションだけで安全とは判断しません。
+バリデーションの安全境界は `docs/security.md` に従い、フロントエンドバリデーションだけで安全とは判断しません。
 
 ## DTO / ListDTO テスト
 
@@ -159,7 +159,7 @@ RepositoryはDBまたは外部データソースとの境界を扱います。
 
 ## Action テスト
 
-Actionはユースケースの手順を扱います。
+Actionはユースケースの手順を扱います。Command Action / Query Actionのどちらも、対象ユースケースに必要な境界を確認します。
 
 確認する観点:
 
@@ -174,7 +174,7 @@ Actionはユースケースの手順を扱います。
 
 必要に応じてFeatureテストまたは単体テストを選びます。
 
-## Job / Command / Scheduler テスト
+## Job / Artisan Command / Scheduler テスト
 
 ### Job
 
@@ -185,23 +185,23 @@ Actionはユースケースの手順を扱います。
 - 再実行時の安全性
 - Jobへ業務ロジックを持たせない
 
-### Command
+### Artisan Command
 
 - 引数・option
 - Job dispatchまたはAction呼び出し
 - exit code
 - 表示メッセージ
-- Commandへ業務ロジックを持たせない
+- Artisan Commandへ業務ロジックを持たせない
 
 ### Scheduler
 
 - 実行時刻
 - env / config gate
 - `withoutOverlapping()`
-- 対象Command / Job
+- 対象Artisan Command / Job
 - 無効時に実行しない
 
-具体的な時刻・Command名・Job名は該当する `docs/features/` に記載します。
+具体的な時刻・Artisan Command名・Job名は該当する `docs/features/` に記載します。
 
 ## Event / Listener テスト
 
@@ -339,7 +339,7 @@ tests/Fakes/
 - DTO / ListDTOの構造変更
 - Repository条件・外部API通信変更
 - Action手順変更
-- Job / Command / Scheduler変更
+- Job / Artisan Command / Scheduler変更
 - Event / Listener変更
 - Responder / Inertia props変更
 - Request validation変更

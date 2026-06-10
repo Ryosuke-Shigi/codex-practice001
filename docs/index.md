@@ -25,10 +25,12 @@
 - Migration・設定
 - 成功しているテスト
 
-### 機能固有の意図・条件
+### 機能固有の意図・制約
 
 - `docs/features/` の該当文書
 - 関連する成功テスト
+
+feature docsは機能固有の意図・制約を記録し、現在の実装挙動はコード・Migration・設定・成功テストで確認します。どちらか一方だけを全用途の正本とは扱いません。
 
 ### 外部向け説明
 
@@ -64,6 +66,14 @@ Actionはユースケースの手順、Domain側のService等は業務判断、R
 
 Architecture Decision Recordの略称としてADRとだけ書くとADR Patternと衝突するため、このプロジェクトでは `Decision Record` または `設計判断記録` と表記します。
 
+### Command Action / Query Action / Artisan Command
+
+- `Command Action`: 登録・更新・削除・同期開始など、状態を変更するユースケースのAction
+- `Query Action`: 一覧・詳細・検索・ランキングなど、参照するユースケースのAction
+- `Artisan Command`: Laravelのコンソール実行入口。JobをdispatchするかActionを呼び、業務ロジック本体を持たない
+
+`Command` だけではCommand ActionとArtisan Commandを区別できないため、文書では対象を明記します。
+
 ## 常時確認する文書
 
 | 文書 | 役割 |
@@ -77,13 +87,13 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 |---|---|
 | `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
-| `docs/architecture.md` | ADR Pattern、レイヤード、責務境界 |
+| `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
 | `docs/testing.md` | テスト追加、仕様固定、CI確認 |
 | `docs/frontend.md` | React / Inertia / TypeScript、props、Component責務 |
 | `docs/ui.md` | UI、Common、モバイル、操作、Effects |
 | `docs/prototype-policy.md` | MOCK / Prototypeの配置、許可範囲、Product化 |
 | `docs/logging.md` | ログ分類、出力責務、保持期間 |
-| `docs/security.md` | 秘密情報、本番接続、破壊的操作、外部公開 |
+| `docs/security.md` | 秘密情報、本番接続、破壊的操作、外部公開、バリデーションの安全境界 |
 | `docs/commenting.md` | コメント、PHPDoc、JSDoc |
 
 ## 機能固有文書
@@ -135,9 +145,11 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 Status: active / archived / superseded
 Scope: 適用リポジトリ・機能
 Last reviewed: YYYY-MM-DD
-Canonical source: 正本となる文書
+Canonical source: 用途ごとの正本となる文書・コード・テスト
 Supersedes: 置き換えた旧資料
 ```
+
+`Canonical source` は全用途を1本へ集約する意味ではありません。機能固有文書では、意図・制約と現在挙動の正本を分けて記載します。
 
 一時的な理解再起動用まとめには、次も残します。
 
@@ -157,4 +169,5 @@ Invalid when:
 - 機能仕様変更時は、コード・テストと該当する `docs/features/` を更新する
 - README、Notion、GPT情報源は正本変更後に追従させる
 - 古い資料を残す場合は `archived` または `superseded` を明記する
-- 同じルールを複数文書へ全文複製しない
+- 同じ詳細ルールを複数文書へ全文複製しない
+- 他文書で同じ観点を確認する場合は、その文書の責務に必要な要約と正本への参照だけを置く
