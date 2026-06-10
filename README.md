@@ -161,132 +161,47 @@ make app-clear
 
 ## AI Driven Development
 
-このプロジェクトでは、AIを開発の主体にはしません。
+このプロジェクトでは、AIを開発の主体にせず、人間が目的・入力・出力・制約・責務境界・テスト観点・完成判定を決めます。
 
-人間が先に決めるもの:
+- ChatGPT: 仕様整理、設計の壁打ち、責務分離、テスト観点、CodexApp向け指示整理
+- CodexApp: 対象コードの調査、実装・修正、差分適用、テスト追加・実行
+- 人間: 仕様確定、差分確認、完成判定、merge、本番反映判断
 
-- 何を作るか
-- 入力
-- 出力
-- 成功条件
-- 失敗条件
-- 責務境界
-- テスト観点
-- 実装しないこと
-- 完成判定
-- 本番反映判断
-
-ChatGPT は、仕様整理・設計整理・責務分離・テスト観点・CodexApp向け指示文作成・レビュー観点整理に使います。
-
-CodexApp は、既存コード確認・差分作成・実装補助・テスト追加・README整理に使います。
-
-AIの出力はそのまま採用せず、テスト・Pull Request・差分確認・責務レビューで人間が確認します。
-
-AIを信用することと、任せて放置することは別です。  
-このプロジェクトでは、テスト・CI・差分確認・責務レビューによって、AIの作業範囲を人間が制御します。
+AIの出力は、テスト、Pull Request、CI、責務レビューを通して確認します。
 
 ## Architecture
 
-このポートフォリオは、ADR パターンとレイヤードアーキテクチャを基準にしています。
-
-ここでの ADR は、Action-Domain-Responder の考え方を指します。
-
-主な責務分離:
-
-- Controller: HTTP入口
-- Request: 入力バリデーション
-- Action: 1ユースケースの手順
-- Command Action: 登録・更新・削除・同期開始などの状態変更
-- Query Action: 一覧・詳細・検索などの参照処理
-- Service: 業務判断、同期方針、状態判断
-- Repository: DB取得・保存、Eloquentクエリ、外部API通信の境界
-- DTO / ListDTO: レイヤー間のデータ受け渡し
-- Responder: Inertia props などの出力整形
-- Factory: DTO生成、Strategy / Responder 選択
-- Strategy: 処理差分、アルゴリズム差分
-- Event / Listener: 発生した事実と副作用処理
-- Component: 画面表示、UI状態、ユーザー操作
-
-Controller に業務判断を書かず、Repository に出力整形を書かず、Service に HTTP 都合を混ぜない構成を基本にしています。
-
-## Directory Structure
-
-主な配置は次のとおりです。
+Action - Domain - Responder のADR Patternと、Laravelのレイヤードアーキテクチャを基準にしています。
 
 ```text
-app/
-├── Actions/
-│   └── <Domain>/
-│       ├── Commands/
-│       └── Queries/
-├── Services/
-│   └── <Domain>/
-├── Repositories/
-│   └── <Domain>/
-├── DTO/
-│   └── <Domain>/
-├── Responders/
-│   └── <Domain>/
-├── Factories/
-│   └── <Domain>/
-├── Strategies/
-│   └── <Domain>/
-├── Events/
-├── Listeners/
-└── Jobs/
+Controller / Request
+        ↓
+Command Action / Query Action
+        ↓
+Service / Repository / DTO / Strategy
+        ↓
+Responder
+        ↓
+React / Inertia
 ```
 
-Laravel標準領域:
+Controllerへ業務判断、Repositoryへ表示判断、ServiceへHTTP都合を混ぜず、必要な責務だけを使用します。
 
-```text
-app/
-└── Http/
-    ├── Controllers/
-    └── Requests/
-```
-
-フロントエンド側:
-
-```text
-resources/js/
-├── Components/
-├── Layouts/
-├── Pages/
-└── theme/
-```
-
-テスト:
-
-```text
-tests/
-├── Feature/
-└── Unit/
-```
-
-Docker構成側では、このリポジトリは `./src` としてマウントされ、コンテナ内では `/var/www/html` として扱われます。
+詳細は [Architecture](docs/architecture.md) を参照してください。
 
 ## Testing
 
-このプロジェクトでは、テストを単なる確認ではなく、AIが壊してはいけない仕様を固定するための安全柵として扱っています。
+テストは、AIや人間が壊してはいけない仕様と責務境界を固定する実行可能な仕様として扱います。
 
-主に以下をテストで確認します。
+主な対象:
 
-- DTO / ListDTO の形
-- Repository の取得条件・保存条件
-- Service の判定
-- Action の処理順序
-- Job の実行結果
-- Responder が渡す Inertia props
-- 保存APIやメモ機能
-- 地震データ取得・保存・ピン再生成
-- 同期処理の結果集計
-- ランキング表示条件
-- display-card-window の表示仕様
-
-テストはコードレビューの代替ではありません。
-
-テストで確認できるのは主に「期待する仕様が壊れていないか」です。  
-「責務分離が崩れていないか」「設計が汚れていないか」は、別途レビューで確認します。
+- Request validation
+- DTO / ListDTO
+- Serviceの業務判断
+- Repositoryの取得・保存・外部API境界
+- Action、Job、Artisan Command、Scheduler
+- Responder / Inertia props
+- React Utility / Component
 
 基本コマンド:
 
@@ -296,69 +211,43 @@ docker compose run --rm npm run test:run
 docker compose run --rm npm run build
 ```
 
+詳細は [Testing](docs/testing.md) を参照してください。
+
 ## CI/CD
 
-このリポジトリでは、GitHub Actions で CI と Deploy を分けています。
+Pull Requestとmainへのpushで、Laravel test、Vitest、frontend buildを実行します。
 
-CI workflow:
-
-- Pull Request 時に実行
-- main push 時に実行
-- PHP 8.3 をセットアップ
-- Node 22 をセットアップ
-- `composer install`
-- `npm ci`
-- `npm run build`
-- `.env.example` から `.env` を作成
-- `php artisan key:generate`
-- `php artisan test`
-- `npm run test:run`
-
-Deploy workflow:
-
-- CI workflow 成功後のみ実行
-- GitHub runner 上で Vite build を作成
-- build済み assets を Lightsail へ転送
-- Lightsail 上で `git pull --ff-only origin main`
-- `php artisan optimize:clear`
-- `queue` / `scheduler` / `php-fpm` を再起動
-
-CIが失敗した場合、Deploy job は実行されません。
+DeployはCI成功後にだけ実行され、build済みassetsをAWS Lightsailの公開環境へ反映します。CIが失敗した場合はDeployしません。
 
 ## Git / Review Flow
 
-main への直接 push は行いません。
+mainへ直接作業せず、目的別ブランチからPull Requestを作成します。
 
-基本フロー:
-
-1. main を最新化する
-2. featureブランチを作成する
-3. 実装する
-4. テストを実行する
-5. Pull Request を作成する
-6. 差分を確認する
-7. CI / status check を確認する
-8. 問題がなければ main へ merge する
-
-Pull Request では、少なくとも以下を確認します。
-
-- 変更内容
-- 変更理由
-- 影響範囲
-- テスト結果
-- CI / status check
-- docs / README / AGENTS.md 更新有無
-- 秘密情報混入がないこと
-- 責務境界に違反していないこと
+```text
+目的・成功条件を固定
+    ↓
+実装・テスト・必要なdocs更新
+    ↓
+Pull Request
+    ↓
+差分・CI・責務・秘密情報を確認
+    ↓
+人間がmergeを判断
+```
 
 ## Documentation / Skills
 
-README は外部向けの概要説明です。  
-詳細資料はリポジトリ内の Markdown として管理し、コード変更と同じく Pull Request で差分確認できるようにしています。
+READMEは外部向けの概要です。内部の設計・テスト・AI運用ルールは、用途別のMarkdownへ分離しています。
 
-- [AGENTS.md](AGENTS.md): CodexApp / AIエージェント向けの固定ルール
-- [Architecture](docs/architecture.md): ADR / レイヤード構成と責務境界
-- [Testing](docs/testing.md): テスト方針、優先順位、AI駆動開発でのテスト活用
-- [Commenting](docs/commenting.md): 通常コメント、PHPDoc、JSDocの運用方針
-- [Prototype Policy](docs/prototype-policy.md): プロトタイプの分離、削除、本番化ルール
-- [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時に代替実装へ進まず停止・報告するためのSkill
+- [AGENTS.md](AGENTS.md): 作業時に守る入口ルール
+- [Documentation Index](docs/index.md): 用途別の正本と参照先
+- [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
+- [Architecture](docs/architecture.md): ADR Patternとレイヤード責務
+- [Testing](docs/testing.md): テスト方針と仕様固定
+- [Frontend](docs/frontend.md): React / Inertia / TypeScriptの実装責務
+- [UI](docs/ui.md): UI、Common、モバイル、Effects
+- [Security](docs/security.md): 秘密情報、本番接続、破壊的操作
+- [Context Management](docs/context-management.md): 文脈読込と理解再起動
+- [Commenting](docs/commenting.md): コメント、PHPDoc、JSDoc
+- [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
+- [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時の停止条件
