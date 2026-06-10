@@ -9,6 +9,7 @@
 ## 参照ドキュメント
 
 - 作業開始時に AGENTS.md を確認する
+- IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階判断、Product化、開発手順に関わる場合は `docs/development-flow.md` を確認する
 - 設計方針・責務境界に関わる変更を行う場合は `docs/architecture.md` を確認する
 - テスト追加・更新、または仕様破壊確認が関わる変更を行う場合は `docs/testing.md` を確認する
 - 通常コメント・PHPDoc・JSDocを追加または更新する場合は `docs/commenting.md` を確認する
@@ -16,9 +17,9 @@
 - 秘密情報、本番接続、AI権限、破壊的操作、外部公開に関わる変更を行う場合は `docs/security.md` を確認する
 - React / Inertia / TypeScript の画面、Component、props、レスポンシブ表示、演出に関わる変更を行う場合は `docs/frontend.md` を確認する
 - UIの見た目、操作、共通Component、Common配置、モバイル表示に関わる変更を行う場合は `docs/ui.md` を確認する
-- プロトタイプの作成・修正・削除・本番化を行う場合は `docs/prototype-policy.md` を確認する
+- MOCKまたはPrototypeの作成・修正・削除・Product化を行う場合は `docs/prototype-policy.md` を確認する
 - 指定された演出・機能・成功条件・対象ファイルがある作業では `skills/no-alternative-implementation/SKILL.md` を確認する
-- 判断に迷う場合は、実装前に `docs/architecture.md` と `docs/testing.md` の両方を確認する
+- Product実装で判断に迷う場合は、実装前に `docs/development-flow.md`、`docs/architecture.md`、`docs/testing.md` を確認する
 - README.md は外部向け概要説明として扱い、設計・テスト・AI作業ルールの詳細は各ドキュメントを参照する
 
 ## アーキテクチャ方針
@@ -76,6 +77,10 @@
 - 既存の責務分離を崩さない
 - 不要なリファクタリングを同時に行わない
 - 仕様にない機能追加を勝手に行わない
+- 速度を優先して一気に作ってよいのはPrototypeまでとする
+- PrototypeコードをそのままProductへ昇格しない
+- Productは1機能・1ユースケース単位で追加する
+- Product化時は目的・入出力・成功条件・失敗条件・責務・テスト観点を固定する
 - 実装後は差分確認を行う
 - 可能な場合はテスト、または確認コマンドを実行する
 
@@ -100,6 +105,9 @@
 
 変更後は、少なくとも以下を確認する。
 
+- 現在の段階がIDEA BOARD / MOCK / PROTOTYPE / PRODUCTのどれか明確か
+- PrototypeコードをProductへ直接流用していないか
+- Productが1機能・1ユースケース単位になっているか
 - 責務境界が崩れていないか
 - 不要な依存が増えていないか
 - DTO / Repository / Service / Action の役割が混ざっていないか
