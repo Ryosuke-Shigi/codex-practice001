@@ -3,7 +3,7 @@
 - Status: active
 - Scope: DanceShortsRadar
 - Last reviewed: 2026-06-10
-- Canonical source: current code, migrations, configuration, and successful tests
+- Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
 
@@ -156,9 +156,9 @@ inactive、standard、1ページ設定は除外します。
 - 動画IDの重複を除外する
 - 共通保存処理へ正しく渡す
 
-### Command / Job
+### Artisan Command / Job
 
-- `dance-short:sync-page2` はJobをdispatchするだけで、同期本体を直接実行しない
+- `dance-short:sync-page2` のArtisan CommandはJobをdispatchするだけで、同期本体を直接実行しない
 - page2 Jobは `SyncDanceShortPage2VideosAction` を呼ぶ
 - page2 Jobは通常同期Jobと同じtimeout / triesを持つ
 
@@ -166,7 +166,7 @@ inactive、standard、1ページ設定は除外します。
 
 - `DANCE_SHORT_SYNC_ENABLED=true` の場合だけ通常同期・page2同期をdispatchする
 - falseの場合は同期Jobをdispatchしない
-- page2 commandは通常同期と別名にする
+- page2 Artisan Commandは通常同期と別名にする
 - `withoutOverlapping()` とenv gateを持つ
 
 ### ランキング
