@@ -196,8 +196,8 @@ AIを信用することと、任せて放置することは別です。
 - Controller: HTTP入口
 - Request: 入力バリデーション
 - Action: 1ユースケースの手順
-- Command: 登録・更新・削除・同期開始などの状態変更
-- Query: 一覧・詳細・検索などの参照処理
+- Command Action: 登録・更新・削除・同期開始などの状態変更
+- Query Action: 一覧・詳細・検索などの参照処理
 - Service: 業務判断、同期方針、状態判断
 - Repository: DB取得・保存、Eloquentクエリ、外部API通信の境界
 - DTO / ListDTO: レイヤー間のデータ受け渡し
