@@ -1,5 +1,9 @@
 # Logging
 
+- Status: active
+- Scope: `Ryosuke-Shigi/codex-practice001`
+- Last reviewed: 2026-06-10
+
 ## このドキュメントの目的
 
 このドキュメントは、このプロジェクトにおけるログの分類、出力責務、保存先、記録項目、禁止事項を明文化するためのものです。
