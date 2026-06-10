@@ -148,11 +148,11 @@ DTOでレイヤー間のデータ構造を固定
     ↓
 ADR Pattern / レイヤード構成で実装
     ↓
+実装内容に合わせて必要な共通docs・feature docsを更新
+    ↓
 対象テスト → 関連テスト → 全体テスト → build
     ↓
 Pull Request・CI・差分・責務レビュー
-    ↓
-必要な共通docs・feature docsを更新
     ↓
 理解再起動用まとめへ圧縮
 ```
