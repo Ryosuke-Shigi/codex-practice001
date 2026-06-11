@@ -31,6 +31,20 @@ class DanceShortsRadarTest extends TestCase
             );
     }
 
+    public function test_dance_shorts_analyzer_mock_page_is_available_without_product_route(): void
+    {
+        $this
+            ->get('/lab/dance-shorts-analyzer-mock')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Lab/DanceShortsAnalyzerMock', false)
+            );
+
+        $this
+            ->get('/dance-shorts-analyzer')
+            ->assertNotFound();
+    }
+
     public function test_dance_shorts_radar_mock_page_is_available_with_sorted_mock_candidates(): void
     {
         /*
