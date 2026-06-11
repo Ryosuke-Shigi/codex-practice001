@@ -2,13 +2,15 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-12
 
 ## このドキュメントの目的
 
 このドキュメントは、発想から本実装までの段階、各段階の完成条件、次へ進む条件、Product実装の基本手順を定めます。
 
 MOCK / Prototypeのディレクトリ、Route、削除、Productとの物理的分離は `docs/prototype-policy.md` を正本とします。
+
+MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへのUI移植は `docs/ui-development-flow.md` を正本とします。
 
 ## 全体フロー
 
@@ -22,7 +24,9 @@ PROTOTYPE
 PRODUCT
 ```
 
-各段階は目的が異なります。前段階のコードをそのまま次段階へ昇格させず、確認できた内容を仕様として抽出して進めます。
+各段階は目的が異なります。前段階の仮データ、仮通信、仮ロジックをそのまま次段階へ昇格させず、確認できた内容を仕様として抽出して進めます。
+
+ただし、MOCKで確認した画面単体のUI構造と、PROTOTYPEで確認した画面間の導線は、`docs/ui-development-flow.md` に従ってProductへ引き継ぎます。
 
 ## IDEA BOARD
 
@@ -49,6 +53,8 @@ PRODUCT
 
 固定データでUI部品、レイアウト、状態表示、操作感を確認する段階です。
 
+MOCKでは、画面を1つずつ作り、画面単体のUI契約を固定します。
+
 扱ってよいもの:
 
 - Card、Button、Field、Modal
@@ -71,10 +77,13 @@ MOCKの完成条件:
 - 主要操作と状態表示を確認できる
 - 各表示幅で破綻しない
 - 固定データだけで成立する
+- Productへ引き継ぐPage / Field / Component / layout / scroll構造を説明できる
 
 ## PROTOTYPE
 
 MOCKで確認したUIを使い、画面遷移、操作手順、簡易的なデータの流れを検証する段階です。
+
+PROTOTYPEでは、MOCKで作った画面同士の接続、導線、状態の受け渡しを確認します。
 
 扱ってよいもの:
 
@@ -100,6 +109,7 @@ Prototypeの完成条件:
 - 必要な入力・出力・失敗条件を抽出できる
 - Product化する単位へ分割できる
 - 仮処理と正式仕様を区別できる
+- Productへ引き継ぐ導線と状態受け渡しを説明できる
 
 ## PRODUCT
 
@@ -116,6 +126,8 @@ Product化前に固定するもの:
 - 実装しないこと
 - 責務境界
 - テスト観点
+- MOCKから引き継ぐ画面単体のUI構造
+- PROTOTYPEから引き継ぐ画面間の導線
 
 基本単位:
 
@@ -137,6 +149,8 @@ Product化前に固定するもの:
 AGENTS.md / docs/index.mdで作業分類
     ↓
 必要な共通docs・feature docs・対象コードを確認
+    ↓
+UI作業では docs/ui-development-flow.md で引き継ぐUI契約を確認
     ↓
 目的・入力・出力・実装しないことを固定
     ↓
@@ -161,6 +175,8 @@ Pull Request・CI・差分・責務レビュー
 
 MOCK、Prototype、Productは、同じ業務非依存のCommon ComponentやEffectsを利用してよいものとします。
 
+UI作業では、MOCKで画面単体を作り、PROTOTYPEで画面同士をつなぎ、PRODUCTでUI構造を引き継いだうえで本データと責務分離へ接続します。
+
 共有しないもの:
 
 - MOCKの固定データ
@@ -169,7 +185,7 @@ MOCK、Prototype、Productは、同じ業務非依存のCommon ComponentやEffec
 - API通信・DB操作
 - 権限判断・状態遷移判断
 
-具体的な配置と削除境界は `docs/prototype-policy.md`、Commonの責務は `docs/ui.md` に従います。
+具体的なUI移植手順は `docs/ui-development-flow.md`、配置と削除境界は `docs/prototype-policy.md`、Commonの責務は `docs/ui.md` に従います。
 
 ## テストとレビュー
 
@@ -178,6 +194,8 @@ MOCK、Prototype、Productは、同じ業務非依存のCommon ComponentやEffec
 重要な境界は実装前または実装と同時に固定し、並び順、pagination props、表示補助データ、モバイル固有操作等は挙動が明確になった後に固定してよいものとします。
 
 テスト成功だけで責務分離が正しいとは判断せず、差分レビューで不要な依存、責務混在、過剰な抽象化を確認します。
+
+UI作業では、MOCKで確認したPage / Field / Component構成、PROTOTYPEで確認した導線、Productで置き換えたpropsをレビュー対象に含めます。
 
 ## ハーネスエンジニアリング
 
@@ -189,6 +207,7 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 - 共通docsとfeature docsによる責務・仕様の分離
 - 指示用まとめによる対象・成功条件・失敗条件の固定
 - DTOによるデータ契約
+- MOCK / PROTOTYPE / PRODUCTのUI契約
 - Action / Service / Repository / Responder / Componentの責務分離
 - テストによる実行可能な仕様
 - Pull RequestとCIによる差分検証
@@ -198,6 +217,7 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 ## 関連文書
 
 - MOCK / Prototypeの配置・削除: `docs/prototype-policy.md`
+- MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
 - 責務境界: `docs/architecture.md`
 - テスト: `docs/testing.md`
 - UI: `docs/ui.md`
