@@ -248,6 +248,6 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [UI](docs/ui.md): UI、Common、モバイル、Effects
 - [Security](docs/security.md): 秘密情報、本番接続、破壊的操作
 - [Context Management](docs/context-management.md): 文脈読込と理解再起動
-- [Commenting / コメント方針](docs/commenting.md): コメント、PHPDoc、JSDoc
+- [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
 - [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
 - [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時の停止条件
