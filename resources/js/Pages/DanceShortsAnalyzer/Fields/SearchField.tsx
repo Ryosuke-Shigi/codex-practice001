@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 export type DanceShortsAnalyzerSearchFieldProps = {
     keyword: string;
     action: string;
+    analyze_action: string;
     placeholder: string;
     button_label: string;
 };

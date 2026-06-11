@@ -3,7 +3,7 @@ import type { DanceShortsAnalyzerVideoCard } from './CardsField';
 type SelectedFieldProps = {
     selectedVideos: DanceShortsAnalyzerVideoCard[];
     maxSelectedVideos: number;
-    onRemoveVideo: (youtubeVideoId: string) => void;
+    onRemoveVideo: (videoId: number) => void;
 };
 
 export default function SelectedField({
@@ -31,7 +31,7 @@ export default function SelectedField({
                                     key={video.youtube_video_id}
                                     type="button"
                                     onClick={() =>
-                                        onRemoveVideo(video.youtube_video_id)
+                                        onRemoveVideo(video.video_id)
                                     }
                                     className="flex min-h-14 w-44 shrink-0 items-center gap-2 rounded-lg border-4 border-blue-100 bg-blue-600/55 p-1.5 text-left shadow-[0_0_0_2px_rgba(147,197,253,0.34),0_12px_26px_rgba(29,78,216,0.28)] transition hover:bg-blue-500/68 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100"
                                 >

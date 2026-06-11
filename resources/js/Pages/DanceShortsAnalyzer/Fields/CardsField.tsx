@@ -31,9 +31,9 @@ type CardsFieldProps = {
     cardsField: DanceShortsAnalyzerCardsFieldProps;
     videos: DanceShortsAnalyzerVideoCard[];
     loading: boolean;
-    selectedVideoIds: string[];
+    selectedVideoIds: number[];
     maxSelectedVideos: number;
-    onToggleVideo: (youtubeVideoId: string) => void;
+    onToggleVideo: (videoId: number) => void;
     onSortChange: (sort: DanceShortsAnalyzerCardSort) => void;
     onLoadMore: () => void;
 };
@@ -105,7 +105,7 @@ export default function CardsField({
                     <div className="grid min-w-0 gap-2 pb-1">
                         {videos.map((video) => {
                             const isSelected = selectedVideoIds.includes(
-                                video.youtube_video_id,
+                                video.video_id,
                             );
                             const canSelect =
                                 isSelected ||
@@ -118,7 +118,7 @@ export default function CardsField({
                                     isSelected={isSelected}
                                     canSelect={canSelect}
                                     onToggle={() =>
-                                        onToggleVideo(video.youtube_video_id)
+                                        onToggleVideo(video.video_id)
                                     }
                                 />
                             );

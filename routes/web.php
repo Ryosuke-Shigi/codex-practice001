@@ -5,19 +5,20 @@ use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
+use App\Http\Controllers\DanceShortsAnalyzerAnalyzeController;
 use App\Http\Controllers\DanceShortsAnalyzerController;
-use App\Http\Controllers\DanceShortsRadarMockController;
-use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarController;
+use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
+use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\DesignPhilosophyController;
 use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
 use App\Http\Controllers\QuakeWavePreviewMapController;
 use App\Http\Controllers\QuakeWavePreviewMapMockController;
-use App\Http\Controllers\QuakeWavePreviewMapRefreshController;
 use App\Http\Controllers\QuakeWavePreviewMapPinSyncController;
 use App\Http\Controllers\QuakeWavePreviewMapPinSyncStatusController;
+use App\Http\Controllers\QuakeWavePreviewMapRefreshController;
 use App\Http\Controllers\QuakeWavePreviewXmlController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -364,6 +365,9 @@ Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class
 
 Route::get('/dance-shorts-analyzer', DanceShortsAnalyzerController::class)
     ->name('dance-shorts-analyzer.index');
+
+Route::get('/dance-shorts-analyzer/analyze', DanceShortsAnalyzerAnalyzeController::class)
+    ->name('dance-shorts-analyzer.analyze');
 
 Route::get('/dance-shorts-radar', DanceShortsRadarController::class)
     ->name('dance-shorts-radar.index');

@@ -1,0 +1,49 @@
+import type { DanceShortsAnalyzerSelectedVideo } from './AnalyzeField';
+
+type AnalyzeSelectedVideoFieldProps = {
+    selectedVideos: DanceShortsAnalyzerSelectedVideo[];
+};
+
+export default function AnalyzeSelectedVideoField({
+    selectedVideos,
+}: AnalyzeSelectedVideoFieldProps) {
+    return (
+        <div className="thumbnailRail min-w-0 overflow-x-auto overflow-y-hidden pb-1 max-sm:landscape:overflow-x-hidden max-sm:landscape:overflow-y-auto max-sm:landscape:pb-0">
+            <div className="flex min-w-max gap-1.5 max-sm:landscape:min-w-0 max-sm:landscape:flex-col">
+                {selectedVideos.map((video) => (
+                    // MOCK 契約では小サムネイルのクリック先を選択切替ではなく YouTube Shorts にします。
+                    <a
+                        key={video.video_id}
+                        href={video.youtube_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={[
+                            'w-16 shrink-0 rounded-md border bg-white/8 p-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 max-sm:landscape:w-full',
+                            video.is_active
+                                ? 'border-blue-300'
+                                : 'border-white/14',
+                        ].join(' ')}
+                    >
+                        <div className="aspect-video w-full overflow-hidden rounded-md bg-slate-900/80 max-sm:landscape:aspect-square">
+                            {video.thumbnail_url ? (
+                                <img
+                                    src={video.thumbnail_url}
+                                    alt=""
+                                    loading="lazy"
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-bold leading-3 text-blue-100/76">
+                                    {video.youtube_video_id}
+                                </div>
+                            )}
+                        </div>
+                        <p className="mt-0.5 truncate text-[10px] font-bold leading-3 text-white">
+                            {video.latest_snapshot?.region_code ?? '-'}
+                        </p>
+                    </a>
+                ))}
+            </div>
+        </div>
+    );
+}
