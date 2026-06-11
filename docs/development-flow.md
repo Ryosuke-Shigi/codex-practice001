@@ -12,6 +12,8 @@ MOCK / Prototypeのディレクトリ、Route、削除、Productとの物理的�
 
 MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへのUI移植は `docs/ui-development-flow.md` を正本とします。
 
+実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` を正本とします。
+
 ## 全体フロー
 
 ```text
@@ -98,7 +100,7 @@ PROTOTYPEでは、MOCKで作った画面同士の接続、導線、状態の受�
 - 本番業務ロジック
 - 正式なDB設計
 - 本番データ更新
-- 本番APIへの更新・削除
+- 本番APIへの変更操作
 - Productと同等の完成判定
 
 速度を優先して一気に作ってよいのはPrototypeまでです。ただし、速く作れたことを完成の根拠にしません。
@@ -125,6 +127,7 @@ Product化前に固定するもの:
 - 業務ルール・権限
 - 実装しないこと
 - 責務境界
+- 実装作法・型・コメント
 - テスト観点
 - MOCKから引き継ぐ画面単体のUI構造
 - PROTOTYPEから引き継ぐ画面間の導線
@@ -152,6 +155,8 @@ AGENTS.md / docs/index.mdで作業分類
     ↓
 UI作業では docs/ui-development-flow.md で引き継ぐUI契約を確認
     ↓
+docs/coding-standards.md と docs/commenting.md で実装作法・型・コメント条件を確認
+    ↓
 目的・入力・出力・実装しないことを固定
     ↓
 成功条件・失敗条件・責務境界を固定
@@ -164,7 +169,7 @@ ADR Pattern / レイヤード構成で実装
     ↓
 実装内容に合わせて必要な共通docs・feature docsを更新
     ↓
-対象テスト → 関連テスト → 全体テスト → build
+対象テスト → 関連テスト → format check → typecheck → 全体テスト → build
     ↓
 Pull Request・CI・差分・責務レビュー
     ↓
@@ -197,6 +202,8 @@ UI作業では、MOCKで画面単体を作り、PROTOTYPEで画面同士をつ�
 
 UI作業では、MOCKで確認したPage / Field / Component構成、PROTOTYPEで確認した導線、Productで置き換えたpropsをレビュー対象に含めます。
 
+実装作業では、型宣言、PHPDoc / JSDoc、nullable、`any`、型アサーション、format / typecheck の確認結果もレビュー対象に含めます。
+
 ## ハーネスエンジニアリング
 
 AIへ自由に実装させるのではなく、AIが速く動いても壊れにくく、間違いを検知しやすい環境を作ります。
@@ -209,7 +216,9 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 - DTOによるデータ契約
 - MOCK / PROTOTYPE / PRODUCTのUI契約
 - Action / Service / Repository / Responder / Componentの責務分離
+- Coding Standardsによる実装作法・型・命名の固定
 - テストによる実行可能な仕様
+- format check / typecheck / buildによる機械確認
 - Pull RequestとCIによる差分検証
 - 理解再起動用まとめによる次回作業の入口固定
 - 人間による完成判定・merge・本番反映判断
@@ -219,6 +228,8 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 - MOCK / Prototypeの配置・削除: `docs/prototype-policy.md`
 - MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
 - 責務境界: `docs/architecture.md`
+- 実装作法: `docs/coding-standards.md`
+- コメント: `docs/commenting.md`
 - テスト: `docs/testing.md`
 - UI: `docs/ui.md`
 - フロントエンド: `docs/frontend.md`
