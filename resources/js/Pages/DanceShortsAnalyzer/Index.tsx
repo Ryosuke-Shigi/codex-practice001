@@ -38,17 +38,17 @@ export default function DanceShortsAnalyzerIndex({
     );
     const [currentCardsField, setCurrentCardsField] = useState(cardsField);
     const [loading, setLoading] = useState(false);
-    const [selectedVideoIds, setSelectedVideoIds] = useState<string[]>([]);
+    const [selectedVideoIds, setSelectedVideoIds] = useState<number[]>([]);
     /*
-     * 選択状態は youtube_video_id だけで保持します。
-     * 追加取得で cards 配列が伸びても、表示に必要な動画情報は現在の videos から
-     * 引き直すことで、カード props を別の state に複製しないようにします。
+     * 選択状態は dance_short_videos の主キーで保持します。
+     * Analyze 画面では snapshot 取得対象を DB 側の動画単位で扱うため、
+     * YouTube video id ではなく video_id を query に渡します。
      */
     const selectedVideos = useMemo(
         () =>
             selectedVideoIds
                 .map((videoId) =>
-                    videos.find((video) => video.youtube_video_id === videoId),
+                    videos.find((video) => video.video_id === videoId),
                 )
                 .filter(
                     (video): video is DanceShortsAnalyzerVideoCard =>
@@ -138,15 +138,15 @@ export default function DanceShortsAnalyzerIndex({
         );
     };
 
-    const handleToggleVideo = (youtubeVideoId: string) => {
+    const handleToggleVideo = (videoId: number) => {
         /*
          * 選択はカードクリックでトグルし、最大5件を超える追加だけを止めます。
          * YouTube を開く操作は PR1 の検索カードには持たせません。
          */
         setSelectedVideoIds((currentVideoIds) => {
-            if (currentVideoIds.includes(youtubeVideoId)) {
+            if (currentVideoIds.includes(videoId)) {
                 return currentVideoIds.filter(
-                    (videoId) => videoId !== youtubeVideoId,
+                    (currentVideoId) => currentVideoId !== videoId,
                 );
             }
 
@@ -154,13 +154,13 @@ export default function DanceShortsAnalyzerIndex({
                 return currentVideoIds;
             }
 
-            return [...currentVideoIds, youtubeVideoId];
+            return [...currentVideoIds, videoId];
         });
     };
 
-    const handleRemoveVideo = (youtubeVideoId: string) => {
+    const handleRemoveVideo = (videoId: number) => {
         setSelectedVideoIds((currentVideoIds) =>
-            currentVideoIds.filter((videoId) => videoId !== youtubeVideoId),
+            currentVideoIds.filter((currentVideoId) => currentVideoId !== videoId),
         );
     };
 
@@ -212,12 +212,25 @@ export default function DanceShortsAnalyzerIndex({
                                 DanceShortsAnalyzer
                             </h1>
                         </div>
-                        <Link
-                            href="/lab"
-                            className="inline-flex min-h-10 max-w-[34vw] shrink-0 items-center justify-center rounded-lg border border-blue-100/35 bg-white/10 px-3 text-center text-xs font-bold leading-4 text-blue-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
-                        >
-                            Labに戻る
-                        </Link>
+                        <div className="flex min-h-10 shrink-0 items-center gap-2">
+                            <Link
+                                href="/lab"
+                                className="inline-flex min-h-10 max-w-[34vw] shrink-0 items-center justify-center rounded-lg border border-blue-100/35 bg-white/10 px-3 text-center text-xs font-bold leading-4 text-blue-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
+                            >
+                                Labに戻る
+                            </Link>
+                            {selectedVideoIds.length > 0 && (
+                                <Link
+                                    href={buildAnalyzeHref(
+                                        searchField.analyze_action,
+                                        selectedVideoIds,
+                                    )}
+                                    className="inline-flex min-h-10 max-w-[38vw] shrink-0 items-center justify-center rounded-lg border border-yellow-100 bg-yellow-300 px-3 text-center text-xs font-black leading-4 text-slate-950 shadow-[0_10px_22px_rgba(234,179,8,0.24)] transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
+                                >
+                                    Analyze
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </header>
                 <SelectedField
@@ -245,6 +258,17 @@ export default function DanceShortsAnalyzerIndex({
             </article>
         </PublicLayout>
     );
+}
+
+function buildAnalyzeHref(baseUrl: string, selectedVideoIds: number[]): string {
+    const searchParams = new URLSearchParams();
+
+    selectedVideoIds.forEach((videoId) => {
+        searchParams.append('video_ids[]', String(videoId));
+    });
+    searchParams.set('active_video_id', String(selectedVideoIds[0]));
+
+    return `${baseUrl}?${searchParams.toString()}`;
 }
 
 function appendUniqueVideos(

@@ -7,7 +7,7 @@ use App\DTO\DanceShortsAnalyzer\Search\DanceShortsAnalyzerVideoDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/*
+/**
  * DanceShortsAnalyzer PRODUCT 画面の Responder です。
  *
  * Query Action の結果を SearchField / CardsField 用 props へ変換します。
@@ -28,6 +28,7 @@ final readonly class DanceShortsAnalyzerSearchResponder
      * @return array{
      *     keyword: string,
      *     action: string,
+     *     analyze_action: string,
      *     placeholder: string,
      *     button_label: string
      * }
@@ -37,6 +38,7 @@ final readonly class DanceShortsAnalyzerSearchResponder
         return [
             'keyword' => $result->keyword ?? '',
             'action' => route('dance-shorts-analyzer.index', [], false),
+            'analyze_action' => route('dance-shorts-analyzer.analyze', [], false),
             'placeholder' => 'キーワード入力',
             'button_label' => 'Search',
         ];

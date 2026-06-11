@@ -105,6 +105,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | 文書 | 対象 |
 |---|---|
 | `docs/features/api-discovery-hub.md` | API Discovery Hubの同期、検索、保存メモ、テスト固定仕様 |
+| `docs/features/dance-shorts-analyzer.md` | DanceShortsAnalyzerの保存済み動画検索、Analyze表示、snapshot計算、テスト固定仕様 |
 | `docs/features/dance-shorts-radar.md` | DanceShortsRadarの同期、ランキング、テスト固定仕様 |
 | `docs/features/japan-quake-wave-map.md` | Japan Quake Wave Mapのfeed、XML、map pin、status API |
 

@@ -2,35 +2,37 @@
 
 namespace App\Providers;
 
-use App\Repositories\ApiCatalog\ApisGuruRepository;
-use App\Repositories\ApiCatalog\ApisGuruRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepository;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogNoteRepository;
 use App\Repositories\ApiCatalog\ApiCatalogNoteRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepository;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
+use App\Repositories\ApiCatalog\ApisGuruRepository;
+use App\Repositories\ApiCatalog\ApisGuruRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
+use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoAnalysisRepository;
+use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoAnalysisRepositoryInterface;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepository;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepository;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepositoryInterface;
-use App\Repositories\DanceShortsRadar\DanceShortVideoRepository;
-use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRepository;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepository;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
-use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepository;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepository;
@@ -67,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
          * Search + Cards の PRODUCT 入口では YouTube API、snapshot、region、search_keywords を読みません。
          */
         $this->app->bind(DanceShortsAnalyzerVideoRepositoryInterface::class, DanceShortsAnalyzerVideoRepository::class);
+        $this->app->bind(DanceShortsAnalyzerVideoAnalysisRepositoryInterface::class, DanceShortsAnalyzerVideoAnalysisRepository::class);
 
         /*
          * DanceShortsRadar 側の YouTube 関連依存です。
