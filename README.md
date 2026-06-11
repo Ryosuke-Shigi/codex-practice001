@@ -251,3 +251,4 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
 - [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
 - [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時の停止条件
+- [Coding Standards](docs/coding-standards.md): PHP / TypeScript / JavaScript / React / CSSの実装作法
