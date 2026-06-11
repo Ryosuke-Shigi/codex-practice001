@@ -44,7 +44,27 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Fetch pull request base
+        if: github.event_name == 'pull_request'
+        run: git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+
+      - name: Check changed PHP formatting
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          mapfile -t php_files < <(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- '*.php')
+
+          if [ "${#php_files[@]}" -eq 0 ]; then
+            echo "No PHP files changed; skipping Pint."
+            exit 0
+          fi
+
+          printf 'Changed PHP files:\n'
+          printf '%s\n' "${php_files[@]}"
+          composer format-check -- "${php_files[@]}"
+
       - name: Check PHP formatting
+        if: github.event_name != 'pull_request'
         run: composer format-check
 
       - name: Build frontend assets
