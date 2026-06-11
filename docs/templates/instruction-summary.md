@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-12
 
 ## このテンプレートの目的
 
@@ -18,6 +18,7 @@
 - 実装しないことを必ず書く
 - 成功条件と失敗条件を必ず書く
 - TDD / テスト観点を必ず書く
+- 実装作法・型・コメントの確認観点を必ず書く
 - 確認コマンドを必ず書く
 - docs更新要否を必ず書く
 - 推測や未確認事項を断定しない
@@ -38,6 +39,7 @@
 
 前提：
 - 共通方針は `AGENTS.md` と `docs/index.md` に従う
+- 実装作法は `docs/coding-standards.md`、コメントは `docs/commenting.md` に従う
 - <今回読む必要がある共通docs>
 - <今回読む必要があるdocs/features>
 - <検証済みの現在状態>
@@ -67,6 +69,13 @@
 - Common Component：<業務非依存UI>
 - <使わない責務は削除する。不要な層は追加しない>
 
+実装作法・型・コメント：
+- PHP：<型宣言、PHPDoc、@param / @return / @throws、Pint確認>
+- TypeScript：<props型、nullable、any禁止、type/interface、型アサーション>
+- JavaScript：<JSを増やす場合の理由、jQuery混在有無>
+- React / UI：<Component責務、Common化、UI状態、アクセシビリティ>
+- CSS / Tailwind：<className、responsive、inline style、z-index>
+
 実装しないこと：
 - <今回対象外の機能・ファイル・設計変更>
 - <代替実装として勝手に採用してはいけないもの>
@@ -84,7 +93,12 @@ README / docs 更新要否：
 - AGENTS.md：<更新内容または不要な理由>
 
 確認コマンド：
-- `<command>`
+- `composer format-check`
+- `php artisan test`
+- `npm run typecheck`
+- `npm run test:run`
+- `npm run build`
+- <今回不要なコマンドは理由を書いて削る>
 
 実装順：
 1. <最初に確認すること>
@@ -109,6 +123,7 @@ README / docs 更新要否：
 - 今回の対象
 - 今回の成功条件・失敗条件
 - 今回の責務境界
+- 今回の実装作法・型・コメントの確認観点
 - 今回実装しないこと
 - 今回必要なテスト
 - 今回の確認コマンド
@@ -119,6 +134,7 @@ README / docs 更新要否：
 - 共通アーキテクチャ
 - 共通DTO方針
 - 共通UI方針
+- 共通実装作法
 - 共通コメント方針
 - 共通セキュリティ方針
 - MOCK / Prototype / Productの共通定義
