@@ -5,7 +5,8 @@
         "build": "vite build",
         "dev": "vite",
         "test": "vitest",
-        "test:run": "vitest run"
+        "test:run": "vitest run",
+        "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
         "@inertiajs/react": "^2.0.0",
