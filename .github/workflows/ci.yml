@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -44,15 +46,16 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Fetch pull request base
-        if: github.event_name == 'pull_request'
-        run: git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
-
       - name: Check changed PHP formatting
-        if: github.event_name == 'pull_request'
         shell: bash
         run: |
-          mapfile -t php_files < <(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- '*.php')
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            compare_range="origin/${{ github.base_ref }}...HEAD"
+          else
+            compare_range="${{ github.event.before }}..HEAD"
+          fi
+
+          mapfile -t php_files < <(git diff --name-only --diff-filter=ACMR "$compare_range" -- '*.php')
 
           if [ "${#php_files[@]}" -eq 0 ]; then
             echo "No PHP files changed; skipping Pint."
@@ -62,10 +65,6 @@ jobs:
           printf 'Changed PHP files:\n'
           printf '%s\n' "${php_files[@]}"
           composer format-check -- "${php_files[@]}"
-
-      - name: Check PHP formatting
-        if: github.event_name != 'pull_request'
-        run: composer format-check
 
       - name: Build frontend assets
         run: npm run build
