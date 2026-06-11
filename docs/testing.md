@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-12
 
 ## このドキュメントの目的
 
@@ -11,6 +11,8 @@
 テストは、既存仕様の破壊を検知し、AIエージェントへ毎回コード全体を説明する必要を減らすための実行可能な仕様として扱います。
 
 機能固有のテスト固定内容は `docs/features/` に置き、この文書には複数機能へ共通する基準だけを置きます。
+
+実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` に従います。
 
 ## 基本方針
 
@@ -23,7 +25,7 @@
 
 テストで主に確認するのは「期待する仕様が壊れていないか」です。
 
-「責務分離が崩れていないか」「不要な抽象化が増えていないか」は、差分レビューで確認します。
+「責務分離が崩れていないか」「不要な抽象化が増えていないか」「実装作法・型・コメントが妥当か」は、差分レビューで確認します。
 
 ## テストにも責務境界を適用する
 
@@ -285,8 +287,6 @@ FeatureテストへServiceの細かい全分岐を重複して書きません。
 
 ### 後追い固定テスト
 
-実装後に仕様が見えた段階で、細かい挙動を固定します。
-
 - 並び順
 - pagination props
 - return URL
@@ -371,6 +371,10 @@ tests/Fakes/
     ↓
 Laravel全体
     ↓
+PHP format check
+    ↓
+TypeScript typecheck
+    ↓
 Vitest
     ↓
 Frontend build
@@ -381,6 +385,7 @@ Frontend build
 Laravel:
 
 ```bash
+composer format-check
 php artisan test
 php artisan test tests/Unit
 php artisan test tests/Feature
@@ -390,6 +395,7 @@ php artisan test tests/Unit/ExampleTest.php
 Frontend:
 
 ```bash
+npm run typecheck
 npm run test:run
 npm run build
 ```
@@ -426,3 +432,4 @@ AIの判断だけで期待値を書き換えません。
 - 不要な依存・過剰な抽象化
 - 機能固有仕様が共通docsへ混ざっていないか
 - テストが実装詳細ではなく仕様を固定しているか
+- 実装作法、型、コメントが `docs/coding-standards.md` と `docs/commenting.md` に沿っているか
