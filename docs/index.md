@@ -89,6 +89,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへのUI移植 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
+| `docs/coding-standards.md` | PHP / TypeScript / JavaScript / React / CSS の実装作法、型、命名、確認コマンド |
 | `docs/testing.md` | テスト追加、仕様固定、CI確認 |
 | `docs/frontend.md` | React / Inertia / TypeScript、props、Component責務 |
 | `docs/ui.md` | UI、Common、モバイル、操作、Effects |
