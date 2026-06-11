@@ -229,6 +229,8 @@ npm run test:run
 npm run build
 ```
 
+`npm run typecheck` は、TypeScript / TSX を変更した場合の確認コマンドです。現時点ではCI必須ゲートではありません。
+
 formatを適用する場合:
 
 ```bash
@@ -240,10 +242,11 @@ composer format
 Pull Requestとmainへのpushでは、少なくとも次を確認します。
 
 - Laravel Pint check
-- TypeScript typecheck
 - frontend build
 - Laravel tests
 - Vitest
+
+TypeScript typecheck は、既存の型エラー解消と運用確認が完了するまでCI必須ゲートにはしません。TypeScript / TSX を変更するPRでは、必要に応じて手元または個別PRで `npm run typecheck` を確認します。
 
 CIが通っても責務境界が正しいとは判断しません。責務、型、コメント、テスト、docs更新は差分レビューでも確認します。
 
