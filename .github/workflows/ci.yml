@@ -44,6 +44,12 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Check PHP formatting
+        run: composer format-check
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
       - name: Build frontend assets
         run: npm run build
 
