@@ -2,11 +2,13 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-12
 
 このドキュメントは、通常コメント・PHPDoc・JSDocの書き方を固定するためのものです。
 
 コメントは、初見の人が主要処理の目的・責務・判断理由・制約を追えるようにするために使います。処理内容を変えたり、テストや設計整理の代替にしたりしません。
+
+実装作法、型、命名、確認コマンドは `docs/coding-standards.md` に従います。
 
 ## 基本方針
 
@@ -32,6 +34,41 @@ PHPでは、次の箇所にコメント追加を検討します。
 
 DTO / ListDTO には、データキャリアとしての責務を説明するコメントは置いてよいです。ただし、DBアクセス、業務判断、HTTPレスポンス生成、JSONレスポンス生成、View / Inertia / React 用の表示判断を正当化するコメントは書きません。
 
+### PHPDocを付ける対象
+
+次のクラスでは、責務がクラス名だけで明確でない場合にクラスPHPDocを付けます。
+
+- Action
+- Service
+- Repository
+- Responder / Presenter
+- DTO / ListDTO
+- Factory
+- Strategy
+- Event / Listener
+- Job
+- Artisan Command
+
+次の公開メソッドでは、シグネチャだけで目的、引数の意味、返り値の用途、例外条件が読み取れない場合にPHPDocを付けます。
+
+- Actionの `__invoke`
+- Serviceの公開メソッド
+- Repositoryの公開メソッド
+- Responder / Presenterの公開メソッド
+- Factory / Strategyの公開メソッド
+- DTO / ListDTOの生成系メソッド、`toArray()`
+- Job / Artisan Command の実行入口
+
+### `@param` / `@return` / `@throws`
+
+`@param` は、型宣言だけでは引数の業務上の意味、IDの基準、nullable、empty、外部API由来値の扱いが分からない場合に使います。
+
+`@return` は、返り値の用途、配列shape、nullable、empty、ResultDTOの意味がシグネチャだけでは分からない場合に使います。
+
+`@throws` は、呼び出し側が例外を扱う必要がある場合、または外部API・DB・業務状態によって失敗条件を明示すべき場合に使います。
+
+ただし、PHPの型宣言と完全に重複するだけのPHPDocは追加しません。
+
 ## TypeScript / React
 
 TypeScript と React では、次の箇所にコメント追加を検討します。
@@ -42,7 +79,7 @@ TypeScript と React では、次の箇所にコメント追加を検討しま�
 - 表示用の変換やキャッシュが、サーバー側責務と混同されやすい箇所
 - 外部ライブラリやブラウザAPIの制約に合わせた実装理由を残す必要がある箇所
 
-JSDocは、公開されるutilityや複雑なHookなど、呼び出し側が責務・制約を知る必要がある場合に使います。propsの型から明らかな説明は重複して書きません。
+JSDocは、公開されるUtilityや複雑なHookなど、呼び出し側が責務・制約を知る必要がある場合に使います。propsの型から明らかな説明は重複して書きません。
 
 ## テスト
 
