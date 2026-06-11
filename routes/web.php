@@ -227,6 +227,26 @@ Route::get('/lab', function () {
         ],
         [
             /*
+             * Dance Shorts Analyzer の表示専用モックです。
+             * Search / Analyze の Field 切り替え、最大5件選択、12時間枠の表表示だけを確認します。
+             * 本体ルート、DB取得、YouTube API、Action / Service / Repository / DTO / Responder は追加しません。
+             */
+            'id' => 'dance-shorts-analyzer-mock',
+            'title' => 'DanceShortsAnalyzer MOCK',
+            'summary' => '保存済み動画を検索して複数選択し、12時間枠の増加量と1時間あたり増加量を仮データで確認する画面モックです。',
+            'status' => 'Mock',
+            'category' => 'MOCK',
+            'href' => '/lab/dance-shorts-analyzer-mock',
+            'actionLabel' => 'モックを見る',
+            'tags' => [
+                'Search / Analyze',
+                'ECharts',
+                '12時間枠',
+                'API未接続',
+            ],
+        ],
+        [
+            /*
              * Dance Shorts Radar の YouTube API 疎通前モックです。
              * API接続、DB保存、snapshot保存は行わず、固定データだけで候補一覧の見え方を確認します。
              */
@@ -312,6 +332,11 @@ Route::get('/lab/dance-shorts-radar-idea-board', function () {
 Route::get('/lab/dance-shorts-analyzer-idea-board', function () {
     return Inertia::render('Lab/DanceShortsAnalyzer');
 })->name('lab.dance-shorts-analyzer-idea-board');
+
+Route::get('/lab/dance-shorts-analyzer-mock', function () {
+    // 表示専用MOCKです。本体分析、DB取得、YouTube API取得は行いません。
+    return Inertia::render('Lab/DanceShortsAnalyzerMock');
+})->name('lab.dance-shorts-analyzer-mock');
 
 Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class)
     ->name('lab.dance-shorts-radar-mock');
