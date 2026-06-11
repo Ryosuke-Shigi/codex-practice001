@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
+use App\Http\Controllers\DanceShortsAnalyzerController;
 use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarController;
@@ -55,6 +56,26 @@ Route::get('/lab', function () {
             'status' => 'Preview',
             'category' => 'PROJECT',
             'href' => '/api-catalog',
+        ],
+        [
+            /*
+             * DanceShortsAnalyzer の PRODUCT 検索画面です。
+             * PR1 の範囲は保存済み dance_short_videos の keyword 検索とカード表示だけに限定します。
+             */
+            'id' => 'dance-shorts-analyzer',
+            'title' => 'DanceShortsAnalyzer 保存済み動画検索',
+            'summary' => '保存済みYouTube Shortsをキーワードで検索し、20件ずつカード表示するAnalyzer本体入口です。',
+            'status' => 'Preview',
+            'category' => 'PROJECT',
+            'href' => '/dance-shorts-analyzer',
+            'actionLabel' => '検索する',
+            'tags' => [
+                'Shorts',
+                'Search',
+                'Cards',
+                'DTO',
+                'Responder',
+            ],
         ],
         [
             /*
@@ -340,6 +361,9 @@ Route::get('/lab/dance-shorts-analyzer-mock', function () {
 
 Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class)
     ->name('lab.dance-shorts-radar-mock');
+
+Route::get('/dance-shorts-analyzer', DanceShortsAnalyzerController::class)
+    ->name('dance-shorts-analyzer.index');
 
 Route::get('/dance-shorts-radar', DanceShortsRadarController::class)
     ->name('dance-shorts-radar.index');

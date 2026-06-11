@@ -12,6 +12,8 @@ use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepository;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
+use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepository;
+use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepository;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
@@ -59,6 +61,12 @@ class AppServiceProvider extends ServiceProvider
          * Action は Interface に依存し、実 HTTP 通信は ApisGuruPreviewRepository が担当します。
          */
         $this->app->bind(ApisGuruPreviewRepositoryInterface::class, ApisGuruPreviewRepository::class);
+
+        /*
+         * DanceShortsAnalyzer 側は保存済み動画の検索だけを担当します。
+         * Search + Cards の PRODUCT 入口では YouTube API、snapshot、region、search_keywords を読みません。
+         */
+        $this->app->bind(DanceShortsAnalyzerVideoRepositoryInterface::class, DanceShortsAnalyzerVideoRepository::class);
 
         /*
          * DanceShortsRadar 側の YouTube 関連依存です。
