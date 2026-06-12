@@ -25,6 +25,7 @@
 - MOCK / Prototypeの配置・削除・分離: `docs/prototype-policy.md`
 - ADR Pattern・レイヤード責務: `docs/architecture.md`
 - Docker経由コマンド・Git境界: `docs/operations/command-registry.md`
+- PRレビュー強度: `docs/operations/pr-review-strength.md`
 - 実装作法・型・命名・確認コマンド: `docs/coding-standards.md`
 - テスト・TDD・CI確認: `docs/testing.md`
 - React / Inertia / TypeScript: `docs/frontend.md`
@@ -80,6 +81,7 @@ Repositoryへ業務判断や表示判断を置かない。ServiceへDB直接操�
 - CIログ、コマンド名、エラー文、固有名詞は原文のまま残してよい
 - 実装後は差分、必要なテスト、CI、秘密情報、docs更新を確認する
 - 実装後は `docs/operations/command-registry.md` に従い、`git diff --check` と必要なテストを実行する
+- PR確認時は `docs/operations/pr-review-strength.md` に従い、目的・変更ファイル・影響範囲・レビュー強度・必要な確認コマンド・読むdocs・読まないdocsを先に判定する
 - mergeは人間の明示判断で行う
 
 ## 作業と停止条件
