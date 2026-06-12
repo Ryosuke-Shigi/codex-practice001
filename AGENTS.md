@@ -84,6 +84,9 @@ Repositoryへ業務判断や表示判断を置かない。ServiceへDB直接操�
 - 最小差分で修正し、不要なリファクタリングを混ぜない
 - 仕様にない機能や代替実装を勝手に追加しない
 - PrototypeコードをそのままProductへ昇格しない
+- UI作業では `docs/ui-development-flow.md` を確認し、MOCK / PROTOTYPE のコードではなくUI契約・振る舞い・状態・導線をProductへ引き継ぐ
+- Product化では、PROTOTYPEで確認した振る舞いを先にTestへ固定してから実装する
+- コメント・PHPDoc・`docs/features/`・Test の役割分担は `docs/commenting.md` と `docs/testing.md` に従う
 - Productは1機能・1ユースケース単位で追加する
 - 機能固有条件は共通docsではなく `docs/features/` に置く
 

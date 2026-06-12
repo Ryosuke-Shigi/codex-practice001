@@ -10,7 +10,7 @@
 
 開発段階の目的・完成条件・遷移条件は `docs/development-flow.md` を正本とします。
 
-MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへのUI移植は `docs/ui-development-flow.md` を正本とします。
+MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへ引き継ぐUI契約は `docs/ui-development-flow.md` を正本とします。
 
 ## 配置
 
@@ -59,7 +59,7 @@ Prototype用Routeは `routes/prototypes.php` に分離します。
 
 Common Componentの詳細は `docs/ui.md` に従います。
 
-UI構造の複製・移動可否は `docs/ui-development-flow.md` に従います。
+UI契約の引き継ぎ方は `docs/ui-development-flow.md` に従います。
 
 ## Product化
 
@@ -79,7 +79,7 @@ Product化前に次を抽出します。
 - MOCKから引き継ぐPage / Field / Component構成
 - PROTOTYPEから引き継ぐ画面間の接続と状態受け渡し
 
-UI構造は、必要に応じてMOCK / PROTOTYPE側からProduct側へ複製または移動してよいものとします。
+UI構造、導線、状態、振る舞いは、MOCK / PROTOTYPEを参照しながらProductの責務に合わせて再実装します。
 
 ただし、固定データ、仮データ、簡易通信、検証用Route、検証用Controller、仮ロジックをそのままProductへ昇格しません。
 
