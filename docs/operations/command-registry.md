@@ -26,6 +26,9 @@
 - `npm` service の存在を確認済み
 - `queue` service の存在を確認済み
 - `scheduler` service の存在を確認済み
+- `composer` service の存在を確認済み
+- `docker compose run --rm composer --version` で `composer` service 経由の Composer 起動を確認済み
+- `docker compose exec php-fpm composer --version` で `php-fpm` 内の Composer 起動を確認済み
 - `/src` 側に `artisan` が存在することを確認済み
 - `/src/package.json` の scripts を確認済み
 - `/src/composer.json` の scripts を確認済み
@@ -48,7 +51,7 @@
 - `format`
 - `format-check`
 
-ここでの「確認済み」は、ファイル上の存在確認です。実行結果を確認していないコマンドは、成功すると断定しません。
+ここでの「確認済み」は、service、ファイル、script、または実行経路の確認を指します。個別の確認コマンドが成功するかは、実際に実行した結果を報告します。実行していないコマンドは成功扱いしません。
 
 ## root / `/src` のGit境界
 
@@ -173,10 +176,14 @@ docker compose exec php-fpm php artisan test
 
 PHP format check が必要な場合は、`/src/composer.json` に存在する script だけを使います。
 
+`composer` service 経由の Composer 起動は確認済みのため、標準の実行経路は次です。
+
 ```bash
 cd /var/www/api-discovery-hub
 docker compose run --rm composer format-check
 ```
+
+`php-fpm` 内の Composer 起動も確認済みですが、標準経路は `composer` service とします。`composer` service が使えない場合だけ、理由と確認結果を明記して別経路を検討します。
 
 route / migration / config の確認が必要な場合:
 
@@ -187,7 +194,7 @@ docker compose exec php-fpm php artisan migrate:status
 docker compose exec php-fpm php artisan optimize:clear
 ```
 
-Composer scripts は `/src/composer.json` 上で存在を確認済みですが、実行方法や必要性は作業内容ごとに確認します。未実行の Composer コマンドを成功扱いしません。
+Composer scripts は `/src/composer.json` 上で存在を確認済みです。ただし、`format` / `format-check` の成否はその時点のPHPコード状態に依存するため、未実行の Composer コマンドを成功扱いしません。
 
 ## React / TypeScript変更時の確認
 
@@ -258,6 +265,7 @@ docker compose logs --tail=100 php-fpm
 - `package.json` に存在しない npm script
 - `composer.json` に存在しない composer script
 - この台帳や既存docsに記載がない Docker service
+- Docker Compose service 名だけ確認し、実際の起動または利用可否を確認していない実行経路
 - 本番環境の deploy / restart / migrate コマンド
 - Makefile や Compose service に存在していても、今回の作業ルールとして採用する確認が取れていないショートカット
 
