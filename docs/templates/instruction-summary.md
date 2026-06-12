@@ -95,9 +95,9 @@ README / docs 更新要否：
 確認コマンド：
 - `composer format-check`
 - `php artisan test`
-- `npm run typecheck`
 - `npm run test:run`
 - `npm run build`
+- TypeScript / TSX変更時に必要な場合のみ `npm run typecheck`
 - <今回不要なコマンドは理由を書いて削る>
 
 実装順：

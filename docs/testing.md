@@ -373,7 +373,7 @@ Laravel全体
     ↓
 PHP format check
     ↓
-TypeScript typecheck
+TypeScript / TSX変更時のtypecheck
     ↓
 Vitest
     ↓
@@ -395,12 +395,30 @@ php artisan test tests/Unit/ExampleTest.php
 Frontend:
 
 ```bash
-npm run typecheck
 npm run test:run
 npm run build
 ```
 
+TypeScript / TSXを変更した場合は、必要に応じて手元確認として次を実行します。
+
+```bash
+npm run typecheck
+```
+
 Docker構成から実行する場合は、リポジトリの運用手順に従います。
+
+## CI必須ゲート
+
+現在のCI必須ゲートは次の確認です。
+
+- Laravel Pint check
+- frontend build
+- Laravel tests
+- Vitest
+
+`composer format-check` は `pint --test` を実行する前提です。CIを通すために `pint --test --dirty` へ弱めません。
+
+`npm run typecheck` は削除しませんが、既存型エラーが残っている間はCI必須ゲートに戻しません。TypeScript / TSX変更時の手元確認コマンドとして扱います。
 
 ## AIエージェントでの使い方
 

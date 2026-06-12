@@ -211,11 +211,13 @@ docker compose run --rm npm run test:run
 docker compose run --rm npm run build
 ```
 
+TypeScript / TSXを変更した場合は、必要に応じて手元確認として `npm run typecheck` を実行します。現時点ではCI必須ゲートではありません。
+
 詳細は [Testing](docs/testing.md) を参照してください。
 
 ## CI/CD
 
-Pull Requestとmainへのpushで、Laravel test、Vitest、frontend buildを実行します。
+Pull Requestとmainへのpushで、Laravel Pint check、frontend build、Laravel tests、Vitestを実行します。TypeScript typecheckは現時点ではCI必須ゲートではありません。
 
 DeployはCI成功後にだけ実行され、build済みassetsをAWS Lightsailの公開環境へ反映します。CIが失敗した場合はDeployしません。
 
@@ -242,6 +244,7 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [AGENTS.md](AGENTS.md): 作業時に守る入口ルール
 - [Documentation Index](docs/index.md): 用途別の正本と参照先
 - [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
+- [UI Development Flow](docs/ui-development-flow.md): MOCK / PROTOTYPE / PRODUCTのUI作成工程
 - [Architecture](docs/architecture.md): ADR Patternとレイヤード責務
 - [Testing](docs/testing.md): テスト方針と仕様固定
 - [Frontend](docs/frontend.md): React / Inertia / TypeScriptの実装責務
