@@ -55,5 +55,4 @@ class DanceShortVideoTrackingService
          */
         return self::STATUS_ACTIVE;
     }
-
 }

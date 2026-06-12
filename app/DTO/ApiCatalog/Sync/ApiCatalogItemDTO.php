@@ -18,6 +18,5 @@ final readonly class ApiCatalogItemDTO
         public ?string $openapiVersion,
         public ?CarbonImmutable $sourceLatestUpdatedAt,
         public string $payloadHash,
-    ) {
-    }
+    ) {}
 }

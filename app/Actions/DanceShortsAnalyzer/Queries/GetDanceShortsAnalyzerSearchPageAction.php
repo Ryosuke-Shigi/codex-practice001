@@ -17,8 +17,7 @@ class GetDanceShortsAnalyzerSearchPageAction
 {
     public function __construct(
         private readonly DanceShortsAnalyzerVideoRepositoryInterface $videoRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * PRODUCT 検索画面に必要な Search + Cards 用 DTO を返します。

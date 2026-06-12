@@ -24,6 +24,7 @@ final readonly class EarthquakeMapPinListQueryDTOFactory
         }
 
         $defaultRange = $this->defaultDateRange();
+
         return new EarthquakeMapPinListQueryDTO(
             limit: $limit,
             startDate: $filledStartDate ?? $defaultRange['startDate'],

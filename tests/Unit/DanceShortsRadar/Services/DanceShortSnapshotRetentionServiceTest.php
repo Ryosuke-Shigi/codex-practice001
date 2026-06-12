@@ -10,7 +10,7 @@ class DanceShortSnapshotRetentionServiceTest extends TestCase
 {
     public function test_retention_days_default_to_thirty_five_days_for_thirty_day_comparison_with_buffer(): void
     {
-        $service = new DanceShortSnapshotRetentionService();
+        $service = new DanceShortSnapshotRetentionService;
 
         $this->assertSame(30, $service->maxComparisonDays());
         $this->assertSame(35, $service->retentionDays());
@@ -20,7 +20,7 @@ class DanceShortSnapshotRetentionServiceTest extends TestCase
 
     public function test_invalid_or_too_short_retention_is_forced_to_safe_default(): void
     {
-        $service = new DanceShortSnapshotRetentionService();
+        $service = new DanceShortSnapshotRetentionService;
 
         $this->assertSame(35, $service->retentionDays(29));
         $this->assertSame(35, $service->retentionDays(0));
@@ -29,7 +29,7 @@ class DanceShortSnapshotRetentionServiceTest extends TestCase
 
     public function test_cutoff_date_is_calculated_from_retention_days(): void
     {
-        $service = new DanceShortSnapshotRetentionService();
+        $service = new DanceShortSnapshotRetentionService;
 
         $cutoff = $service->cutoffAt(
             now: CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),

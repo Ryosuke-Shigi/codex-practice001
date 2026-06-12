@@ -24,8 +24,7 @@ final readonly class EarthquakeExtractedEntryDTO
         public ?string $xmlUrl,
         public ?string $rawCategory,
         public ?string $rawAuthor,
-    ) {
-    }
+    ) {}
 
     public static function fromXmlEntryPreview(EarthquakeXmlEntryPreviewDTO $entry): self
     {

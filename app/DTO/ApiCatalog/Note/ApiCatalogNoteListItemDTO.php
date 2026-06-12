@@ -12,8 +12,7 @@ final readonly class ApiCatalogNoteListItemDTO
         public string $body,
         public ?string $createdAt,
         public ?string $updatedAt,
-    ) {
-    }
+    ) {}
 
     public static function fromModel(ApiCatalogNote $note): self
     {

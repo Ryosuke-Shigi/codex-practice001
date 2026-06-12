@@ -36,8 +36,7 @@ final readonly class YouTubeVideoDetailDTO
         public ?int $viewCount,
         public ?int $likeCount,
         public ?int $commentCount,
-    ) {
-    }
+    ) {}
 
     /**
      * videos.list から切り出した値だけを camelCase の配列へ変換します。

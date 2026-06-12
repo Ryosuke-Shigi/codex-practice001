@@ -13,8 +13,7 @@ final readonly class GetApiCatalogListAction
 {
     public function __construct(
         private ApiCatalogCacheRepositoryInterface $repository,
-    ) {
-    }
+    ) {}
 
     public function execute(ApiCatalogListQueryDTO $query): ApiCatalogListResultDTO
     {
@@ -64,8 +63,7 @@ final readonly class GetApiCatalogListAction
     private function resolveExistingPage(
         ApiCatalogListQueryDTO $query,
         LengthAwarePaginator $paginator,
-    ): LengthAwarePaginator
-    {
+    ): LengthAwarePaginator {
         $lastPage = max(1, $paginator->lastPage());
 
         /*

@@ -12,8 +12,7 @@ final readonly class UpdateApiCatalogNoteAction
     public function __construct(
         private ApiCatalogCacheRepositoryInterface $cacheRepository,
         private ApiCatalogNoteRepositoryInterface $noteRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(
         string $apiKey,

@@ -15,8 +15,7 @@ final readonly class DanceShortRankingDisplayCardDTO
 {
     public function __construct(
         public DanceShortVideoRankingItemDTO $rankingItem,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{type: string, rankingItem: array<string, bool|int|float|string|null>}

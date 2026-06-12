@@ -36,8 +36,7 @@ class GetDanceShortVideoRankingPageAction
         private readonly DanceShortDisplayCardTabService $displayCardTabService,
         private readonly DanceShortDisplayCardWindowService $displayCardWindowService,
         private readonly DanceShortDisplayCardStrategyFactory $displayCardStrategyFactory,
-    ) {
-    }
+    ) {}
 
     public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortVideoRankingPageDTO
     {

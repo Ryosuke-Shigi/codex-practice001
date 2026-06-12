@@ -15,6 +15,5 @@ final readonly class DanceShortVideoRegionSaveDTO
         public int $video_id,
         public int $region_id,
         public CarbonInterface $detected_at,
-    ) {
-    }
+    ) {}
 }

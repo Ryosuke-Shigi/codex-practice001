@@ -29,8 +29,7 @@ final readonly class DanceShortVideoSaveDTO
         public ?string $default_audio_language,
         public ?string $live_broadcast_content,
         public ?bool $embeddable,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

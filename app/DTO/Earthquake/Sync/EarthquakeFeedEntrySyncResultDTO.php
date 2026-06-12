@@ -26,8 +26,7 @@ final readonly class EarthquakeFeedEntrySyncResultDTO
         public ?string $errorMessage,
         public ?CarbonInterface $startedAt,
         public ?CarbonInterface $finishedAt,
-    ) {
-    }
+    ) {}
 
     public static function fromModel(EarthquakeFeedEntrySyncRun $syncRun): self
     {

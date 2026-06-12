@@ -9,8 +9,7 @@ class ListApiPreviewsAction
 {
     public function __construct(
         private readonly ApiPreviewResponder $responder,
-    ) {
-    }
+    ) {}
 
     public function execute(): Response
     {

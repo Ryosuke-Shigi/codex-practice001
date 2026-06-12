@@ -103,6 +103,6 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
 
     private function service(): DanceShortSnapshotMetricService
     {
-        return new DanceShortSnapshotMetricService();
+        return new DanceShortSnapshotMetricService;
     }
 }

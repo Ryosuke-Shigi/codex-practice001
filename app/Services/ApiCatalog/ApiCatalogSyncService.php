@@ -20,8 +20,7 @@ class ApiCatalogSyncService
     public function __construct(
         private readonly ApisGuruRepositoryInterface $apisGuruRepository,
         private readonly ApiCatalogCacheRepositoryInterface $cacheRepository,
-    ) {
-    }
+    ) {}
 
     public function sync(): ApiCatalogSyncResultDTO
     {
@@ -38,6 +37,7 @@ class ApiCatalogSyncService
         foreach ($apiList as $apiKey => $apiPayload) {
             if (! is_string($apiKey)) {
                 $failedCount++;
+
                 continue;
             }
 
@@ -45,6 +45,7 @@ class ApiCatalogSyncService
 
             if (! is_array($apiPayload)) {
                 $failedCount++;
+
                 continue;
             }
 
@@ -55,12 +56,14 @@ class ApiCatalogSyncService
                 if ($existing === null) {
                     $this->cacheRepository->insert($item, $syncedAt);
                     $insertedCount++;
+
                     continue;
                 }
 
                 if ($this->shouldUpdate($existing, $item)) {
                     $this->cacheRepository->update($existing, $item, $syncedAt);
                     $updatedCount++;
+
                     continue;
                 }
 
@@ -132,7 +135,6 @@ class ApiCatalogSyncService
 
     /**
      * @param  array<string, mixed>  $apiPayload
-     *
      * @return array<string, mixed>
      */
     private function preferredVersionPayload(array $apiPayload, ?string $preferredVersion): array

@@ -261,9 +261,7 @@ class ApiCatalogSyncTest extends TestCase
         $syncRun = $repository->createQueued();
         $action = new class extends SyncApiCatalogAction
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function execute(): ApiCatalogSyncResultDTO
             {
@@ -298,7 +296,7 @@ class ApiCatalogSyncTest extends TestCase
 
     public function test_sync_job_has_explicit_timeout_for_catalog_sync(): void
     {
-        $job = new SyncApiCatalogJob();
+        $job = new SyncApiCatalogJob;
 
         $this->assertSame(1, $job->tries);
         $this->assertSame(900, $job->timeout);

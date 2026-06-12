@@ -54,7 +54,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->videoRegion($inactive, $region, '2026-05-31 00:00:00');
         $this->videoRegion($archived, $region, '2026-05-31 00:00:00');
 
-        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
@@ -92,7 +92,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
         $this->app->instance(
             YouTubeVideoApiRepositoryInterface::class,
-            new SnapshotRefreshFakeYouTubeVideoApiRepository(),
+            new SnapshotRefreshFakeYouTubeVideoApiRepository,
         );
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
@@ -138,7 +138,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
         $this->assertDatabaseCount('dance_short_video_snapshots', 0);
 
-        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
@@ -179,7 +179,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->videoRegion($jpUs, $jp, '2026-06-01 00:00:00');
         $this->videoRegion($jpUs, $us, '2026-06-01 00:00:00');
 
-        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
@@ -224,7 +224,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->region();
         $this->video('active-without-relation', 'active');
 
-        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository();
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();

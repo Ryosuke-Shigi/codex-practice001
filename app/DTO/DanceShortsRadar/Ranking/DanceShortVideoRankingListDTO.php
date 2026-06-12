@@ -9,8 +9,7 @@ final readonly class DanceShortVideoRankingListDTO
      */
     public function __construct(
         public array $items,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{items: array<int, array<string, bool|int|float|string|null>>}

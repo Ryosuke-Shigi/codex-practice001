@@ -42,7 +42,7 @@ class DanceShortVideoRankingPageTest extends TestCase
 
     public function test_page_uses_default_filters_and_passes_ranking_props_without_calling_youtube_api(): void
     {
-        $youtubeRepository = new ThrowingRankingPageYouTubeVideoApiRepository();
+        $youtubeRepository = new ThrowingRankingPageYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         /*
@@ -127,7 +127,7 @@ class DanceShortVideoRankingPageTest extends TestCase
 
     public function test_page_shows_seeded_region_tabs_and_empty_ranking_without_snapshots(): void
     {
-        $youtubeRepository = new ThrowingRankingPageYouTubeVideoApiRepository();
+        $youtubeRepository = new ThrowingRankingPageYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         /*
@@ -559,9 +559,7 @@ class DanceShortVideoRankingPageTest extends TestCase
             GetDanceShortVideoRankingPageAction::class,
             new class extends GetDanceShortVideoRankingPageAction
             {
-                public function __construct()
-                {
-                }
+                public function __construct() {}
 
                 public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortVideoRankingPageDTO
                 {

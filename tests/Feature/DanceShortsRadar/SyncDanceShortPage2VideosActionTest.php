@@ -44,7 +44,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
         $this->keyword($jp, 'one page expanded keyword', DanceShortSearchScope::Expanded, 1, 40, true);
         $this->keyword($us, 'us expanded keyword', DanceShortSearchScope::Expanded, 2, 10, true);
 
-        $youtubeRepository = new Page2FakeDanceShortYouTubeVideoApiRepository();
+        $youtubeRepository = new Page2FakeDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(SyncDanceShortPage2VideosAction::class)->execute();
@@ -101,7 +101,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
         $jp = $this->region('JP', '日本', true);
         $this->keyword($jp, 'no token keyword', DanceShortSearchScope::Expanded, 2, 10, true);
 
-        $youtubeRepository = new Page2NoTokenDanceShortYouTubeVideoApiRepository();
+        $youtubeRepository = new Page2NoTokenDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(SyncDanceShortPage2VideosAction::class)->execute();
@@ -121,7 +121,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
         $jp = $this->region('JP', '日本', true);
         $this->keyword($jp, 'three page keyword', DanceShortSearchScope::Expanded, 3, 10, true);
 
-        $youtubeRepository = new Page2MaxPageDanceShortYouTubeVideoApiRepository();
+        $youtubeRepository = new Page2MaxPageDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(SyncDanceShortPage2VideosAction::class)->execute();

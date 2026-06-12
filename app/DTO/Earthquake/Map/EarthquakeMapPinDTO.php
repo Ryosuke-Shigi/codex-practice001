@@ -19,8 +19,7 @@ final readonly class EarthquakeMapPinDTO
         public ?string $occurredAt,
         public ?string $reportedAt,
         public ?string $comment,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, int|string|null>

@@ -19,8 +19,7 @@ final readonly class DanceShortVideoSnapshotCreateDTO
         public ?int $like_count,
         public ?int $comment_count,
         public CarbonInterface $collected_at,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

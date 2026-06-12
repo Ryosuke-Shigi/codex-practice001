@@ -10,6 +10,5 @@ final readonly class YouTubeVideoSearchResultDTO
     public function __construct(
         public array $items,
         public ?string $nextPageToken,
-    ) {
-    }
+    ) {}
 }

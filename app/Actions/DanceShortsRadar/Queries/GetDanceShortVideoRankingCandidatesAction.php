@@ -14,8 +14,7 @@ class GetDanceShortVideoRankingCandidatesAction
     public function __construct(
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortSnapshotMetricService $snapshotMetricService,
-    ) {
-    }
+    ) {}
 
     public function execute(DanceShortVideoRankingConditionDTO $condition): DanceShortVideoRankingListDTO
     {

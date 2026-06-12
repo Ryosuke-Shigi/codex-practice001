@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\QuakeWavePreview;
 
+use App\Jobs\Earthquake\RefreshEarthquakeMapDataJob;
 use App\Models\EarthquakeFeedEntry;
 use App\Models\EarthquakeMapPin;
-use App\Jobs\Earthquake\RefreshEarthquakeMapDataJob;
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
-use Illuminate\Http\Client\Request;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia as Assert;

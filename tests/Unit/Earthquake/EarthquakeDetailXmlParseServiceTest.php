@@ -10,7 +10,7 @@ class EarthquakeDetailXmlParseServiceTest extends TestCase
 {
     public function test_parse_extracts_map_display_values_from_jma_detail_xml(): void
     {
-        $service = new EarthquakeDetailXmlParseService();
+        $service = new EarthquakeDetailXmlParseService;
 
         $dto = $service->parse($this->earthquakeReportXml(), 123, 'fallback title');
 
@@ -32,7 +32,7 @@ class EarthquakeDetailXmlParseServiceTest extends TestCase
 
     public function test_is_mappable_requires_coordinates_and_max_intensity(): void
     {
-        $service = new EarthquakeDetailXmlParseService();
+        $service = new EarthquakeDetailXmlParseService;
 
         $this->assertTrue($service->isMappable($this->pin()));
         $this->assertFalse($service->isMappable($this->pin(latitude: null)));

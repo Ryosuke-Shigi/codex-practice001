@@ -43,8 +43,7 @@ final readonly class DanceShortVideoRankingConditionDTO
         public int $comparisonDays = self::DEFAULT_COMPARISON_DAYS,
         public int $limit = self::DEFAULT_LIMIT,
         public string $sortKey = self::DEFAULT_SORT_KEY,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

@@ -2,14 +2,12 @@
 
 namespace App\Services\Earthquake;
 
-use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use Carbon\CarbonImmutable;
-use RuntimeException;
 use Throwable;
 
 class EarthquakeMapPinBuildService
@@ -19,8 +17,7 @@ class EarthquakeMapPinBuildService
         private readonly EarthquakeDetailXmlRepositoryInterface $detailXmlRepository,
         private readonly EarthquakeDetailXmlParseService $detailXmlParseService,
         private readonly EarthquakeMapPinRepositoryInterface $mapPinRepository,
-    ) {
-    }
+    ) {}
 
     public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
     {
@@ -44,6 +41,7 @@ class EarthquakeMapPinBuildService
 
             if (! is_string($xmlUrl) || trim($xmlUrl) === '') {
                 $skippedCount++;
+
                 continue;
             }
 
@@ -56,6 +54,7 @@ class EarthquakeMapPinBuildService
 
                 if (! ($transport['success'] ?? false)) {
                     $failedCount++;
+
                     continue;
                 }
 
@@ -72,6 +71,7 @@ class EarthquakeMapPinBuildService
                  */
                 if (! $this->detailXmlParseService->isMappable($pin)) {
                     $skippedCount++;
+
                     continue;
                 }
 

@@ -74,6 +74,6 @@ class EarthquakeMapPinListQueryDTOFactoryTest extends TestCase
 
     private function factory(): EarthquakeMapPinListQueryDTOFactory
     {
-        return new EarthquakeMapPinListQueryDTOFactory();
+        return new EarthquakeMapPinListQueryDTOFactory;
     }
 }

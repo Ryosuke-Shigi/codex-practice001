@@ -37,7 +37,7 @@ class DanceShortsAnalyzerSearchPageTest extends TestCase
          * 初期表示で Repository が呼ばれると、全件取得や React 側絞り込みへ流れやすくなります。
          * fake Repository の callCount で「keyword 未入力時は検索しない」を直接守ります。
          */
-        $repository = new CountingDanceShortsAnalyzerVideoRepository();
+        $repository = new CountingDanceShortsAnalyzerVideoRepository;
         $this->app->instance(DanceShortsAnalyzerVideoRepositoryInterface::class, $repository);
 
         $this
@@ -210,7 +210,7 @@ class DanceShortsAnalyzerSearchPageTest extends TestCase
          * PRODUCT 検索は保存済み dance_short_videos だけを読むため、
          * YouTube API repository が呼ばれた時点でテストを落とします。
          */
-        $youtubeRepository = new ThrowingAnalyzerPageYouTubeVideoApiRepository();
+        $youtubeRepository = new ThrowingAnalyzerPageYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $this->video([
@@ -236,9 +236,7 @@ class DanceShortsAnalyzerSearchPageTest extends TestCase
             GetDanceShortsAnalyzerSearchPageAction::class,
             new class extends GetDanceShortsAnalyzerSearchPageAction
             {
-                public function __construct()
-                {
-                }
+                public function __construct() {}
 
                 public function execute(DanceShortsAnalyzerSearchInputDTO $input): DanceShortsAnalyzerSearchPageResultDTO
                 {

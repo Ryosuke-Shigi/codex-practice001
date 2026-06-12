@@ -19,8 +19,7 @@ class SyncDanceShortPage2VideosAction
         private readonly PersistDanceShortVideoDetailsAction $persistVideoDetailsAction,
         private readonly CleanupDanceShortVideoSnapshotsAction $cleanupAction,
         private readonly DanceShortSearchConditionDTOFactory $searchConditionFactory,
-    ) {
-    }
+    ) {}
 
     public function execute(): DanceShortVideoSyncResultDTO
     {
@@ -116,6 +115,7 @@ class SyncDanceShortPage2VideosAction
                 $currentPage = $this->youTubeVideoApiRepository->searchVideoPage($condition);
             } catch (Throwable) {
                 $failedCount++;
+
                 continue;
             }
 

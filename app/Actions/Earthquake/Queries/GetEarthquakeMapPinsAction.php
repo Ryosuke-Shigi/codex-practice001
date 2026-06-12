@@ -10,8 +10,7 @@ class GetEarthquakeMapPinsAction
 {
     public function __construct(
         private readonly EarthquakeMapPinRepositoryInterface $mapPinRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
     {

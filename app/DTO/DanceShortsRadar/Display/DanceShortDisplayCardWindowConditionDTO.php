@@ -23,6 +23,5 @@ final readonly class DanceShortDisplayCardWindowConditionDTO
         public int $startRank,
         public int $windowSize,
         public ?int $selectedVideoId = null,
-    ) {
-    }
+    ) {}
 }

@@ -74,7 +74,7 @@ class SyncDanceShortVideosActionTest extends TestCase
             'is_active' => true,
         ]);
 
-        $youtubeRepository = new FakeDanceShortYouTubeVideoApiRepository();
+        $youtubeRepository = new FakeDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
@@ -163,7 +163,7 @@ class SyncDanceShortVideosActionTest extends TestCase
             'collected_at' => '2026-04-25 00:00:00',
         ]);
 
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository());
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository);
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
 
@@ -232,7 +232,7 @@ class SyncDanceShortVideosActionTest extends TestCase
             'last_detected_at' => '2026-05-31 16:00:00',
         ]);
 
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository());
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository);
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
 
@@ -282,7 +282,7 @@ class SyncDanceShortVideosActionTest extends TestCase
 
         $this->app->instance(
             YouTubeVideoApiRepositoryInterface::class,
-            new FailingSearchDanceShortYouTubeVideoApiRepository(),
+            new FailingSearchDanceShortYouTubeVideoApiRepository,
         );
 
         $result = app(SyncDanceShortVideosAction::class)->execute();

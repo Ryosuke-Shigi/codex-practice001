@@ -20,8 +20,7 @@ final readonly class ApiCatalogListResultDTO
         public array $domains,
         public array $items,
         public array $pagination,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

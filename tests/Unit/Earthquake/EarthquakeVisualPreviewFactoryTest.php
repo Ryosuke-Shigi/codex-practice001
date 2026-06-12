@@ -11,7 +11,7 @@ class EarthquakeVisualPreviewFactoryTest extends TestCase
 {
     public function test_make_default_keeps_the_static_design_preview_shape(): void
     {
-        $factory = new EarthquakeVisualPreviewFactory();
+        $factory = new EarthquakeVisualPreviewFactory;
 
         $preview = $factory->makeDefault()->toArray();
 
@@ -24,7 +24,7 @@ class EarthquakeVisualPreviewFactoryTest extends TestCase
 
     public function test_make_accepts_extracted_entries_without_running_extraction_or_xml_fetching(): void
     {
-        $factory = new EarthquakeVisualPreviewFactory();
+        $factory = new EarthquakeVisualPreviewFactory;
         $entries = new EarthquakeExtractedEntryListDTO([
             new EarthquakeExtractedEntryDTO(
                 id: 'urn:jma:earthquake:latest',

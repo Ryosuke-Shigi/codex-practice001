@@ -223,7 +223,7 @@ class DanceShortRisingCandidateServiceTest extends TestCase
 
     private function service(): DanceShortRisingCandidateService
     {
-        return new DanceShortRisingCandidateService();
+        return new DanceShortRisingCandidateService;
     }
 
     private function item(

@@ -32,8 +32,7 @@ final readonly class DanceShortVideoRankingItemDTO
         public ?CarbonInterface $previousCollectedAt,
         public int $comparisonDays,
         public bool $hasPreviousSnapshot,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

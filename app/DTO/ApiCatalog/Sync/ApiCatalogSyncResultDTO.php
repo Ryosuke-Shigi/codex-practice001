@@ -11,8 +11,7 @@ final readonly class ApiCatalogSyncResultDTO
         public int $skippedCount,
         public int $inactiveCount,
         public int $failedCount,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, int>

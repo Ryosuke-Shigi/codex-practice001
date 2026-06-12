@@ -38,8 +38,7 @@ final readonly class DanceShortVideoRankingPageDTO
         public string $sortKey,
         public array $comparisonDayOptions,
         public array $sortKeyOptions,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

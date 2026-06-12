@@ -19,8 +19,7 @@ class SyncDanceShortVideosAction
         private readonly PersistDanceShortVideoDetailsAction $persistVideoDetailsAction,
         private readonly CleanupDanceShortVideoSnapshotsAction $cleanupAction,
         private readonly DanceShortSearchConditionDTOFactory $searchConditionFactory,
-    ) {
-    }
+    ) {}
 
     public function execute(): DanceShortVideoSyncResultDTO
     {
@@ -112,6 +111,7 @@ class SyncDanceShortVideosAction
                 );
             } catch (Throwable) {
                 $failedCount++;
+
                 continue;
             }
 

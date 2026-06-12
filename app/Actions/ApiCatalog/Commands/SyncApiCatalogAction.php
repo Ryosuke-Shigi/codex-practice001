@@ -9,8 +9,7 @@ class SyncApiCatalogAction
 {
     public function __construct(
         private readonly ApiCatalogSyncService $service,
-    ) {
-    }
+    ) {}
 
     public function execute(): ApiCatalogSyncResultDTO
     {

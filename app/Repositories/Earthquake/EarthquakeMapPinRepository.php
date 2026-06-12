@@ -9,6 +9,7 @@ use App\Models\EarthquakeMapPin;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -54,11 +55,13 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
                 if (! $existing instanceof EarthquakeMapPin) {
                     EarthquakeMapPin::query()->create($attributes);
                     $insertedCount++;
+
                     continue;
                 }
 
                 if (! $this->shouldUpdate($existing, $attributes)) {
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -259,7 +262,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, EarthquakeMapPin>
+     * @return Collection<int, EarthquakeMapPin>
      */
     private function latestModels(EarthquakeMapPinListQueryDTO $query)
     {

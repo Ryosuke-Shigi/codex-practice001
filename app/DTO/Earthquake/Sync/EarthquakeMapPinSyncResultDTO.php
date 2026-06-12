@@ -26,8 +26,7 @@ final readonly class EarthquakeMapPinSyncResultDTO
         public ?string $errorMessage,
         public ?CarbonInterface $startedAt,
         public ?CarbonInterface $finishedAt,
-    ) {
-    }
+    ) {}
 
     public static function fromModel(EarthquakeMapPinSyncRun $syncRun): self
     {

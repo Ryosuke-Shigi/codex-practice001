@@ -11,14 +11,13 @@ namespace App\DTO\Earthquake\Preview;
 final readonly class EarthquakeVisualPreviewDTO
 {
     /**
-     * @param array<int, EarthquakePinPreviewDTO> $pins
-     * @param array<int, EarthquakeRipplePreviewDTO> $ripples
+     * @param  array<int, EarthquakePinPreviewDTO>  $pins
+     * @param  array<int, EarthquakeRipplePreviewDTO>  $ripples
      */
     public function __construct(
         public array $pins,
         public array $ripples,
-    ) {
-    }
+    ) {}
 
     /**
      * Inertia props 用にピン・波紋の見本を配列化します。

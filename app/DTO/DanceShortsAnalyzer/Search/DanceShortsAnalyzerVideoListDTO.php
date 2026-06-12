@@ -21,6 +21,5 @@ final readonly class DanceShortsAnalyzerVideoListDTO
         public bool $hasMore,
         public int $currentPage,
         public int $perPage,
-    ) {
-    }
+    ) {}
 }

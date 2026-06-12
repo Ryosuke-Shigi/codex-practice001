@@ -16,8 +16,7 @@ class EarthquakeFeedEntrySyncService
         private readonly EarthquakeXmlPreviewService $xmlPreviewService,
         private readonly EarthquakeEntryExtractService $entryExtractService,
         private readonly EarthquakeFeedEntryRepositoryInterface $feedEntryRepository,
-    ) {
-    }
+    ) {}
 
     public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
     {

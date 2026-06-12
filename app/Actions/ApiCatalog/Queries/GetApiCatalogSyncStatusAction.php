@@ -9,8 +9,7 @@ final readonly class GetApiCatalogSyncStatusAction
 {
     public function __construct(
         private ApiCatalogSyncStatusRepositoryInterface $repository,
-    ) {
-    }
+    ) {}
 
     public function execute(?int $syncRunId = null): ?ApiCatalogSyncStatusDTO
     {

@@ -14,8 +14,7 @@ final readonly class DanceShortDisplayCardStrategyFactory
         private RisingDisplayCardStrategy $risingStrategy,
         private AllRankingDisplayCardStrategy $allRankingStrategy,
         private RegionRankingDisplayCardStrategy $regionRankingStrategy,
-    ) {
-    }
+    ) {}
 
     public function make(string $selectedTabCode): DanceShortDisplayCardStrategyInterface
     {

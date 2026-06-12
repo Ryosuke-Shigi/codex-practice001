@@ -9,7 +9,7 @@ class DanceShortVideoTrackingServiceTest extends TestCase
 {
     public function test_only_active_videos_are_snapshot_save_targets(): void
     {
-        $service = new DanceShortVideoTrackingService();
+        $service = new DanceShortVideoTrackingService;
 
         $this->assertTrue($service->isSnapshotSaveTarget(DanceShortVideoTrackingService::STATUS_ACTIVE));
         $this->assertFalse($service->isSnapshotSaveTarget(DanceShortVideoTrackingService::STATUS_INACTIVE));
@@ -20,7 +20,7 @@ class DanceShortVideoTrackingServiceTest extends TestCase
 
     public function test_tracking_status_candidates_are_fixed(): void
     {
-        $service = new DanceShortVideoTrackingService();
+        $service = new DanceShortVideoTrackingService;
 
         $this->assertSame([
             DanceShortVideoTrackingService::STATUS_ACTIVE,
@@ -33,8 +33,7 @@ class DanceShortVideoTrackingServiceTest extends TestCase
     {
         $this->assertSame(
             DanceShortVideoTrackingService::STATUS_ACTIVE,
-            (new DanceShortVideoTrackingService())->snapshotRefreshTargetStatus(),
+            (new DanceShortVideoTrackingService)->snapshotRefreshTargetStatus(),
         );
     }
-
 }

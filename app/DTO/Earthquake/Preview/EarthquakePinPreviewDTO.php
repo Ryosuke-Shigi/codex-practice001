@@ -15,8 +15,7 @@ final readonly class EarthquakePinPreviewDTO
         public string $maxIntensity,
         public string $color,
         public string $sizeLabel,
-    ) {
-    }
+    ) {}
 
     /**
      * React 側でそのまま扱える camelCase の props へ変換します。

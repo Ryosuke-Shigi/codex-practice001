@@ -28,8 +28,7 @@ final readonly class ApiPreviewResultDTO
         public array $queryParameters,
         public ?array $responsePreview,
         public string $rawPayloadPreview,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

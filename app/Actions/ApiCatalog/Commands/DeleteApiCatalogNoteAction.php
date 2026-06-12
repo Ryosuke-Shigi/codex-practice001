@@ -10,8 +10,7 @@ final readonly class DeleteApiCatalogNoteAction
     public function __construct(
         private ApiCatalogCacheRepositoryInterface $cacheRepository,
         private ApiCatalogNoteRepositoryInterface $noteRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(string $apiKey, int $noteId): bool
     {

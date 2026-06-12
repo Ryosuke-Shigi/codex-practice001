@@ -20,8 +20,7 @@ class SyncEarthquakeMapPinsJob implements ShouldQueue
 
     public function __construct(
         public readonly int $syncRunId,
-    ) {
-    }
+    ) {}
 
     public function handle(
         EarthquakeMapPinSyncRunRepositoryInterface $syncRunRepository,

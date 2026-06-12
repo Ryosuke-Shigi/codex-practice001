@@ -48,8 +48,7 @@ final readonly class DanceShortVideoRankingPageInputDTO
         public int $startRank = 1,
         public int $windowSize = 5,
         public ?int $selectedVideoId = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

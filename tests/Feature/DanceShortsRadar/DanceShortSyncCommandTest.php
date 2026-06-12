@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\DanceShortsRadar;
 
+use App\Actions\DanceShortsRadar\Commands\RefreshDanceShortVideoSnapshotsAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortPage2VideosAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
-use App\Actions\DanceShortsRadar\Commands\RefreshDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
-use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
+use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -30,10 +30,9 @@ class DanceShortSyncCommandTest extends TestCase
     public function test_command_does_not_execute_sync_action_directly(): void
     {
         Queue::fake();
-        $this->app->instance(SyncDanceShortVideosAction::class, new class extends SyncDanceShortVideosAction {
-            public function __construct()
-            {
-            }
+        $this->app->instance(SyncDanceShortVideosAction::class, new class extends SyncDanceShortVideosAction
+        {
+            public function __construct() {}
 
             public function execute(): DanceShortVideoSyncResultDTO
             {
@@ -64,10 +63,9 @@ class DanceShortSyncCommandTest extends TestCase
     public function test_page2_command_does_not_execute_page2_sync_action_directly(): void
     {
         Queue::fake();
-        $this->app->instance(SyncDanceShortPage2VideosAction::class, new class extends SyncDanceShortPage2VideosAction {
-            public function __construct()
-            {
-            }
+        $this->app->instance(SyncDanceShortPage2VideosAction::class, new class extends SyncDanceShortPage2VideosAction
+        {
+            public function __construct() {}
 
             public function execute(): DanceShortVideoSyncResultDTO
             {
@@ -98,10 +96,9 @@ class DanceShortSyncCommandTest extends TestCase
     public function test_snapshot_command_does_not_execute_snapshot_action_directly(): void
     {
         Queue::fake();
-        $this->app->instance(RefreshDanceShortVideoSnapshotsAction::class, new class extends RefreshDanceShortVideoSnapshotsAction {
-            public function __construct()
-            {
-            }
+        $this->app->instance(RefreshDanceShortVideoSnapshotsAction::class, new class extends RefreshDanceShortVideoSnapshotsAction
+        {
+            public function __construct() {}
 
             public function execute(): DanceShortVideoSyncResultDTO
             {

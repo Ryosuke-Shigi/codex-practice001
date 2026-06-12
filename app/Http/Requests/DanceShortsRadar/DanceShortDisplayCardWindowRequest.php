@@ -11,6 +11,4 @@ namespace App\Http\Requests\DanceShortsRadar;
  * route / Controller 上では「ページ表示」ではなく「カード window 取得」の入口だと
  * 読み取れるようにしています。
  */
-class DanceShortDisplayCardWindowRequest extends DanceShortVideoRankingRequest
-{
-}
+class DanceShortDisplayCardWindowRequest extends DanceShortVideoRankingRequest {}

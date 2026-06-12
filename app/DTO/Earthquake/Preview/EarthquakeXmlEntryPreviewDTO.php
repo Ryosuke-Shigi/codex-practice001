@@ -19,8 +19,7 @@ final readonly class EarthquakeXmlEntryPreviewDTO
         public ?string $xmlUrl,
         public ?string $rawCategory,
         public ?string $rawAuthor,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

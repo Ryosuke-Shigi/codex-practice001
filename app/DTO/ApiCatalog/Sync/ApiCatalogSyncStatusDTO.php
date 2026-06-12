@@ -31,8 +31,7 @@ final readonly class ApiCatalogSyncStatusDTO
         public ?CarbonInterface $finishedAt,
         public ?CarbonInterface $createdAt,
         public ?CarbonInterface $updatedAt,
-    ) {
-    }
+    ) {}
 
     public static function fromModel(ApiCatalogSyncRun $syncRun): self
     {

@@ -10,7 +10,7 @@ class DanceShortVideoEligibilityServiceTest extends TestCase
 {
     public function test_it_identifies_shorts_target_from_iso8601_duration(): void
     {
-        $service = new DanceShortVideoEligibilityService();
+        $service = new DanceShortVideoEligibilityService;
 
         $this->assertTrue($service->isShortsTarget($this->detail(duration: 'PT58S')));
         $this->assertTrue($service->isShortsTarget($this->detail(duration: 'PT3M')));
@@ -21,7 +21,7 @@ class DanceShortVideoEligibilityServiceTest extends TestCase
 
     public function test_it_identifies_required_persistence_fields_without_db_queries(): void
     {
-        $service = new DanceShortVideoEligibilityService();
+        $service = new DanceShortVideoEligibilityService;
 
         $this->assertTrue($service->hasRequiredPersistenceFields($this->detail()));
         $this->assertFalse($service->hasRequiredPersistenceFields($this->detail(title: null)));

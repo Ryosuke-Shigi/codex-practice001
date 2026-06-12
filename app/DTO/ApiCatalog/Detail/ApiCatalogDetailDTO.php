@@ -25,8 +25,7 @@ final readonly class ApiCatalogDetailDTO
         public ?string $sourceLatestUpdatedAt,
         public bool $isActive,
         public array $notes,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, ApiCatalogNote>  $notes

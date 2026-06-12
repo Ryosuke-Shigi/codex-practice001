@@ -21,6 +21,5 @@ final readonly class DanceShortsAnalyzerSearchPageResultDTO
         public string $sort,
         public bool $hasSearched,
         public DanceShortsAnalyzerVideoListDTO $videoList,
-    ) {
-    }
+    ) {}
 }

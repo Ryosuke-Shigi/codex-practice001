@@ -14,8 +14,7 @@ final readonly class DanceShortVideoRankingRegionDTO
     public function __construct(
         public string $code,
         public string $name,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{code: string, name: string}

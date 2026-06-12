@@ -8,8 +8,7 @@ final readonly class EarthquakeMapPinListQueryDTO
         public int $limit,
         public ?string $startDate,
         public ?string $endDate,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{startDate: string|null, endDate: string|null}

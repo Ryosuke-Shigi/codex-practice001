@@ -12,7 +12,7 @@ class DanceShortVideoSnapshotCreateDTOFactoryTest extends TestCase
 {
     public function test_it_maps_youtube_detail_statistics_to_snapshot_create_dto(): void
     {
-        $dto = (new DanceShortVideoSnapshotCreateDTOFactory())->fromYouTubeVideoDetail(
+        $dto = (new DanceShortVideoSnapshotCreateDTOFactory)->fromYouTubeVideoDetail(
             detail: new YouTubeVideoDetailDTO(
                 youtubeVideoId: 'video-001',
                 title: 'Dance short',
@@ -50,7 +50,7 @@ class DanceShortVideoSnapshotCreateDTOFactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('YouTube video view count is required to create a snapshot.');
 
-        (new DanceShortVideoSnapshotCreateDTOFactory())->fromYouTubeVideoDetail(
+        (new DanceShortVideoSnapshotCreateDTOFactory)->fromYouTubeVideoDetail(
             detail: new YouTubeVideoDetailDTO(
                 youtubeVideoId: 'video-001',
                 title: 'Dance short',

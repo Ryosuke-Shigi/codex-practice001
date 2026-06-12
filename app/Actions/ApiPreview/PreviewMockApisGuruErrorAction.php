@@ -17,8 +17,7 @@ class PreviewMockApisGuruErrorAction
 {
     public function __construct(
         private readonly ApiPreviewResponder $responder,
-    ) {
-    }
+    ) {}
 
     public function execute(): Response
     {

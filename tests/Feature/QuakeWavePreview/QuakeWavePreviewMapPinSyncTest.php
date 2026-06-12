@@ -11,6 +11,7 @@ use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Models\EarthquakeFeedEntry;
 use App\Models\EarthquakeMapPin;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
+use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Services\Earthquake\EarthquakeDetailXmlParseService;
@@ -133,9 +134,7 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
         $syncRunId = $repository->createPending();
         $buildService = new class extends EarthquakeMapPinBuildService
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
             {
@@ -244,9 +243,7 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
         $sourceEntry = $this->createFeedEntry('urn:jma:earthquake:1');
         $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, new class($this->earthquakeReportXml(eventId: '20260511112751', reportedAt: '2026-05-11T11:31:00+09:00')) implements EarthquakeDetailXmlRepositoryInterface
         {
-            public function __construct(private readonly string $body)
-            {
-            }
+            public function __construct(private readonly string $body) {}
 
             public function fetch(string $url): array
             {
@@ -360,8 +357,7 @@ XML;
         {
             public function __construct(
                 private readonly EarthquakeMapPinRepositoryInterface $innerRepository,
-            ) {
-            }
+            ) {}
 
             public function isStorageReady(): bool
             {
@@ -388,7 +384,7 @@ XML;
             }
         };
         $buildService = new EarthquakeMapPinBuildService(
-            app(\App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface::class),
+            app(EarthquakeFeedEntryRepositoryInterface::class),
             app(EarthquakeDetailXmlRepositoryInterface::class),
             app(EarthquakeDetailXmlParseService::class),
             $failingRepository,

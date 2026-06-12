@@ -18,6 +18,5 @@ final readonly class DanceShortVideoSnapshotRefreshTargetDTO
         public int $video_id,
         public string $youtube_video_id,
         public array $region_ids,
-    ) {
-    }
+    ) {}
 }

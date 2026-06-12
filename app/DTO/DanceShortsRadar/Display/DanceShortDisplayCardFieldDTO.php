@@ -30,8 +30,7 @@ final readonly class DanceShortDisplayCardFieldDTO
         public ?int $activeRank,
         public DanceShortDisplayCardPaginationDTO $pagination,
         public ?string $emptyMessage,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

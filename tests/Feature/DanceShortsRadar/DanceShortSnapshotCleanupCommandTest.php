@@ -4,6 +4,8 @@ namespace Tests\Feature\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Cleanup\DanceShortSnapshotCleanupResultDTO;
+use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -13,12 +15,11 @@ class DanceShortSnapshotCleanupCommandTest extends TestCase
 {
     public function test_command_calls_cleanup_action_and_outputs_deleted_count(): void
     {
-        $fakeAction = new class extends CleanupDanceShortVideoSnapshotsAction {
+        $fakeAction = new class extends CleanupDanceShortVideoSnapshotsAction
+        {
             public bool $called = false;
 
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function execute(?CarbonInterface $now = null): DanceShortSnapshotCleanupResultDTO
             {
@@ -34,16 +35,17 @@ class DanceShortSnapshotCleanupCommandTest extends TestCase
         };
 
         $this->app->instance(CleanupDanceShortVideoSnapshotsAction::class, $fakeAction);
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new class implements YouTubeVideoApiRepositoryInterface {
-            public function searchVideos(\App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO $condition): array
+        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new class implements YouTubeVideoApiRepositoryInterface
+        {
+            public function searchVideos(DanceShortSearchConditionDTO $condition): array
             {
                 $this->failBecauseYouTubeApiShouldNotBeCalled();
             }
 
             public function searchVideoPage(
-                \App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO $condition,
+                DanceShortSearchConditionDTO $condition,
                 ?string $pageToken = null,
-            ): \App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO {
+            ): YouTubeVideoSearchResultDTO {
                 $this->failBecauseYouTubeApiShouldNotBeCalled();
             }
 
