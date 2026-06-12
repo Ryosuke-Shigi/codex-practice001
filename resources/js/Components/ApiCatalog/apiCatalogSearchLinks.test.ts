@@ -73,7 +73,7 @@ describe('apiCatalogSearchLinks', () => {
          */
         const href = buildApiCatalogSearchUrl({
             title: null,
-            providerKey: undefined,
+            providerKey: null,
             description: '   ',
             apiKey: '',
         });

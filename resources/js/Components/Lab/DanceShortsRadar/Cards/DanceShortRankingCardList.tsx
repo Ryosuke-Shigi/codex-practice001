@@ -28,10 +28,13 @@ export default function DanceShortRankingCardList({
 
     return (
         <section id="dance-shorts-card-field" className="grid gap-4">
-            {cards.map((candidate) => (
+            {cards.map((candidate, index) => (
                 <DanceShortsCandidateCard
                     key={`${candidate.region}-${candidate.video_id ?? candidate.youtube_url ?? candidate.title}`}
                     candidate={candidate}
+                    sortKey="view_count_delta"
+                    rank={index + 1}
+                    isActive={false}
                 />
             ))}
         </section>

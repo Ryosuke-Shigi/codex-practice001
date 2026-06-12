@@ -28,12 +28,14 @@ export default function DanceShortRisingCardList({
 
     return (
         <section id="dance-shorts-card-field" className="grid gap-4">
-            {cards.map((candidate) => (
+            {cards.map((candidate, index) => (
                 <DanceShortsRisingCandidateCard
                     key={`${candidate.source_region}-${candidate.youtube_url ?? candidate.youtube_video_id ?? candidate.title}`}
                     title={candidate.title}
+                    publishedAt={candidate.published_at}
                     sourceRegion={candidate.source_region}
                     sourceRegionLabel={candidate.source_region_label}
+                    sourceCollectedAt={candidate.source_collected_at}
                     japanStatus={candidate.japan_status}
                     viewCountDelta={candidate.view_count_delta}
                     viewGrowthRate={candidate.view_growth_rate}
@@ -44,6 +46,8 @@ export default function DanceShortRisingCardList({
                     youtubeUrl={candidate.youtube_url}
                     tags={candidate.tags}
                     observationNote={candidate.observation_note}
+                    rank={index + 1}
+                    isActive={false}
                 />
             ))}
         </section>

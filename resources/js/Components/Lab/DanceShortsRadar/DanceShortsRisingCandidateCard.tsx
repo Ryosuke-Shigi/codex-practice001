@@ -48,7 +48,7 @@ function formatJapanViewCountDelta(value: number | null) {
 function formatDateTime(value: string | null | undefined) {
     return value === null || value === undefined
         ? '未設定'
-        : value.replaceAll('-', '/');
+        : value.replace(/-/g, '/');
 }
 
 /*
