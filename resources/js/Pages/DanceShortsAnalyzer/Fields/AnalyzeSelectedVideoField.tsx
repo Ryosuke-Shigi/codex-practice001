@@ -20,9 +20,16 @@ export default function AnalyzeSelectedVideoField({
                         className={[
                             'w-16 shrink-0 rounded-md border bg-white/8 p-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 max-sm:landscape:w-full',
                             video.is_active
-                                ? 'border-blue-300'
-                                : 'border-white/14',
+                                ? 'scale-[1.03] opacity-100'
+                                : 'opacity-80 hover:opacity-100',
                         ].join(' ')}
+                        style={{
+                            borderColor: video.chart_color,
+                            borderWidth: '3px',
+                            boxShadow: video.is_active
+                                ? `0 0 0 2px ${video.chart_color}`
+                                : `0 0 0 1px ${video.chart_color}99`,
+                        }}
                     >
                         <div className="aspect-video w-full overflow-hidden rounded-md bg-slate-900/80 max-sm:landscape:aspect-square">
                             {video.thumbnail_url ? (

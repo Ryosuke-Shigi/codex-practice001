@@ -34,6 +34,7 @@ export type DanceShortsAnalyzerSelectedVideo = {
     tracking_status: string;
     is_active: boolean;
     active_url: string;
+    chart_color: string;
     latest_snapshot: DanceShortsAnalyzerSnapshot | null;
 };
 
@@ -98,12 +99,17 @@ export type DanceShortsAnalyzerComparisonTable = {
     metric_label: string;
 };
 
-export type DanceShortsAnalyzerComparison = {
+export type DanceShortsAnalyzerComparisonPeriod = {
+    label: string;
     charts: Record<string, DanceShortsAnalyzerChart>;
     tables: {
         delta: Record<string, DanceShortsAnalyzerComparisonTable>;
         per_hour: Record<string, DanceShortsAnalyzerComparisonTable>;
     };
+};
+
+export type DanceShortsAnalyzerComparison = {
+    periods: Record<AnalyzePeriodKey, DanceShortsAnalyzerComparisonPeriod>;
 };
 
 export type DanceShortsAnalyzerRegionAnalysis = {
@@ -197,10 +203,13 @@ export default function AnalyzeField({ analyzeField }: AnalyzeFieldProps) {
         );
     }
 
+    const activeComparison =
+        analyzeField.comparison.periods[activePeriod] ??
+        analyzeField.comparison.periods.all;
     const activeDeltaTable =
-        analyzeField.comparison.tables.delta[activeMetric] ?? null;
+        activeComparison?.tables.delta[activeMetric] ?? null;
     const activePerHourTable =
-        analyzeField.comparison.tables.per_hour[activeMetric] ?? null;
+        activeComparison?.tables.per_hour[activeMetric] ?? null;
 
     return (
         <>
@@ -246,7 +255,7 @@ export default function AnalyzeField({ analyzeField }: AnalyzeFieldProps) {
                                 onChangePeriod={setActivePeriod}
                             />
                             <AnalyzeChartField
-                                charts={analyzeField.comparison.charts}
+                                charts={activeComparison?.charts ?? {}}
                                 activeMetric={activeMetric}
                             />
                             <div className="grid min-h-0 min-w-0 flex-1 gap-1.5 overflow-y-auto overflow-x-hidden md:grid-cols-2">

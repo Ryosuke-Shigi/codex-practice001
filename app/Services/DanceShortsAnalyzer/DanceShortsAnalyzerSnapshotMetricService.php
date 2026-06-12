@@ -7,6 +7,8 @@ use App\DTO\DanceShortsAnalyzer\Analyze\DanceShortsAnalyzerMetricSeriesDTO;
 use App\DTO\DanceShortsAnalyzer\Analyze\DanceShortsAnalyzerPerHourRowDTO;
 use App\DTO\DanceShortsAnalyzer\Analyze\DanceShortsAnalyzerSnapshotMetricDTO;
 use App\DTO\DanceShortsAnalyzer\Analyze\DanceShortsAnalyzerSnapshotPointDTO;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 
 /**
  * DanceShortsAnalyzer の snapshot 差分計算 Service です。
@@ -16,6 +18,41 @@ use App\DTO\DanceShortsAnalyzer\Analyze\DanceShortsAnalyzerSnapshotPointDTO;
  */
 final class DanceShortsAnalyzerSnapshotMetricService
 {
+    /**
+     * @return array<int, string>
+     */
+    public function comparisonPeriodKeys(): array
+    {
+        return ['day', 'week', 'month', 'all'];
+    }
+
+    /**
+     * @param  array<int, DanceShortsAnalyzerSnapshotPointDTO>  $snapshots
+     * @return array<int, DanceShortsAnalyzerSnapshotPointDTO>
+     */
+    public function filterSnapshotsForPeriod(
+        array $snapshots,
+        string $periodKey,
+        CarbonInterface $latestCollectedAt,
+    ): array {
+        if ($periodKey === 'all') {
+            return array_values($snapshots);
+        }
+
+        $anchor = CarbonImmutable::instance($latestCollectedAt);
+        $cutoffAt = match ($periodKey) {
+            'day' => $anchor->subHours(24),
+            'week' => $anchor->subDays(7),
+            'month' => $anchor->subDays(30),
+            default => $anchor,
+        };
+
+        return array_values(array_filter(
+            $snapshots,
+            fn (DanceShortsAnalyzerSnapshotPointDTO $snapshot): bool => $snapshot->collectedAt->getTimestamp() >= $cutoffAt->getTimestamp(),
+        ));
+    }
+
     /**
      * @param  array<int, DanceShortsAnalyzerSnapshotPointDTO>  $snapshots
      * @return array<int, DanceShortsAnalyzerSnapshotMetricDTO>
@@ -55,6 +92,11 @@ final class DanceShortsAnalyzerSnapshotMetricService
      */
     public function deltaRows(array $metrics): array
     {
+        $calculableMetrics = array_values(array_filter(
+            $metrics,
+            fn (DanceShortsAnalyzerSnapshotMetricDTO $metric): bool => $metric->previousSnapshot !== null,
+        ));
+
         return array_map(
             fn (DanceShortsAnalyzerSnapshotMetricDTO $metric): DanceShortsAnalyzerDeltaRowDTO => new DanceShortsAnalyzerDeltaRowDTO(
                 snapshot: $metric->snapshot,
@@ -63,7 +105,7 @@ final class DanceShortsAnalyzerSnapshotMetricService
                 likeDelta: $metric->likeDelta,
                 commentDelta: $metric->commentDelta,
             ),
-            $metrics,
+            $calculableMetrics,
         );
     }
 
@@ -73,6 +115,11 @@ final class DanceShortsAnalyzerSnapshotMetricService
      */
     public function perHourRows(array $metrics): array
     {
+        $calculableMetrics = array_values(array_filter(
+            $metrics,
+            fn (DanceShortsAnalyzerSnapshotMetricDTO $metric): bool => $metric->previousSnapshot !== null,
+        ));
+
         return array_map(
             fn (DanceShortsAnalyzerSnapshotMetricDTO $metric): DanceShortsAnalyzerPerHourRowDTO => new DanceShortsAnalyzerPerHourRowDTO(
                 snapshot: $metric->snapshot,
@@ -82,7 +129,7 @@ final class DanceShortsAnalyzerSnapshotMetricService
                 likePerHour: $metric->likePerHour,
                 commentPerHour: $metric->commentPerHour,
             ),
-            $metrics,
+            $calculableMetrics,
         );
     }
 

@@ -63,6 +63,7 @@ final class GetDanceShortsAnalyzerAnalyzePageAction
 
         // MOCK の Analyze は小サムネイル単位で選択動画を横比較するため、active 動画とは別に全選択動画の比較 DTO を作ります。
         $videoAnalyses = $this->buildVideoAnalyses($selectedVideosWithLatestSnapshot, $snapshots);
+        $comparisonPeriodVideoAnalyses = $this->buildComparisonPeriodVideoAnalyses($videoAnalyses);
         $regionAnalyses = $this->buildRegionAnalyses(
             array_values(array_filter(
                 $snapshots,
@@ -75,6 +76,7 @@ final class GetDanceShortsAnalyzerAnalyzePageAction
             activeVideoId: $activeVideoId,
             activeVideo: $activeVideo,
             videoAnalyses: $videoAnalyses,
+            comparisonPeriodVideoAnalyses: $comparisonPeriodVideoAnalyses,
             regionAnalyses: $regionAnalyses,
             activeRegionId: $this->resolveActiveRegionId($regionAnalyses),
         );
@@ -87,6 +89,7 @@ final class GetDanceShortsAnalyzerAnalyzePageAction
             activeVideoId: null,
             activeVideo: null,
             videoAnalyses: [],
+            comparisonPeriodVideoAnalyses: $this->emptyComparisonPeriodVideoAnalyses(),
             regionAnalyses: [],
             activeRegionId: null,
         );
@@ -179,6 +182,95 @@ final class GetDanceShortsAnalyzerAnalyzePageAction
         }
 
         return $videoAnalyses;
+    }
+
+    /**
+     * @return array<string, array<int, DanceShortsAnalyzerVideoAnalysisDTO>>
+     */
+    private function emptyComparisonPeriodVideoAnalyses(): array
+    {
+        $periodAnalyses = [];
+
+        foreach ($this->metricService->comparisonPeriodKeys() as $periodKey) {
+            $periodAnalyses[$periodKey] = [];
+        }
+
+        return $periodAnalyses;
+    }
+
+    /**
+     * @param  array<int, DanceShortsAnalyzerVideoAnalysisDTO>  $videoAnalyses
+     * @return array<string, array<int, DanceShortsAnalyzerVideoAnalysisDTO>>
+     */
+    private function buildComparisonPeriodVideoAnalyses(array $videoAnalyses): array
+    {
+        $latestSnapshot = $this->latestVideoAnalysisSnapshot($videoAnalyses);
+        $periodAnalyses = [];
+
+        foreach ($this->metricService->comparisonPeriodKeys() as $periodKey) {
+            if ($latestSnapshot === null) {
+                $periodAnalyses[$periodKey] = [];
+
+                continue;
+            }
+
+            $periodAnalyses[$periodKey] = array_map(
+                fn (DanceShortsAnalyzerVideoAnalysisDTO $analysis): DanceShortsAnalyzerVideoAnalysisDTO => $this->rebuildVideoAnalysis(
+                    $analysis,
+                    $this->metricService->filterSnapshotsForPeriod(
+                        $analysis->snapshots,
+                        $periodKey,
+                        $latestSnapshot->collectedAt,
+                    ),
+                ),
+                $videoAnalyses,
+            );
+        }
+
+        return $periodAnalyses;
+    }
+
+    /**
+     * @param  array<int, DanceShortsAnalyzerSnapshotPointDTO>  $snapshots
+     */
+    private function rebuildVideoAnalysis(
+        DanceShortsAnalyzerVideoAnalysisDTO $baseAnalysis,
+        array $snapshots,
+    ): DanceShortsAnalyzerVideoAnalysisDTO {
+        $metrics = $this->metricService->calculate($snapshots);
+
+        return new DanceShortsAnalyzerVideoAnalysisDTO(
+            video: $baseAnalysis->video,
+            regionId: $baseAnalysis->regionId,
+            regionCode: $baseAnalysis->regionCode,
+            regionName: $baseAnalysis->regionName,
+            snapshots: $snapshots,
+            metrics: $metrics,
+            metricSeries: $this->metricService->metricSeries($snapshots),
+            deltaRows: $this->metricService->deltaRows($metrics),
+            perHourRows: $this->metricService->perHourRows($metrics),
+            latestSnapshot: $this->latestSnapshot($snapshots),
+        );
+    }
+
+    /**
+     * @param  array<int, DanceShortsAnalyzerVideoAnalysisDTO>  $videoAnalyses
+     */
+    private function latestVideoAnalysisSnapshot(array $videoAnalyses): ?DanceShortsAnalyzerSnapshotPointDTO
+    {
+        $latestSnapshot = null;
+
+        foreach ($videoAnalyses as $analysis) {
+            if ($analysis->latestSnapshot === null) {
+                continue;
+            }
+
+            if ($latestSnapshot === null || $this->isNewerSnapshot($analysis->latestSnapshot, $latestSnapshot)) {
+                $latestSnapshot = $analysis->latestSnapshot;
+            }
+        }
+
+        return $latestSnapshot;
     }
 
     /**

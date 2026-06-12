@@ -10,6 +10,7 @@ final readonly class DanceShortsAnalyzerAnalyzePageResultDTO
     /**
      * @param  array<int, DanceShortsAnalyzerSelectedVideoDTO>  $selectedVideos
      * @param  array<int, DanceShortsAnalyzerVideoAnalysisDTO>  $videoAnalyses
+     * @param  array<string, array<int, DanceShortsAnalyzerVideoAnalysisDTO>>  $comparisonPeriodVideoAnalyses
      * @param  array<int, DanceShortsAnalyzerRegionAnalysisDTO>  $regionAnalyses
      */
     public function __construct(
@@ -17,6 +18,7 @@ final readonly class DanceShortsAnalyzerAnalyzePageResultDTO
         public ?int $activeVideoId,
         public ?DanceShortsAnalyzerSelectedVideoDTO $activeVideo,
         public array $videoAnalyses,
+        public array $comparisonPeriodVideoAnalyses,
         public array $regionAnalyses,
         public ?int $activeRegionId,
     ) {}

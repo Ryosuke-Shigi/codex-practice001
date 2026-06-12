@@ -109,7 +109,7 @@ class DanceShortsAnalyzerAnalyzePageTest extends TestCase
             'view_count' => 200,
             'like_count' => 20,
             'comment_count' => 2,
-            'collected_at' => '2026-06-01 00:00:00',
+            'collected_at' => '2026-06-01 01:00:00',
         ]);
         DanceShortVideoSnapshot::query()->create([
             'video_id' => $otherVideo->getKey(),
@@ -135,10 +135,13 @@ class DanceShortsAnalyzerAnalyzePageTest extends TestCase
                 ->has('analyzeField.selected_videos', 2)
                 ->where('analyzeField.selected_videos.0.video_id', $video->getKey())
                 ->where('analyzeField.selected_videos.0.youtube_url', 'https://www.youtube.com/shorts/analyze-video')
+                ->where('analyzeField.selected_videos.0.chart_color', '#60a5fa')
                 ->where('analyzeField.selected_videos.1.video_id', $otherVideo->getKey())
                 ->where('analyzeField.selected_videos.1.youtube_url', 'https://www.youtube.com/shorts/other-analyze-video')
+                ->where('analyzeField.selected_videos.1.chart_color', '#22c55e')
                 ->where('analyzeField.active_video.title', 'Analyze Video')
                 ->where('analyzeField.active_video.channel_title', 'Analyze Channel')
+                ->where('analyzeField.active_video.chart_color', '#60a5fa')
                 ->has('analyzeField.regions', 1)
                 ->where('analyzeField.regions.0.region_code', 'JP')
                 ->where('analyzeField.regions.0.region_name', '日本')
@@ -154,33 +157,129 @@ class DanceShortsAnalyzerAnalyzePageTest extends TestCase
                 ->where('analyzeField.regions.0.charts.view_count.option.series.0.data.1', 160)
                 ->where('analyzeField.regions.0.charts.like_count.title', 'Like推移')
                 ->where('analyzeField.regions.0.charts.comment_count.title', 'Comment推移')
-                ->has('analyzeField.regions.0.delta_rows', 2)
-                ->where('analyzeField.regions.0.delta_rows.0.view_delta', null)
-                ->where('analyzeField.regions.0.delta_rows.1.view_delta', 60)
-                ->where('analyzeField.regions.0.delta_rows.1.like_delta', 6)
-                ->has('analyzeField.regions.0.per_hour_rows', 2)
-                ->where('analyzeField.regions.0.per_hour_rows.0.view_per_hour', null)
-                ->where('analyzeField.regions.0.per_hour_rows.1.view_per_hour', 20)
-                ->where('analyzeField.regions.0.per_hour_rows.1.like_per_hour', 2)
-                ->has('analyzeField.comparison.charts.view_count.option.series', 2)
-                ->where('analyzeField.comparison.charts.view_count.option.series.0.name', 'Analyze Video')
-                ->where('analyzeField.comparison.charts.view_count.option.series.1.name', 'Other Analyze Video')
-                ->where('analyzeField.comparison.charts.view_count.option.xAxis.data.0', '06/01 00:00')
-                ->where('analyzeField.comparison.charts.view_count.option.xAxis.data.1', '06/01 03:00')
-                ->where('analyzeField.comparison.charts.view_count.option.series.0.data.0', 100)
-                ->where('analyzeField.comparison.charts.view_count.option.series.0.data.1', 160)
-                ->where('analyzeField.comparison.charts.view_count.option.series.1.data.0', 200)
-                ->where('analyzeField.comparison.charts.view_count.option.series.1.data.1', 320)
-                ->has('analyzeField.comparison.tables.delta.view_count.columns', 2)
-                ->where('analyzeField.comparison.tables.delta.view_count.columns.0.title', 'Analyze Video')
-                ->where('analyzeField.comparison.tables.delta.view_count.columns.1.title', 'Other Analyze Video')
-                ->where('analyzeField.comparison.tables.delta.view_count.rows.1.cells.0.value_label', '60')
-                ->where('analyzeField.comparison.tables.delta.view_count.rows.1.cells.1.value_label', '120')
-                ->where('analyzeField.comparison.tables.per_hour.view_count.rows.1.cells.0.value_label', '20.00 / h')
-                ->where('analyzeField.comparison.tables.per_hour.view_count.rows.1.cells.1.value_label', '40.00 / h')
+                ->has('analyzeField.regions.0.delta_rows', 1)
+                ->where('analyzeField.regions.0.delta_rows.0.view_delta', 60)
+                ->where('analyzeField.regions.0.delta_rows.0.like_delta', 6)
+                ->has('analyzeField.regions.0.per_hour_rows', 1)
+                ->where('analyzeField.regions.0.per_hour_rows.0.view_per_hour', 20)
+                ->where('analyzeField.regions.0.per_hour_rows.0.like_per_hour', 2)
+                ->has('analyzeField.comparison.periods.day')
+                ->has('analyzeField.comparison.periods.week')
+                ->has('analyzeField.comparison.periods.month')
+                ->has('analyzeField.comparison.periods.all')
+                ->has('analyzeField.comparison.periods.day.charts.view_count.option.series', 2)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.color.0', '#60a5fa')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.color.1', '#22c55e')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.0.name', 'Analyze Video')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.1.name', 'Other Analyze Video')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.data.0', '00:00')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.data.1', '01:00')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.data.2', '03:00')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.axisLabel.hideOverlap', true)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.0.data.0', 100)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.0.data.1', null)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.0.data.2', 160)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.1.data.0', null)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.1.data.1', 200)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.1.data.2', 320)
+                ->has('analyzeField.comparison.periods.day.tables.delta.view_count.columns', 2)
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.columns.0.title', 'Analyze Video')
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.columns.1.title', 'Other Analyze Video')
+                ->has('analyzeField.comparison.periods.day.tables.delta.view_count.rows', 1)
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.0.value_label', '60')
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.1.value_label', '120')
+                ->where('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows.0.cells.0.value_label', '20.00 / h')
+                ->where('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows.0.cells.1.value_label', '60.00 / h')
             );
 
         $this->assertSame(0, $youtubeRepository->callCount);
+    }
+
+    public function test_comparison_periods_use_latest_snapshot_as_anchor_and_format_axis_labels(): void
+    {
+        $region = $this->region();
+        $video = $this->video([
+            'youtube_video_id' => 'period-video',
+            'title' => 'Period Video',
+        ]);
+
+        foreach ([
+            ['view_count' => 10, 'collected_at' => '2026-05-01 00:00:00'],
+            ['view_count' => 20, 'collected_at' => '2026-05-15 12:00:00'],
+            ['view_count' => 40, 'collected_at' => '2026-06-04 12:00:00'],
+            ['view_count' => 70, 'collected_at' => '2026-06-09 13:00:00'],
+            ['view_count' => 100, 'collected_at' => '2026-06-10 12:00:00'],
+        ] as $snapshot) {
+            DanceShortVideoSnapshot::query()->create([
+                'video_id' => $video->getKey(),
+                'region_id' => $region->getKey(),
+                'view_count' => $snapshot['view_count'],
+                'like_count' => 1,
+                'comment_count' => 1,
+                'collected_at' => $snapshot['collected_at'],
+            ]);
+        }
+
+        $this
+            ->get('/dance-shorts-analyzer/analyze?'.http_build_query([
+                'video_ids' => [$video->getKey()],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('analyzeField.comparison.periods.day.charts.view_count.option.series.0.data', 2)
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.data.0', '13:00')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.data.1', '12:00')
+                ->where('analyzeField.comparison.periods.day.charts.view_count.option.xAxis.axisLabel.rotate', 0)
+                ->has('analyzeField.comparison.periods.day.tables.delta.view_count.rows', 1)
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.0.value_label', '30')
+                ->has('analyzeField.comparison.periods.week.charts.view_count.option.series.0.data', 3)
+                ->where('analyzeField.comparison.periods.week.charts.view_count.option.xAxis.data.0', '06/04 12:00')
+                ->where('analyzeField.comparison.periods.week.charts.view_count.option.xAxis.data.2', '06/10 12:00')
+                ->where('analyzeField.comparison.periods.week.charts.view_count.option.xAxis.axisLabel.rotate', 30)
+                ->has('analyzeField.comparison.periods.week.tables.delta.view_count.rows', 2)
+                ->has('analyzeField.comparison.periods.month.charts.view_count.option.series.0.data', 4)
+                ->where('analyzeField.comparison.periods.month.charts.view_count.option.xAxis.data.0', '05/15')
+                ->where('analyzeField.comparison.periods.month.charts.view_count.option.xAxis.data.3', '06/10')
+                ->where('analyzeField.comparison.periods.month.charts.view_count.option.xAxis.axisLabel.rotate', 30)
+                ->has('analyzeField.comparison.periods.month.tables.delta.view_count.rows', 3)
+                ->has('analyzeField.comparison.periods.all.charts.view_count.option.series.0.data', 5)
+                ->where('analyzeField.comparison.periods.all.charts.view_count.option.xAxis.data.0', '2026/05/01')
+                ->where('analyzeField.comparison.periods.all.charts.view_count.option.xAxis.data.4', '2026/06/10')
+                ->where('analyzeField.comparison.periods.all.charts.view_count.option.xAxis.axisLabel.rotate', 45)
+                ->has('analyzeField.comparison.periods.all.tables.delta.view_count.rows', 4)
+            );
+    }
+
+    public function test_single_snapshot_period_tables_are_empty(): void
+    {
+        $region = $this->region();
+        $video = $this->video([
+            'youtube_video_id' => 'single-snapshot-video',
+        ]);
+
+        DanceShortVideoSnapshot::query()->create([
+            'video_id' => $video->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 100,
+            'like_count' => 10,
+            'comment_count' => 1,
+            'collected_at' => '2026-06-01 00:00:00',
+        ]);
+
+        $this
+            ->get('/dance-shorts-analyzer/analyze?'.http_build_query([
+                'video_ids' => [$video->getKey()],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('analyzeField.no_snapshot_message', null)
+                ->has('analyzeField.regions.0.delta_rows', 0)
+                ->has('analyzeField.regions.0.per_hour_rows', 0)
+                ->has('analyzeField.comparison.periods.day.tables.delta.view_count.rows', 0)
+                ->has('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows', 0)
+                ->has('analyzeField.comparison.periods.all.tables.delta.view_count.rows', 0)
+                ->has('analyzeField.comparison.periods.all.tables.per_hour.view_count.rows', 0)
+            );
     }
 
     public function test_multiple_regions_are_kept_separate_and_latest_region_becomes_active(): void
