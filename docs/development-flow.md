@@ -206,6 +206,8 @@ UI作業では、MOCKで確認したPage / Field / Component構成、PROTOTYPE�
 
 実装作業では、型宣言、PHPDoc / JSDoc、nullable、`any`、型アサーション、format / typecheck の確認結果もレビュー対象に含めます。
 
+PR確認時のレビュー強度は `docs/operations/pr-review-strength.md` に従い、作業種別、影響範囲、失敗時の危険度から先に判定します。
+
 ## ハーネスエンジニアリング
 
 AIへ自由に実装させるのではなく、AIが速く動いても壊れにくく、間違いを検知しやすい環境を作ります。
@@ -236,3 +238,4 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 - UI: `docs/ui.md`
 - フロントエンド: `docs/frontend.md`
 - コンテキスト管理: `docs/context-management.md`
+- PRレビュー強度: `docs/operations/pr-review-strength.md`
