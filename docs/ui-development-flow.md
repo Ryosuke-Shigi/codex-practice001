@@ -23,12 +23,14 @@ MOCK       画面単体のUIを作る
     ↓
 PROTOTYPE  画面同士の接続、導線、状態変化を作る
     ↓
-PRODUCT    UI構造を引き継ぎ、本データと責務分離へ接続する
+PRODUCT    UI契約と振る舞いを引き継ぎ、本データと責務分離へ接続する
 ```
 
 PRODUCT化とは、MOCKやPROTOTYPEで確認したUIを捨てて作り直すことではありません。
 
-PRODUCT化とは、画面単体のUI構造と画面間の導線を維持したまま、固定データ、仮データ、仮通信、仮ロジックを、本番用のprops、Backend、Repository、Service、Responder、DTO、Testへ置き換えることです。
+PRODUCT化とは、画面単体のUI契約と画面間の導線を維持したまま、固定データ、仮データ、仮通信、仮ロジックを、本番用のprops、Backend、Repository、Service、Responder、DTO、Testへ置き換えることです。
+
+PRODUCTで引き継ぐのは、MOCK / PROTOTYPE のコードそのものではありません。引き継ぐのは、UI契約、振る舞い、状態、導線であり、PRODUCTの責務に合わせて再実装します。
 
 ## UI契約
 
@@ -54,6 +56,10 @@ UI契約に含めるもの:
 - 画面密度
 - 上詰め / 中央寄せ
 - 空状態や仮表示
+- Productで置き換えるprops
+- 本データ接続点
+- Responder / Componentの責務境界
+- PROTOTYPEで確認した振る舞い
 
 UI契約に含めないもの:
 
@@ -186,8 +192,10 @@ PRODUCT化で行うこと:
 
 - MOCKで作った画面単体のUI構造を引き継ぐ
 - PROTOTYPEで作った画面間の導線を引き継ぐ
-- 必要に応じてMOCK / PROTOTYPEのPage、Field、Componentを複製する
-- Product用ディレクトリへ移動または再配置する
+- MOCK / PROTOTYPEのPage、Field、Component構造を確認する
+- PROTOTYPEで確認した振る舞い、状態、導線を確認する
+- PRODUCTで守るべき振る舞いを先にTestへ記述する
+- PRODUCTの責務に合わせてPage、Field、Componentを再実装する
 - ダミーデータをpropsへ置き換える
 - propsをBackendから渡す
 - DB取得をRepositoryへ置く
@@ -209,20 +217,22 @@ PRODUCT化で避けること:
 - FrontendへDB取得や外部API呼び出しを置く
 - 次PRの機能を混ぜる
 
-## UI移植の標準手順
+## PRODUCT化の標準手順
 
 PRODUCT化では、次の順で進めます。
 
 ```text
 MOCKで画面単体のUI契約を確認
     ↓
-PROTOTYPEで画面間の導線と状態受け渡しを確認
+PROTOTYPEで画面間の導線、状態受け渡し、振る舞いを確認
     ↓
 PRODUCT化する1目的・1ユースケースを決める
     ↓
-引き継ぐPage / Field / Component / layout / className / scroll構造を列挙
+引き継ぐUI契約、振る舞い、状態、導線を列挙
     ↓
-MOCK / PROTOTYPEのUI構造を複製またはProduct側へ移動
+PRODUCTで守るべき仕様をTestへ記述
+    ↓
+PRODUCTの責務に合わせてComponent / Action / Service / Repository / DTO / Responderを再実装
     ↓
 固定データ・仮データ・仮通信・仮ロジックを削除
     ↓
@@ -232,12 +242,12 @@ Repository / Service / Actionへ責務分離
     ↓
 Reactは表示、操作、UI状態へ寄せる
     ↓
-テストで画面契約とpropsを固定
+Testを通す
     ↓
-MOCK / PROTOTYPEとの差分を比較
+UI契約が壊れていないかMOCK / PROTOTYPEと比較
 ```
 
-複製または移動してよいもの:
+再実装時に参照するもの:
 
 - Pageの骨格
 - Fieldの構成
@@ -249,7 +259,7 @@ MOCK / PROTOTYPEとの差分を比較
 - 汎用的なUI状態
 - 業務非依存のCommon Component
 
-複製または移動してはいけないもの:
+引き継がないもの:
 
 - 固定データ配列
 - 仮データ
@@ -259,6 +269,43 @@ MOCK / PROTOTYPEとの差分を比較
 - 検証用Controller
 - console.logなどの検証残骸
 - 本番仕様として未確定の条件分岐
+
+## PRODUCT化時に先にTestで固定するもの
+
+PRODUCT化では、実装を先に作らず、PROTOTYPEで確認済みの振る舞いからPRODUCTで守る仕様を先にTestへ記述します。
+
+先に固定するもの:
+
+- 選択したデータだけが対象になること
+- 本番APIを追加呼び出ししないこと
+- 保存済みデータを使うこと
+- Serviceの業務判断
+- Repositoryの取得条件
+- Responderのprops構造
+- UIで必要な状態
+- loading / empty / error / selected などの状態
+- 画面遷移や導線
+- 壊してはいけない表示仕様
+
+## コードコピー禁止と共通Component化
+
+MOCK / PROTOTYPE のコードをそのままPRODUCTへ貼り付けません。
+
+PRODUCTでは、MOCK / PROTOTYPE のUI契約、振る舞い、状態、導線を参照し、PRODUCTの責務に合わせて再実装します。
+
+共通Component化は、CodexAppやAIの自己判断だけで確定しません。次のいずれかを満たす場合に、人間がレビューできる形で提案します。
+
+- 人間が明示的に共通Component化を許可している
+- PR本文に理由、共有する画面、props設計、本データ接続点、影響範囲、代替案を書いている
+
+共通Component化の最低条件:
+
+- 共通Componentとして切り出す理由がある
+- MOCK専用の仮データや仮処理が残っていない
+- Product責務に合っている
+- props型が明確
+- 本データ接続点が明確
+- テストまたはPR本文で影響範囲を説明している
 
 ## 責務分離の原則
 
@@ -433,7 +480,7 @@ MOCKでは、画面を1つずつ作り、画面単体のUI契約を固定しま�
 
 PROTOTYPEでは、画面同士の接続、導線、状態の受け渡しを確認します。
 
-PRODUCTでは、MOCK / PROTOTYPEで確認したUI構造を複製または移動し、固定データ、仮データ、仮通信、仮ロジックを本データ接続と責務分離へ置き換えます。
+PRODUCTでは、MOCK / PROTOTYPEで確認したUI契約、振る舞い、状態、導線を引き継ぎ、固定データ、仮データ、仮通信、仮ロジックを本データ接続と責務分離へ置き換えます。
 
 PRODUCT化とは、UIを捨てて作り直すことではありません。
 

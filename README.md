@@ -245,13 +245,15 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [Documentation Index](docs/index.md): 用途別の正本と参照先
 - [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
 - [UI Development Flow](docs/ui-development-flow.md): MOCK / PROTOTYPE / PRODUCTのUI作成工程
+- [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
 - [Architecture](docs/architecture.md): ADR Patternとレイヤード責務
 - [Testing](docs/testing.md): テスト方針と仕様固定
+- [Coding Standards](docs/coding-standards.md): PHP / TypeScript / JavaScript / React / CSSの実装作法
 - [Frontend](docs/frontend.md): React / Inertia / TypeScriptの実装責務
 - [UI](docs/ui.md): UI、Common、モバイル、Effects
 - [Security](docs/security.md): 秘密情報、本番接続、破壊的操作
 - [Context Management](docs/context-management.md): 文脈読込と理解再起動
 - [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
 - [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
+- [Instruction Summary Template](docs/templates/instruction-summary.md): CodexAppへ渡す指示用まとめの型
 - [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時の停止条件
-- [Coding Standards](docs/coding-standards.md): PHP / TypeScript / JavaScript / React / CSSの実装作法

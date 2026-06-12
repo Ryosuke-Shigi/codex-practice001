@@ -66,6 +66,8 @@ PHPDocには必要に応じて `@param`、`@return`、`@throws` を使います�
 
 ただし、PHPの型宣言と完全に重複するだけのPHPDocは追加しません。
 
+Action PHPDocにはユースケース、呼び出すService、成功条件を中心に書きます。Service PHPDocには業務判断、入力、出力、置かない責務を書きます。業務仕様は `docs/features/`、実行可能な仕様固定はTestへ置き、PHPDocへ細かい期待値を詰め込みません。
+
 ### DTO / ListDTO
 
 - DTOはレイヤー間のデータキャリアに限定する
@@ -256,6 +258,7 @@ CIが通っても責務境界が正しいとは判断しません。責務、型
 - `docs/frontend.md` のComponent / props責務を崩していないか
 - `docs/ui.md` のUI責務と操作条件を崩していないか
 - `docs/commenting.md` に従い、必要なPHPDoc / JSDocを追加・更新したか
+- Action PHPDoc、Service PHPDoc、Service内コメント、`docs/features/`、Test の役割分担が崩れていないか
 - 型宣言、nullable、empty、例外条件が曖昧なままになっていないか
 - `any` や型アサーションで不整合を隠していないか
 - 必要なformat / test / buildを確認したか

@@ -10,7 +10,7 @@
 
 MOCK / Prototypeのディレクトリ、Route、削除、Productとの物理的分離は `docs/prototype-policy.md` を正本とします。
 
-MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへのUI移植は `docs/ui-development-flow.md` を正本とします。
+MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへ引き継ぐUI契約は `docs/ui-development-flow.md` を正本とします。
 
 実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` を正本とします。
 
@@ -131,6 +131,8 @@ Product化前に固定するもの:
 - テスト観点
 - MOCKから引き継ぐ画面単体のUI構造
 - PROTOTYPEから引き継ぐ画面間の導線
+- PROTOTYPEで確認した振る舞い
+- PRODUCTで先にTestへ固定する仕様
 
 基本単位:
 
@@ -161,7 +163,7 @@ docs/coding-standards.md と docs/commenting.md で実装作法・型・コメ�
     ↓
 成功条件・失敗条件・責務境界を固定
     ↓
-重要な境界をテストで固定
+PROTOTYPEで確認済みの振る舞いをPRODUCTで守る仕様として先にTestへ記述
     ↓
 DTOでレイヤー間のデータ構造を固定
     ↓
@@ -190,13 +192,13 @@ UI作業では、MOCKで画面単体を作り、PROTOTYPEで画面同士をつ�
 - API通信・DB操作
 - 権限判断・状態遷移判断
 
-具体的なUI移植手順は `docs/ui-development-flow.md`、配置と削除境界は `docs/prototype-policy.md`、Commonの責務は `docs/ui.md` に従います。
+具体的なUI契約の引き継ぎ方は `docs/ui-development-flow.md`、配置と削除境界は `docs/prototype-policy.md`、Commonの責務は `docs/ui.md` に従います。
 
 ## テストとレビュー
 
 共通テスト方針は `docs/testing.md` に従います。
 
-重要な境界は実装前または実装と同時に固定し、並び順、pagination props、表示補助データ、モバイル固有操作等は挙動が明確になった後に固定してよいものとします。
+PRODUCT化では、PROTOTYPEで確認した振る舞いを先にTestへ固定します。並び順、pagination props、表示補助データ、モバイル固有操作等は挙動が明確になった後に固定してよいものとします。
 
 テスト成功だけで責務分離が正しいとは判断せず、差分レビューで不要な依存、責務混在、過剰な抽象化を確認します。
 

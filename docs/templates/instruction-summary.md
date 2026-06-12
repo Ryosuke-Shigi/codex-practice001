@@ -47,6 +47,15 @@
 作業ブランチ：
 - `<branch-name>`
 
+UI作成工程：
+- MOCK：<画面単体で確認済みのUI契約>
+- PROTOTYPE：<画面間の導線・状態受け渡し・振る舞い>
+- PRODUCT：<本データと責務分離へ接続する範囲>
+- 引き継ぐUI契約：<Page / Field / Component / layout / scroll / 状態表示>
+- 引き継ぐ振る舞い：<画面遷移・操作・状態変化>
+- 引き継がない仮処理：<固定データ・仮通信・仮ロジック>
+- PRODUCTで先に固定するTest：<実装前に固定する仕様>
+
 触る範囲：
 - <対象ファイル・ディレクトリ・責務>
 
@@ -68,6 +77,13 @@
 - Feature Component：<機能固有UI>
 - Common Component：<業務非依存UI>
 - <使わない責務は削除する。不要な層は追加しない>
+
+コメント / PHPDoc / features docs / Test の役割：
+- Action PHPDoc：<ユースケース、呼び出すService、成功条件>
+- Service PHPDoc：<業務判断、入力、出力、置かない責務>
+- Service内コメント：<なぜその条件・計算・比較なのか>
+- docs/features/：<人間が読む業務仕様、UI契約、禁止事項>
+- Test：<実行可能な仕様固定>
 
 実装作法・型・コメント：
 - PHP：<型宣言、PHPDoc、@param / @return / @throws、Pint確認>

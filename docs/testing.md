@@ -296,6 +296,35 @@ FeatureテストへServiceの細かい全分岐を重複して書きません。
 
 すべてを最初から完全なTDDにする必要はありませんが、すべてを後回しにもしません。
 
+## PRODUCT化時のTDD順序
+
+PRODUCT化では、実装を先に作らず、PROTOTYPEで確認済みの振る舞いをPRODUCTで守る仕様として先にTestへ記述します。
+
+```text
+PROTOTYPEの振る舞い確認
+    ↓
+PRODUCTで守るべき仕様をTestへ記述
+    ↓
+Action / Service / Responder / Componentを実装
+    ↓
+Testを通す
+    ↓
+UI契約が壊れていないか確認
+```
+
+先に固定する観点:
+
+- 選択したデータだけが対象になること
+- 本番APIを追加呼び出ししないこと
+- 保存済みデータを使うこと
+- Serviceの業務判断
+- Repositoryの取得条件
+- Responderのprops構造
+- UIで必要な状態
+- loading / empty / error / selected などの状態
+- 画面遷移や導線
+- 壊してはいけない表示仕様
+
 ## Fixture / Fake / Mock
 
 テスト本体へ長いXML・JSON・巨大payload・複雑な匿名クラスを書きすぎません。
