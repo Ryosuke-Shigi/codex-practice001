@@ -7,6 +7,12 @@ use App\Models\DanceShortVideo;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
+/**
+ * DanceShortsRadar の動画本体テーブルを扱う DB Repository です。
+ *
+ * youtube_video_id を一意キーにした検索・upsert・差分比較を担当します。
+ * Shorts 判定、tracking 状態の意味づけ、snapshot 保存可否は Service / Action 側へ分けます。
+ */
 class DanceShortVideoRepository implements DanceShortVideoRepositoryInterface
 {
     public function findByYoutubeVideoId(string $youtubeVideoId): ?DanceShortVideo

@@ -5,6 +5,11 @@ namespace App\Factories\ApiCatalog;
 use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
 use Illuminate\Http\Request;
 
+/**
+ * APIカタログ一覧の Request query を検索DTOへ変換する Factory です。
+ *
+ * 空文字や未許可sortをDTOへ渡す前に正規化し、Repository がHTTP入力を直接読まない境界を作ります。
+ */
 final readonly class ApiCatalogListQueryDTOFactory
 {
     private const SORT_KEYS = [

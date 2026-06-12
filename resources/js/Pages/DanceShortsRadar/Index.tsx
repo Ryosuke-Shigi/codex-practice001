@@ -17,7 +17,7 @@ import type {
 } from '@/Components/Lab/DanceShortsRadar/types';
 import PublicLayout from '@/Layouts/PublicLayout';
 
-/*
+/**
  * DanceShortsRadar の通常ランキング本画面です。
  *
  * 本データ用 Responder が、操作 UI / 状態説明 / カード表示を 3Field の props shape へ
@@ -30,6 +30,12 @@ type DanceShortsRadarIndexProps = {
     displayCardField: DanceShortsDisplayCardFieldProps;
 };
 
+/**
+ * DanceShortsRadar本番ランキングの Page Component です。
+ *
+ * 3Field props を Feature Component へ渡し、表示中select groupだけをUI状態として持ちます。
+ * DB取得、ランキング計算、snapshot metric の再計算は Laravel 側へ残します。
+ */
 export default function DanceShortsRadarIndex({
     displaySelectField,
     displayHeaderField,

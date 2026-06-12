@@ -7,6 +7,12 @@ use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * QuakeWave Map 画面の Inertia props を整える Responder です。
+ *
+ * Repository から戻った MapPinListDTO と検索DTOを Page props に変換します。
+ * DB取得条件やピンの表示演出はここで判断せず、出力形の固定だけを担当します。
+ */
 class EarthquakeMapResponder
 {
     public function __invoke(EarthquakeMapPinListDTO $pins, EarthquakeMapPinListQueryDTO $query): Response

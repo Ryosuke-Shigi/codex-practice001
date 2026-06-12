@@ -8,6 +8,12 @@ use App\DTO\DanceShortsAnalyzer\Search\DanceShortsAnalyzerVideoListDTO;
 use App\Models\DanceShortVideo;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * DanceShortsAnalyzer検索画面の保存済み動画検索を担当する Repository です。
+ *
+ * dance_short_videos の検索・並び替え・lookahead取得だけを扱います。
+ * snapshot分析、region比較、YouTube API取得は別のAction / Repositoryへ分けます。
+ */
 class DanceShortsAnalyzerVideoRepository implements DanceShortsAnalyzerVideoRepositoryInterface
 {
     /**

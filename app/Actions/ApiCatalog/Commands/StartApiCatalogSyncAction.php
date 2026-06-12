@@ -7,6 +7,12 @@ use App\Jobs\ApiCatalog\SyncApiCatalogJob;
 use App\Repositories\ApiCatalog\ApiCatalogSyncStatusRepositoryInterface;
 use RuntimeException;
 
+/**
+ * APIカタログ同期Jobを Queue へ投入する Command Action です。
+ *
+ * HTTP入口から同期開始を受け付け、状態管理レコードの作成と Job dispatch だけを担当します。
+ * APIs.guru 取得や cache 更新の業務手順は SyncApiCatalogJob 以降へ渡します。
+ */
 final readonly class StartApiCatalogSyncAction
 {
     public function __construct(

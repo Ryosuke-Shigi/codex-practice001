@@ -82,7 +82,7 @@ function rankForIndex(field: DanceShortsDisplayCardField, index: number) {
     return field.pagination.startRank + index;
 }
 
-/*
+/**
  * displayCardField は Laravel 側で確定した現在windowだけを受け取ります。
  * React 側では受け取ったwindowをcacheし、前後移動、先読み、Loading表示、カード本体の
  * 表示だけを扱います。ranking / rising の判定やsortはここでは行いません。

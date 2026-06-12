@@ -7,6 +7,12 @@ use RuntimeException;
 use SimpleXMLElement;
 use Throwable;
 
+/**
+ * JMA 個別XML電文から地図pin用DTOを作る Service です。
+ *
+ * XML namespace を辿って震源・震度・時刻の値を抽出し、MapPinDTOへ変換します。
+ * XML取得、DB保存、React表示演出は担当せず、解析結果が地図表示可能かの判定までに留めます。
+ */
 class EarthquakeDetailXmlParseService
 {
     private const JMAXML_INFORMATION_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/informationBasis1/';

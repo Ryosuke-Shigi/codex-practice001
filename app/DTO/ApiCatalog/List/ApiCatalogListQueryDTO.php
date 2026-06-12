@@ -2,6 +2,12 @@
 
 namespace App\DTO\ApiCatalog\List;
 
+/**
+ * APIカタログ一覧の検索条件を Controller から Repository へ渡す DTO です。
+ *
+ * Request オブジェクトをDB境界へ渡さないための入力キャリアであり、
+ * 検索条件の正規化は Factory、取得条件の適用は Repository に分けます。
+ */
 final readonly class ApiCatalogListQueryDTO
 {
     public const SORT_UPDATED_DESC = 'updated_desc';

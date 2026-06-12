@@ -7,6 +7,12 @@ use App\DTO\ApiCatalog\Note\ApiCatalogNoteUpdateDTO;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogNoteRepositoryInterface;
 
+/**
+ * APIカタログの保存メモを更新する Command Action です。
+ *
+ * api_key と note id の組み合わせで対象を確定し、別APIのメモへ届かないようにします。
+ * 入力形式は Request、DB更新は Repository に任せ、この Action は更新手順だけを持ちます。
+ */
 final readonly class UpdateApiCatalogNoteAction
 {
     public function __construct(

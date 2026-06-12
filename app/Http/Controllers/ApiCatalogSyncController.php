@@ -9,6 +9,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
+/**
+ * APIカタログ同期開始と同期状態取得の HTTP 入口です。
+ *
+ * 同期開始POSTと polling 用JSONを Action / Responder へ接続します。
+ * 同期本体や件数集計は Job / Service に置き、Controller はHTTP入力と戻り先の安全確認に限定します。
+ */
 class ApiCatalogSyncController extends Controller
 {
     public function __invoke(

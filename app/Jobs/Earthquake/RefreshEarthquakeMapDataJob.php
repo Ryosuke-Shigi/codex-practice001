@@ -12,6 +12,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * QuakeWave Map の統合更新を Queue 上で順番に実行する Job です。
+ *
+ * feed entry 同期を完了させてから map pin 生成へ進めます。
+ * 個別XML解析や保存判断は Service / Repository 側へ残し、Job は実行順と状態run更新を担当します。
+ */
 class RefreshEarthquakeMapDataJob implements ShouldQueue
 {
     use Queueable;

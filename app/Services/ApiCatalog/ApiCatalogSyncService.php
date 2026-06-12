@@ -13,6 +13,12 @@ use InvalidArgumentException;
 use JsonException;
 use Throwable;
 
+/**
+ * APIs.guru カタログ同期の業務判断を担当する Service です。
+ *
+ * 外部Repositoryから取得したpayloadを保存DTOへ変換し、既存cacheとの差分、無効化、
+ * 失敗件数の集約を判断します。HTTPレスポンス、Queue状態更新、Inertia props生成は扱いません。
+ */
 class ApiCatalogSyncService
 {
     private const TEXT_COLUMN_MAX_BYTES = 65535;
@@ -22,6 +28,9 @@ class ApiCatalogSyncService
         private readonly ApiCatalogCacheRepositoryInterface $cacheRepository,
     ) {}
 
+    /**
+     * APIs.guru の一覧を cache テーブルへ反映し、同期結果件数を返します。
+     */
     public function sync(): ApiCatalogSyncResultDTO
     {
         $apiList = $this->apisGuruRepository->fetchList();

@@ -9,6 +9,12 @@ use App\Models\ApiCatalogCache;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
+/**
+ * APIカタログ一覧を取得する Query Action です。
+ *
+ * Request由来の検索DTOを受け取り、Repository の検索結果を ListDTO へ集約します。
+ * DB条件は Repository、Inertia props 整形は Responder に分け、Action は一覧表示ユースケースの手順に限定します。
+ */
 final readonly class GetApiCatalogListAction
 {
     public function __construct(

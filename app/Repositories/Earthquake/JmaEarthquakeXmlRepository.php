@@ -5,7 +5,7 @@ namespace App\Repositories\Earthquake;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
-/*
+/**
  * 気象庁 防災情報XML PULL型の XML を取得する Repository です。
  *
  * この層の責務は HTTP request / response の transport 情報をそろえることだけです。

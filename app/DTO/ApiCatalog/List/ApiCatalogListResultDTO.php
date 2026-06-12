@@ -2,6 +2,12 @@
 
 namespace App\DTO\ApiCatalog\List;
 
+/**
+ * APIカタログ一覧の Query Action から Responder へ渡す ListDTO です。
+ *
+ * 一覧items、検索候補、paginationをまとめるデータキャリアであり、
+ * DB検索やInertiaレスポンス生成はこのDTOへ持たせません。
+ */
 final readonly class ApiCatalogListResultDTO
 {
     /**

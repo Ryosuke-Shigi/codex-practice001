@@ -8,7 +8,7 @@ use App\Http\Requests\DanceShortsRadar\DanceShortVideoRankingRequest;
 use App\Responders\DanceShortsRadar\DanceShortVideoRankingResponder;
 use Inertia\Response;
 
-/*
+/**
  * DanceShortsRadar 通常ランキング本画面の HTTP 入口です。
  *
  * Controller が担当するのは、FormRequest で検証済みの query を入力 DTO に移し、

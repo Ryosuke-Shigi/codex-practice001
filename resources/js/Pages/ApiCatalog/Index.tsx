@@ -271,6 +271,12 @@ function shouldShowSyncResult(status: ApiCatalogSyncStatus | null) {
     return status !== null && !status.isRunning;
 }
 
+/**
+ * APIカタログ本番一覧の Page Component です。
+ *
+ * Inertia props で受け取った一覧・検索候補・同期状態を表示し、検索、ページ送り、
+ * 同期開始とpollingの画面状態だけを扱います。検索条件のDB適用や同期本体の実行はLaravel側へ委譲します。
+ */
 export default function Index({
     filters,
     providers,

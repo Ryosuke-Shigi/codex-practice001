@@ -5,6 +5,11 @@ namespace App\Console\Commands;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
 use Illuminate\Console\Command;
 
+/**
+ * DanceShortsRadar の通常同期Jobを投入する Artisan Command です。
+ *
+ * CLIからの手動入口として Queue に積むだけに留め、同期本体の業務ロジックは Job / Action へ渡します。
+ */
 class DanceShortSyncCommand extends Command
 {
     protected $signature = 'dance-short:sync';

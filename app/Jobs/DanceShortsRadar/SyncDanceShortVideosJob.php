@@ -7,6 +7,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * DanceShortsRadar の通常同期を Queue worker で実行する Job です。
+ *
+ * 非同期実行の timeout / retry 境界を持ち、同期手順は SyncDanceShortVideosAction へ委譲します。
+ * YouTube API 呼び出しやDB保存条件を Job に持たせません。
+ */
 class SyncDanceShortVideosJob implements ShouldQueue
 {
     use Queueable;

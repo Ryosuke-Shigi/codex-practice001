@@ -8,6 +8,12 @@ use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use RuntimeException;
 
+/**
+ * QuakeWave Map の統合更新Jobを投入する Command Action です。
+ *
+ * feed entry 取込runと map pin 生成runを作り、Queue へ Job を渡します。
+ * XML取得・解析・DB保存の本体は Job / Service / Repository に分け、Action は開始手順だけを扱います。
+ */
 final readonly class StartEarthquakeMapRefreshAction
 {
     public function __construct(

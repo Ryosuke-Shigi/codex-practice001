@@ -8,6 +8,11 @@ export type EChartsViewerProps = {
     renderer?: 'canvas' | 'svg';
 };
 
+/**
+ * ECharts optionを描画する業務非依存の共通Componentです。
+ *
+ * 呼び出し元が作った option を表示するだけに留め、機能固有の集計や表示値の意味づけは持ちません。
+ */
 export default function EChartsViewer({
     option,
     height = 360,

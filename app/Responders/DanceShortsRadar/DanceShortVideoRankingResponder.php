@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/*
+/**
  * DanceShortsRadar 通常ランキング画面の Responder です。
  *
  * Responder は Query Action の DTO を Inertia / React が描きやすい props へ変換します。

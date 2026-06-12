@@ -9,6 +9,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * APIカタログ同期を Queue worker で実行する Job です。
+ *
+ * 状態runを running / completed / failed へ更新しながら SyncApiCatalogAction を呼びます。
+ * APIs.guru payload の解釈や cache 更新判断は Action / Service 側へ委譲します。
+ */
 class SyncApiCatalogJob implements ShouldQueue
 {
     use Queueable;

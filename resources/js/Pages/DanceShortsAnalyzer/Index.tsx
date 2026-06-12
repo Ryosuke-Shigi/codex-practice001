@@ -22,6 +22,12 @@ type DanceShortsAnalyzerIndexProps = {
 
 const maxSelectedVideos = 5;
 
+/**
+ * DanceShortsAnalyzer検索画面の Page Component です。
+ *
+ * 検索語、追加取得、カード選択、Analyze導線のUI状態を扱います。
+ * 検索条件のDB適用やsnapshot分析はLaravel側のAction / Repositoryへ委譲します。
+ */
 export default function DanceShortsAnalyzerIndex({
     searchField,
     cardsField,

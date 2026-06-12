@@ -26,6 +26,12 @@ function shouldIgnoreSwipeTarget(target: EventTarget | null) {
     return target.closest('button, a, input, textarea, select, [role="button"], [contenteditable="true"]') !== null;
 }
 
+/**
+ * ページ全体の左右スワイプを検出して、呼び出し元のページ移動処理へ通知する共通Hookです。
+ *
+ * button / link / form 操作や画面端のOSジェスチャーを除外し、Hook自身はURL遷移や
+ * Inertia操作を実行しません。Page側が onSwipeLeft / onSwipeRight で用途を決めます。
+ */
 export default function useSwipeNavigation({
     onSwipeLeft,
     onSwipeRight,
