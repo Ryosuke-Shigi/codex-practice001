@@ -467,7 +467,7 @@ function buildChartOption(
         series: [
             ...seriesValues.map((series) => ({
                 name: series.name,
-                type: 'line',
+                type: 'line' as const,
                 smooth: true,
                 symbolSize: 7,
                 lineStyle: {
