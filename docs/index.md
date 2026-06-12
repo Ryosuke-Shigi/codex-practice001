@@ -19,6 +19,10 @@
 - `AGENTS.md`
 - 共通方針docs
 
+### コマンド実行・Git境界
+
+- `docs/operations/command-registry.md`
+
 ### 実装済みの現在挙動
 
 - 現在のコード
@@ -89,6 +93,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
+| `docs/operations/command-registry.md` | Docker経由コマンド、root / `/src` のGit境界、作業種別ごとの確認 |
 | `docs/coding-standards.md` | PHP / TypeScript / JavaScript / React / CSS の実装作法、型、命名、確認コマンド |
 | `docs/testing.md` | テスト追加、仕様固定、CI確認 |
 | `docs/frontend.md` | React / Inertia / TypeScript、props、Component責務 |

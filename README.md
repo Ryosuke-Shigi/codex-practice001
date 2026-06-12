@@ -214,14 +214,15 @@ Controllerへ業務判断、Repositoryへ表示判断、ServiceへHTTP都合を�
 基本コマンド:
 
 ```bash
-docker compose run --rm artisan test
-docker compose run --rm npm run test:run
-docker compose run --rm npm run build
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan test
+docker compose run --rm npm npm run test:run
+docker compose run --rm npm npm run build
 ```
 
-TypeScript / TSXを変更した場合は、必要に応じて手元確認として `npm run typecheck` を実行します。現時点ではCI必須ゲートではありません。
+TypeScript / TSXを変更した場合は、必要に応じて手元確認として `docker compose run --rm npm npm run typecheck` を実行します。現時点ではCI必須ゲートではありません。
 
-詳細は [Testing](docs/testing.md) を参照してください。
+詳細は [Testing](docs/testing.md) と [Docker経由コマンド台帳](docs/operations/command-registry.md) を参照してください。
 
 ## CI/CD
 
@@ -251,6 +252,7 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 
 - [AGENTS.md](AGENTS.md): 作業時に守る入口ルール
 - [Documentation Index](docs/index.md): 用途別の正本と参照先
+- [Docker Command Registry](docs/operations/command-registry.md): Docker経由コマンドとGit境界
 - [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
 - [UI Development Flow](docs/ui-development-flow.md): MOCK / PROTOTYPE / PRODUCTのUI作成工程
 - [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容

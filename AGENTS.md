@@ -24,6 +24,7 @@
 - MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
 - MOCK / Prototypeの配置・削除・分離: `docs/prototype-policy.md`
 - ADR Pattern・レイヤード責務: `docs/architecture.md`
+- Docker経由コマンド・Git境界: `docs/operations/command-registry.md`
 - 実装作法・型・命名・確認コマンド: `docs/coding-standards.md`
 - テスト・TDD・CI確認: `docs/testing.md`
 - React / Inertia / TypeScript: `docs/frontend.md`
@@ -74,8 +75,11 @@ Repositoryへ業務判断や表示判断を置かない。ServiceへDB直接操�
 - 既存の未コミット差分を勝手に変更・削除しない
 - commit / push はユーザーの明示指示がある場合のみ行う
 - commit前に差分内容・確認コマンド・テスト結果を提示する
+- Pull Request のタイトル・本文・レビューコメントは日本語で書く
+- commit message は既存履歴に合わせる。ただし特別な理由がなければ日本語で目的が分かる文にする
+- CIログ、コマンド名、エラー文、固有名詞は原文のまま残してよい
 - 実装後は差分、必要なテスト、CI、秘密情報、docs更新を確認する
-- 実装後は `git diff --check` と必要なテストを実行する
+- 実装後は `docs/operations/command-registry.md` に従い、`git diff --check` と必要なテストを実行する
 - mergeは人間の明示判断で行う
 
 ## 作業と停止条件
