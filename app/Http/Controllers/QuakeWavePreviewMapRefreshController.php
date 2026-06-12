@@ -9,6 +9,12 @@ use App\Responders\Earthquake\EarthquakeMapRefreshResponder;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
+/**
+ * QuakeWave Map 更新POSTの HTTP 入口です。
+ *
+ * Controller は統合更新Actionを呼び、開始結果を JSON Responder へ渡します。
+ * XML取得・pin生成・同期状態の業務判断は Action / Job / Service に分離します。
+ */
 class QuakeWavePreviewMapRefreshController extends Controller
 {
     public function __invoke(

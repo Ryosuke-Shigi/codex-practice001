@@ -11,6 +11,12 @@ use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Throwable;
 
+/**
+ * DanceShortsRadar の通常YouTube同期を実行する Command Action です。
+ *
+ * active region / keyword の検索、詳細取得、保存共通Action、snapshot cleanup を順に呼びます。
+ * YouTube通信やDB保存の実装詳細は Repository / 下位Actionへ渡し、同期ユースケースの手順だけを扱います。
+ */
 class SyncDanceShortVideosAction
 {
     public function __construct(

@@ -51,6 +51,11 @@ function errorMessageFrom(error: unknown) {
     return 'Mermaid図の描画に失敗しました。構文を確認してください。';
 }
 
+/**
+ * Mermaid文字列をSVGとして描画する業務非依存の共通Componentです。
+ *
+ * 図の構文エラー表示、標準表示、拡大表示だけを扱い、図に含まれる業務内容の判断は呼び出し元へ残します。
+ */
 export default function MermaidDiagram({
     chart,
     title,

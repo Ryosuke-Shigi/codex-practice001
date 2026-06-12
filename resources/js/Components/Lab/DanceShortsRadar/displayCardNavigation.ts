@@ -10,6 +10,11 @@ export const autoSlideIntervalMs = 1300;
 export const cardSwipeDistanceThreshold = 40;
 export const diagonalSwipeToleranceRatio = 1.25;
 
+/**
+ * カードwindow内で自動送りを開始できるかを判定します。
+ *
+ * 件数判定をComponentから切り出し、ボタンのdisabledとinterval開始条件を同じUI契約にそろえます。
+ */
 export function canStartAutoSlide(visibleCardCount: number) {
     /*
      * 1枚だけの window では自動送りを始めません。
@@ -18,6 +23,11 @@ export function canStartAutoSlide(visibleCardCount: number) {
     return visibleCardCount > 1;
 }
 
+/**
+ * カード領域のtouch移動量から、カード送りまたはselect操作に使うswipe方向を返します。
+ *
+ * ここでは方向検出だけを担当し、実際のURL遷移やwindow取得は呼び出し元Componentへ残します。
+ */
 export function detectCardSwipe(deltaX: number, deltaY: number) {
     /*
      * 斜め swipe は誤操作になりやすいため、主方向が副方向の一定倍率を超えた場合だけ採用します。
@@ -43,6 +53,11 @@ export function detectCardSwipe(deltaX: number, deltaY: number) {
     return null;
 }
 
+/**
+ * 縦swipeをselect optionの前後移動へ変換します。
+ *
+ * 横swipeはカード送りの責務なので null を返し、呼び出し側がカード移動として扱えるようにします。
+ */
 export function selectOptionDirectionForVerticalSwipe(
     swipeDirection: CardSwipeDirection,
 ) {
@@ -61,6 +76,11 @@ export function selectOptionDirectionForVerticalSwipe(
     return null;
 }
 
+/**
+ * カード切替アニメーション用のCSS classを組み立てます。
+ *
+ * transition stateの意味をTypeScript側に閉じ、CSSはmanual / auto と方向別の見た目だけを担当します。
+ */
 export function cardFieldTransitionClassNames(
     transition: CardFieldTransition | null,
 ) {

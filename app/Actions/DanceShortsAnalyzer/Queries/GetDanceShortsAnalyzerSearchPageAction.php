@@ -7,7 +7,7 @@ use App\DTO\DanceShortsAnalyzer\Search\DanceShortsAnalyzerSearchPageResultDTO;
 use App\DTO\DanceShortsAnalyzer\Search\DanceShortsAnalyzerVideoListDTO;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepositoryInterface;
 
-/*
+/**
  * DanceShortsAnalyzer PRODUCT 画面の Search + Cards 用 Query Action です。
  *
  * PR1 では保存済み動画の検索だけを扱います。keyword 未入力時は DB 検索を行わず、

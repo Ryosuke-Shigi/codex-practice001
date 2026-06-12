@@ -4,6 +4,11 @@ namespace App\Http\Requests\ApiCatalog;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * APIカタログ保存メモ作成の入力形式を検証する Request です。
+ *
+ * title / body の型と必須だけを確認し、対象APIへ保存できるかの判定は Action / Repository に委譲します。
+ */
 class StoreApiCatalogNoteRequest extends FormRequest
 {
     public function authorize(): bool

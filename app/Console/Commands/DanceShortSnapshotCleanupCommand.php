@@ -5,6 +5,11 @@ namespace App\Console\Commands;
 use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use Illuminate\Console\Command;
 
+/**
+ * DanceShortsRadar snapshot cleanup を手動実行する Artisan Command です。
+ *
+ * 削除件数を標準出力へ出す入口であり、保持期間や物理削除queryは Action / Service / Repository 側へ分けます。
+ */
 class DanceShortSnapshotCleanupCommand extends Command
 {
     protected $signature = 'dance-short:snapshot:cleanup';

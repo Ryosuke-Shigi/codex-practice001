@@ -7,7 +7,7 @@ use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewListDTO;
 
-/*
+/**
  * JMA Atom entry 一覧から、地震系 entry だけを抽出する Preview Service です。
  *
  * Repository は XML 取得だけ、EarthquakeXmlPreviewService は Atom XML の表層 parsing、

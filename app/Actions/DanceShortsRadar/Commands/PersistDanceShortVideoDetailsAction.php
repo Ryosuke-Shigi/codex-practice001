@@ -18,6 +18,12 @@ use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonInterface;
 use Throwable;
 
+/**
+ * YouTube動画詳細を動画本体・地域・snapshotへ保存する共通 Command Action です。
+ *
+ * page1 / page2 同期から同じ保存手順を使えるよう、詳細取得後の Shorts 判定、保存DTO生成、
+ * tracking 状態による snapshot 対象判定をここに集約します。HTTP出力やランキング表示は扱いません。
+ */
 class PersistDanceShortVideoDetailsAction
 {
     public function __construct(

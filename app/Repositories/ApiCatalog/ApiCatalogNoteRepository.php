@@ -6,6 +6,12 @@ use App\DTO\ApiCatalog\Note\ApiCatalogNoteCreateDTO;
 use App\DTO\ApiCatalog\Note\ApiCatalogNoteUpdateDTO;
 use App\Models\ApiCatalogNote;
 
+/**
+ * APIカタログ保存メモの DB 境界を担当する Repository です。
+ *
+ * saved_api_notes の取得・作成・更新・削除を扱い、メモ本文の表示整形や
+ * HTTPレスポンス生成は DTO / Responder 側へ渡します。
+ */
 class ApiCatalogNoteRepository implements ApiCatalogNoteRepositoryInterface
 {
     /**

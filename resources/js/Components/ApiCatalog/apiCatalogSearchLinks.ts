@@ -41,6 +41,11 @@ function buildBaseSearchQuery(target: ApiCatalogSearchTarget) {
     return fallbackParts.join(' ') || 'API';
 }
 
+/**
+ * API名やprovider名からGoogle検索用URLを生成します。
+ *
+ * 外部ページの正しさは判定せず、カード表示から調査を始めるためのURL文字列だけを返します。
+ */
 export function buildApiCatalogSearchUrl(target: ApiCatalogSearchTarget, suffix = '') {
     const baseQuery = buildBaseSearchQuery(target);
     const query = [baseQuery, normalizedPart(suffix)].filter(Boolean).join(' ');
@@ -51,6 +56,12 @@ export function buildApiCatalogSearchUrl(target: ApiCatalogSearchTarget, suffix 
     return `${GOOGLE_SEARCH_URL}?q=${encodeURIComponent(query)}`;
 }
 
+/**
+ * APIカタログカードから外部検索へ出るための表示リンクを組み立てます。
+ *
+ * ここで作るのは検索補助URLだけです。公式ドキュメントや正しいサンプルの確定判断は行わず、
+ * Component は返された label / href / ariaLabel を表示します。
+ */
 export function buildApiCatalogSearchLinks(target: ApiCatalogSearchTarget): ApiCatalogSearchLink[] {
     /*
      * 4種類すべて Google 検索URLとして生成します。

@@ -10,6 +10,12 @@ use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Throwable;
 
+/**
+ * 保存済み JMA feed entry から地図pinを生成する Service です。
+ *
+ * feed entry 取込後の第2段階として、個別XML取得・解析・pin保存の手順をまとめます。
+ * HTTP入口、Queue状態更新、Inertia props生成は持たず、外部通信とDB操作は Repository に委譲します。
+ */
 class EarthquakeMapPinBuildService
 {
     public function __construct(

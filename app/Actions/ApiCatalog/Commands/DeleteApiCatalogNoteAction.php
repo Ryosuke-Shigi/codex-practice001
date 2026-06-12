@@ -5,6 +5,12 @@ namespace App\Actions\ApiCatalog\Commands;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogNoteRepositoryInterface;
 
+/**
+ * APIカタログの保存メモを削除する Command Action です。
+ *
+ * 対象APIに属する note だけを Repository 経由で削除し、HTTPレスポンス生成や
+ * SoftDeletes の実装詳細はこの層へ持ち込みません。
+ */
 final readonly class DeleteApiCatalogNoteAction
 {
     public function __construct(

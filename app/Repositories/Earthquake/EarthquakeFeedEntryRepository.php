@@ -10,6 +10,12 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
+/**
+ * JMA feed entry の保存・読み取りを担当する DB Repository です。
+ *
+ * earthquake_feed_entries への upsert と map pin 生成用の取得条件を扱います。
+ * 地震entryとして採用するか、個別XMLを解析できるかの判断は Service 側へ分けます。
+ */
 class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInterface
 {
     private const TABLE = 'earthquake_feed_entries';

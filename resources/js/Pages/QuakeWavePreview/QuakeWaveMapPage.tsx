@@ -30,7 +30,7 @@ function dateRangeFromFilters(filters: QuakeWaveMapFilters): QuakeDateRange {
     };
 }
 
-/*
+/**
  * DB pins 用のページ入口です。
  * Controller -> QueryAction -> Repository -> Responder で組み立てた Inertia props を受け取り、
  * 共通表示コンポーネントの JapanQuakeWaveMap に渡します。ここでは仮データを作りません。

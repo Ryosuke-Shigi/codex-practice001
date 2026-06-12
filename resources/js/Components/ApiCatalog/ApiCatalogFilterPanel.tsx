@@ -35,6 +35,12 @@ type ApiCatalogFilterPanelProps = {
     onClear: () => void;
 };
 
+/**
+ * APIカタログ一覧の検索・絞り込みUIをまとめる Feature Component です。
+ *
+ * keyword / provider / domain / sort の入力状態を表示し、変更イベントを親Pageへ通知します。
+ * 候補の取得やDB検索条件の解決は行わず、モックと本番で共通に使う操作UIに責務を絞ります。
+ */
 export default function ApiCatalogFilterPanel({
     keyword,
     providerKey,

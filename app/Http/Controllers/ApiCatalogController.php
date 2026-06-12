@@ -11,6 +11,12 @@ use App\Responders\ApiCatalog\ApiCatalogListResponder;
 use Illuminate\Http\Request;
 use Inertia\Response;
 
+/**
+ * APIカタログ一覧・詳細の HTTP 入口です。
+ *
+ * Request / QueryFactory / Action / Responder を接続し、Controller には業務判断やDB取得条件を置きません。
+ * 詳細の戻り先URLだけは HTTP 入力の安全境界としてここで許可範囲を確認します。
+ */
 class ApiCatalogController extends Controller
 {
     public function __invoke(

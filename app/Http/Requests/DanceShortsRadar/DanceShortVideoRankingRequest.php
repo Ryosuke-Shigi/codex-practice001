@@ -7,6 +7,12 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * DanceShortsRadar ランキング画面の query parameter を検証する Request です。
+ *
+ * tab / comparisonDays / sort / window の形式と許可値だけを確認します。
+ * active region の解決やランキング条件の正規化は Query Action / Service 側へ残します。
+ */
 class DanceShortVideoRankingRequest extends FormRequest
 {
     public function authorize(): bool

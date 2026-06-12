@@ -6,6 +6,12 @@ use App\Actions\ApiCatalog\Commands\SyncApiCatalogAction;
 use App\Jobs\ApiCatalog\SyncApiCatalogJob;
 use Illuminate\Console\Command;
 
+/**
+ * APIカタログ同期を手動実行する Artisan Command です。
+ *
+ * CLI入口として queue 投入または Action 直接実行を選び、同期の業務判断は
+ * SyncApiCatalogAction / ApiCatalogSyncService に委譲します。
+ */
 class SyncApiCatalogCommand extends Command
 {
     protected $signature = 'api-catalog:sync {--queue : Dispatch the API catalog sync job to the queue.}';

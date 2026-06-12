@@ -11,6 +11,12 @@ use App\Http\Requests\ApiCatalog\StoreApiCatalogNoteRequest;
 use App\Http\Requests\ApiCatalog\UpdateApiCatalogNoteRequest;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * APIカタログ保存メモの HTTP 入口です。
+ *
+ * FormRequest の検証済み入力を DTO 化して Command Action へ渡します。
+ * 保存・更新・削除の対象API判定は Action / Repository に任せ、Controller は redirect 境界だけを扱います。
+ */
 class ApiCatalogNoteController extends Controller
 {
     public function store(

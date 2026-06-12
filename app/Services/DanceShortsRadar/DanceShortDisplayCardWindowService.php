@@ -4,7 +4,7 @@ namespace App\Services\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardPaginationDTO;
 
-/*
+/**
  * DanceShortsRadar の表示カード window を決める Service です。
  *
  * 画面は「現在見えている最大5件」だけを初期 props と API で受け取り、React 側が

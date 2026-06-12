@@ -9,6 +9,12 @@ use Carbon\CarbonImmutable;
 use RuntimeException;
 use Throwable;
 
+/**
+ * JMA Atom feed entry を保存済みデータへ同期する Service です。
+ *
+ * 外部XML取得、Atom entryの表層解析、地震系entry抽出、DB upsert の手順をまとめます。
+ * HTTP入口、Queue状態更新、React props生成は扱わず、保存可否の細かなDB境界は Repository に委譲します。
+ */
 class EarthquakeFeedEntrySyncService
 {
     public function __construct(

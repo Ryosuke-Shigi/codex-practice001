@@ -7,6 +7,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * DanceShortsRadar snapshot cleanup を Queue worker で実行する Job です。
+ *
+ * Scheduler からの実行入口として Action を呼び、保持期間や削除条件は
+ * CleanupDanceShortVideoSnapshotsAction / Service / Repository に委譲します。
+ */
 class CleanupDanceShortVideoSnapshotsJob implements ShouldQueue
 {
     use Queueable;

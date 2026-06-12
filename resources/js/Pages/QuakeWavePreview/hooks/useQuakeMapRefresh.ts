@@ -70,6 +70,11 @@ export function pendingStatusFromSyncRunId(syncRunId: number): EarthquakeSyncSta
     };
 }
 
+/**
+ * feed entry同期とmap pin生成の状態から、更新パネルへ出す短い文言を決めます。
+ *
+ * Panel側に2系統sync runの優先順位を持たせず、Hook側で画面状態としてまとめます。
+ */
 export function refreshStatusLabel(
     feedEntryStatus: EarthquakeSyncStatus | null,
     mapPinStatus: EarthquakeSyncStatus | null,
@@ -108,6 +113,12 @@ export function refreshStatusLabel(
     return 'XML取込とPIN生成を1つのJobで開始できます';
 }
 
+/**
+ * QuakeWave Map の統合更新UIに必要な状態と操作を提供するHookです。
+ *
+ * POSTによるJob投入、feed entry / map pin の2系統polling、完了後のpins再取得をまとめます。
+ * Page と MapRefreshPanel は返された props を表示・実行するだけにし、通信手順を表示Componentへ漏らしません。
+ */
 export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
     const [feedEntrySyncStatus, setFeedEntrySyncStatus] = useState<EarthquakeSyncStatus | null>(null);
     const [mapPinSyncStatus, setMapPinSyncStatus] = useState<EarthquakeSyncStatus | null>(null);

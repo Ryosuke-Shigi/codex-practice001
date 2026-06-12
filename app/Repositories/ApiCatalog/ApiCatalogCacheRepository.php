@@ -9,6 +9,12 @@ use Carbon\CarbonInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * APIカタログ cache テーブルとの DB 境界を担当する Repository です。
+ *
+ * Eloquent による保存・検索・ページング条件をここへ閉じ込めます。
+ * payload差分の意味づけや同期成功判定は Service / Action に置き、Repository は渡された条件でDBを扱います。
+ */
 class ApiCatalogCacheRepository implements ApiCatalogCacheRepositoryInterface
 {
     public function findByApiKey(string $apiKey): ?ApiCatalogCache

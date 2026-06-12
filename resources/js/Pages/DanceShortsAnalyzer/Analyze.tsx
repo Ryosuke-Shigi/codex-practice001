@@ -10,6 +10,12 @@ type DanceShortsAnalyzerAnalyzeProps = {
     analyzeField: DanceShortsAnalyzerAnalyzeFieldProps;
 };
 
+/**
+ * DanceShortsAnalyzer分析結果画面の Page Component です。
+ *
+ * Responder が整えた analyzeField を表示Componentへ渡し、Page側では分析計算や
+ * snapshot取得条件の再構築を行いません。
+ */
 export default function DanceShortsAnalyzerAnalyze({
     analyzeField,
 }: DanceShortsAnalyzerAnalyzeProps) {

@@ -7,6 +7,12 @@ use App\DTO\ApiCatalog\Note\ApiCatalogNoteListItemDTO;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogNoteRepositoryInterface;
 
+/**
+ * APIカタログ詳細画面から保存メモを追加する Command Action です。
+ *
+ * api_key で対象APIを解決し、保存そのものは Note Repository に委譲します。
+ * Controller や Request にAPI所属判定を置かないためのユースケース境界です。
+ */
 final readonly class StoreApiCatalogNoteAction
 {
     public function __construct(

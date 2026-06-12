@@ -13,6 +13,12 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
+/**
+ * QuakeWave Map pin の保存・読み取りを担当する DB Repository です。
+ *
+ * earthquake_map_pins の upsert、日付範囲での取得、DTO復元を扱います。
+ * XML解析や地図上の色・波紋サイズなどの表示判断は Service / React 側へ残します。
+ */
 class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
 {
     private const TABLE = 'earthquake_map_pins';
