@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-13
 
 ## このドキュメントの目的
 
@@ -25,6 +25,45 @@ ChatGPT / CodexApp / subagentsへ必要な文脈だけを渡し、トークン�
 - 文書同士が矛盾する場合は `docs/index.md` の用途別正本を確認する
 - 正本同士が矛盾する場合は自動的に優先せず停止する
 - 作業後は次回の理解再起動に必要な情報だけを圧縮する
+
+## 探索範囲制限
+
+AI駆動開発では、目的なくリポジトリ全体を探索しません。
+
+禁止すること:
+
+- 目的なく `app/` 全体を読む
+- 目的なく `resources/` 全体を読む
+- 目的なく `tests/` 全体を読む
+- 関係ない feature docs を読む
+- 関係ない Docker / 本番 / CI docs を読む
+- エラーや目的と関係ないクラス名で広範囲検索する
+- 手がかりがないまま grep を繰り返す
+
+許可する検索:
+
+- 機能名
+- Route名
+- Controller名
+- Action名
+- Service名
+- Repository名
+- DTO名
+- Responder名
+- Component名
+- Test名
+- エラー文
+- PRで変更されたファイル名
+- `docs/index.md` や feature docs から辿れる明示的な参照
+
+検索の原則:
+
+1. PR本文、指示用まとめ、AGENTS.md、`docs/index.md` を確認する
+2. 作業種別と対象機能を特定する
+3. 読むdocs / 読まないdocs を決める
+4. 変更対象ファイルと入口を特定する
+5. 必要なファイルだけ読む
+6. 依存先が判明した場合だけ追加で読む
 
 ## 文脈の読み込み階層
 
