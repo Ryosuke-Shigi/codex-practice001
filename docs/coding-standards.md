@@ -10,7 +10,7 @@
 
 責務境界は `docs/architecture.md`、React / Inertia / TypeScript の画面責務は `docs/frontend.md`、UIの見た目と操作は `docs/ui.md`、コメントとPHPDoc / JSDocは `docs/commenting.md` を正本とします。
 
-このドキュメントでは、各言語・各ファイルで毎回迷いやすい書き方、型、命名、確認コマンドを扱います。
+このドキュメントでは、各言語・各ファイルで毎回迷いやすい書き方、型、命名、確認コマンドを扱います。Docker経由の実行場所と service は `docs/operations/command-registry.md` に従います。
 
 ## 基本方針
 
@@ -111,8 +111,9 @@ Action PHPDocにはユースケース、呼び出すService、成功条件を中
 PHPの整形はLaravel Pintを使います。
 
 ```bash
-composer format
-composer format-check
+cd /var/www/api-discovery-hub
+docker compose run --rm composer format
+docker compose run --rm composer format-check
 ```
 
 formatだけの差分は、原則として機能変更PRへ混ぜません。対象ファイルの修正に伴う最小限の整形に留めます。
@@ -216,19 +217,23 @@ UIの見た目と操作基準は `docs/ui.md` に従います。
 
 変更内容に応じて、対象範囲から全体へ広げて確認します。
 
+実行場所と Docker service は `docs/operations/command-registry.md` を正本とします。
+
 PHP:
 
 ```bash
-composer format-check
-php artisan test
+cd /var/www/api-discovery-hub
+docker compose run --rm composer format-check
+docker compose exec php-fpm php artisan test
 ```
 
 Frontend:
 
 ```bash
-npm run typecheck
-npm run test:run
-npm run build
+cd /var/www/api-discovery-hub
+docker compose run --rm npm npm run typecheck
+docker compose run --rm npm npm run test:run
+docker compose run --rm npm npm run build
 ```
 
 `npm run typecheck` は、TypeScript / TSX を変更した場合の確認コマンドです。現時点ではCI必須ゲートではありません。
@@ -236,7 +241,8 @@ npm run build
 formatを適用する場合:
 
 ```bash
-composer format
+cd /var/www/api-discovery-hub
+docker compose run --rm composer format
 ```
 
 ## CI

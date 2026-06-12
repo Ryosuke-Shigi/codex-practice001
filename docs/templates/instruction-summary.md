@@ -40,6 +40,7 @@
 前提：
 - 共通方針は `AGENTS.md` と `docs/index.md` に従う
 - 実装作法は `docs/coding-standards.md`、コメントは `docs/commenting.md` に従う
+- Docker経由コマンドとGit境界は `docs/operations/command-registry.md` に従う
 - <今回読む必要がある共通docs>
 - <今回読む必要があるdocs/features>
 - <検証済みの現在状態>
@@ -109,11 +110,12 @@ README / docs 更新要否：
 - AGENTS.md：<更新内容または不要な理由>
 
 確認コマンド：
-- `composer format-check`
-- `php artisan test`
-- `npm run test:run`
-- `npm run build`
-- TypeScript / TSX変更時に必要な場合のみ `npm run typecheck`
+- docsのみ：`cd /var/www/api-discovery-hub/src && git diff --check`
+- PHP / Laravel変更：`cd /var/www/api-discovery-hub && docker compose exec php-fpm php artisan test`
+- PHP format確認：`cd /var/www/api-discovery-hub && docker compose run --rm composer format-check`
+- React / TypeScript変更：`cd /var/www/api-discovery-hub && docker compose run --rm npm npm run test:run`
+- 画面変更：`cd /var/www/api-discovery-hub && docker compose run --rm npm npm run build`
+- TypeScript / TSX変更時に必要な場合のみ `cd /var/www/api-discovery-hub && docker compose run --rm npm npm run typecheck`
 - <今回不要なコマンドは理由を書いて削る>
 
 実装順：

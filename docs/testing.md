@@ -12,7 +12,7 @@
 
 機能固有のテスト固定内容は `docs/features/` に置き、この文書には複数機能へ共通する基準だけを置きます。
 
-実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` に従います。
+実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` に従います。Docker経由の実行場所と service は `docs/operations/command-registry.md` に従います。
 
 ## 基本方針
 
@@ -411,30 +411,35 @@ Frontend build
 
 ## 基本コマンド
 
+実行場所と Docker service は `docs/operations/command-registry.md` を正本とします。
+
 Laravel:
 
 ```bash
-composer format-check
-php artisan test
-php artisan test tests/Unit
-php artisan test tests/Feature
-php artisan test tests/Unit/ExampleTest.php
+cd /var/www/api-discovery-hub
+docker compose run --rm composer format-check
+docker compose exec php-fpm php artisan test
+docker compose exec php-fpm php artisan test tests/Unit
+docker compose exec php-fpm php artisan test tests/Feature
+docker compose exec php-fpm php artisan test tests/Unit/ExampleTest.php
 ```
 
 Frontend:
 
 ```bash
-npm run test:run
-npm run build
+cd /var/www/api-discovery-hub
+docker compose run --rm npm npm run test:run
+docker compose run --rm npm npm run build
 ```
 
 TypeScript / TSXを変更した場合は、必要に応じて手元確認として次を実行します。
 
 ```bash
-npm run typecheck
+cd /var/www/api-discovery-hub
+docker compose run --rm npm npm run typecheck
 ```
 
-Docker構成から実行する場合は、リポジトリの運用手順に従います。
+docsのみ変更の場合は、原則として Laravel test や npm build を必須にしません。未実行の場合は理由を明記します。
 
 ## CI必須ゲート
 
