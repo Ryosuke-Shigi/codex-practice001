@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-12
+- Last reviewed: 2026-06-13
 
 ## このドキュメントの目的
 
@@ -177,6 +177,8 @@ Pull Request・CI・差分・責務レビュー
     ↓
 理解再起動用まとめへ圧縮
 ```
+
+作業中に対象ファイル、入口となる Route / Action / Component / Command、責務境界、確認コマンドを特定できない場合は、探索範囲を広げて試行錯誤しません。docs とコード、feature docs と共通docs、指示内容とPR差分に矛盾がある場合も、代替実装へ進まず停止して人間の判断を待ちます。
 
 ## UI共有
 
