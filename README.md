@@ -4,7 +4,15 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築しているポー�
 
 公開URL: https://ada-works.dev
 
-このリポジトリでは、AIに実装を丸投げせず、人間が仕様・責務・境界・テスト観点を決めたうえで、ChatGPT と CodexApp を使い分けながら開発しています。
+## このリポジトリについて
+
+このリポジトリは、単にLaravelアプリを作るだけではなく、AI駆動開発を安全に進めるための設計・ドキュメント・テスト・Pull Request運用まで含めたポートフォリオです。
+
+ChatGPTで仕様整理、責務分離、テスト観点、レビュー観点、CodexApp向け指示用まとめを整理し、CodexAppで対象コードの調査、実装、差分適用、テスト追加・実行を行う前提で開発しています。
+
+開発では IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階を分け、PRODUCT化ではUI契約・振る舞い・状態・導線を引き継ぎながら、Repository / Service / DTO / Responder / Test へ責務を分離します。
+
+AIの出力は完成品として扱わず、テスト、Pull Request、CI、責務レビュー、人間のmerge判断を通して確認します。
 
 ## Projects
 
