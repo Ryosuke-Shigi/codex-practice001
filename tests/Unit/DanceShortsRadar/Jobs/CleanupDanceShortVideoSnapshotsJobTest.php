@@ -17,12 +17,11 @@ class CleanupDanceShortVideoSnapshotsJobTest extends TestCase
          * cleanup Job の責務は Action を Queue worker 上で実行することだけです。
          * 削除 cutoff の算出や DB 削除条件は Action / Service / Repository の既存テストで固定します。
          */
-        $action = new class extends CleanupDanceShortVideoSnapshotsAction {
+        $action = new class extends CleanupDanceShortVideoSnapshotsAction
+        {
             public bool $called = false;
 
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function execute(?CarbonInterface $now = null): DanceShortSnapshotCleanupResultDTO
             {
@@ -37,7 +36,7 @@ class CleanupDanceShortVideoSnapshotsJobTest extends TestCase
             }
         };
 
-        (new CleanupDanceShortVideoSnapshotsJob())->handle($action);
+        (new CleanupDanceShortVideoSnapshotsJob)->handle($action);
 
         $this->assertTrue($action->called);
     }
@@ -48,7 +47,7 @@ class CleanupDanceShortVideoSnapshotsJobTest extends TestCase
          * cleanup は YouTube API を呼ばない maintenance Job ですが、Queue 上で詰まったままにしないため
          * retry / timeout / timeout failure の基本設定を同期 Job と同じ粒度で固定します。
          */
-        $job = new CleanupDanceShortVideoSnapshotsJob();
+        $job = new CleanupDanceShortVideoSnapshotsJob;
 
         $this->assertSame(1, $job->tries);
         $this->assertSame(120, $job->timeout);

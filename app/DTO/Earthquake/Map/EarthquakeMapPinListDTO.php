@@ -9,8 +9,7 @@ final readonly class EarthquakeMapPinListDTO
      */
     public function __construct(
         public array $items,
-    ) {
-    }
+    ) {}
 
     public function count(): int
     {

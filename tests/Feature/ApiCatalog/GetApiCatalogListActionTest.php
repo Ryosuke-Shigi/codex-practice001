@@ -3,6 +3,7 @@
 namespace Tests\Feature\ApiCatalog;
 
 use App\Actions\ApiCatalog\Queries\GetApiCatalogListAction;
+use App\DTO\ApiCatalog\List\ApiCatalogListItemDTO;
 use App\DTO\ApiCatalog\List\ApiCatalogListQueryDTO;
 use App\Models\ApiCatalogCache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,7 +108,7 @@ class GetApiCatalogListActionTest extends TestCase
      * Action テストでは ApiCatalogListItemDTO の配列が返るため、
      * DTO境界を保ったまま apiKey だけを比較します。
      *
-     * @param  array<int, \App\DTO\ApiCatalog\List\ApiCatalogListItemDTO>  $items
+     * @param  array<int, ApiCatalogListItemDTO>  $items
      * @return array<int, string>
      */
     private function apiKeys(array $items): array

@@ -17,8 +17,7 @@ final readonly class DesignPhilosophySectionDTO
         public string $body,
         public string $proofLabel,
         public string $proofText,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $section

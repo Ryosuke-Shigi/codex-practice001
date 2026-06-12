@@ -24,8 +24,7 @@ class RefreshDanceShortVideoSnapshotsAction
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
         private readonly DanceShortSnapshotPeriodService $snapshotPeriodService,
         private readonly DanceShortVideoTrackingService $trackingService,
-    ) {
-    }
+    ) {}
 
     public function execute(): DanceShortVideoSyncResultDTO
     {
@@ -58,6 +57,7 @@ class RefreshDanceShortVideoSnapshotsAction
                 $details = $this->youTubeVideoApiRepository->fetchVideoDetails($youtubeVideoIds);
             } catch (Throwable) {
                 $failedCount += count($youtubeVideoIds);
+
                 continue;
             }
 
@@ -68,11 +68,13 @@ class RefreshDanceShortVideoSnapshotsAction
 
                 if ($target === null) {
                     $skippedVideoCount++;
+
                     continue;
                 }
 
                 if ($detail->viewCount === null) {
                     $skippedPersistenceCount += count($target->region_ids);
+
                     continue;
                 }
 

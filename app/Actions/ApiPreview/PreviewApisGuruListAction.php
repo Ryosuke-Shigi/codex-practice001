@@ -24,8 +24,7 @@ class PreviewApisGuruListAction
         private readonly ApisGuruPreviewResultFactory $factory,
         // Inertia::render() は Responder に集約し、Action から view 生成の詳細を外します。
         private readonly ApiPreviewResponder $responder,
-    ) {
-    }
+    ) {}
 
     public function execute(bool $shouldFetch): Response
     {

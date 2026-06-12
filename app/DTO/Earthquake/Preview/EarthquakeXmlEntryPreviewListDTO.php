@@ -16,8 +16,7 @@ final readonly class EarthquakeXmlEntryPreviewListDTO
      */
     public function __construct(
         public array $items,
-    ) {
-    }
+    ) {}
 
     public function count(): int
     {

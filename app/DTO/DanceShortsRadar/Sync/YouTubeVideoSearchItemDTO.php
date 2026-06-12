@@ -19,8 +19,7 @@ final readonly class YouTubeVideoSearchItemDTO
         public ?string $channelTitle,
         public ?string $publishedAt,
         public ?string $thumbnailUrl,
-    ) {
-    }
+    ) {}
 
     /**
      * DTO が保持している候補動画情報だけを camelCase の配列へ変換します。

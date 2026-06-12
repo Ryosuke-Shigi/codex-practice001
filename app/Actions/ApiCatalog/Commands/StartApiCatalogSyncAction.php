@@ -11,8 +11,7 @@ final readonly class StartApiCatalogSyncAction
 {
     public function __construct(
         private ApiCatalogSyncStatusRepositoryInterface $repository,
-    ) {
-    }
+    ) {}
 
     public function execute(): ?ApiCatalogSyncStatusDTO
     {

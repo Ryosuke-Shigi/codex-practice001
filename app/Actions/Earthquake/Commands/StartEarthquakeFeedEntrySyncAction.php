@@ -10,8 +10,7 @@ final readonly class StartEarthquakeFeedEntrySyncAction
 {
     public function __construct(
         private EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(): int
     {

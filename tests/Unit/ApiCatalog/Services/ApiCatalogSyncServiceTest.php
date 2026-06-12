@@ -69,7 +69,7 @@ class ApiCatalogSyncServiceTest extends TestCase
                 }),
                 $this->isInstanceOf(CarbonInterface::class),
             )
-            ->willReturn(new ApiCatalogCache());
+            ->willReturn(new ApiCatalogCache);
 
         $cacheRepository
             ->expects($this->never())

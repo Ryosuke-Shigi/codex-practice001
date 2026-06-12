@@ -2,13 +2,13 @@
 
 namespace App\Actions\DanceShortsRadar\Commands;
 
-use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoRegionSaveDTO;
+use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSaveDTOFactory;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
 use App\Models\DanceShortRegion;
-use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
@@ -31,8 +31,7 @@ class PersistDanceShortVideoDetailsAction
         private readonly DanceShortVideoTrackingService $trackingService,
         private readonly DanceShortVideoSaveDTOFactory $videoSaveDTOFactory,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<int, string>  $youtubeVideoIds
@@ -70,11 +69,13 @@ class PersistDanceShortVideoDetailsAction
         foreach ($details as $detail) {
             if (! $this->eligibilityService->isShortsTarget($detail)) {
                 $excludedByShortsCount++;
+
                 continue;
             }
 
             if (! $this->eligibilityService->hasRequiredPersistenceFields($detail)) {
                 $skippedPersistenceCount++;
+
                 continue;
             }
 
@@ -103,6 +104,7 @@ class PersistDanceShortVideoDetailsAction
 
                 if (! $this->trackingService->isSnapshotSaveTarget($video->tracking_status)) {
                     $skippedSnapshotByTrackingCount++;
+
                     continue;
                 }
 

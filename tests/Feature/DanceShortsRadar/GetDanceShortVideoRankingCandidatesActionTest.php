@@ -23,7 +23,7 @@ class GetDanceShortVideoRankingCandidatesActionTest extends TestCase
 
     public function test_execute_returns_ranking_items_from_active_region_snapshots_without_calling_youtube_api(): void
     {
-        $youtubeRepository = new ThrowingRankingYouTubeVideoApiRepository();
+        $youtubeRepository = new ThrowingRankingYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
 
         $jp = $this->region('JP', '日本');

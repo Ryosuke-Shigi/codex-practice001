@@ -15,8 +15,7 @@ final readonly class DanceShortSnapshotCleanupResultDTO
         public CarbonInterface $cutoffAt,
         public int $retentionDays,
         public int $deletedSnapshotCount,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, int|string>

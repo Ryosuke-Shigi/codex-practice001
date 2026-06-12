@@ -24,6 +24,7 @@ final readonly class DanceShortsAnalyzerSearchInputDTO
      * snapshot 由来の伸び率や増加量は PR2 以降の対象なので、ここには含めません。
      */
     public const SORT_PUBLISHED_DESC = 'published_desc';
+
     public const SORT_PUBLISHED_ASC = 'published_asc';
 
     /**
@@ -37,6 +38,5 @@ final readonly class DanceShortsAnalyzerSearchInputDTO
         public int $page = 1,
         public int $perPage = self::PER_PAGE,
         public string $sort = self::SORT_PUBLISHED_DESC,
-    ) {
-    }
+    ) {}
 }

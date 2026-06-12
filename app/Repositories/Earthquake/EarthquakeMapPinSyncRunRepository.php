@@ -102,8 +102,7 @@ class EarthquakeMapPinSyncRunRepository implements EarthquakeMapPinSyncRunReposi
             ->latest('id')
             ->limit(max(1, min($limit, 50)))
             ->get()
-            ->map(fn (EarthquakeMapPinSyncRun $syncRun): EarthquakeMapPinSyncResultDTO
-                => EarthquakeMapPinSyncResultDTO::fromModel($syncRun))
+            ->map(fn (EarthquakeMapPinSyncRun $syncRun): EarthquakeMapPinSyncResultDTO => EarthquakeMapPinSyncResultDTO::fromModel($syncRun))
             ->all();
     }
 }

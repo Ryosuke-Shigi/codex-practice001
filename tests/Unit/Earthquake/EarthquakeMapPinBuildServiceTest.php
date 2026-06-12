@@ -130,7 +130,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $service = new EarthquakeMapPinBuildService(
             $feedEntryRepository,
             $detailXmlRepository,
-            new EarthquakeDetailXmlParseService(),
+            new EarthquakeDetailXmlParseService,
             $mapPinRepository,
         );
 

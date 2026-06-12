@@ -5,8 +5,11 @@ namespace App\DTO\ApiCatalog\List;
 final readonly class ApiCatalogListQueryDTO
 {
     public const SORT_UPDATED_DESC = 'updated_desc';
+
     public const SORT_UPDATED_ASC = 'updated_asc';
+
     public const SORT_NAME_ASC = 'name_asc';
+
     public const SORT_NAME_DESC = 'name_desc';
 
     /*
@@ -20,6 +23,5 @@ final readonly class ApiCatalogListQueryDTO
         public string $sortKey,
         public int $page,
         public int $perPage,
-    ) {
-    }
+    ) {}
 }

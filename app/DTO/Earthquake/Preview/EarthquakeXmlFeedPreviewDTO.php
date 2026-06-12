@@ -14,8 +14,7 @@ final readonly class EarthquakeXmlFeedPreviewDTO
         public ?string $feedTitle,
         public ?string $feedUpdatedAt,
         public EarthquakeXmlEntryPreviewListDTO $entries,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

@@ -84,6 +84,6 @@ class ApiCatalogListQueryDTOFactoryTest extends TestCase
 
     private function factory(): ApiCatalogListQueryDTOFactory
     {
-        return new ApiCatalogListQueryDTOFactory();
+        return new ApiCatalogListQueryDTOFactory;
     }
 }

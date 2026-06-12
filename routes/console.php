@@ -18,7 +18,7 @@ Artisan::command('inspire', function () {
  * withoutOverlapping は scheduler 側の多重投入を避けるための最低限の保険です。
  * worker 側の排他、同期履歴、失敗ログは別途追加する前提にしています。
  */
-Schedule::job(new SyncApiCatalogJob())
+Schedule::job(new SyncApiCatalogJob)
     ->dailyAt('03:00')
     ->name('api-catalog-sync')
     ->withoutOverlapping();
@@ -80,7 +80,7 @@ Schedule::command('dance-short:sync-snapshots')
  * Scheduler には「毎日いつ Job を積むか」だけを置き、DANCE_SHORT_SNAPSHOT_RETENTION_DAYS の解釈や
  * dance_short_video_snapshots の削除条件はここへ書きません。
  */
-Schedule::job(new CleanupDanceShortVideoSnapshotsJob())
+Schedule::job(new CleanupDanceShortVideoSnapshotsJob)
     ->dailyAt('04:30')
     ->name('dance-short-snapshot-cleanup')
     ->withoutOverlapping();

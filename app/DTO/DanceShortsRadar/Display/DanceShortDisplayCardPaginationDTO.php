@@ -11,8 +11,7 @@ final readonly class DanceShortDisplayCardPaginationDTO
         public bool $hasNext,
         public ?int $prevStartRank,
         public ?int $nextStartRank,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

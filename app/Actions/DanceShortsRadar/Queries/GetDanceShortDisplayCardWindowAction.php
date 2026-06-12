@@ -28,8 +28,7 @@ final readonly class GetDanceShortDisplayCardWindowAction
         private DanceShortDisplayCardTabService $displayCardTabService,
         private DanceShortDisplayCardWindowService $displayCardWindowService,
         private DanceShortDisplayCardStrategyFactory $displayCardStrategyFactory,
-    ) {
-    }
+    ) {}
 
     public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortDisplayCardWindowDTO
     {
@@ -59,5 +58,4 @@ final readonly class GetDanceShortDisplayCardWindowAction
                 selectedVideoId: $input->selectedVideoId,
             ));
     }
-
 }

@@ -10,7 +10,7 @@ class DanceShortVideoSaveDTOFactoryTest extends TestCase
 {
     public function test_it_maps_youtube_detail_to_video_save_dto(): void
     {
-        $dto = (new DanceShortVideoSaveDTOFactory())->fromYouTubeVideoDetail(new YouTubeVideoDetailDTO(
+        $dto = (new DanceShortVideoSaveDTOFactory)->fromYouTubeVideoDetail(new YouTubeVideoDetailDTO(
             youtubeVideoId: 'video-001',
             title: ' Dance short ',
             description: 'Dance description.',

@@ -11,8 +11,7 @@ final readonly class GetApiCatalogDetailAction
     public function __construct(
         private ApiCatalogCacheRepositoryInterface $repository,
         private ApiCatalogNoteRepositoryInterface $noteRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(string $apiKey): ?ApiCatalogDetailDTO
     {

@@ -11,7 +11,7 @@ class EarthquakeEntryExtractServiceTest extends TestCase
 {
     public function test_extract_all_filters_earthquake_related_entries_and_excludes_volcano_entries(): void
     {
-        $service = new EarthquakeEntryExtractService();
+        $service = new EarthquakeEntryExtractService;
         $entries = new EarthquakeXmlEntryPreviewListDTO([
             new EarthquakeXmlEntryPreviewDTO(
                 id: 'urn:jma:earthquake:1',
@@ -60,7 +60,7 @@ class EarthquakeEntryExtractServiceTest extends TestCase
 
     public function test_extract_latest_prefers_updated_at_then_published_at_and_pushes_invalid_dates_back(): void
     {
-        $service = new EarthquakeEntryExtractService();
+        $service = new EarthquakeEntryExtractService;
         $entries = new EarthquakeXmlEntryPreviewListDTO([
             new EarthquakeXmlEntryPreviewDTO(
                 id: 'urn:jma:invalid-date',

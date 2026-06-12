@@ -9,7 +9,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 {
     public function test_start_rank_is_normalized_to_five_card_window_start(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $this->assertSame(1, $service->normalizeStartRank(null, 5));
         $this->assertSame(1, $service->normalizeStartRank(0, 5));
@@ -21,7 +21,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_window_size_defaults_to_five_and_rejects_oversized_values(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $this->assertSame(5, $service->normalizeWindowSize(null));
         $this->assertSame(5, $service->normalizeWindowSize(0));
@@ -31,7 +31,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_build_window_uses_one_item_lookahead_for_pagination(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $window = $service->buildWindow(range(1, 11), 6, 5);
 
@@ -46,7 +46,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_build_window_from_lookahead_keeps_repository_window_start_rank(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $window = $service->buildWindowFromLookahead(range(6, 11), 6, 5);
 
@@ -61,7 +61,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_build_window_around_selected_video_centers_middle_rank(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $window = $service->buildWindowAroundSelectedVideo(
             items: range(1, 10),
@@ -78,7 +78,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_build_window_around_selected_video_keeps_head_window_for_first_rank(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $window = $service->buildWindowAroundSelectedVideo(
             items: range(1, 10),
@@ -95,7 +95,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_build_window_around_selected_video_keeps_tail_window_for_last_rank(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $window = $service->buildWindowAroundSelectedVideo(
             items: range(1, 10),
@@ -112,7 +112,7 @@ class DanceShortDisplayCardWindowServiceTest extends TestCase
 
     public function test_active_rank_uses_start_rank_and_active_index_when_card_exists(): void
     {
-        $service = new DanceShortDisplayCardWindowService();
+        $service = new DanceShortDisplayCardWindowService;
 
         $this->assertSame(8, $service->activeRankFor(6, 2, true));
         $this->assertNull($service->activeRankFor(6, 2, false));

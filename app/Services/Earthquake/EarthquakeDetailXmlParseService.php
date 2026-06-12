@@ -10,7 +10,9 @@ use Throwable;
 class EarthquakeDetailXmlParseService
 {
     private const JMAXML_INFORMATION_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/informationBasis1/';
+
     private const JMAXML_SEISMOLOGY_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/body/seismology1/';
+
     private const JMAXML_ELEMENT_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/elementBasis1/';
 
     public function parse(string $body, int $sourceEntryId, ?string $fallbackTitle = null): EarthquakeMapPinDTO

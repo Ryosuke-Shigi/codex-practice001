@@ -23,8 +23,7 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
     public function __construct(
         private DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private DanceShortDisplayCardWindowService $displayCardWindowService,
-    ) {
-    }
+    ) {}
 
     public function getWindow(
         DanceShortDisplayCardWindowConditionDTO $condition,

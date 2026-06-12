@@ -12,8 +12,7 @@ final readonly class StartEarthquakeMapPinSyncAction
     public function __construct(
         private EarthquakeMapPinSyncRunRepositoryInterface $syncRunRepository,
         private EarthquakeMapPinRepositoryInterface $mapPinRepository,
-    ) {
-    }
+    ) {}
 
     public function execute(): int
     {

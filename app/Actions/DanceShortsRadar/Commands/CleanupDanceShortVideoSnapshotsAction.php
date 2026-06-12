@@ -13,8 +13,7 @@ class CleanupDanceShortVideoSnapshotsAction
     public function __construct(
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortSnapshotRetentionService $retentionService,
-    ) {
-    }
+    ) {}
 
     public function execute(?CarbonInterface $now = null): DanceShortSnapshotCleanupResultDTO
     {

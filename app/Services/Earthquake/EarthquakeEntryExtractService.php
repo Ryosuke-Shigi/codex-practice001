@@ -35,8 +35,7 @@ class EarthquakeEntryExtractService
         ));
 
         return new EarthquakeExtractedEntryListDTO(array_map(
-            fn (EarthquakeXmlEntryPreviewDTO $entry): EarthquakeExtractedEntryDTO
-                => EarthquakeExtractedEntryDTO::fromXmlEntryPreview($entry),
+            fn (EarthquakeXmlEntryPreviewDTO $entry): EarthquakeExtractedEntryDTO => EarthquakeExtractedEntryDTO::fromXmlEntryPreview($entry),
             $items,
         ));
     }

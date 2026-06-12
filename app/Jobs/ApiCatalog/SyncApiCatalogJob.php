@@ -35,8 +35,7 @@ class SyncApiCatalogJob implements ShouldQueue
 
     public function __construct(
         public readonly ?int $syncRunId = null,
-    ) {
-    }
+    ) {}
 
     public function handle(
         SyncApiCatalogAction $action,

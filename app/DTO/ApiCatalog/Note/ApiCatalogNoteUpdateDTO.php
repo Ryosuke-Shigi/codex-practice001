@@ -7,8 +7,7 @@ final readonly class ApiCatalogNoteUpdateDTO
     public function __construct(
         public ?string $title,
         public string $body,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array{title?: string|null, body: string}  $data

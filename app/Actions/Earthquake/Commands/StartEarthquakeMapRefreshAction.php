@@ -14,8 +14,7 @@ final readonly class StartEarthquakeMapRefreshAction
         private EarthquakeFeedEntrySyncRunRepositoryInterface $feedEntrySyncRunRepository,
         private EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
         private EarthquakeMapPinRepositoryInterface $mapPinRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{feedEntrySyncRunId: int, mapPinSyncRunId: int}

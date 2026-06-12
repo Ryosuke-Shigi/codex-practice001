@@ -24,15 +24,17 @@ class EarthquakeXmlPreviewService
      * namespace URI を定数化して parse 処理の意図を残します。
      */
     private const ATOM_NAMESPACE = 'http://www.w3.org/2005/Atom';
+
     private const JMAXML_INFORMATION_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/informationBasis1/';
+
     private const JMAXML_SEISMOLOGY_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/body/seismology1/';
+
     private const JMAXML_ELEMENT_NAMESPACE = 'http://xml.kishou.go.jp/jmaxml1/elementBasis1/';
 
     public function __construct(
         private readonly EarthquakeXmlRepositoryInterface $repository,
         private readonly EarthquakeEntryExtractService $entryExtractService,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

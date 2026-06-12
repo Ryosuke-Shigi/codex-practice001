@@ -16,8 +16,7 @@ readonly class RegionRankingDisplayCardStrategy implements DanceShortDisplayCard
     public function __construct(
         private GetDanceShortVideoRankingCandidatesAction $rankingCandidatesAction,
         private DanceShortDisplayCardWindowService $displayCardWindowService,
-    ) {
-    }
+    ) {}
 
     public function getWindow(
         DanceShortDisplayCardWindowConditionDTO $condition,

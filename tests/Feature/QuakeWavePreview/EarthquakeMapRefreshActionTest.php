@@ -59,9 +59,7 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
         $feedEntrySyncService = new class extends EarthquakeFeedEntrySyncService
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
             {
@@ -81,9 +79,7 @@ class EarthquakeMapRefreshActionTest extends TestCase
         };
         $mapPinBuildService = new class extends EarthquakeMapPinBuildService
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
             {
@@ -143,9 +139,7 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
         $feedEntrySyncService = new class extends EarthquakeFeedEntrySyncService
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
             {
@@ -156,9 +150,7 @@ class EarthquakeMapRefreshActionTest extends TestCase
         {
             public bool $wasCalled = false;
 
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
             {
@@ -239,9 +231,7 @@ class EarthquakeMapRefreshActionTest extends TestCase
         ]);
         $this->app->instance(EarthquakeXmlRepositoryInterface::class, new class($this->atomFeed()) implements EarthquakeXmlRepositoryInterface
         {
-            public function __construct(private readonly string $body)
-            {
-            }
+            public function __construct(private readonly string $body) {}
 
             public function fetchHighFrequencyFeed(): array
             {
@@ -271,9 +261,7 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $feedEntrySyncService = app(EarthquakeFeedEntrySyncService::class);
         $mapPinBuildService = new class extends EarthquakeMapPinBuildService
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
             {

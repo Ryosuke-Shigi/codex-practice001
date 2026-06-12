@@ -17,8 +17,7 @@ final readonly class EarthquakeRipplePreviewDTO
         public int $size,
         public string $duration,
         public int $ringCount,
-    ) {
-    }
+    ) {}
 
     /**
      * React 側でそのまま扱える camelCase の props へ変換します。

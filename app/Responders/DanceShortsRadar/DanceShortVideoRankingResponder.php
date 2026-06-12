@@ -7,7 +7,6 @@ use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
-use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;

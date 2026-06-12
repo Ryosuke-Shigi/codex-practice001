@@ -18,8 +18,7 @@ final readonly class DanceShortDisplayCardListDTO
      */
     public function __construct(
         public array $cards,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{cards: array<int, array<string, mixed>>}

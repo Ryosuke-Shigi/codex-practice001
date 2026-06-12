@@ -29,6 +29,5 @@ final readonly class DanceShortsAnalyzerVideoDTO
         public ?string $thumbnailUrl,
         public ?CarbonInterface $publishedAt,
         public string $trackingStatus,
-    ) {
-    }
+    ) {}
 }

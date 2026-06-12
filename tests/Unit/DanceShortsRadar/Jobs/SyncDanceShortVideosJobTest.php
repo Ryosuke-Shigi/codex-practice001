@@ -10,8 +10,8 @@ use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortSearchConditionDTOFactory;
 use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
-use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
+use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
@@ -25,12 +25,11 @@ class SyncDanceShortVideosJobTest extends TestCase
 {
     public function test_handle_calls_sync_action(): void
     {
-        $action = new class extends SyncDanceShortVideosAction {
+        $action = new class extends SyncDanceShortVideosAction
+        {
             public bool $called = false;
 
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function execute(): DanceShortVideoSyncResultDTO
             {
@@ -42,19 +41,18 @@ class SyncDanceShortVideosJobTest extends TestCase
             }
         };
 
-        (new SyncDanceShortVideosJob())->handle($action);
+        (new SyncDanceShortVideosJob)->handle($action);
 
         $this->assertTrue($action->called);
     }
 
     public function test_page2_handle_calls_page2_sync_action(): void
     {
-        $action = new class extends SyncDanceShortPage2VideosAction {
+        $action = new class extends SyncDanceShortPage2VideosAction
+        {
             public bool $called = false;
 
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function execute(): DanceShortVideoSyncResultDTO
             {
@@ -66,19 +64,18 @@ class SyncDanceShortVideosJobTest extends TestCase
             }
         };
 
-        (new SyncDanceShortPage2VideosJob())->handle($action);
+        (new SyncDanceShortPage2VideosJob)->handle($action);
 
         $this->assertTrue($action->called);
     }
 
     public function test_snapshot_handle_calls_refresh_snapshot_action(): void
     {
-        $action = new class extends RefreshDanceShortVideoSnapshotsAction {
+        $action = new class extends RefreshDanceShortVideoSnapshotsAction
+        {
             public bool $called = false;
 
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function execute(): DanceShortVideoSyncResultDTO
             {
@@ -90,7 +87,7 @@ class SyncDanceShortVideosJobTest extends TestCase
             }
         };
 
-        (new SyncDanceShortVideoSnapshotsJob())->handle($action);
+        (new SyncDanceShortVideoSnapshotsJob)->handle($action);
 
         $this->assertTrue($action->called);
     }
@@ -102,7 +99,7 @@ class SyncDanceShortVideosJobTest extends TestCase
             $this->searchTargetRepository(),
             $this->persistAction(),
             $this->cleanupAction(),
-            new DanceShortSearchConditionDTOFactory(),
+            new DanceShortSearchConditionDTOFactory,
         ))->execute();
 
         $this->assertInstanceOf(DanceShortVideoSyncResultDTO::class, $result);
@@ -124,7 +121,7 @@ class SyncDanceShortVideosJobTest extends TestCase
 
     public function test_job_has_queue_runtime_settings(): void
     {
-        $job = new SyncDanceShortVideosJob();
+        $job = new SyncDanceShortVideosJob;
 
         $this->assertSame(1, $job->tries);
         $this->assertSame(300, $job->timeout);
@@ -134,7 +131,7 @@ class SyncDanceShortVideosJobTest extends TestCase
 
     public function test_page2_job_has_queue_runtime_settings(): void
     {
-        $job = new SyncDanceShortPage2VideosJob();
+        $job = new SyncDanceShortPage2VideosJob;
 
         $this->assertSame(1, $job->tries);
         $this->assertSame(300, $job->timeout);
@@ -144,7 +141,7 @@ class SyncDanceShortVideosJobTest extends TestCase
 
     public function test_snapshot_job_has_queue_runtime_settings_and_fixed_unique_id(): void
     {
-        $job = new SyncDanceShortVideoSnapshotsJob();
+        $job = new SyncDanceShortVideoSnapshotsJob;
 
         $this->assertInstanceOf(ShouldBeUnique::class, $job);
         $this->assertSame(1, $job->tries);
@@ -163,7 +160,7 @@ class SyncDanceShortVideosJobTest extends TestCase
     private function searchTargetRepository(): DanceShortSearchTargetRepositoryInterface
     {
         $repository = $this->createStub(DanceShortSearchTargetRepositoryInterface::class);
-        $repository->method('activeRegions')->willReturn(new Collection());
+        $repository->method('activeRegions')->willReturn(new Collection);
 
         return $repository;
     }
@@ -182,7 +179,7 @@ class SyncDanceShortVideosJobTest extends TestCase
     {
         return new CleanupDanceShortVideoSnapshotsAction(
             $this->snapshotRepository(),
-            new DanceShortSnapshotRetentionService(),
+            new DanceShortSnapshotRetentionService,
         );
     }
 }

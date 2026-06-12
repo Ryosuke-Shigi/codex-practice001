@@ -22,8 +22,7 @@ final readonly class ApiCatalogListItemDTO
         public ?string $openapiVersion,
         public bool $isActive,
         public array $notes,
-    ) {
-    }
+    ) {}
 
     public static function fromModel(ApiCatalogCache $cache): self
     {

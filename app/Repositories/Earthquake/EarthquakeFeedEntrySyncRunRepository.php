@@ -102,8 +102,7 @@ class EarthquakeFeedEntrySyncRunRepository implements EarthquakeFeedEntrySyncRun
             ->latest('id')
             ->limit(max(1, min($limit, 50)))
             ->get()
-            ->map(fn (EarthquakeFeedEntrySyncRun $syncRun): EarthquakeFeedEntrySyncResultDTO
-                => EarthquakeFeedEntrySyncResultDTO::fromModel($syncRun))
+            ->map(fn (EarthquakeFeedEntrySyncRun $syncRun): EarthquakeFeedEntrySyncResultDTO => EarthquakeFeedEntrySyncResultDTO::fromModel($syncRun))
             ->all();
     }
 }

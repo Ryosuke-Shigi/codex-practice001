@@ -23,9 +23,7 @@ class QuakeWaveSyncStatusApiTest extends TestCase
     {
         $this->app->instance(EarthquakeXmlRepositoryInterface::class, new class($this->atomFeed()) implements EarthquakeXmlRepositoryInterface
         {
-            public function __construct(private readonly string $body)
-            {
-            }
+            public function __construct(private readonly string $body) {}
 
             public function fetchHighFrequencyFeed(): array
             {
@@ -62,9 +60,7 @@ class QuakeWaveSyncStatusApiTest extends TestCase
                 app(EarthquakeFeedEntrySyncService::class),
                 new class extends EarthquakeMapPinBuildService
                 {
-                    public function __construct()
-                    {
-                    }
+                    public function __construct() {}
 
                     public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
                     {

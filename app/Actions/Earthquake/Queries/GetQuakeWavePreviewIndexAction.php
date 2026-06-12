@@ -16,8 +16,7 @@ final readonly class GetQuakeWavePreviewIndexAction
         private EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,
         private EarthquakeMapPinRepositoryInterface $mapPinRepository,
         private EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

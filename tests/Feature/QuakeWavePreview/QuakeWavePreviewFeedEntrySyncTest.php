@@ -129,9 +129,7 @@ class QuakeWavePreviewFeedEntrySyncTest extends TestCase
         $syncRunId = $repository->createPending();
         $syncService = new class extends EarthquakeFeedEntrySyncService
         {
-            public function __construct()
-            {
-            }
+            public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
             {
@@ -207,9 +205,7 @@ class QuakeWavePreviewFeedEntrySyncTest extends TestCase
     {
         $this->app->instance(EarthquakeXmlRepositoryInterface::class, new class($this->atomFeed()) implements EarthquakeXmlRepositoryInterface
         {
-            public function __construct(private readonly string $body)
-            {
-            }
+            public function __construct(private readonly string $body) {}
 
             public function fetchHighFrequencyFeed(): array
             {

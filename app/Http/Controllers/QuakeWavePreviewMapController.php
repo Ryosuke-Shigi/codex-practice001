@@ -15,8 +15,7 @@ class QuakeWavePreviewMapController extends Controller
         GetEarthquakeMapPinsAction $action,
         EarthquakeMapResponder $responder,
         EarthquakeMapPinListQueryDTOFactory $queryFactory,
-    ): Response
-    {
+    ): Response {
         /*
          * MAP 表示の HTTP 入口です。
          * 第1段階では保存済み earthquake_map_pins を読むだけにし、Atom feed取得、

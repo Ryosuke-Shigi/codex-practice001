@@ -42,8 +42,7 @@ final readonly class DanceShortVideoRisingCandidateDTO
         public ?CarbonInterface $japanPreviousCollectedAt,
         public string $japanComparisonStatus,
         public int $comparisonDays,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, bool|int|float|string|null>

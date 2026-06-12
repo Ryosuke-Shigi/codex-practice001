@@ -45,6 +45,7 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
         foreach ($entries->items as $entry) {
             if (trim($entry->id) === '') {
                 $failedCount++;
+
                 continue;
             }
 
@@ -62,6 +63,7 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
                      */
                     EarthquakeFeedEntry::query()->create($attributes);
                     $insertedCount++;
+
                     continue;
                 }
 
@@ -72,6 +74,7 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
                      * 「feed内容に実質差分があったか」を読み取りやすくなります。
                      */
                     $skippedCount++;
+
                     continue;
                 }
 

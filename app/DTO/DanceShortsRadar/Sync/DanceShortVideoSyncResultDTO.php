@@ -22,8 +22,7 @@ final readonly class DanceShortVideoSyncResultDTO
         public int $skippedPersistenceCount = 0,
         public int $cleanedUpSnapshotCount = 0,
         public int $failedCount = 0,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, int|string>

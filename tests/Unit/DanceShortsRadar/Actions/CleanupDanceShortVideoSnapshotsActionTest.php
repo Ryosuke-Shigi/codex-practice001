@@ -17,10 +17,10 @@ class CleanupDanceShortVideoSnapshotsActionTest extends TestCase
 {
     public function test_execute_delegates_cutoff_delete_to_repository_and_returns_result_dto(): void
     {
-        $repository = new FakeCleanupDanceShortVideoSnapshotRepository();
+        $repository = new FakeCleanupDanceShortVideoSnapshotRepository;
         $action = new CleanupDanceShortVideoSnapshotsAction(
             snapshotRepository: $repository,
-            retentionService: new DanceShortSnapshotRetentionService(),
+            retentionService: new DanceShortSnapshotRetentionService,
         );
 
         $result = $action->execute(CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'));

@@ -25,8 +25,7 @@ class RefreshEarthquakeMapDataJob implements ShouldQueue
     public function __construct(
         public readonly int $feedEntrySyncRunId,
         public readonly int $mapPinSyncRunId,
-    ) {
-    }
+    ) {}
 
     public function handle(
         EarthquakeFeedEntrySyncRunRepositoryInterface $feedEntrySyncRunRepository,

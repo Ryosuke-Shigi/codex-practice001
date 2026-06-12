@@ -15,8 +15,7 @@ final readonly class EarthquakeExtractedEntryListDTO
      */
     public function __construct(
         public array $items,
-    ) {
-    }
+    ) {}
 
     public function count(): int
     {
@@ -38,8 +37,7 @@ final readonly class EarthquakeExtractedEntryListDTO
          */
         usort(
             $items,
-            fn (EarthquakeExtractedEntryDTO $left, EarthquakeExtractedEntryDTO $right): int
-                => $this->entryTimestamp($right) <=> $this->entryTimestamp($left),
+            fn (EarthquakeExtractedEntryDTO $left, EarthquakeExtractedEntryDTO $right): int => $this->entryTimestamp($right) <=> $this->entryTimestamp($left),
         );
 
         return $items[0];

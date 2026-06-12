@@ -48,8 +48,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
     public function searchVideoPage(
         DanceShortSearchConditionDTO $condition,
         ?string $pageToken = null,
-    ): YouTubeVideoSearchResultDTO
-    {
+    ): YouTubeVideoSearchResultDTO {
         $payload = $this->getJson('search.list', 'search', array_merge([
             'key' => $this->apiKey(),
             'part' => 'snippet',

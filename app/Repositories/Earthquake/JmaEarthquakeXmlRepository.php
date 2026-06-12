@@ -113,8 +113,7 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
         float $responseTimeMs,
         ?int $statusCode,
         string $errorMessage,
-    ): array
-    {
+    ): array {
         /*
          * DNS/TLS/timeout など response がない失敗も Controller まで例外を漏らさず、
          * Preview 画面で status/message として確認できる transport result にそろえます。

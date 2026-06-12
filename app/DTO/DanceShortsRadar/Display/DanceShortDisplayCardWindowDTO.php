@@ -13,6 +13,5 @@ final readonly class DanceShortDisplayCardWindowDTO
 {
     public function __construct(
         public DanceShortDisplayCardFieldDTO $displayCardField,
-    ) {
-    }
+    ) {}
 }

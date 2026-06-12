@@ -24,8 +24,7 @@ final readonly class DanceShortSearchConditionDTO
         public int $maxResults,
         public CarbonInterface $publishedAfter,
         public string $videoDuration,
-    ) {
-    }
+    ) {}
 
     /**
      * search.list の可変 query parameter に変換します。
