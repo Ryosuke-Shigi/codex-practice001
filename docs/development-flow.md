@@ -169,7 +169,7 @@ ADR Pattern / レイヤード構成で実装
     ↓
 実装内容に合わせて必要な共通docs・feature docsを更新
     ↓
-対象テスト → 関連テスト → format check → typecheck → 全体テスト → build
+対象テスト → 関連テスト → format check → TypeScript / TSX変更時に必要なtypecheck → 全体テスト → build
     ↓
 Pull Request・CI・差分・責務レビュー
     ↓
@@ -218,7 +218,7 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 - Action / Service / Repository / Responder / Componentの責務分離
 - Coding Standardsによる実装作法・型・命名の固定
 - テストによる実行可能な仕様
-- format check / typecheck / buildによる機械確認
+- format check / TypeScript / TSX変更時に必要なtypecheck / buildによる機械確認
 - Pull RequestとCIによる差分検証
 - 理解再起動用まとめによる次回作業の入口固定
 - 人間による完成判定・merge・本番反映判断

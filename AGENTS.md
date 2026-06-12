@@ -21,6 +21,7 @@
 ## 参照先
 
 - 開発段階・Product化: `docs/development-flow.md`
+- MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
 - MOCK / Prototypeの配置・削除・分離: `docs/prototype-policy.md`
 - ADR Pattern・レイヤード責務: `docs/architecture.md`
 - 実装作法・型・命名・確認コマンド: `docs/coding-standards.md`
@@ -101,6 +102,7 @@ Repositoryへ業務判断や表示判断を置かない。ServiceへDB直接操�
 - 責務境界が崩れていないか
 - 不要な依存・抽象化・変更が増えていないか
 - 必要な実装作法・型・コメントが `docs/coding-standards.md` と `docs/commenting.md` に沿っているか
-- 必要なテスト、typecheck、format check、buildを確認したか
+- 必要なテスト、format check、buildを確認したか
+- TypeScript / TSXを変更した場合は、必要に応じて手元確認としてtypecheckを確認したか
 - 機能固有docsと現在のコード・成功テストが一致しているか
 - 次回の理解再起動に必要な現在地と検証結果が残っているか

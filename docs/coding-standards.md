@@ -258,4 +258,5 @@ CIが通っても責務境界が正しいとは判断しません。責務、型
 - `docs/commenting.md` に従い、必要なPHPDoc / JSDocを追加・更新したか
 - 型宣言、nullable、empty、例外条件が曖昧なままになっていないか
 - `any` や型アサーションで不整合を隠していないか
-- 必要なformat / typecheck / test / buildを確認したか
+- 必要なformat / test / buildを確認したか
+- TypeScript / TSXを変更した場合は、必要に応じてtypecheckを確認したか
