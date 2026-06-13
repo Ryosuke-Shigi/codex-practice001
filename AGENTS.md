@@ -12,9 +12,10 @@
 
 1. `AGENTS.md`
 2. `docs/index.md`
-3. 今回の作業に必要な共通docs
-4. 対象機能の `docs/features/`
-5. 対象コードと関連テスト
+3. `docs/md-router.md`
+4. 今回の作業に必要な共通docs
+5. 対象機能の `docs/features/`
+6. 対象コードと関連テスト
 
 リポジトリ全体や全docsを、念のためという理由だけで毎回読み込まない。
 
@@ -54,6 +55,7 @@ Git境界が不明な場合は、remote変更、clone、restoreへ進まず停�
 ## 参照先
 
 - 開発段階・Product化: `docs/development-flow.md`
+- MDルーター: `docs/md-router.md`
 - MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
 - MOCK / Prototypeの配置・削除・分離: `docs/prototype-policy.md`
 - ADR Pattern・レイヤード責務: `docs/architecture.md`

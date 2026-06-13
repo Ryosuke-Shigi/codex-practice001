@@ -17,6 +17,7 @@
 ### 全体ルール・禁止事項
 
 - `AGENTS.md`
+- `docs/md-router.md`
 - 共通方針docs
 
 ### コマンド実行・Git境界
@@ -90,10 +91,13 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 |---|---|
 | `AGENTS.md` | AI・人間が作業時に守る入口ルール |
 | `docs/index.md` | docsの索引、正本の役割分担、用語 |
+| `docs/md-router.md` | 作業種別ごとに読むdocs、読まないdocs、停止条件、作業後の保守ルール |
 
 ## MD作業ルーター
 
 MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
+
+詳細な作業種別別ルーティング、PRレビュー強度との接続、停止条件、作業後の保守ルールは `docs/md-router.md` を正本とします。
 
 作業前に次を宣言します。
 
@@ -124,6 +128,7 @@ MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を
 | 文書 | 読む条件 |
 |---|---|
 | `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
+| `docs/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
