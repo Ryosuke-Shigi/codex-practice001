@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の緯度経度を SVG 座標へ変換する utility です。
+ *
+ * 表示上の projection だけを扱い、座標の抽出・検証・pin生成可否判断は backend 側へ置きます。
+ */
 export type MapPoint = {
     x: number;
     y: number;

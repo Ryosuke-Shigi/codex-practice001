@@ -8,6 +8,12 @@ use App\Strategies\DanceShortsRadar\DisplayCards\DanceShortDisplayCardStrategyIn
 use App\Strategies\DanceShortsRadar\DisplayCards\RegionRankingDisplayCardStrategy;
 use App\Strategies\DanceShortsRadar\DisplayCards\RisingDisplayCardStrategy;
 
+/**
+ * DanceShortsRadar の表示カード取得方式をタブ値から選ぶ Factory です。
+ *
+ * Action から RISING / ALL / 地域別の Strategy 選択を分離し、各 Strategy には取得差分だけを持たせます。
+ * ここにランキング条件の計算や Repository query は置きません。
+ */
 final readonly class DanceShortDisplayCardStrategyFactory
 {
     public function __construct(
@@ -16,6 +22,9 @@ final readonly class DanceShortDisplayCardStrategyFactory
         private RegionRankingDisplayCardStrategy $regionRankingStrategy,
     ) {}
 
+    /**
+     * 選択済みタブに対応する表示カード Strategy を返します。
+     */
     public function make(string $selectedTabCode): DanceShortDisplayCardStrategyInterface
     {
         /*

@@ -1,3 +1,8 @@
+/**
+ * APIs.guru preview の Inertia Page Component です。
+ *
+ * 実取得またはモックの結果 props を表示し、取得可否やエラー shape の生成は Action / Responder に委譲します。
+ */
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 

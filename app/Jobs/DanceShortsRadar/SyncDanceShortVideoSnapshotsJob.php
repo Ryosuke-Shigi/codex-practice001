@@ -8,6 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * 保存済み active 動画の snapshot 専用同期を Queue で実行する Job です。
+ *
+ * `dance-short:sync-snapshots` から投入され、Job 全体を固定 uniqueId で一意化します。
+ * 動画選定、JST 12時間枠、保存/更新判断は Action / Service / Repository 側の責務です。
+ */
 class SyncDanceShortVideoSnapshotsJob implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
@@ -20,11 +26,17 @@ class SyncDanceShortVideoSnapshotsJob implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 1800;
 
+    /**
+     * snapshot 専用同期全体の多重実行を防ぐための固定キーを返します。
+     */
     public function uniqueId(): string
     {
         return 'dance-short-video-snapshots-refresh';
     }
 
+    /**
+     * snapshot 専用同期 Action を呼び出す Queue worker 側の入口です。
+     */
     public function handle(RefreshDanceShortVideoSnapshotsAction $action): void
     {
         /*
@@ -35,6 +47,11 @@ class SyncDanceShortVideoSnapshotsJob implements ShouldBeUnique, ShouldQueue
         $action->execute();
     }
 
+    /**
+     * 失敗時 hook です。
+     *
+     * 同期結果を永続化する status model は現時点では持たないため、ここでは追加の副作用を持たせません。
+     */
     public function failed(?Throwable $exception): void
     {
         //

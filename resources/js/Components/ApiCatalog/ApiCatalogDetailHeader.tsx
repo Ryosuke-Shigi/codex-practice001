@@ -1,3 +1,8 @@
+/**
+ * API Catalog 詳細画面ヘッダーの表示 Component です。
+ *
+ * 戻り先 URL と外部検索リンクの表示だけを担当し、returnUrl の安全性確認は Controller / Page 側で済ませます。
+ */
 import { Link } from '@inertiajs/react';
 
 import SearchButtons from './SearchButtons';

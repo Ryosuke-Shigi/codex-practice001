@@ -1,3 +1,8 @@
+/**
+ * API Catalog 一覧 filter panel の表示 Component です。
+ *
+ * keyword / provider / domain / sort の入力 UI を担当し、検索対象や件数補正は Page / backend 境界へ委譲します。
+ */
 import { useId, useState } from 'react';
 
 import ApiCatalogSortSelect from './ApiCatalogSortSelect';

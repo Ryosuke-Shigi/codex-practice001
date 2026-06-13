@@ -1,3 +1,8 @@
+/**
+ * API Catalog 詳細・カードで使う外部検索ボタン Component です。
+ *
+ * 入力 target から検索リンクを生成して表示するだけにし、API調査結果の保存や外部取得は行いません。
+ */
 import {
     buildApiCatalogSearchLinks,
     type ApiCatalogSearchTarget,

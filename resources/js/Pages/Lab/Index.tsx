@@ -1,4 +1,10 @@
 import { useMemo, useState } from 'react';
+/**
+ * Lab 一覧の Inertia Page Component です。
+ *
+ * routes/web.php から渡された紹介カードをカテゴリ別に表示します。
+ * 本体機能の同期、DB取得、外部API呼び出しは行わず、タブ選択だけを UI state として扱います。
+ */
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
 

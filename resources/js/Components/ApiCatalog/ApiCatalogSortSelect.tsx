@@ -1,3 +1,8 @@
+/**
+ * API Catalog filter panel 内の sort select Component です。
+ *
+ * 選択肢と選択値の表示だけを担当し、実際の sort 条件や pagination 補正は Page / backend へ渡します。
+ */
 import {
     apiCatalogSortOptions,
     type ApiCatalogSortKey,

@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar MOCK の snapshot 観測一覧用固定データです。
+ *
+ * Product の snapshot 取得結果ではなく、初回/最新観測 UI を確認するためだけの source です。
+ */
 import type { DanceShortsSnapshotObservation } from './types';
 
 /*

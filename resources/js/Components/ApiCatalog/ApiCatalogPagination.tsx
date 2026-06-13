@@ -1,3 +1,8 @@
+/**
+ * API Catalog 一覧 pagination の表示 Component です。
+ *
+ * Responder / Page から渡された pagination state をリンク表示に変換し、件数補正や取得条件は backend 側へ分けます。
+ */
 import ApiCatalogPaginationSummary, {
     toApiCatalogPaginationDisplayState,
     type ApiCatalogPaginationState,

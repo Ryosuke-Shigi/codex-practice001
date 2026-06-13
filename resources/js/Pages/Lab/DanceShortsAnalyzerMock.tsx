@@ -1,3 +1,8 @@
+/**
+ * DanceShortsAnalyzer MOCK の Page Component です。
+ *
+ * Search / Analyze の UI 契約を仮データで確認するページであり、Product の DB検索や snapshot 計算は行いません。
+ */
 import type { EChartsOption } from 'echarts';
 import type { FormEvent, ReactNode } from 'react';
 

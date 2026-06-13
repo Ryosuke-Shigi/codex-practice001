@@ -1,3 +1,8 @@
+/**
+ * DanceShortsAnalyzer Search 画面の選択済み動画 Field Component です。
+ *
+ * 選択状態の表示と Analyze 導線だけを担当し、動画IDの妥当性や snapshot 取得は Analyze 側へ渡します。
+ */
 import type { DanceShortsAnalyzerVideoCard } from './CardsField';
 
 type SelectedFieldProps = {

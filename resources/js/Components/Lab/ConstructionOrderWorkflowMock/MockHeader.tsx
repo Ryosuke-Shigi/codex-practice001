@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK のヘッダー Component です。
+ *
+ * 現在の表示ステータスと Lab 戻り導線だけを表示し、保存状態や権限判断は持ちません。
+ */
 import { Link } from '@inertiajs/react';
 
 type MockHeaderProps = {

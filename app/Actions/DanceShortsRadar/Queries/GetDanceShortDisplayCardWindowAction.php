@@ -13,7 +13,7 @@ use App\Services\DanceShortsRadar\DanceShortDisplayCardTabService;
 use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 
-/*
+/**
  * displayCardField の先読み API 用 Query Action です。
  *
  * Request 由来の startRank / windowSize を受け取り、初期表示と同じ Strategy Factory へ
@@ -30,6 +30,9 @@ final readonly class GetDanceShortDisplayCardWindowAction
         private DanceShortDisplayCardStrategyFactory $displayCardStrategyFactory,
     ) {}
 
+    /**
+     * 追加取得 API 用に、選択タブと window 条件から表示カード DTO を取得します。
+     */
     public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortDisplayCardWindowDTO
     {
         $regions = $this->searchTargetRepository

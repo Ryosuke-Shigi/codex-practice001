@@ -1,3 +1,8 @@
+/**
+ * Japan Quake Wave Map の共通地図表示 Component です。
+ *
+ * 保存済み pin props を地図・レイヤー・詳細表示へ渡し、DB取得、同期開始、pin生成可否判断は呼び出し元へ分けます。
+ */
 import { useEffect, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 

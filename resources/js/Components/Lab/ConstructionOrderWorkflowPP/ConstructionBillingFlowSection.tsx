@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の処理フロー説明 section Component です。
+ *
+ * Mermaid 図で構想を見せるだけにし、実際の Action / Service 実装とは接続しません。
+ */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
 import { constructionBillingFlowChart } from './constructionBillingPresentationData';

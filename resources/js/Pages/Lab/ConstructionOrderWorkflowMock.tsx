@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の Page Component です。
+ *
+ * 入力中データやタブ状態は画面内 state として扱い、保存処理、DB接続、CSV取込、帳票生成は行いません。
+ */
 import { Head } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 

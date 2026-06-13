@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar のサムネイル表示補助とリンク無効化条件を、React表示と純粋関数の両方で固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

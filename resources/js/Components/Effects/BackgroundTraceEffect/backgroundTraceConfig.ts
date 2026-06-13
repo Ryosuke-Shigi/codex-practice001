@@ -1,3 +1,8 @@
+/**
+ * trace effect の演出設定値です。
+ *
+ * 背景演出の速度やサイズだけを定義し、UIの機能状態や業務データの設定としては使いません。
+ */
 export type TraceLightSize = 'sm' | 'md' | 'lg';
 
 export const backgroundTraceConfig = {

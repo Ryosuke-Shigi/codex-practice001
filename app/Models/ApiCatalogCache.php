@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * APIs.guru 由来のカタログキャッシュを表す Eloquent Model です。
+ *
+ * payload_hash や active 状態の保存先であり、同期時の insert / update / skip 判断は Service 側で扱います。
+ */
 class ApiCatalogCache extends Model
 {
     protected $table = 'api_catalog_cache';

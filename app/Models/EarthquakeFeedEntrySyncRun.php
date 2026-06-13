@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * earthquake feed entry 同期 run の状態と件数を保持する Eloquent Model です。
+ *
+ * status API が読む保存境界であり、Atom feed の解析や entry upsert 判断は Service / Repository へ分けます。
+ */
 class EarthquakeFeedEntrySyncRun extends Model
 {
     protected $table = 'earthquake_feed_entry_sync_runs';

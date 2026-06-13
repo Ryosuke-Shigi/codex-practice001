@@ -1,3 +1,8 @@
+/**
+ * jQuery ripples を使った水面背景演出 Component です。
+ *
+ * 外部ライブラリの初期化と破棄だけを扱い、feature data や backend props には触れません。
+ */
 import { useEffect, useRef } from 'react';
 import $ from 'jquery';
 import 'jquery.ripples';

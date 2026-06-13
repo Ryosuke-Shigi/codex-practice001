@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 表示カードの empty 状態 Component です。
+ *
+ * 取得結果0件の message 表示だけを扱い、loading 中やエラー状態とは別にします。
+ */
 type EmptyDisplayCardFieldProps = {
     message: string;
 };

@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の履歴タイムライン Component です。
+ *
+ * 固定履歴を表示するだけにし、監査ログやDB履歴の取得・保存は扱いません。
+ */
 import type { HistoryItem } from './mockData';
 
 type HistoryTimelineProps = {

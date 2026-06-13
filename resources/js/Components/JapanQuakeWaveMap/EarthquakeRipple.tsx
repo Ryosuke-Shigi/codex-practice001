@@ -1,3 +1,8 @@
+/**
+ * QuakeWave Preview の波紋デザイン見本 Component です。
+ *
+ * preview DTO の見た目確認に限定し、本体 map の pin data や同期 status には依存しません。
+ */
 export type EarthquakeRipplePreview = {
     label: string;
     maxIntensity: string;

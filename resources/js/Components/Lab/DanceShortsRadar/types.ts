@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar の画面 props / Component props で共有する型定義です。
+ *
+ * Laravel Responder が返すランキング/上昇候補/表示カードの境界を React 側で表し、UI state と業務判断を混ぜないために使います。
+ */
 export type DanceShortsRegionCode = 'JP' | 'US' | 'KR';
 export const DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES = {
     RANKING: 'ranking',

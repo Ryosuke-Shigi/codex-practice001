@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の画像アップロード見本 Component です。
+ *
+ * 固定カードを表示するだけで、実ファイル選択、S3保存、画像DB登録は行いません。
+ */
 import { imageCards } from './mockData';
 
 export default function ImageUploadMockPanel() {

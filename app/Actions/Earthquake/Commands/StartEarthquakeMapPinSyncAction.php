@@ -7,6 +7,11 @@ use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use RuntimeException;
 
+/**
+ * QuakeWave Preview の map pin 生成同期を開始する Command Action です。
+ *
+ * pending run 作成と Queue Job 投入だけを担当し、個別XML取得や pin 生成可否判断は後続層へ委譲します。
+ */
 final readonly class StartEarthquakeMapPinSyncAction
 {
     public function __construct(
@@ -14,6 +19,11 @@ final readonly class StartEarthquakeMapPinSyncAction
         private EarthquakeMapPinRepositoryInterface $mapPinRepository,
     ) {}
 
+    /**
+     * map pin 同期 run を作成して Queue に投入し、polling 用 ID を返します。
+     *
+     * @throws RuntimeException status / map pin 保存先が未準備で同期開始できない場合。
+     */
     public function execute(): int
     {
         /*

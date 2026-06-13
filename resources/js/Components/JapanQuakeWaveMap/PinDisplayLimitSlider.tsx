@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の表示件数を調整する slider Component です。
+ *
+ * 取得済み pins の描画件数だけを変え、Repository の limit や同期対象件数には影響させません。
+ */
 export const PIN_DISPLAY_LIMIT_MIN = 5;
 export const PIN_DISPLAY_LIMIT_MAX = 45;
 export const PIN_DISPLAY_LIMIT_INITIAL = 10;

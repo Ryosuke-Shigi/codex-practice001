@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK のタブナビゲーション Component です。
+ *
+ * 画面内 tab state の切替だけを担当し、route 遷移や保存済み業務状態とは接続しません。
+ */
 import type { TabKey } from './mockData';
 import { tabs } from './mockData';
 

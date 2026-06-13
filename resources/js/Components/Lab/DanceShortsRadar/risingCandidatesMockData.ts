@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar MOCK の上昇候補タブ用固定データです。
+ *
+ * backend の read model ではなく、UI 表示とカード構造を確認するためだけに使います。
+ */
 import type { DanceShortsRisingCandidate } from './types';
 
 /*

@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map のプレート境界線レイヤー Component です。
+ *
+ * 地図上の補助表示に限定し、地震 pin の取得条件や震度判断には関与しません。
+ */
 import { useEffect, useMemo, useState } from 'react';
 
 import {

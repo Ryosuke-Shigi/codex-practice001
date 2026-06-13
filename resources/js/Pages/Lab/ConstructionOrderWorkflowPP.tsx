@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システムの idea-board Page Component です。
+ *
+ * 実DB、CSV取込、帳票生成には接続せず、説明用セクションの組み立てだけを担当します。
+ */
 import { Head } from '@inertiajs/react';
 
 import BasicConceptCards from '@/Components/Lab/ConstructionOrderWorkflowPP/BasicConceptCards';

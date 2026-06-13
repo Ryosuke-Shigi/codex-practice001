@@ -6,8 +6,16 @@ use App\Actions\Earthquake\Queries\GetQuakeWavePreviewIndexAction;
 use App\Responders\Earthquake\QuakeWavePreviewIndexResponder;
 use Inertia\Response;
 
+/**
+ * QuakeWave Preview 開発入口ページの HTTP 入口です。
+ *
+ * 入口カードや preview props の構築は Query Action / Responder に分け、Controller は接続だけを担当します。
+ */
 class QuakeWavePreviewController extends Controller
 {
+    /**
+     * QuakeWave Preview index の画面データを取得して Inertia response に変換します。
+     */
     public function __invoke(
         GetQuakeWavePreviewIndexAction $action,
         QuakeWavePreviewIndexResponder $responder,

@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar のカードスワイプ/自動送り utility が、DOMなしで固定できる表示操作仕様を検証します。
+ */
 import { describe, expect, it } from 'vitest';
 
 import {

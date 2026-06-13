@@ -1,5 +1,10 @@
 import type { DanceShortsAnalyzerComparisonTable } from './AnalyzeField';
 
+/**
+ * DanceShortsAnalyzer Analyze 画面の増加量テーブル Field Component です。
+ *
+ * Responder から渡された columns / cells を表示し、差分計算不能値を 0 に丸める処理は入れません。
+ */
 type AnalyzeDeltaTableFieldProps = {
     table: DanceShortsAnalyzerComparisonTable;
 };

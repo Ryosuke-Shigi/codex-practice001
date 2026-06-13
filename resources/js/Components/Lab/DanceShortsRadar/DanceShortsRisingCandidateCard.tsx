@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar の上昇候補カード Component です。
+ *
+ * source region と日本側の観測状態を表示し、上昇候補の判定や read model 取得は backend 側へ分けます。
+ */
 import type { ReactNode } from 'react';
 
 import DanceShortsThumbnailLink from './DanceShortsThumbnailLink';

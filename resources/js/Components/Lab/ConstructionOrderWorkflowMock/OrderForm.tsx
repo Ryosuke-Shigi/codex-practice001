@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の発注入力フォーム Component です。
+ *
+ * 画面内 state の更新だけを扱い、実保存、DB接続、CSV取込、validation 本体は行いません。
+ */
 import type { FormEvent } from 'react';
 import type { OrderDraft } from './mockData';
 

@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 本画面の表示条件選択 Field Component です。
+ *
+ * tab / comparisonDays / sort の選択 UI と Inertia reload だけを担当し、条件正規化は backend 側へ委譲します。
+ */
 import { router } from '@inertiajs/react';
 import { useRef } from 'react';
 import type { TouchEvent } from 'react';

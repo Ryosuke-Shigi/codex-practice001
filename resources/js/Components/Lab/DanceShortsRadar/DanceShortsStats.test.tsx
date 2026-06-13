@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar の統計表示が null / 差分 / sortKey に応じて崩れないことを固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

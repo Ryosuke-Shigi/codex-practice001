@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 表示カードのスワイプ/自動送り utility です。
+ *
+ * DOMに依存しない表示操作だけを扱い、ランキング順や取得 window の意味判断は backend / Page 側へ残します。
+ */
 export type CardSwipeDirection = 'left' | 'right' | 'up' | 'down';
 export type CardFieldTransitionDirection = -1 | 1;
 export type CardFieldTransitionMode = 'manual' | 'auto';

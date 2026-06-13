@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の画面構成説明 section Component です。
+ *
+ * 画面案の説明だけを担当し、実 route / Controller / 保存処理の追加は行いません。
+ */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
 import { screenCards, screenFlowChart } from './constructionBillingPresentationData';

@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の表示レイヤー切替 Component です。
+ *
+ * pins / ripple / label / plate boundary の表示ON/OFFだけを扱い、取得済みデータそのものは変更しません。
+ */
 import { useState } from 'react';
 
 export type MapLayerVisibility = {

@@ -1,3 +1,8 @@
+/**
+ * trace pattern の SVG 描画 Component です。
+ *
+ * 静的 pattern 定義を SVG として描画するだけにし、Page props や feature data を受け取りません。
+ */
 import type { CSSProperties } from 'react';
 
 import {

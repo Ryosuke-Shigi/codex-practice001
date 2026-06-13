@@ -8,6 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * Japan Quake Wave Map の Atom feed entry 同期を Queue で実行する Job です。
+ *
+ * HTTP 入口から受け取った syncRunId の状態を更新し、同期本体は Service へ委譲します。
+ * Job へ XML 解析や entry upsert 条件を置かないことで、再実行時の境界を読みやすくします。
+ */
 class SyncEarthquakeFeedEntriesJob implements ShouldQueue
 {
     use Queueable;
@@ -22,6 +28,9 @@ class SyncEarthquakeFeedEntriesJob implements ShouldQueue
         public readonly int $syncRunId,
     ) {}
 
+    /**
+     * feed entry 同期 run を running へ進め、Service の集計結果を完了状態へ反映します。
+     */
     public function handle(
         EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,
         EarthquakeFeedEntrySyncService $syncService,
@@ -47,6 +56,9 @@ class SyncEarthquakeFeedEntriesJob implements ShouldQueue
         $syncRunRepository->markCompleted($this->syncRunId, $result);
     }
 
+    /**
+     * timeout など handle() 外の失敗でも status API が終端状態を返せるようにします。
+     */
     public function failed(?Throwable $exception): void
     {
         /*

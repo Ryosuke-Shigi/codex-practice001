@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の課題整理 section Component です。
+ *
+ * 説明用カードと図を表示するだけで、現行業務仕様の正本や要件確定資料としては扱いません。
+ */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
 import { problemCards, problemFlowChart } from './constructionBillingPresentationData';

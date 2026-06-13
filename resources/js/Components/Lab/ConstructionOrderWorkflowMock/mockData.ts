@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の画面内固定データと型定義です。
+ *
+ * 実DBやCSV取込の代替ではなく、Page state と表示部品の契約を確認するためだけに使います。
+ */
 export type TabKey =
     | 'registration'
     | 'order'

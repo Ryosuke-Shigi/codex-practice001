@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar の上昇候補 section が empty / candidate 表示を分ける仕様を固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

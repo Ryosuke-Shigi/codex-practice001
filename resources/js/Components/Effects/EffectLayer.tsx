@@ -1,3 +1,8 @@
+/**
+ * 公開画面の背景演出を切り替える Effects Component です。
+ *
+ * Layout から選択された演出を描画するだけにし、業務データ・保存処理・Page props には依存しません。
+ */
 import type { ComponentType } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 

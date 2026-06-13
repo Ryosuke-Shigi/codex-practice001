@@ -1,3 +1,8 @@
+/**
+ * 色変化を使う背景演出 Component です。
+ *
+ * motion の見た目だけを担当し、各 feature の状態や API 通信には関与しません。
+ */
 import { motion } from 'motion/react';
 
 /*

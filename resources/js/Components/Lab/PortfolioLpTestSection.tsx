@@ -1,3 +1,8 @@
+/**
+ * portfolio LP のテスト観点 section Component です。
+ *
+ * テストで守る観点の説明表示だけを扱い、実行可能な仕様固定は tests 側に置きます。
+ */
 type PortfolioLpTestItem = {
     title: string;
     description: string;

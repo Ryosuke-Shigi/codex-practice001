@@ -1,3 +1,8 @@
+/**
+ * Design Philosophy セクションを表示する template Component です。
+ *
+ * DTO 由来 props の表示だけを担当し、section の有効判定や並び順は backend 側へ分けます。
+ */
 export type DesignPhilosophySection = {
     /*
      * Laravel の DesignPhilosophySectionDTO::toArray() と対応する props です。

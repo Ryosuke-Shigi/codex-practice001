@@ -1,3 +1,8 @@
+/**
+ * portfolio LP の導線ボタン Component です。
+ *
+ * 受け取った link props を表示し、遷移先の権限や機能状態の判断は各 route / Page 側へ分けます。
+ */
 import { Link } from '@inertiajs/react';
 
 export type PortfolioLpLink = {

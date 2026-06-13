@@ -1,3 +1,8 @@
+/**
+ * cursor ripple の背景演出 Component です。
+ *
+ * ポインター位置を装飾へ反映するだけで、クリック対象や業務操作の状態には介入しません。
+ */
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { motion } from 'motion/react';
 

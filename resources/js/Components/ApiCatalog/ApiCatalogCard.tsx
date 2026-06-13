@@ -1,3 +1,8 @@
+/**
+ * API Catalog 一覧カードの表示 Component です。
+ *
+ * 一覧/モックの props を表示し、検索条件・ページング・保存メモ CRUD の判断は呼び出し元や backend へ分けます。
+ */
 import { Link } from '@inertiajs/react';
 import { motion } from 'motion/react';
 

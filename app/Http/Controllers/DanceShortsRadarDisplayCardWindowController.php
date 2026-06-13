@@ -8,8 +8,17 @@ use App\Http\Requests\DanceShortsRadar\DanceShortDisplayCardWindowRequest;
 use App\Responders\DanceShortsRadar\DanceShortVideoRankingResponder;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * DanceShortsRadar の表示カード window 追加取得 API の HTTP 入口です。
+ *
+ * 初期ページ表示と同じ Request / DTO / Query Action を使い、JSON shape は Responder に寄せます。
+ * Controller は tab や ranking 種別の分岐を持ちません。
+ */
 class DanceShortsRadarDisplayCardWindowController extends Controller
 {
+    /**
+     * 検証済み query から表示カード window を取得して JSON で返します。
+     */
     public function __invoke(
         DanceShortDisplayCardWindowRequest $request,
         GetDanceShortDisplayCardWindowAction $action,

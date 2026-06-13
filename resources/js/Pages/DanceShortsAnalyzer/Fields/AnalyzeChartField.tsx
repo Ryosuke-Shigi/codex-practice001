@@ -1,3 +1,8 @@
+/**
+ * DanceShortsAnalyzer Analyze 画面のチャート Field Component です。
+ *
+ * Responder が生成した ECharts option を表示し、Component 側で series や業務値を再計算しません。
+ */
 import EChartsViewer from '@/Components/Common/Visualizations/Charts/EChartsViewer';
 
 import type { DanceShortsAnalyzerChart } from './AnalyzeField';

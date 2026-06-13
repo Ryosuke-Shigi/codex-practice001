@@ -1,3 +1,6 @@
+/**
+ * 背景演出 selector が選択状態と pattern 一覧を表示する UI 契約を固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 

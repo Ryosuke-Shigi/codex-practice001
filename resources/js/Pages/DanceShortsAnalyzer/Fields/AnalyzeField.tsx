@@ -1,3 +1,8 @@
+/**
+ * DanceShortsAnalyzer Analyze 画面の分析表示 Field Component です。
+ *
+ * metric / period の UI 状態を受けて表示を切り替え、snapshot 計算や EChartsOption 生成は backend props を使います。
+ */
 import type { EChartsOption } from 'echarts';
 
 import { useState } from 'react';

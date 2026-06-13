@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の状態チャート section Component です。
+ *
+ * ECharts 表示用の説明データを描画するだけで、実データ集計や帳票状態管理は行いません。
+ */
 import EChartsViewer from '@/Components/Common/Visualizations/Charts/EChartsViewer';
 
 import { statusCharts } from './constructionBillingPresentationData';

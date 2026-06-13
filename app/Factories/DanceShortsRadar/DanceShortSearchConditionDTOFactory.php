@@ -7,8 +7,17 @@ use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use Carbon\CarbonImmutable;
 
+/**
+ * DanceShortsRadar の検索対象 region / keyword を YouTube 検索用 DTO へ変換する Factory です。
+ *
+ * Action は同期手順、Repository は YouTube API request を担当するため、この Factory は
+ * 検索条件 DTO の組み立てだけを扱います。
+ */
 class DanceShortSearchConditionDTOFactory
 {
+    /**
+     * active region と keyword から search.list に渡す条件 DTO を作成します。
+     */
     public function fromRegionAndKeyword(
         DanceShortRegion $region,
         DanceShortSearchKeyword $keyword,

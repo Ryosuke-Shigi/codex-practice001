@@ -1,3 +1,8 @@
+/**
+ * portfolio LP の feature card grid Component です。
+ *
+ * 説明用配列をカード表示するだけにし、機能本体の状態やDBデータとは接続しません。
+ */
 type PortfolioLpFeature = {
     title: string;
     description: string;

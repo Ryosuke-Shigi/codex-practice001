@@ -8,8 +8,17 @@ use App\Responders\Earthquake\EarthquakeMapPinSyncStatusResponder;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
+/**
+ * QuakeWave Preview の map pin 同期開始 API の HTTP 入口です。
+ *
+ * POST から Command Action を起動し、個別XML取得と pin 生成は Queue Job 側へ渡します。
+ * Controller には pin 生成可否や Repository 条件を置きません。
+ */
 class QuakeWavePreviewMapPinSyncController extends Controller
 {
+    /**
+     * map pin 同期を開始し、polling 用の syncRunId と初期 status を返します。
+     */
     public function __invoke(
         StartEarthquakeMapPinSyncAction $action,
         EarthquakeMapPinSyncRunRepositoryInterface $syncRunRepository,

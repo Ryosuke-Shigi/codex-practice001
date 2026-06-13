@@ -1,3 +1,8 @@
+/**
+ * API Catalog 保存メモの表示・操作 Component です。
+ *
+ * props で渡された URL へ Inertia 操作を行い、メモ所有確認や保存可否の判断は Laravel 側へ置きます。
+ */
 import { router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 

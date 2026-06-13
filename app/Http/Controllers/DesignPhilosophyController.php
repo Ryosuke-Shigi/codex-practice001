@@ -6,8 +6,16 @@ use App\Actions\DesignPhilosophy\Queries\GetDesignPhilosophySectionsAction;
 use App\Responders\DesignPhilosophy\DesignPhilosophyResponder;
 use Inertia\Response;
 
+/**
+ * Design Philosophy ページの HTTP 入口です。
+ *
+ * セクション取得は Query Action、Inertia props 整形は Responder に分け、Controller は橋渡しに限定します。
+ */
 class DesignPhilosophyController extends Controller
 {
+    /**
+     * 有効なセクションを取得して Design Philosophy ページへ渡します。
+     */
     public function __invoke(
         GetDesignPhilosophySectionsAction $action,
         DesignPhilosophyResponder $responder,

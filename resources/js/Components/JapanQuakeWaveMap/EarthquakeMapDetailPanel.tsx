@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の選択 pin 詳細表示 Component です。
+ *
+ * 受け取った pin の項目を表示用に整えるだけにし、震度や座標の生成判断は backend / map component へ分けます。
+ */
 import { useEffect, useState } from 'react';
 
 import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';

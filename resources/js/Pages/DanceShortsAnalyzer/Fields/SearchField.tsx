@@ -1,3 +1,8 @@
+/**
+ * DanceShortsAnalyzer Search 画面の検索フォーム Field Component です。
+ *
+ * 入力値と送信先 props を表示し、保存済み動画の検索条件や validation は Request / Action 側へ委譲します。
+ */
 import type { FormEvent } from 'react';
 
 export type DanceShortsAnalyzerSearchFieldProps = {

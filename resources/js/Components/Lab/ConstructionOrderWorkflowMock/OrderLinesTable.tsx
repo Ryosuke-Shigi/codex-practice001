@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の明細テーブル Component です。
+ *
+ * 仮明細と金額表示だけを扱い、見積/請求の確定処理やDB保存は行いません。
+ */
 import type { OrderLine } from './mockData';
 import { formatCurrency } from './mockData';
 

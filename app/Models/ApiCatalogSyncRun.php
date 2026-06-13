@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * APIカタログ同期 run の状態と集計値を保持する Eloquent Model です。
+ *
+ * Queue / Action / Repository が更新する状態保存先であり、同期の差分判断や外部API通信は持ちません。
+ */
 class ApiCatalogSyncRun extends Model
 {
     protected $table = 'api_catalog_sync_runs';

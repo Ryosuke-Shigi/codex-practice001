@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の請求プレビュー Component です。
+ *
+ * 仮の発注入力と明細を表示用に合成するだけで、帳票生成やファイル保存は行いません。
+ */
 import type { OrderDraft, OrderLine } from './mockData';
 import { formatCurrency } from './mockData';
 

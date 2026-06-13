@@ -1,3 +1,8 @@
+/**
+ * Japan Quake Wave Map の SVG 地図描画 Component です。
+ *
+ * pins と layer state を描画要素へ変換し、pin の取得条件や同期処理は持ちません。
+ */
 import { useMemo } from 'react';
 
 import EarthquakeMapPinMarker from '@/Components/JapanQuakeWaveMap/EarthquakeMapPinMarker';

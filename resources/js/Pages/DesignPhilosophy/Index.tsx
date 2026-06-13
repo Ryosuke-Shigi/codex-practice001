@@ -1,3 +1,8 @@
+/**
+ * Design Philosophy の Inertia Page Component です。
+ *
+ * Laravel Responder から受け取った sections を並べるだけにし、enabled 判定や並び替えは backend 側へ委譲します。
+ */
 import { Head } from '@inertiajs/react';
 
 import DesignPhilosophySectionTemplate, {

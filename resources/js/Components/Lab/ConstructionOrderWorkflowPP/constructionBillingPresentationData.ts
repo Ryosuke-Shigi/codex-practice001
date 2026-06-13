@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム idea-board の説明用データです。
+ *
+ * 実装正本ではなく、LP内で画面例・図・チャートを構成するための静的 props source として扱います。
+ */
 import type { EChartsOption } from 'echarts';
 
 /*

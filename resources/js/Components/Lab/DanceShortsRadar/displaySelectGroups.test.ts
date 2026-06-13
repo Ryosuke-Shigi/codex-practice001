@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar の表示条件選択 group utility が loop / disabled option を正しく扱うことを固定します。
+ */
 import { describe, expect, it } from 'vitest';
 
 import {

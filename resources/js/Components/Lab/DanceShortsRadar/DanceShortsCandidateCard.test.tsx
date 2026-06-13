@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar の通常ランキング候補カードが snapshot 比較状態を表示できることを固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

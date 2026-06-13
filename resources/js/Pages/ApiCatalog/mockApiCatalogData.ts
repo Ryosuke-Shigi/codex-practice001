@@ -1,3 +1,8 @@
+/**
+ * API Discovery Hub モック画面専用の固定データと検索補助です。
+ *
+ * 本番 Responder props の代替ではなく、UI確認用の mock source として扱います。
+ */
 import type { ApiCatalogNoteItem } from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
 
 export type ApiCatalogProvider = {

@@ -6,6 +6,11 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Throwable;
 
+/**
+ * DanceShortsRadar snapshot の保持期間と削除 cutoff を判断する Service です。
+ *
+ * DB削除は Repository、実行順序は Action に委譲し、この Service は日数と時刻境界の業務判断だけを扱います。
+ */
 class DanceShortSnapshotRetentionService
 {
     /*
@@ -18,11 +23,17 @@ class DanceShortSnapshotRetentionService
 
     private const DEFAULT_RETENTION_DAYS = 35;
 
+    /**
+     * ランキング比較で想定する最大日数を返します。
+     */
     public function maxComparisonDays(): int
     {
         return self::MAX_COMPARISON_DAYS;
     }
 
+    /**
+     * 設定値を安全な保持日数へ正規化します。
+     */
     public function retentionDays(int|string|null $configuredRetentionDays = null): int
     {
         /*
@@ -45,6 +56,9 @@ class DanceShortSnapshotRetentionService
         return $retentionDays;
     }
 
+    /**
+     * Repository の削除条件へ渡す UTC cutoff を返します。
+     */
     public function cutoffAt(
         CarbonInterface $now,
         int|string|null $configuredRetentionDays = null,

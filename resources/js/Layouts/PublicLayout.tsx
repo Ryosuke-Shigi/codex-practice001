@@ -1,3 +1,8 @@
+/**
+ * 公開画面共通の Layout Component です。
+ *
+ * 背景エフェクトと children の配置だけを扱い、各機能のデータ取得や業務判断は Page 側へ分けます。
+ */
 import { useState, type PropsWithChildren } from 'react';
 
 import EffectLayer, {

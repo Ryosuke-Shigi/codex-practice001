@@ -1,3 +1,8 @@
+/**
+ * QuakeWave XML preview の Inertia Page Component です。
+ *
+ * Service / Responder から渡された preview 結果を表示し、外部XML取得や解析処理は Component に置きません。
+ */
 import { Head, Link } from '@inertiajs/react';
 
 import PublicLayout from '@/Layouts/PublicLayout';

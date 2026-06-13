@@ -1,3 +1,8 @@
+/**
+ * trace pattern 背景演出の静的定義です。
+ *
+ * 画面演出用の座標・線・光だけを保持し、feature data や UI props の正本としては扱いません。
+ */
 import type { TraceLightSize } from './backgroundTraceConfig';
 
 export type TraceCircle = {

@@ -1,3 +1,8 @@
+/**
+ * QuakeWave Preview の pin デザイン見本 Component です。
+ *
+ * preview DTO の表示に限定し、本体 map pin の取得や同期状態とは接続しません。
+ */
 export type EarthquakePinPreview = {
     label: string;
     maxIntensity: string;

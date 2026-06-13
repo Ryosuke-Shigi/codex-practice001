@@ -4,6 +4,11 @@ namespace App\Http\Requests\Earthquake;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Japan Quake Wave Map の日付範囲 query を検証する Request です。
+ *
+ * ここでは `Y-m-d` 形式だけを扱い、実際の取得条件や期間補正は Query DTO Factory へ委譲します。
+ */
 class QuakeWavePreviewMapRequest extends FormRequest
 {
     public function authorize(): bool

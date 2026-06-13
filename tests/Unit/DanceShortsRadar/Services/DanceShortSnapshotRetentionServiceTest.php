@@ -6,6 +6,11 @@ use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use Carbon\CarbonImmutable;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * snapshot cleanup の保持期間と UTC cutoff 境界を固定する Unit Test です。
+ *
+ * Repository の削除 query ではなく、Service が担う日数判断と時刻変換だけを確認します。
+ */
 class DanceShortSnapshotRetentionServiceTest extends TestCase
 {
     public function test_retention_days_default_to_thirty_five_days_for_thirty_day_comparison_with_buffer(): void

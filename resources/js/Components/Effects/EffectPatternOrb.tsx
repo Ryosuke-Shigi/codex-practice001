@@ -1,3 +1,8 @@
+/**
+ * Effect selector 内の pattern preview orb Component です。
+ *
+ * 選択肢の見た目表示だけを担当し、実際の背景切替 state は親 Component に残します。
+ */
 import { motion } from 'motion/react';
 
 import type { EffectPattern } from '@/Components/Effects/EffectLayer';

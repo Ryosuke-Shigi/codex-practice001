@@ -2,7 +2,7 @@
 
 namespace App\DTO\DanceShortsRadar\Display;
 
-/*
+/**
  * Strategy が返す displayCardField window の結果 DTO です。
  *
  * 現時点で外へ渡す主契約は displayCardField だけです。結果 DTO を挟んでおくことで、

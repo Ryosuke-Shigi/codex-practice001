@@ -1,3 +1,8 @@
+/**
+ * API Catalog 詳細画面の hero 表示 Component です。
+ *
+ * API名、provider、service、version の表示に限定し、外部 OpenAPI 定義の取得や解析は行いません。
+ */
 import { motion } from 'motion/react';
 
 type ApiCatalogDetailHeroProps = {

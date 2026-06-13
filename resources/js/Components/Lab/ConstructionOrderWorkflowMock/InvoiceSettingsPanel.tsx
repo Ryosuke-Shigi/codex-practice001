@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の請求設定 Component です。
+ *
+ * 画面内の請求種別・テンプレート・出力形式 state を切り替えるだけで、帳票生成は行いません。
+ */
 import type { InvoiceType } from './mockData';
 
 type InvoiceSettingsPanelProps = {

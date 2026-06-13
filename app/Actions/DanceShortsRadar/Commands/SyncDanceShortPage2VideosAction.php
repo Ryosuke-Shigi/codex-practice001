@@ -11,6 +11,12 @@ use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Throwable;
 
+/**
+ * DanceShortsRadar の expanded keyword page2 以降を同期する Command Action です。
+ *
+ * page2 以降の動画ID収集と共通保存処理への委譲を担当します。
+ * Shorts判定、snapshot保存、cleanup の個別判断は後続 Action / Service / Repository に分けます。
+ */
 class SyncDanceShortPage2VideosAction
 {
     public function __construct(
@@ -21,6 +27,9 @@ class SyncDanceShortPage2VideosAction
         private readonly DanceShortSearchConditionDTOFactory $searchConditionFactory,
     ) {}
 
+    /**
+     * active expanded keyword を対象に page2 以降を検索し、同期結果 DTO を返します。
+     */
     public function execute(): DanceShortVideoSyncResultDTO
     {
         /*
