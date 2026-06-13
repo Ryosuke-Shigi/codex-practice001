@@ -55,6 +55,8 @@
 
 ## root / `/src` のGit境界
 
+このローカル構成では、root側のDocker / 環境repoと、`/src` 側のLaravel / React / docs / tests / アプリrepoは別Git管理です。
+
 root側は、Docker とローカル実行基盤を扱います。
 
 - `docker-compose.yml`
@@ -77,6 +79,31 @@ root側は、Docker とローカル実行基盤を扱います。
 - `docs/`
 - `AGENTS.md`
 - `README.md`
+
+作業対象に応じて確認するGit境界を切り替えます。
+
+- Docker / compose / 環境作業: root側repoを確認する
+- Laravel / React / docs / tests / appコード作業: `/src` 側repoを確認する
+
+アプリ/docs作業をroot側から開始する場合は、外側repoのremoteだけで判断せず、次を確認します。
+
+```bash
+git -C src remote -v
+git -C src branch --show-current
+git -C src status --short
+```
+
+root側repoのremoteが `Ryosuke-Shigi/laravel11-docker.git` でも、`/src` 側repoが対象アプリrepoを向いている場合は異常扱いしません。
+
+Git境界が不明な場合は、remote変更、clone、restoreへ進まず停止して報告します。
+
+禁止する復旧操作:
+
+- 外側repoのremoteを書き換えない
+- cloneしない
+- `src/` を削除しない
+- `artisan` をrestoreしない
+- Git境界が不明なままブランチ切替や編集へ進まない
 
 Git操作の原則:
 
@@ -108,7 +135,7 @@ git status --short
 
 対象repo、remote、branchが指示と一致しない場合は、作業を続けず停止して報告します。
 
-一時cloneで作業する場合は、元workspaceと一時cloneの `pwd` / `git remote -v` / `git branch --show-current` / `git status --short` を区別し、どちらで作業したかを完了報告に明記します。
+人間が別の作業場所を明示した場合は、元workspaceと指定された作業場所の `pwd` / `git remote -v` / `git branch --show-current` / `git status --short` を区別し、どちらで作業したかを完了報告に明記します。
 
 ## Docker経由コマンド原則
 

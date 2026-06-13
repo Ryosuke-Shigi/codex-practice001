@@ -18,9 +18,27 @@
 
 リポジトリ全体や全docsを、念のためという理由だけで毎回読み込まない。
 
+参照先一覧は「全部読むリスト」ではありません。`docs/index.md` のMD作業ルーターで、今回読むdocs、読まないdocs、編集禁止ファイル、停止条件を確定してから進みます。
+
 ## 作業開始前のリポジトリ確認
 
 実装、docs更新、テスト追加、PR作成の前に、必ず作業対象リポジトリを確認する。
+
+このローカル構成では、外側workspaceのDocker / 環境repoと、`src/` 内のLaravel / React / docs / tests / アプリrepoは別Git管理です。
+
+Docker / compose / 環境作業では外側repoを確認し、Laravel / React / docs / tests / appコード作業では `src/` 内repoを確認します。
+
+アプリ/docs作業を外側workspaceから開始する場合は、外側repoのremoteだけで判断せず、次を確認します。
+
+```bash
+git -C src remote -v
+git -C src branch --show-current
+git -C src status --short
+```
+
+外側repoのremoteが `Ryosuke-Shigi/laravel11-docker.git` でも、`src/` が対象アプリrepoを向いている場合は異常扱いしません。
+
+Git境界が不明な場合は、remote変更、clone、restoreへ進まず停止して報告します。
 
 最低限、以下を確認する。
 
@@ -31,7 +49,7 @@
 
 対象repo、remote、branchが指示と一致しない場合は、作業を続けず停止して報告する。
 
-一時cloneで作業する場合は、元workspaceと一時cloneのどちらで作業したかを完了報告に明記する。
+人間が別の作業場所を明示した場合は、元workspaceと指定された作業場所のどちらで作業したかを完了報告に明記する。
 
 ## 参照先
 
@@ -50,9 +68,10 @@
 - セキュリティ・破壊的操作: `docs/security.md`
 - コメント・PHPDoc・JSDoc: `docs/commenting.md`
 - 機能固有仕様: `docs/features/`
-- 指示用まとめ: `docs/templates/instruction-summary.md`
 - PR本文: `docs/templates/pr-summary.md`
 - 代替実装禁止: `skills/no-alternative-implementation/SKILL.md`
+
+この一覧は候補の案内です。実際に読む文書は `docs/index.md` のMD作業ルーターで作業種別を決めてから絞ります。
 
 READMEは外部向け概要説明として扱い、内部の設計・テスト・AI運用ルールを詰め込みすぎない。
 
