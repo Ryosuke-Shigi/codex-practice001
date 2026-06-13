@@ -1,3 +1,8 @@
+/**
+ * DanceShortsAnalyzer Search 画面の動画カード一覧 Field Component です。
+ *
+ * props の動画一覧と選択状態を表示するだけにし、最大選択数や次ページ取得条件は Page / backend 境界へ分けます。
+ */
 export type DanceShortsAnalyzerVideoCard = {
     video_id: number;
     youtube_video_id: string;

@@ -7,6 +7,11 @@ use App\DTO\ApiCatalog\Sync\ApiCatalogSyncStatusDTO;
 use App\Models\ApiCatalogSyncRun;
 use Carbon\CarbonInterface;
 
+/**
+ * APIカタログ同期 run の状態保存に必要な Repository 契約です。
+ *
+ * Controller / Action はこの契約を通じて status を扱い、Eloquent model や Schema 確認の詳細へ依存しません。
+ */
 interface ApiCatalogSyncStatusRepositoryInterface
 {
     public function isStorageReady(): bool;

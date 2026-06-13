@@ -1,3 +1,8 @@
+/**
+ * surface shimmer の背景演出 Component です。
+ *
+ * 装飾用の描画だけを担当し、Page のデータ取得や操作状態には依存しません。
+ */
 export default function SurfaceShimmerBackground() {
     return (
         /*

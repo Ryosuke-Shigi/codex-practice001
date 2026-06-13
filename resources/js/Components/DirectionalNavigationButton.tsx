@@ -1,3 +1,8 @@
+/**
+ * 前後移動用の小さな共通ボタン Component です。
+ *
+ * 方向と disabled 表示だけを受け取り、どのデータへ移動するかの判断は呼び出し元に残します。
+ */
 type DirectionalNavigationButtonProps = {
     direction: 'previous' | 'next';
     ariaLabel: string;

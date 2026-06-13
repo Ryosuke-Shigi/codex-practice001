@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の Form / Excel / System 比較 section Component です。
+ *
+ * 役割分担の説明表示に限定し、実際のExcel取込やフォーム保存処理は持ちません。
+ */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
 import {

@@ -2,6 +2,11 @@ import type { ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 
 import { useMemo, useState } from 'react';
+/**
+ * DanceShortsAnalyzer の idea-board Page Component です。
+ *
+ * Product の Search / Analyze 画面とは分け、複数動画比較の構想説明だけを表示します。
+ */
 import { Head } from '@inertiajs/react';
 
 import EChartsViewer from '@/Components/Common/Visualizations/Charts/EChartsViewer';

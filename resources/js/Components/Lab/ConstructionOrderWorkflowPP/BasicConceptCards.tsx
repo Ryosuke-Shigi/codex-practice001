@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の基本概念カード Component です。
+ *
+ * 説明用カードを表示するだけにし、実装済み Form / Action / Service の責務とは接続しません。
+ */
 const conceptCards = [
     {
         title: 'Formは発注入力の入口',

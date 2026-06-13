@@ -1,3 +1,8 @@
+/**
+ * QuakeWave Preview の開発確認入口 Page Component です。
+ *
+ * XML / map / sync status への導線と polling UI を扱い、Atom feed 取得や map pin 生成本体は backend に委譲します。
+ */
 import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';

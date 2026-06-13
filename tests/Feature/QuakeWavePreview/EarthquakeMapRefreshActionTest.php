@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
 
+/**
+ * QuakeWave map refresh の一括開始 Action と Job の手順を固定する Feature Test です。
+ *
+ * feed entry と map pin の2つの同期runを分け、片方の失敗を全成功扱いにしない境界を守ります。
+ */
 class EarthquakeMapRefreshActionTest extends TestCase
 {
     use RefreshDatabase;

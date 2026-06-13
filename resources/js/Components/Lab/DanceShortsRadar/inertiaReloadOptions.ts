@@ -1,4 +1,4 @@
-/*
+/**
  * DanceShortsRadar 本画面のタブ / 比較日数 / 並び順切り替えで使う
  * Inertia partial reload 対象 props です。
  *

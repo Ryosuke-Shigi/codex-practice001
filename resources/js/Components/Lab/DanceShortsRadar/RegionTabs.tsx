@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar のタブ選択 Component です。
+ *
+ * Inertia partial reload の起点だけを担当し、選択タブの正規化や表示カード取得は backend / Action 側へ委譲します。
+ */
 import { router } from '@inertiajs/react';
 
 import { DANCE_SHORTS_RADAR_RELOAD_OPTIONS } from './inertiaReloadOptions';

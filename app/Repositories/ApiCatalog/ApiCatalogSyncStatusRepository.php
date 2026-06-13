@@ -8,6 +8,12 @@ use App\Models\ApiCatalogSyncRun;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * APIカタログ同期 run の状態保存境界を担当する Repository です。
+ *
+ * status table の存在確認、作成、更新、取得を扱います。
+ * 同期件数の意味づけや Queue 投入判断は Action / Service 側へ置きます。
+ */
 class ApiCatalogSyncStatusRepository implements ApiCatalogSyncStatusRepositoryInterface
 {
     private const TABLE = 'api_catalog_sync_runs';

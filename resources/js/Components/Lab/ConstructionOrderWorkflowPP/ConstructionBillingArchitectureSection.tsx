@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の構成説明 section Component です。
+ *
+ * Mermaid 図と説明文を表示するだけで、実 architecture docs や実装構成を上書きする正本ではありません。
+ */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
 import {

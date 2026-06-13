@@ -2,6 +2,11 @@
 
 namespace App\Services\DanceShortsRadar;
 
+/**
+ * DanceShortsRadar の tracking_status の意味を扱う Service です。
+ *
+ * Repository へ渡す条件文字列の基準を集約し、DB query や画面表示判断は持ちません。
+ */
 class DanceShortVideoTrackingService
 {
     /*

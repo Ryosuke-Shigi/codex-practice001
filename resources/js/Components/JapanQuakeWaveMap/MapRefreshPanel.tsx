@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map refresh 操作用 Component です。
+ *
+ * 呼び出し元から渡された action を起動し、同期 run の生成や status JSON の shape は backend / Page 側へ分けます。
+ */
 import { useState } from 'react';
 
 export type MapRefreshAction = {

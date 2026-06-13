@@ -8,8 +8,17 @@ use App\Responders\Earthquake\EarthquakeFeedEntrySyncStatusResponder;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
+/**
+ * QuakeWave Preview の feed entry 同期開始 API の HTTP 入口です。
+ *
+ * POST を受けて Command Action を呼び、Queue 投入後の sync status JSON を Responder へ委譲します。
+ * Atom feed の取得や entry 保存は HTTP request 内では実行しません。
+ */
 class QuakeWavePreviewFeedEntrySyncController extends Controller
 {
+    /**
+     * feed entry 同期を開始し、polling に必要な syncRunId と初期 status を返します。
+     */
     public function __invoke(
         StartEarthquakeFeedEntrySyncAction $action,
         EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,

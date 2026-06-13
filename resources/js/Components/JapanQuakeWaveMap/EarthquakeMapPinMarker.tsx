@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map 上の pin marker Component です。
+ *
+ * pin props から表示位置・色・選択状態を描画し、震源座標の抽出や保存判断は backend 側へ分けます。
+ */
 import type { CSSProperties } from 'react';
 
 import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';

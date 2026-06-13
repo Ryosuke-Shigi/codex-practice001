@@ -1,3 +1,8 @@
+/**
+ * API Catalog 一覧のカード配列表示 Component です。
+ *
+ * 表示対象 items を受け取り、検索や pagination の条件生成は Page / Responder の境界に残します。
+ */
 import ApiCatalogCard, { type ApiCatalogCardItem } from './ApiCatalogCard';
 
 export type ApiCatalogListItem = ApiCatalogCardItem & {

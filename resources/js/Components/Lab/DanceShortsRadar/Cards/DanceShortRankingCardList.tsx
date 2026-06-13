@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 表示カード内の通常ランキングカード list Component です。
+ *
+ * ranking DTO をカードへ展開するだけにし、順位計算や window 取得は backend / 親 Component に任せます。
+ */
 import DanceShortsCandidateCard from '../DanceShortsCandidateCard';
 import type { DanceShortsCandidate } from '../types';
 import EmptyDisplayCardField from './EmptyDisplayCardField';

@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar の tab UI が現在タブと Inertia reload 導線を保つことを固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

@@ -1,3 +1,8 @@
+/**
+ * trace effect 背景の gradient layer Component です。
+ *
+ * 背景色の装飾だけを担当し、各 Page のコンテンツや業務状態には依存しません。
+ */
 import type { HTMLAttributes } from 'react';
 
 type BackgroundGradientVariant = 'cute-pastel';

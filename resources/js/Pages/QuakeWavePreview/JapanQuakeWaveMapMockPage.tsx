@@ -1,3 +1,8 @@
+/**
+ * Japan Quake Wave Map のモック Page Component です。
+ *
+ * 仮データ作成と表示状態の確認に限定し、DB pins の取得や同期 API 起動は本体 map ページへ分けます。
+ */
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 

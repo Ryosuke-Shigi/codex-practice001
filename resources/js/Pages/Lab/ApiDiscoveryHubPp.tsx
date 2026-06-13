@@ -1,3 +1,8 @@
+/**
+ * API Discovery Hub の idea-board / 紹介LP Page Component です。
+ *
+ * 本体一覧、同期、保存メモ CRUD は `/api-catalog` 側の責務に分け、このページは説明用の静的構成だけを扱います。
+ */
 import { Head } from '@inertiajs/react';
 
 import PortfolioLpFeatureGrid from '@/Components/Lab/PortfolioLpFeatureGrid';

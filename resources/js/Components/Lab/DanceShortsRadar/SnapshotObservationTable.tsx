@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar MOCK の snapshot 観測一覧テーブル Component です。
+ *
+ * 初回/最新観測 props を表示するだけにし、ランキング差分や views_per_hour の計算とは分けます。
+ */
 import type {
     DanceShortsRegionCode,
     DanceShortsSnapshotObservation,

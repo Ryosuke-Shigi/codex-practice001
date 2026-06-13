@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の日付範囲入力 Component です。
+ *
+ * Page が Inertia 再取得へ渡す文字列を入力するだけにし、期間の validation は FormRequest 側へ置きます。
+ */
 export type QuakeDateRange = {
     startDate: string;
     endDate: string;

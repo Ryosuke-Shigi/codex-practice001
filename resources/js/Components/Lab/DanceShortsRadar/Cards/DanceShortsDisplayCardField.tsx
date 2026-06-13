@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 本体の表示カード window Component です。
+ *
+ * props の displayCardField を横スワイプ/自動送りで表示し、次 window の取得条件や ranking 種別判断は API / backend に渡します。
+ */
 import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent, PointerEvent, TouchEvent } from 'react';

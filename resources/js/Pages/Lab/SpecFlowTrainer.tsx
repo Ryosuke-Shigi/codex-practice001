@@ -1,3 +1,8 @@
+/**
+ * Spec Flow Trainer の idea-board Page Component です。
+ *
+ * 実保存やエディタ機能は持たせず、構想と画面イメージを静的に説明する入口です。
+ */
 import type { ReactNode } from 'react';
 import type { EChartsOption } from 'echarts';
 

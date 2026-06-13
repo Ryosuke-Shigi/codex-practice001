@@ -1,3 +1,8 @@
+/**
+ * API Discovery Hub 本番詳細の Inertia Page Component です。
+ *
+ * Responder から受け取った詳細 DTO と保存メモ props を表示し、API取得や所有判定は backend 側へ分けます。
+ */
 import { Head } from '@inertiajs/react';
 
 import ApiCatalogDetailBody, {

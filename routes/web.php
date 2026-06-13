@@ -363,12 +363,23 @@ Route::get('/lab/dance-shorts-analyzer-mock', function () {
 Route::get('/lab/dance-shorts-radar-mock', DanceShortsRadarMockController::class)
     ->name('lab.dance-shorts-radar-mock');
 
+/*
+ * DanceShortsAnalyzer の PRODUCT 入口です。
+ * Search は保存済み動画の検索、Analyze は選択済み動画の snapshot 比較を担当します。
+ * routes では URL と Controller の対応だけを定義し、検索条件、最大選択数、ECharts props は
+ * Request / Action / Responder / Component 側の境界で扱います。
+ */
 Route::get('/dance-shorts-analyzer', DanceShortsAnalyzerController::class)
     ->name('dance-shorts-analyzer.index');
 
 Route::get('/dance-shorts-analyzer/analyze', DanceShortsAnalyzerAnalyzeController::class)
     ->name('dance-shorts-analyzer.analyze');
 
+/*
+ * DanceShortsRadar の PRODUCT 表示入口です。
+ * 初期表示は Inertia、display-card-window は同じ表示条件を使う JSON 追加取得APIとして扱います。
+ * YouTube API 同期、snapshot専用同期、cleanup は console / Job 側に分け、この route 群では起動しません。
+ */
 Route::get('/dance-shorts-radar', DanceShortsRadarController::class)
     ->name('dance-shorts-radar.index');
 
@@ -397,6 +408,11 @@ Route::get('/lab/spec-flow-trainer', function () {
     return Inertia::render('Lab/SpecFlowTrainer');
 })->name('lab.spec-flow-trainer');
 
+/*
+ * QuakeWave Preview の開発確認入口です。
+ * index / mock / xml / map / sync status を分け、表示確認、XML確認、DB保存済みpin表示、
+ * 非同期同期開始を同じ Controller へ詰め込まないようにしています。
+ */
 Route::get('/quakewave-preview', QuakeWavePreviewController::class)
     ->name('quakewave-preview.index');
 
@@ -422,6 +438,10 @@ Route::post('/quakewave-preview/map-pins/sync', QuakeWavePreviewMapPinSyncContro
 Route::get('/quakewave-preview/map-pins/sync/status', QuakeWavePreviewMapPinSyncStatusController::class)
     ->name('quakewave-preview.map-pins.sync.status');
 
+/*
+ * API Preview は外部API疎通とレスポンス形確認の入口です。
+ * API Discovery Hub 本体同期やDBキャッシュ保存とは切り離し、成功/失敗の画面確認だけを扱います。
+ */
 Route::get('/api-preview', ApiPreviewController::class)->name('api-preview.index');
 
 // API Discovery Hub 本体一覧です。表示整形は Responder、DB 取得は Repository に分離します。

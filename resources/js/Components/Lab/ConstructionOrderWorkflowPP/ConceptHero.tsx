@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の hero Component です。
+ *
+ * 構想説明と導線表示だけを担当し、発注データの取得や保存処理は行いません。
+ */
 import { Link } from '@inertiajs/react';
 
 export default function ConceptHero() {

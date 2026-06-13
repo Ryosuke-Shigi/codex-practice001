@@ -1,3 +1,8 @@
+/**
+ * Lab idea-board / portfolio LP の hero Component です。
+ *
+ * 説明用 props を表示するだけにし、各 PRODUCT 画面のデータ取得や同期処理とは接続しません。
+ */
 import type { ReactNode } from 'react';
 
 import { Link } from '@inertiajs/react';

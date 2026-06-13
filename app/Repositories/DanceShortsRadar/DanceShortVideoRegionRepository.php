@@ -7,8 +7,16 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotRefreshTargetDTO;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoRegion;
 
+/**
+ * dance_short_video_regions と snapshot refresh 対象取得を扱う Repository です。
+ *
+ * 発見関係の保存と tracking_status 条件での取得に限定し、active の意味判断や snapshot 保存可否は Service 側へ置きます。
+ */
 class DanceShortVideoRegionRepository implements DanceShortVideoRegionRepositoryInterface
 {
+    /**
+     * 動画と地域の発見関係を1行に保ちながら最終検出時刻を更新します。
+     */
     public function upsert(DanceShortVideoRegionSaveDTO $dto): DanceShortVideoRegion
     {
         /*

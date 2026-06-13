@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * DanceShortsRadar / Analyzer で扱う保存済み YouTube Shorts 動画を表す Eloquent Model です。
+ *
+ * 動画本体の保存項目と relation だけを持ち、Shorts判定、tracking_status の意味判断、ランキング計算は Service 側へ置きます。
+ */
 class DanceShortVideo extends Model
 {
     protected $table = 'dance_short_videos';

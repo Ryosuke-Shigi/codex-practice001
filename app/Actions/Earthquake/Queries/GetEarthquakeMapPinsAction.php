@@ -6,12 +6,21 @@ use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 
+/**
+ * Japan Quake Wave Map の表示対象 pin を取得する Query Action です。
+ *
+ * Controller から Query DTO を受け取り、Repository へ取得を委譲します。
+ * feed取得、XML解析、pin生成、Inertia props 整形はこの Action に置きません。
+ */
 class GetEarthquakeMapPinsAction
 {
     public function __construct(
         private readonly EarthquakeMapPinRepositoryInterface $mapPinRepository,
     ) {}
 
+    /**
+     * 地図表示に必要な pin list DTO を返します。
+     */
     public function execute(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
     {
         /*

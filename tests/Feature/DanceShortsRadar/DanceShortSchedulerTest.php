@@ -12,6 +12,11 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
+/**
+ * DanceShortsRadar の Scheduler 登録、env gate、実行時刻を固定する Feature Test です。
+ *
+ * YouTube API quota を守るため、通常同期・page2同期・snapshot専用同期の窓が混ざらないことを確認します。
+ */
 class DanceShortSchedulerTest extends TestCase
 {
     private const FIRST_SYNC_SCHEDULED_AT = '2026-06-01 00:00:00';

@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 本画面の displayCardField を表示する Field Component です。
+ *
+ * Responder props をカード window UI へ渡し、reload や選択群の操作は子 Component / utility に閉じます。
+ */
 import DanceShortsCardDisplayField from '../Cards/DanceShortsDisplayCardField';
 import type {
     DanceShortsDisplaySelectGroup,

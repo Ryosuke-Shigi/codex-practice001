@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の震度フィルター Component / utility です。
+ *
+ * 表示ON/OFFの UI 値を扱い、DB取得条件や map pin 生成条件は変更しません。
+ */
 import VerticalIntensitySwitch from '@/Components/JapanQuakeWaveMap/VerticalIntensitySwitch';
 
 export type QuakeIntensityKey =

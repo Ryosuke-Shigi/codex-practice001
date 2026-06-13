@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 本画面の header props 表示 Field Component です。
+ *
+ * backend が整えた見出し文言を表示するだけにし、タブや件数の再計算は行いません。
+ */
 import type { DanceShortsDisplayHeaderField as DanceShortsDisplayHeaderFieldProps } from '../types';
 
 export default function DanceShortsDisplayHeaderField({

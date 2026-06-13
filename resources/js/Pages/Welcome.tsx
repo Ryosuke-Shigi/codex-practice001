@@ -1,3 +1,8 @@
+/**
+ * トップページの Page Component です。
+ *
+ * 公開入口の表示だけを担当し、Lab や各 PRODUCT 画面のデータ取得・業務判断はそれぞれの route / Page に分けます。
+ */
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';

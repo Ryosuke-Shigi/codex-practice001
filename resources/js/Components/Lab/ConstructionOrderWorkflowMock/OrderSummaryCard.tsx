@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の発注情報カード Component です。
+ *
+ * 入力中 draft の表示だけを担当し、金額確定や保存済み発注データの取得は行いません。
+ */
 import type { OrderDraft } from './mockData';
 import { formatCurrency } from './mockData';
 

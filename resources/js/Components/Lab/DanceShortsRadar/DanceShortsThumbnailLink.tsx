@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar のサムネイルリンク Component / 表示補助です。
+ *
+ * 画像ロード状態とリンク無効化だけを扱い、YouTube URL 生成や動画保存可否は backend / props 境界で確定します。
+ */
 import { useEffect, useRef, useState } from 'react';
 
 export type DanceShortsThumbnailDisplayData = {

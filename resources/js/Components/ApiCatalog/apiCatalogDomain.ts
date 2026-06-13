@@ -1,3 +1,8 @@
+/**
+ * API Catalog の provider_key から表示・filter 用 domain を取り出す utility です。
+ *
+ * DB カラムを増やさず UI 表示の補助に限定し、Repository の検索条件そのものは backend 側で扱います。
+ */
 export function extractProviderDomain(providerKey: string | null | undefined): string {
     /*
      * 本番DBに domain 専用カラムは持たせません。

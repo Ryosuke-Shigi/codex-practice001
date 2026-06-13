@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の表示用 pin 絞り込み hook です。
+ *
+ * 取得済み pins の震度フィルター、件数制限、表示順だけを扱い、DB取得条件や同期状態は変更しません。
+ */
 import { useMemo, useState } from 'react';
 
 import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';

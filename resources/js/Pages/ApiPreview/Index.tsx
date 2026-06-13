@@ -1,3 +1,8 @@
+/**
+ * API Preview 一覧の Inertia Page Component です。
+ *
+ * Action / Responder から渡された preview 対象を表示し、本体機能の同期や保存処理は呼び出しません。
+ */
 import { Head, Link } from '@inertiajs/react';
 
 import PublicLayout from '@/Layouts/PublicLayout';

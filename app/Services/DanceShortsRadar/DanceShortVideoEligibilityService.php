@@ -6,10 +6,18 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use DateInterval;
 use Throwable;
 
+/**
+ * YouTube 動画詳細を DanceShortsRadar の保存対象にできるか判断する Service です。
+ *
+ * API通信やDB保存は行わず、duration と必須項目の意味判断だけを扱います。
+ */
 class DanceShortVideoEligibilityService
 {
     private const SHORTS_MAX_DURATION_SECONDS = 180;
 
+    /**
+     * videos.list の duration から Shorts 保存対象の長さかを判定します。
+     */
     public function isShortsTarget(YouTubeVideoDetailDTO $detail): bool
     {
         /*
@@ -27,6 +35,9 @@ class DanceShortVideoEligibilityService
             && $durationSeconds <= self::SHORTS_MAX_DURATION_SECONDS;
     }
 
+    /**
+     * 動画本体と snapshot 保存に必要な最低限の値が揃っているかを判定します。
+     */
     public function hasRequiredPersistenceFields(YouTubeVideoDetailDTO $detail): bool
     {
         /*

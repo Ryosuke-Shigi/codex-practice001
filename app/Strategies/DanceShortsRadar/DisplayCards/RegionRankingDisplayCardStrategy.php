@@ -11,6 +11,12 @@ use App\DTO\DanceShortsRadar\Display\DanceShortRankingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
 
+/**
+ * 地域別通常ランキングの表示カード Strategy です。
+ *
+ * 選択中 region のランキング取得を担当し、Action から Repository 条件分岐を隠します。
+ * selectedVideoId 指定時の前後 window 切り出しは Service へ委譲します。
+ */
 readonly class RegionRankingDisplayCardStrategy implements DanceShortDisplayCardStrategyInterface
 {
     public function __construct(
@@ -18,6 +24,9 @@ readonly class RegionRankingDisplayCardStrategy implements DanceShortDisplayCard
         private DanceShortDisplayCardWindowService $displayCardWindowService,
     ) {}
 
+    /**
+     * 選択中 region だけを対象に通常ランキングの表示カード window を返します。
+     */
     public function getWindow(
         DanceShortDisplayCardWindowConditionDTO $condition,
     ): DanceShortDisplayCardWindowDTO {

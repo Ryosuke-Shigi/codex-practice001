@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 本画面の補助メッセージ Field Component です。
+ *
+ * displayHeaderField 由来の文言を表示し、ランキング条件や sort option の生成は扱いません。
+ */
 import type { DanceShortsDisplayHeaderField as DanceShortsDisplayMessageFieldProps } from '../types';
 
 export default function DanceShortsDisplayMessageField({

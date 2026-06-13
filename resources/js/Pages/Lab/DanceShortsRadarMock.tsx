@@ -1,3 +1,8 @@
+/**
+ * Dance Shorts Radar MOCK の Inertia Page Component です。
+ *
+ * Laravel から渡された固定候補データを表示し、YouTube API・DB保存・snapshot同期へは接続しません。
+ */
 import { useMemo, useState } from 'react';
 
 import { Head, Link } from '@inertiajs/react';

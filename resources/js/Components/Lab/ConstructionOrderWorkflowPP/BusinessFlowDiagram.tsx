@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の業務フロー図 Component です。
+ *
+ * 非エンジニア向け説明の静的図であり、実際の workflow state や DB 状態とは接続しません。
+ */
 const businessFlowSteps = [
     ['Excelで入力', '発注情報をいつものExcelで作ります。'],
     ['CSVで受け渡し', 'システムに渡せる形で出力します。'],

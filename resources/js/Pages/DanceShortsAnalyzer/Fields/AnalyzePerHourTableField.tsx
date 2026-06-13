@@ -1,5 +1,10 @@
 import type { DanceShortsAnalyzerComparisonTable } from './AnalyzeField';
 
+/**
+ * DanceShortsAnalyzer Analyze 画面の1時間あたり増加量テーブル Field Component です。
+ *
+ * Responder から渡された横比較表を表示し、経過時間や per_hour の計算は Component へ持ち込みません。
+ */
 type AnalyzePerHourTableFieldProps = {
     table: DanceShortsAnalyzerComparisonTable;
 };

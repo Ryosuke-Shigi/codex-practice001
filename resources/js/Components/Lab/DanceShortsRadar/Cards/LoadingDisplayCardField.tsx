@@ -1,4 +1,4 @@
-/*
+/**
  * cardField のwindow切り替え中にだけ表示するLoading枠です。
  * emptyMessage は取得結果0件用、LoadingはReact側の取得中UIとして分けます。
  */

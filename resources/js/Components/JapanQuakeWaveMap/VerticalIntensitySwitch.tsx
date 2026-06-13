@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map の震度ON/OFFスイッチ Component です。
+ *
+ * 視覚的な切替 UI に限定し、選択値の意味づけや pins の絞り込みは親 Component / hook が扱います。
+ */
 type VerticalIntensitySwitchProps = {
     label: string;
     checked: boolean;

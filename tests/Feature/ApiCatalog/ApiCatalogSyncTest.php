@@ -15,6 +15,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
+/**
+ * API Discovery Hub の同期開始、status 更新、Queue 境界を固定する Feature Test です。
+ *
+ * API 取得や差分判断の細部ではなく、HTTP/Action/Job/Repository の接続と status JSON の仕様を守ります。
+ */
 class ApiCatalogSyncTest extends TestCase
 {
     use RefreshDatabase;

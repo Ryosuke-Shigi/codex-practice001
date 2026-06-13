@@ -1,3 +1,6 @@
+/**
+ * 背景演出 layer が jQuery ripples の外部依存を安全に初期化・破棄する境界を固定します。
+ */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('jquery', () => ({

@@ -1,3 +1,8 @@
+/**
+ * QuakeWave map 上の波紋表示 Component です。
+ *
+ * pin の震度と座標から表示演出を描画し、地震情報の解析や保存判断は backend 側へ分けます。
+ */
 import type { CSSProperties } from 'react';
 
 type EarthquakeMapRippleVisual = {

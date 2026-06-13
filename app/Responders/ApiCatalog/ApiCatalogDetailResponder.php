@@ -6,8 +6,17 @@ use App\DTO\ApiCatalog\Detail\ApiCatalogDetailDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * API Discovery Hub 詳細画面の Inertia props を整形する Responder です。
+ *
+ * DTO を React が表示できる配列へ変換し、Controller で検証済みの戻り先 URL を渡します。
+ * API の存在判定や note 所有確認はここでは行いません。
+ */
 final readonly class ApiCatalogDetailResponder
 {
+    /**
+     * API詳細ページに必要な props を返します。
+     */
     public function show(ApiCatalogDetailDTO $item, string $returnUrl): Response
     {
         /*

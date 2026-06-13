@@ -18,7 +18,7 @@ use App\Services\DanceShortsRadar\DanceShortDisplayCardTabService;
 use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 
-/*
+/**
  * DanceShortsRadar 通常ランキング画面の Query Action です。
  *
  * この Action は初期 Inertia 表示用の入口として、active region、選択中タブ、
@@ -38,6 +38,9 @@ class GetDanceShortVideoRankingPageAction
         private readonly DanceShortDisplayCardStrategyFactory $displayCardStrategyFactory,
     ) {}
 
+    /**
+     * ランキング初期表示に必要な active region、選択タブ、表示カード window を組み立てます。
+     */
     public function execute(DanceShortVideoRankingPageInputDTO $input): DanceShortVideoRankingPageDTO
     {
         $regions = $this->searchTargetRepository

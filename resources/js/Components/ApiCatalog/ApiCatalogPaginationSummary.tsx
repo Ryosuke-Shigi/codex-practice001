@@ -1,3 +1,8 @@
+/**
+ * API Catalog pagination の表示文言を組み立てる Component / utility です。
+ *
+ * 件数やページ補正は backend / Page 側の入力を信頼し、ここでは人が読む summary へ変換するだけにします。
+ */
 export type ApiCatalogPaginationState = {
     /*
      * 本番一覧では Laravel paginator 由来、mock 一覧では固定データの抽出後件数由来です。

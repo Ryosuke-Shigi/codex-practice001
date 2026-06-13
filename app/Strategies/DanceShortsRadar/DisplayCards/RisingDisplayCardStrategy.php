@@ -13,6 +13,12 @@ use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
 use App\Services\DanceShortsRadar\DanceShortRisingCandidateService;
 use Carbon\CarbonImmutable;
 
+/**
+ * RISING タブ用の表示カード Strategy です。
+ *
+ * US / KR など source region と JP 側の観測状態を比較する read model を DTO に詰め替えます。
+ * Repository query の条件は Repository に、window 切り出しは Service に分けます。
+ */
 final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardStrategyInterface
 {
     /**
@@ -25,6 +31,9 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
         private DanceShortDisplayCardWindowService $displayCardWindowService,
     ) {}
 
+    /**
+     * 上昇候補タブに表示するカード window を返します。
+     */
     public function getWindow(
         DanceShortDisplayCardWindowConditionDTO $condition,
     ): DanceShortDisplayCardWindowDTO {

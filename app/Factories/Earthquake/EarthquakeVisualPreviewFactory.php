@@ -7,7 +7,7 @@ use App\DTO\Earthquake\Preview\EarthquakePinPreviewDTO;
 use App\DTO\Earthquake\Preview\EarthquakeRipplePreviewDTO;
 use App\DTO\Earthquake\Preview\EarthquakeVisualPreviewDTO;
 
-/*
+/**
  * QuakeWave Preview の visualPreview props 用 DTO を組み立てる Factory です。
  *
  * ここでは XML 取得や entry 抽出は行わず、抽出済み entry を受け取って
@@ -15,6 +15,9 @@ use App\DTO\Earthquake\Preview\EarthquakeVisualPreviewDTO;
  */
 class EarthquakeVisualPreviewFactory
 {
+    /**
+     * Preview 入口で使う既定の visualPreview DTO を生成します。
+     */
     public function makeDefault(): EarthquakeVisualPreviewDTO
     {
         /*
@@ -24,6 +27,9 @@ class EarthquakeVisualPreviewFactory
         return $this->make(new EarthquakeExtractedEntryListDTO([]));
     }
 
+    /**
+     * 抽出済み entry list から表示確認用の visualPreview DTO を生成します。
+     */
     public function make(EarthquakeExtractedEntryListDTO $entries): EarthquakeVisualPreviewDTO
     {
         /*

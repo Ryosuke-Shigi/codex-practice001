@@ -1,3 +1,8 @@
+/**
+ * portfolio LP の技術説明 section Component です。
+ *
+ * 技術項目の説明表示に限定し、実装済みコードの状態確認や同期処理は扱いません。
+ */
 type PortfolioLpTechItem = {
     title: string;
     description: string;

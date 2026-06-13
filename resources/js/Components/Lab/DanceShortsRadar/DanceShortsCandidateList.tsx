@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar の通常ランキング候補一覧 Component です。
+ *
+ * props の候補配列をカードに展開し、ランキング順や空状態の意味判断は呼び出し元から受け取ります。
+ */
 import EmptyDisplayCardField from './Cards/EmptyDisplayCardField';
 import DanceShortsCandidateCard from './DanceShortsCandidateCard';
 import type {

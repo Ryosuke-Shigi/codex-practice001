@@ -1,3 +1,8 @@
+/**
+ * API Catalog 詳細ページ本文の表示 Component です。
+ *
+ * 技術行と notes panel の表示枠だけを担当し、API仕様本文の取得や保存メモ操作は別 Component / backend に委譲します。
+ */
 import { useState, type ReactNode } from 'react';
 
 export type ApiCatalogDetailTechnicalRow = [label: string, value: string | null];

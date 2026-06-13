@@ -5,12 +5,21 @@ namespace App\Actions\ApiPreview;
 use App\Responders\ApiPreviewResponder;
 use Inertia\Response;
 
+/**
+ * API Preview 一覧を返す Query Action です。
+ *
+ * 本体同期前の外部API確認入口を固定データとしてまとめ、表示整形は Responder に渡します。
+ * ここでは外部API通信、DB保存、本体カタログ同期は行いません。
+ */
 class ListApiPreviewsAction
 {
     public function __construct(
         private readonly ApiPreviewResponder $responder,
     ) {}
 
+    /**
+     * preview 対象の一覧 props を Responder 経由で返します。
+     */
     public function execute(): Response
     {
         // 一覧は固定の preview 対象だけを返し、ここでは外部 API 通信を行いません。

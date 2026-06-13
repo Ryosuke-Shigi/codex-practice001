@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\DanceShortsRadar;
 
-/*
+/**
  * 表示カード window API 専用の Request です。
  *
  * 追加読み込みでも初期ページ表示と同じ tab / comparisonDays / sort / startRank /

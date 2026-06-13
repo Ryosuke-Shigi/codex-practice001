@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar の通常ランキング候補カード Component です。
+ *
+ * ranking item props を表示し、ランキング計算や selected window の切り出しは Action / Service 側へ分けます。
+ */
 import type { ReactNode } from 'react';
 
 import DanceShortsStats from './DanceShortsStats';

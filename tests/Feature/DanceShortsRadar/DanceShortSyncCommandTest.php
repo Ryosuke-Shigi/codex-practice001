@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
 
+/**
+ * DanceShortsRadar の Artisan Command が Job 投入だけを行うことを固定する Feature Test です。
+ *
+ * Command へ同期本体や YouTube API 呼び出しを混ぜない責務境界を守ります。
+ */
 class DanceShortSyncCommandTest extends TestCase
 {
     public function test_command_dispatches_sync_job(): void

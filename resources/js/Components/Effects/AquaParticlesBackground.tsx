@@ -1,3 +1,8 @@
+/**
+ * 水面粒子風の背景演出 Component です。
+ *
+ * CSS / DOM 演出だけを担当し、Page props や機能データには依存しません。
+ */
 import type { CSSProperties } from 'react';
 
 /*

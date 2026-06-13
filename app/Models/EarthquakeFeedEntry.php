@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * JMA Atom feed から抽出した entry を保持する Eloquent Model です。
+ *
+ * Model はテーブル境界と cast だけを表し、重複回避や同期結果の意味判断は Repository / Service へ置きます。
+ */
 class EarthquakeFeedEntry extends Model
 {
     protected $table = 'earthquake_feed_entries';

@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar の partial reload 対象 props が表示カードと選択UIに限定されることを固定します。
+ */
 import { describe, expect, it } from 'vitest';
 
 import {

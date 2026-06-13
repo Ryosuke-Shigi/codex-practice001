@@ -1,3 +1,8 @@
+/**
+ * API Catalog 一覧の sort UI と query 値をつなぐ表示補助です。
+ *
+ * Repository の並び替え条件を再実装せず、UI が受け付ける候補値と既定値だけを固定します。
+ */
 export const apiCatalogSortOptions = [
     { value: 'updated_desc', label: '更新日が新しい順' },
     { value: 'updated_asc', label: '更新日が古い順' },

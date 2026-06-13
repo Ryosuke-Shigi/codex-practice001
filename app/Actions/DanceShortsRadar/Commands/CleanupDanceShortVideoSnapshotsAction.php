@@ -8,6 +8,12 @@ use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 
+/**
+ * DanceShortsRadar snapshot の保持期間超過分を削除する Command Action です。
+ *
+ * Scheduler / Artisan Command / 同期後 cleanup から呼ばれ、cutoff 算出は Service、
+ * 物理削除は Repository に委譲します。YouTube API 通信やランキング表示判断は持ちません。
+ */
 class CleanupDanceShortVideoSnapshotsAction
 {
     public function __construct(
@@ -15,6 +21,9 @@ class CleanupDanceShortVideoSnapshotsAction
         private readonly DanceShortSnapshotRetentionService $retentionService,
     ) {}
 
+    /**
+     * cleanup の実行時刻を決め、保持期間に基づく削除結果 DTO を返します。
+     */
     public function execute(?CarbonInterface $now = null): DanceShortSnapshotCleanupResultDTO
     {
         /*

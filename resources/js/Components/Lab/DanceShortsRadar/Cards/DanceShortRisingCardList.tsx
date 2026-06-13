@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 表示カード内の上昇候補カード list Component です。
+ *
+ * rising candidate DTO を表示し、上昇判定や日本側観測状態の計算は backend 側へ分けます。
+ */
 import DanceShortsRisingCandidateCard from '../DanceShortsRisingCandidateCard';
 import type { DanceShortsRisingCandidate } from '../types';
 import EmptyDisplayCardField from './EmptyDisplayCardField';

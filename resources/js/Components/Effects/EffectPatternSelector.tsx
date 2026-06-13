@@ -1,3 +1,8 @@
+/**
+ * 背景演出パターンを選ぶ UI Component です。
+ *
+ * 選択状態は Layout の UI state として扱い、各 Page の機能状態や backend props には影響させません。
+ */
 import {
     effectPatterns,
     type EffectName,

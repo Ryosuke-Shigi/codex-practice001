@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar MOCK の snapshot 観測一覧ナビゲーション Component です。
+ *
+ * 初回観測/最新観測の表示切替だけを担当し、ランキングタブや本体 reload 条件とは分けます。
+ */
 import type { DanceShortsSnapshotObservationKind } from './types';
 
 type SnapshotObservationNavigationProps = {

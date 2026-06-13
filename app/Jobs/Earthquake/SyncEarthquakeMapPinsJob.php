@@ -8,6 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
+/**
+ * Japan Quake Wave Map の map pin 生成を Queue で実行する Job です。
+ *
+ * POST 入口で作成された syncRunId を受け取り、状態遷移と Service 呼び出しだけを担当します。
+ * 個別XML取得、解析、pin生成可否、DB保存条件は Service / Repository に置きます。
+ */
 class SyncEarthquakeMapPinsJob implements ShouldQueue
 {
     use Queueable;
@@ -22,6 +28,9 @@ class SyncEarthquakeMapPinsJob implements ShouldQueue
         public readonly int $syncRunId,
     ) {}
 
+    /**
+     * map pin 同期 run を running へ進め、生成 Service の結果を完了状態として保存します。
+     */
     public function handle(
         EarthquakeMapPinSyncRunRepositoryInterface $syncRunRepository,
         EarthquakeMapPinBuildService $buildService,
@@ -47,6 +56,9 @@ class SyncEarthquakeMapPinsJob implements ShouldQueue
         $syncRunRepository->markCompleted($this->syncRunId, $result);
     }
 
+    /**
+     * handle() を通らない失敗でも polling 用の終端状態を残します。
+     */
     public function failed(?Throwable $exception): void
     {
         /*

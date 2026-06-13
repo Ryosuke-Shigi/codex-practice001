@@ -1,3 +1,6 @@
+/**
+ * API Catalog の外部検索リンク生成 utility が provider / service / title を安全なURLへ変換する仕様を固定します。
+ */
 import { describe, expect, it } from 'vitest';
 
 import {

@@ -1,3 +1,8 @@
+/**
+ * caustics 風の背景演出 Component です。
+ *
+ * 装飾レイヤーとして描画するだけにし、画面の操作状態や業務データは扱いません。
+ */
 export default function CausticsBackground() {
     return (
         /*

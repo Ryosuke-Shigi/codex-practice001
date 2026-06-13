@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
+/**
+ * QuakeWave map 表示 request の validation と Inertia props 境界を固定する Feature Test です。
+ *
+ * 日付形式の安全境界を Request に置き、無効入力時に外部 HTTP を呼ばないことを守ります。
+ */
 class QuakeWavePreviewMapRequestTest extends TestCase
 {
     use RefreshDatabase;

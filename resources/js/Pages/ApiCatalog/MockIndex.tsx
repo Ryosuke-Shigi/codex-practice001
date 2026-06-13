@@ -1,3 +1,8 @@
+/**
+ * API Discovery Hub モック一覧の Page Component です。
+ *
+ * mockApiCatalogData を使った UI 確認専用ページで、DBキャッシュ取得や同期 status には接続しません。
+ */
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 

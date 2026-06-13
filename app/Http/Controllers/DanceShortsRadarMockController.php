@@ -6,7 +6,7 @@ use App\Actions\Lab\Queries\GetDanceShortsRadarMockCandidatesAction;
 use App\Responders\Lab\DanceShortsRadarMockResponder;
 use Inertia\Response;
 
-/*
+/**
  * Dance Shorts Radar モック画面の HTTP 入口です。
  *
  * Controller は「どの画面を返すか」の入口に限定します。
@@ -18,6 +18,9 @@ use Inertia\Response;
  */
 class DanceShortsRadarMockController extends Controller
 {
+    /**
+     * 固定モック候補を Action から受け取り、Responder 経由で Inertia に渡します。
+     */
     public function __invoke(
         GetDanceShortsRadarMockCandidatesAction $action,
         DanceShortsRadarMockResponder $responder,

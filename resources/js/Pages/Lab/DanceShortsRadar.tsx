@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react';
 
+/**
+ * Dance Shorts Radar の idea-board Page Component です。
+ *
+ * YouTube API 接続や snapshot 保存は行わず、構想説明と導線表示だけを担当します。
+ */
 import { Head } from '@inertiajs/react';
 
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';

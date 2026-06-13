@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
 
+/**
+ * QuakeWave feed entry 同期の開始 route / Action / Job / status API を固定する Feature Test です。
+ *
+ * Atom feed 解析そのものではなく、同期 run の状態遷移と polling 用 JSON shape を守ります。
+ */
 class QuakeWavePreviewFeedEntrySyncTest extends TestCase
 {
     use RefreshDatabase;

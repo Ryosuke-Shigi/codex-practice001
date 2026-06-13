@@ -1,3 +1,6 @@
+/**
+ * DanceShortsRadar MOCK の snapshot 観測一覧が first / latest 表示を分けることを固定します。
+ */
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

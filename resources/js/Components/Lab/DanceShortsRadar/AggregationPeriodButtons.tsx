@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar MOCK の集計期間ボタン Component です。
+ *
+ * 画面内の表示切替だけを担当し、本体ランキングの comparisonDays query とは別の UI state として扱います。
+ */
 import type { DanceShortsAggregationPeriod } from './types';
 
 type AggregationPeriodButtonsProps = {

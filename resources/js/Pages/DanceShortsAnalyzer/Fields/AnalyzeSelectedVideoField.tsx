@@ -1,5 +1,10 @@
 import type { DanceShortsAnalyzerSelectedVideo } from './AnalyzeField';
 
+/**
+ * DanceShortsAnalyzer Analyze 画面の選択動画サムネイル Field Component です。
+ *
+ * 選択済み動画 props の表示と Shorts URL 導線だけを扱い、URL生成や active video 解決は backend / Page 側へ分けます。
+ */
 type AnalyzeSelectedVideoFieldProps = {
     selectedVideos: DanceShortsAnalyzerSelectedVideo[];
 };

@@ -1,3 +1,8 @@
+/**
+ * API Discovery Hub モック詳細の Page Component です。
+ *
+ * モック一覧からの戻り導線と詳細UIを確認するためのページで、本番保存メモ CRUD には接続しません。
+ */
 import { Head, Link } from '@inertiajs/react';
 import { useMemo } from 'react';
 

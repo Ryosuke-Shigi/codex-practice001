@@ -1,3 +1,8 @@
+/**
+ * Japan Quake Wave Map の idea-board / 紹介LP Page Component です。
+ *
+ * XML取得、map pin 同期、保存済み pin 表示は QuakeWave Preview 側へ分け、このページは機能紹介だけを扱います。
+ */
 import { Head } from '@inertiajs/react';
 
 import PortfolioLpFeatureGrid from '@/Components/Lab/PortfolioLpFeatureGrid';

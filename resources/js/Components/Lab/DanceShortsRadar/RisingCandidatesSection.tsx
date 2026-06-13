@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar の上昇候補一覧 Component です。
+ *
+ * 上昇候補 props を表示するだけにし、海外先行判定や日本側観測状態の計算は backend 側へ置きます。
+ */
 import EmptyDisplayCardField from './Cards/EmptyDisplayCardField';
 import DanceShortsRisingCandidateCard from './DanceShortsRisingCandidateCard';
 import type {

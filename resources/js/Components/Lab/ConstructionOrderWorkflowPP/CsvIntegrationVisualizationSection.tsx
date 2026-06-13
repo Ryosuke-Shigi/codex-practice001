@@ -1,3 +1,8 @@
+/**
+ * 工事発注 idea-board の CSV 連携可視化 Component です。
+ *
+ * 説明用 chart / diagram を表示するだけで、CSV parse や import 処理は行いません。
+ */
 import type { EChartsOption } from 'echarts';
 
 import EChartsViewer from '@/Components/Common/Visualizations/Charts/EChartsViewer';

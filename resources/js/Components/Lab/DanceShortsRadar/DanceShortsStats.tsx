@@ -1,3 +1,8 @@
+/**
+ * DanceShortsRadar 候補カード内の統計表示 Component です。
+ *
+ * props の数値を表示用に整えるだけにし、snapshot 差分や sortKey の正規化は backend / Page へ委譲します。
+ */
 import type { DanceShortsCandidate } from './types';
 
 type DanceShortsStatsProps = {

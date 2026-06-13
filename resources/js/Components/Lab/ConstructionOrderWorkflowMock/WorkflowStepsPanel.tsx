@@ -1,3 +1,8 @@
+/**
+ * 工事発注管理・請求システム MOCK の工程表示 Component です。
+ *
+ * 工程ON/OFFの画面内 state を表示するだけにし、実際の工程進捗保存や通知処理は行いません。
+ */
 import type { WorkflowStep } from './mockData';
 
 type WorkflowStepsPanelProps = {

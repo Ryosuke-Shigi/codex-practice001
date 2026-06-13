@@ -1,3 +1,8 @@
+/**
+ * 背景用 orb の位置を更新する hook です。
+ *
+ * 演出用 state だけを返し、Page の業務状態やユーザー入力状態とは分けます。
+ */
 import { useEffect, useRef, useState } from 'react';
 
 export type BouncingOrbPosition = {
