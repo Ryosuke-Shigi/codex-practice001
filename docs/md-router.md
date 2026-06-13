@@ -50,6 +50,69 @@ MDルーターは、docsを軽く扱うためのものではない。
 
 最初からリポジトリ全体を探索しない。
 
+## 外側環境repoと内側アプリrepoの境界
+
+このプロジェクトでは、外側の Docker / compose / nginx / deploy 用repoと、内側の Laravel / React / docs / tests / app 用repoが分かれている場合がある。
+
+この構成は異常ではない。
+
+ただし、Laravel / React / app docs / tests / feature docs の作業では、外側repoを作業対象repoとして扱ってはいけない。
+
+外側repo `Ryosuke-Shigi/laravel11-docker` で作業してよいのは、以下に限定する。
+
+* Docker
+* docker-compose
+* nginx
+* PHP-FPM
+* build / deploy
+* Lightsail運用
+* 外側環境repo固有の README / docs
+* 環境起動・停止・公開ポート・volume・network に関する設定
+
+以下は内側アプリrepo `Ryosuke-Shigi/codex-practice001` 側で作業する。
+
+* Laravel app
+* React / Inertia
+* routes
+* app/
+* resources/
+* tests/
+* docs/architecture.md
+* docs/testing.md
+* docs/frontend.md
+* docs/ui-development-flow.md
+* docs/features/
+* DanceShorts系docs
+* MDルーター
+* PRレビュー強度ルール
+* UI開発フロー
+* MOCK / PROTOTYPE / PRODUCT 方針
+
+Laravel / React / app docs / tests / feature docs の作業なのに、外側repo `laravel11-docker` に差分が出た場合は、repo境界ミスとして停止する。
+
+Docker / compose / nginx / deploy / Lightsail運用作業でない限り、外側repoにPRを作成してはいけない。
+
+外側repoから作業を開始した場合でも、アプリ作業では必ず内側アプリrepoの remote / branch / status を確認する。
+
+内側アプリrepoを確認できない場合は、推測で作業を続けず停止する。
+
+作業開始時に以下を確認する。
+
+* 今回の作業は外側環境repoの作業か
+* 今回の作業は内側アプリrepoの作業か
+* 現在見ている remote はどちらか
+* 現在見ている branch はどちらか
+* 差分を出すべきrepoはどちらか
+* PRを作成すべきrepoはどちらか
+
+判断できない場合は、作業を開始しない。
+
+最重要ルール:
+
+Laravel / React / app docs / tests / feature docs の作業では、`laravel11-docker` にPRを作らない。
+
+`laravel11-docker` にPRを作ってよいのは、Docker / compose / nginx / deploy / Lightsail運用など、外側環境repoそのものを変更する作業だけである。
+
 ## 作業種別別ルーティング表
 
 | 作業種別 | 最初に読むdocs | 追加で読むdocs | 主に読むコード | 読まないもの |
@@ -140,6 +203,10 @@ feature docsは共通方針を上書きできない。
 * secrets / env / token / 個人情報が含まれる可能性がある
 * mainへ直接書き込みそうになっている
 * 対象ブランチが確認できない
+* 作業対象repo、差分を出すrepo、PRを作成するrepoを確認できない
+* Laravel / React / app docs / tests / feature docs の作業なのに、外側repo `laravel11-docker` に差分が出ている
+* Docker / compose / nginx / deploy / Lightsail運用作業ではないのに、外側repo `laravel11-docker` にPRを作成しようとしている
+* 外側repoから開始したアプリ作業で、内側アプリrepo `codex-practice001` の remote / branch / status を確認できない
 * 確認コマンドが未定義で、代替実行すると危険がある
 * 存在しないdocsを前提にしている
 * docsパスを確認せずに新規参照として追加しようとしている
@@ -243,6 +310,8 @@ MDルーターは一度作って終わりではない。
 * 停止条件に追加すべき失敗があったか
 * PRレビュー強度との対応にズレがないか
 * 存在しないdocs参照を追加していないか
+* 作業対象repoとPR作成先repoが一致していたか
+* アプリ作業で外側repo `laravel11-docker` に差分やPRを作っていないか
 
 「毎回必ずMDルーターを更新する」ではない。
 
