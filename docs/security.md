@@ -20,7 +20,7 @@ AIへの指示文だけを安全装置とは扱わず、権限・接続先・実
 
 ## 秘密情報の扱い
 
-以下の実値を、AGENTS.md、README、docs、Skills、指示用まとめ、PR本文、コメント、ログへ記載しません。
+以下の実値を、AGENTS.md、README、docs、Skills、PR本文、コメント、ログへ記載しません。
 
 - `.env` の実値
 - APIキー

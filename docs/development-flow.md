@@ -218,7 +218,7 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 
 - `AGENTS.md` と `docs/index.md` による入口固定
 - 共通docsとfeature docsによる責務・仕様の分離
-- 指示用まとめによる対象・成功条件・失敗条件の固定
+- 明示された作業条件による対象・成功条件・失敗条件の固定
 - DTOによるデータ契約
 - MOCK / PROTOTYPE / PRODUCTのUI契約
 - Action / Service / Repository / Responder / Componentの責務分離
