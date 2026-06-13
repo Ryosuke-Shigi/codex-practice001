@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-12
+- Last reviewed: 2026-06-13
 
 ## このドキュメントの目的
 
@@ -85,6 +85,30 @@ Git操作の原則:
 - 対象外リポジトリでブランチを作らない
 - `/src` の変更なのに root側だけ `pull` して完了扱いしない
 - root側は Docker 構成確認だけが目的なら、ブランチを作らず `status` と `docker compose config --services` の確認に留める
+
+## 作業開始前のリポジトリ確認
+
+実装、docs更新、テスト追加、PR作成の前に、作業対象リポジトリを確認します。
+
+最低限、次を確認します。
+
+```bash
+pwd
+git remote -v
+git branch --show-current
+git status --short
+```
+
+確認すること:
+
+- 作業ディレクトリが指示されたリポジトリである
+- `origin` の fetch / push が指示された GitHub repository を向いている
+- 作業ブランチが指示されたブランチ、または作成前の `main` である
+- 未コミット差分に今回作業と無関係な変更がない
+
+対象repo、remote、branchが指示と一致しない場合は、作業を続けず停止して報告します。
+
+一時cloneで作業する場合は、元workspaceと一時cloneの `pwd` / `git remote -v` / `git branch --show-current` / `git status --short` を区別し、どちらで作業したかを完了報告に明記します。
 
 ## Docker経由コマンド原則
 
