@@ -31,10 +31,10 @@ export default function ConceptHero() {
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
                     <Link
-                        href="/lab/construction-order-workflow-mock"
+                        href="/lab/construction-order-new-mock"
                         className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        操作モックを見る
+                        新MOCKを見る
                     </Link>
                     <Link
                         href="/lab"
