@@ -1,153 +1,42 @@
 # AGENTS.md
 
-## 基本方針
+このファイルは、`src/` 側アプリリポジトリで作業するための入口です。
 
-このプロジェクトでは、AIを丸投げ実装者として扱わない。
+詳細ルール本文はここに増やさず、AI作業用MD索引と対象docsへ誘導します。
 
-人間が目的・仕様・責務・成功条件・失敗条件・完成判定を握り、AIは調査、実装補助、差分修正、テスト追加、レビュー補助に使う。
+## 最初に読むもの
 
-## 作業開始時の入口
+1. [docs/ai/index.md](docs/ai/index.md)
+2. [docs/ai/rules/agent-working-policy.md](docs/ai/rules/agent-working-policy.md)
+3. [docs/ai/rules/responsibility-boundaries.md](docs/ai/rules/responsibility-boundaries.md)
+4. [docs/index.md](docs/index.md)
+5. 作業種別に応じて [docs/ai/workflows/md-router.md](docs/ai/workflows/md-router.md) から必要docsを絞る
 
-作業開始時は、次の順序で必要な情報だけを確認する。
+参照先一覧は「全部読むリスト」ではありません。
+作業種別、今回読むdocs、読まないdocs、編集禁止ファイル、停止条件を固定してから進みます。
 
-1. `AGENTS.md`
-2. `docs/index.md`
-3. `docs/md-router.md`
-4. 今回の作業に必要な共通docs
-5. 対象機能の `docs/features/`
-6. 対象コードと関連テスト
+## root との関係
 
-リポジトリ全体や全docsを、念のためという理由だけで毎回読み込まない。
+外側workspaceの root は Docker / 環境repo、`src/` は Laravel / React / docs / tests / アプリrepoです。
 
-参照先一覧は「全部読むリスト」ではありません。`docs/index.md` のMD作業ルーターで、今回読むdocs、読まないdocs、編集禁止ファイル、停止条件を確定してから進みます。
+外側repoから開始した場合でも、Laravel / React / app docs / tests を触る作業では、この `src/` 側repoの remote / branch / status を確認します。
 
-## 作業開始前のリポジトリ確認
+## 必読先
 
-実装、docs更新、テスト追加、PR作成の前に、必ず作業対象リポジトリを確認する。
+| 用途 | 参照先 |
+|---|---|
+| AI作業用MD索引 | [docs/ai/index.md](docs/ai/index.md) |
+| AIと人間の役割、Git / PR、停止条件 | [docs/ai/rules/agent-working-policy.md](docs/ai/rules/agent-working-policy.md) |
+| ADR Pattern、用語、責務境界 | [docs/ai/rules/responsibility-boundaries.md](docs/ai/rules/responsibility-boundaries.md) |
+| docs全体の索引、用途別の正本 | [docs/index.md](docs/index.md) |
+| 作業種別ごとのMDルーター | [docs/ai/workflows/md-router.md](docs/ai/workflows/md-router.md) |
+| コマンド実行、Git境界 | [docs/operations/command-registry.md](docs/operations/command-registry.md) |
+| PRレビュー強度 | [docs/operations/pr-review-strength.md](docs/operations/pr-review-strength.md) |
 
-このローカル構成では、外側workspaceのDocker / 環境repoと、`src/` 内のLaravel / React / docs / tests / アプリrepoは別Git管理です。
+## 作業範囲の確認
 
-Docker / compose / 環境作業では外側repoを確認し、Laravel / React / docs / tests / appコード作業では `src/` 内repoを確認します。
-
-アプリ/docs作業を外側workspaceから開始する場合は、外側repoのremoteだけで判断せず、次を確認します。
-
-```bash
-git -C src remote -v
-git -C src branch --show-current
-git -C src status --short
-```
-
-外側repoのremoteが `Ryosuke-Shigi/laravel11-docker.git` でも、`src/` が対象アプリrepoを向いている場合は異常扱いしません。
-
-Git境界が不明な場合は、remote変更、clone、restoreへ進まず停止して報告します。
-
-最低限、以下を確認する。
-
-- `pwd`
-- `git remote -v`
-- `git branch --show-current`
-- `git status --short`
-
-対象repo、remote、branchが指示と一致しない場合は、作業を続けず停止して報告する。
-
-人間が別の作業場所を明示した場合は、元workspaceと指定された作業場所のどちらで作業したかを完了報告に明記する。
-
-## 参照先
-
-- 開発段階・Product化: `docs/development-flow.md`
-- MDルーター: `docs/md-router.md`
-- MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
-- MOCK / Prototypeの配置・削除・分離: `docs/prototype-policy.md`
-- ADR Pattern・レイヤード責務: `docs/architecture.md`
-- Docker経由コマンド・Git境界: `docs/operations/command-registry.md`
-- PRレビュー強度: `docs/operations/pr-review-strength.md`
-- 実装作法・型・命名・確認コマンド: `docs/coding-standards.md`
-- テスト・TDD・CI確認: `docs/testing.md`
-- React / Inertia / TypeScript: `docs/frontend.md`
-- UI・Common・モバイル・Effects: `docs/ui.md`
-- コンテキスト管理・理解再起動: `docs/context-management.md`
-- ログ: `docs/logging.md`
-- セキュリティ・破壊的操作: `docs/security.md`
-- コメント・PHPDoc・JSDoc: `docs/commenting.md`
-- 機能固有仕様: `docs/features/`
-- PR本文: `docs/templates/pr-summary.md`
-- 代替実装禁止: `skills/no-alternative-implementation/SKILL.md`
-
-この一覧は候補の案内です。実際に読む文書は `docs/index.md` のMD作業ルーターで作業種別を決めてから絞ります。
-
-READMEは外部向け概要説明として扱い、内部の設計・テスト・AI運用ルールを詰め込みすぎない。
-
-## 用語
-
-- `ADR Pattern` は Action - Domain - Responderを指す
-- 設計判断の記録は `Decision Record` または `設計判断記録` と呼ぶ
-- Architecture Decision Recordの意味で `ADR` とだけ表記しない
-- 状態変更のActionは `Command Action`、参照処理のActionは `Query Action` と呼ぶ
-- Laravelのコンソール入口は `Artisan Command` と呼び、`Command Action` と区別する
-
-## 必ず守る責務境界
-
-- Controller: HTTPの入口
-- Request: 入力形式のバリデーション
-- Action: 1ユースケースの手順。必要に応じてCommand Action / Query Actionへ分ける
-- Service: 業務判断・ドメインルール
-- Repository: DBまたは外部データソースとの境界
-- DTO / ListDTO: レイヤー間のデータキャリア
-- Responder: Inertia props、JSON、CSV、PDF等の出力整形
-- Job / Artisan Command / Scheduler: 実行入口
-- Component: 画面表示、ユーザー操作、UI状態
-
-Repositoryへ業務判断や表示判断を置かない。ServiceへDB直接操作やHTTP都合を置かない。DTOへレスポンス生成や画面表示判断を置かない。Componentへ業務状態遷移判断を置かない。
-
-単純処理へ不要なService、Factory、Strategyを機械的に追加しない。
-
-## Git / PR
-
-- 実装・修正・docs更新・テスト追加・PR作成の前に、作業対象リポジトリ、remote、branch、未コミット差分を確認する
 - `main` で直接作業しない
-- `main` を最新化して目的別ブランチを作る
-- 原則として作業ブランチから別の作業ブランチを切らない
-- 1タスクへ複数目的を混ぜない
-- 1つのcommitには1つの目的だけを含める
 - 既存の未コミット差分を勝手に変更・削除しない
-- commit / push はユーザーの明示指示がある場合のみ行う
-- commit前に差分内容・確認コマンド・テスト結果を提示する
-- Pull Request のタイトル・本文・レビューコメントは日本語で書く
-- commit message は既存履歴に合わせる。ただし特別な理由がなければ日本語で目的が分かる文にする
-- CIログ、コマンド名、エラー文、固有名詞は原文のまま残してよい
-- 実装後は差分、必要なテスト、CI、秘密情報、docs更新を確認する
-- 実装後は `docs/operations/command-registry.md` に従い、`git diff --check` と必要なテストを実行する
-- PR確認時は `docs/operations/pr-review-strength.md` に従い、目的・変更ファイル・影響範囲・レビュー強度・必要な確認コマンド・読むdocs・読まないdocsを先に判定する
-- mergeは人間の明示判断で行う
-
-## 作業と停止条件
-
-- 変更対象と成功条件を固定してから作業する
-- 最小差分で修正し、不要なリファクタリングを混ぜない
 - 仕様にない機能や代替実装を勝手に追加しない
-- PrototypeコードをそのままProductへ昇格しない
-- UI作業では `docs/ui-development-flow.md` を確認し、MOCK / PROTOTYPE のコードではなくUI契約・振る舞い・状態・導線をProductへ引き継ぐ
-- Product化では、PROTOTYPEで確認した振る舞いを先にTestへ固定してから実装する
-- コメント・PHPDoc・`docs/features/`・Test の役割分担は `docs/commenting.md` と `docs/testing.md` に従う
-- Productは1機能・1ユースケース単位で追加する
-- 機能固有条件は共通docsではなく `docs/features/` に置く
-
-次の場合は推測で進めず停止して差異を報告する。
-
-- 必要な仕様が見つからない
-- コード・テスト・docsが矛盾している
-- 却下済み案か判断できない
-- 対象外ファイルへ影響する可能性がある
-- 本番接続、秘密情報、破壊的操作が関係する
-- テスト結果を確認できないのに完了判定を求められている
-
-## 完了確認
-
-- 目的と成功条件を満たしたか
-- 責務境界が崩れていないか
-- 不要な依存・抽象化・変更が増えていないか
-- 必要な実装作法・型・コメントが `docs/coding-standards.md` と `docs/commenting.md` に沿っているか
-- 必要なテスト、format check、buildを確認したか
-- TypeScript / TSXを変更した場合は、必要に応じて手元確認としてtypecheckを確認したか
-- 機能固有docsと現在のコード・成功テストが一致しているか
-- 次回の理解再起動に必要な現在地と検証結果が残っているか
+- `.env` の実値、APIキー、DBパスワード、AWSキーなどの秘密情報を書かない
+- 迷う場合は推測で進めず、差異を報告して人間に確認する

@@ -16,8 +16,8 @@ ChatGPT / CodexApp / subagentsへ必要な文脈だけを渡し、トークン�
 
 - リポジトリ全体を毎回読み込まない
 - すべてのdocsを毎回読み込まない
-- `AGENTS.md` と `docs/index.md` を入口にする
-- 作業開始時は `docs/md-router.md` で作業種別ごとの読むdocsを固定する
+- `AGENTS.md`、`docs/ai/index.md`、`docs/index.md` を入口にする
+- 作業開始時は `docs/ai/workflows/md-router.md` で作業種別ごとの読むdocsを固定する
 - 必要な共通docsとfeature docsだけを読む
 - 検索してから必要なファイルと範囲だけを開く
 - 1タスクへ複数機能・複数目的を混ぜない
@@ -29,7 +29,7 @@ ChatGPT / CodexApp / subagentsへ必要な文脈だけを渡し、トークン�
 
 ## MDルーター
 
-作業開始時は、必ず `docs/md-router.md` を確認し、作業種別ごとに読むdocsを固定する。
+作業開始時は、必ず `docs/ai/workflows/md-router.md` を確認し、作業種別ごとに読むdocsを固定する。
 
 AIは、作業種別を判定できない場合、推測でdocs探索を広げず停止する。
 
@@ -71,9 +71,9 @@ AI駆動開発では、目的なくリポジトリ全体を探索しません。
 
 検索の原則:
 
-1. PR本文、AGENTS.md、`docs/index.md` を確認する
+1. PR本文、AGENTS.md、`docs/ai/index.md`、`docs/index.md` を確認する
 2. 作業種別と対象機能を特定する
-3. `docs/md-router.md` のMDルーターで参照範囲を決める
+3. `docs/ai/workflows/md-router.md` のMDルーターで参照範囲を決める
 4. 読むdocs / 読まないdocs / 編集禁止ファイル / 除外対象 / Git境界 / 停止条件を宣言する
 5. 変更対象ファイルと入口を特定する
 6. 必要なファイルだけ読む
@@ -94,10 +94,11 @@ AI駆動開発では、目的なくリポジトリ全体を探索しません。
 
 ```text
 AGENTS.md
+docs/ai/index.md
 docs/index.md
 ```
 
-`AGENTS.md` は作業ルールの入口、`docs/index.md` は用語・文書配置・用途別正本の入口です。
+`AGENTS.md` は作業ルールの入口、`docs/ai/index.md` はAI作業用MDの索引、`docs/index.md` は用語・文書配置・用途別正本の入口です。
 
 ### 作業内容に応じて確認
 
@@ -144,7 +145,7 @@ feature docsは共通ルールを上書きできません。
 ```text
 目的・段階・対象機能を確認
     ↓
-AGENTS.md / docs/index.md / docs/md-router.mdで参照先を決める
+AGENTS.md / docs/ai/index.md / docs/index.md / docs/ai/workflows/md-router.mdで参照先を決める
     ↓
 MDルーターで読むdocs・読まないdocs・編集禁止ファイル・停止条件を固定
     ↓
@@ -282,7 +283,7 @@ Supersedes: 置き換えた旧資料
 
 用途別の正本は `docs/index.md` に従います。
 
-- 全体ルール・禁止事項: `AGENTS.md` と共通docs
+- 全体ルール・禁止事項: `AGENTS.md`、`docs/ai/index.md`、共通docs
 - 実装済みの現在挙動: コード・Migration・設定・成功テスト
 - 機能固有の意図・制約: feature docsと関連テスト
 - 外部説明: README

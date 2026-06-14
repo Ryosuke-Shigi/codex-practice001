@@ -14,7 +14,7 @@ MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへ引
 
 実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` を正本とします。
 
-MDルーターの詳細は `docs/md-router.md` を正本とします。
+MDルーターの詳細は `docs/ai/workflows/md-router.md` を正本とします。
 
 開発フロー、docs構成、feature docs、運用手順が変わった場合は、作業後にMDルーターの追加・削除・修正が必要か確認します。
 
@@ -155,7 +155,7 @@ Product化前に固定するもの:
 ## Product実装の基本手順
 
 ```text
-AGENTS.md / docs/index.mdで作業分類
+AGENTS.md / docs/ai/index.md / docs/index.mdで作業分類
     ↓
 必要な共通docs・feature docs・対象コードを確認
     ↓
@@ -220,8 +220,8 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 
 主なガードレール:
 
-- `AGENTS.md` と `docs/index.md` による入口固定
-- `docs/md-router.md` による作業種別ごとの参照範囲固定
+- `AGENTS.md`、`docs/ai/index.md`、`docs/index.md` による入口固定
+- `docs/ai/workflows/md-router.md` による作業種別ごとの参照範囲固定
 - 共通docsとfeature docsによる責務・仕様の分離
 - 明示された作業条件による対象・成功条件・失敗条件の固定
 - DTOによるデータ契約
@@ -238,7 +238,7 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 
 - MOCK / Prototypeの配置・削除: `docs/prototype-policy.md`
 - MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
-- MDルーター: `docs/md-router.md`
+- MDルーター: `docs/ai/workflows/md-router.md`
 - 責務境界: `docs/architecture.md`
 - 実装作法: `docs/coding-standards.md`
 - コメント: `docs/commenting.md`
