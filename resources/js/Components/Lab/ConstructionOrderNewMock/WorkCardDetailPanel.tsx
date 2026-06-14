@@ -13,7 +13,7 @@ export default function WorkCardDetailPanel({
     const styles = cardKindStyles[card.kind];
 
     return (
-        <section className="grid max-h-[calc(100vh-9rem)] gap-4 overflow-y-auto">
+        <section className="grid h-full min-h-0 gap-3 overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
             <div className={`rounded-lg border p-4 shadow-sm ${styles.panel}`}>
                 <button
                     type="button"

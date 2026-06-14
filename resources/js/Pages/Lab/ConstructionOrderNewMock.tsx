@@ -58,17 +58,24 @@ export default function ConstructionOrderNewMock() {
         setActiveScreen('card-detail');
     };
 
+    const isEntryFlow =
+        activeScreen === 'entry' ||
+        activeScreen === 'csv' ||
+        activeScreen === 'projects';
+
     return (
-        <PublicLayout className="bg-[#f4f8fb] px-4 py-4 sm:px-6 lg:px-8">
+        <PublicLayout className="h-dvh overflow-hidden bg-[#f4f8fb] text-slate-900">
             <Head title="工事発注管理・請求システム 新MOCK" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-3 pb-8">
-                <ConstructionOrderNewMockHeader
-                    activeScreen={activeScreen}
-                    onScreenChange={setActiveScreen}
-                />
+            <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-2 overflow-hidden p-3 sm:p-4">
+                {isEntryFlow && (
+                    <ConstructionOrderNewMockHeader
+                        activeScreen={activeScreen}
+                        onScreenChange={setActiveScreen}
+                    />
+                )}
 
-                <main className="min-h-0 min-w-0">
+                <main className="min-h-0 min-w-0 flex-1 overflow-hidden">
                     {activeScreen === 'entry' && (
                         <EntryFormPanel
                             draft={entryDraft}

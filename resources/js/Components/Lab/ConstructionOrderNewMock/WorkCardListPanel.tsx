@@ -11,15 +11,15 @@ export default function WorkCardListPanel({
     onOpenCard,
 }: WorkCardListPanelProps) {
     return (
-        <section className="grid max-h-[calc(100vh-16rem)] gap-3 overflow-y-auto">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-                <h3 className="text-lg font-bold text-slate-950">カード一覧</h3>
-                <div className="flex gap-2 overflow-x-auto">
+        <section className="grid gap-2">
+            <div className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white p-2 shadow-sm">
+                <h3 className="text-base font-bold text-slate-950">カード一覧</h3>
+                <div className="flex shrink-0 gap-1.5">
                     {['追加', '編集', '削除'].map((label) => (
                         <button
                             key={label}
                             type="button"
-                            className="min-h-9 shrink-0 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                            className="h-8 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                         >
                             {label}
                         </button>
@@ -27,20 +27,13 @@ export default function WorkCardListPanel({
                 </div>
             </div>
 
-            <div className="overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-                <table className="w-full min-w-[980px] border-collapse text-left text-sm">
+            <div className="rounded-md border border-slate-200 bg-white shadow-sm">
+                <table className="w-full table-fixed border-collapse text-left text-xs sm:text-sm">
                     <thead className="bg-slate-100 text-xs font-bold text-slate-600">
                         <tr>
-                            <th className="px-3 py-2">種別</th>
-                            <th className="px-3 py-2">タイトル</th>
-                            <th className="px-3 py-2">状態</th>
-                            <th className="px-3 py-2">金額</th>
-                            <th className="px-3 py-2">分類</th>
-                            <th className="px-3 py-2">メモ</th>
-                            <th className="px-3 py-2">写真</th>
-                            <th className="px-3 py-2">ファイル</th>
-                            <th className="px-3 py-2">請求</th>
-                            <th className="px-3 py-2">フラグ</th>
+                            <th className="w-[58%] px-2 py-2">カード</th>
+                            <th className="w-[18%] px-2 py-2">状態</th>
+                            <th className="w-[24%] px-2 py-2 text-right">金額</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,34 +51,35 @@ export default function WorkCardListPanel({
                                     key={card.id}
                                     className="border-t border-slate-200 hover:bg-slate-50"
                                 >
-                                    <td className="whitespace-nowrap px-3 py-2">
+                                    <td className="px-2 py-2 align-top">
                                         <span
-                                            className={`rounded-md border px-2 py-1 text-xs font-bold ${styles.badge}`}
+                                            className={`inline-flex rounded-md border px-1.5 py-0.5 text-[11px] font-bold ${styles.badge}`}
                                         >
                                             {cardKindLabels[card.kind]}
                                         </span>
-                                    </td>
-                                    <td className="px-3 py-2">
                                         <button
                                             type="button"
                                             onClick={() => onOpenCard(card)}
-                                            className="text-left font-bold text-sky-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                                            className="mt-1 block w-full text-left font-bold leading-5 text-sky-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                                         >
                                             {card.title}
                                         </button>
+                                        <p className="mt-1 leading-4 text-slate-500">
+                                            {card.category} / {card.billingTarget} /{' '}
+                                            {card.hasMemo ? 'メモあり' : 'メモなし'} /{' '}
+                                            {card.hasPhotos ? '写真あり' : '写真なし'} /{' '}
+                                            {card.hasFiles ? 'ファイルあり' : 'ファイルなし'}
+                                        </p>
                                     </td>
-                                    <td className="whitespace-nowrap px-3 py-2 font-semibold text-slate-700">
+                                    <td className="px-2 py-2 align-top font-semibold leading-5 text-slate-700">
                                         {card.status}
+                                        <span className="mt-1 block text-[11px] font-bold text-violet-700">
+                                            {flags || '-'}
+                                        </span>
                                     </td>
-                                    <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-950">
+                                    <td className="px-2 py-2 text-right align-top font-bold leading-5 text-slate-950">
                                         {card.amount}
                                     </td>
-                                    <td className="whitespace-nowrap px-3 py-2">{card.category}</td>
-                                    <td className="whitespace-nowrap px-3 py-2">{card.hasMemo ? 'あり' : 'なし'}</td>
-                                    <td className="whitespace-nowrap px-3 py-2">{card.hasPhotos ? 'あり' : 'なし'}</td>
-                                    <td className="whitespace-nowrap px-3 py-2">{card.hasFiles ? 'あり' : 'なし'}</td>
-                                    <td className="whitespace-nowrap px-3 py-2">{card.billingTarget}</td>
-                                    <td className="whitespace-nowrap px-3 py-2">{flags || '-'}</td>
                                 </tr>
                             );
                         })}
