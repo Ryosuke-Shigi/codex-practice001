@@ -2,7 +2,13 @@ import DocumentPreviewPanel from './DocumentPreviewPanel';
 import ProjectProgressPanel from './ProjectProgressPanel';
 import SiteAccessPanel from './SiteAccessPanel';
 import WorkCardListPanel from './WorkCardListPanel';
-import type { DocumentType, Project, ProjectDetailTab, WorkCard } from './mockData';
+import type {
+    CardKind,
+    DocumentType,
+    Project,
+    ProjectDetailTab,
+    WorkCard,
+} from './mockData';
 import { projectDetailTabs } from './mockData';
 
 type ProjectDetailPanelProps = {
@@ -11,6 +17,7 @@ type ProjectDetailPanelProps = {
     onTabChange: (tab: ProjectDetailTab) => void;
     onBackToProjects: () => void;
     onOpenCard: (card: WorkCard) => void;
+    onAddCard: (kind: CardKind) => void;
 };
 
 export default function ProjectDetailPanel({
@@ -19,36 +26,30 @@ export default function ProjectDetailPanel({
     onTabChange,
     onBackToProjects,
     onOpenCard,
+    onAddCard,
 }: ProjectDetailPanelProps) {
     return (
         <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2">
-                <button
-                    type="button"
-                    onClick={onBackToProjects}
-                    className="mb-1 text-xs font-bold text-slate-500 underline-offset-4 hover:text-sky-700 hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                >
-                    ← 案件一覧
-                </button>
-
-                <div className="grid gap-1">
-                    <h2 className="break-words text-base font-bold text-slate-950 sm:text-lg">
-                        {project.name}
-                    </h2>
-                    <p className="break-words text-xs text-slate-600">
-                        {project.customerName} / {project.siteAddress}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                    <div className="grid min-w-0 gap-1">
+                        <h2 className="break-words text-base font-bold text-slate-950 sm:text-lg">
+                            {project.name}
+                        </h2>
+                        <p className="break-words text-xs text-slate-600">
+                            {project.customerName} / {project.siteAddress}
+                        </p>
                         <span className="rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-900">
                             {project.status}
                         </span>
-                        <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-bold text-slate-700">
-                            {project.cardCount}
-                        </span>
-                        <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-900">
-                            {project.estimateStatus}
-                        </span>
                     </div>
+                    <button
+                        type="button"
+                        onClick={onBackToProjects}
+                        className="min-h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                    >
+                        案件一覧へ
+                    </button>
                 </div>
             </div>
 
@@ -83,7 +84,11 @@ export default function ProjectDetailPanel({
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
                 {activeTab === 'access' && <SiteAccessPanel project={project} />}
                 {activeTab === 'cards' && (
-                    <WorkCardListPanel project={project} onOpenCard={onOpenCard} />
+                    <WorkCardListPanel
+                        project={project}
+                        onOpenCard={onOpenCard}
+                        onAddCard={onAddCard}
+                    />
                 )}
                 {activeTab === 'progress' && <ProjectProgressPanel project={project} />}
                 {(['estimate', 'invoice', 'receipt'] as ProjectDetailTab[]).includes(

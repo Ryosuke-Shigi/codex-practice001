@@ -50,7 +50,7 @@ export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
                         rel="noreferrer"
                         className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-sky-700 px-3 text-center text-sm font-bold text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     >
-                        Google Mapで開く
+                        Google Mapsで現場を開く
                     </a>
                     <a
                         href={googleRouteUrl}
@@ -58,7 +58,7 @@ export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
                         rel="noreferrer"
                         className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-slate-950 px-3 text-center text-sm font-bold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
                     >
-                        Google Mapで経路を見る
+                        Google Mapsで経路を見る
                     </a>
                     <a
                         href={yahooMapUrl}
@@ -66,7 +66,7 @@ export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
                         rel="noreferrer"
                         className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 text-center text-sm font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     >
-                        Yahoo!マップで開く
+                        Yahoo!マップで現場を開く
                     </a>
                 </div>
 

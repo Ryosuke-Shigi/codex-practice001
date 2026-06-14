@@ -69,22 +69,16 @@ export type WorkCard = {
 
 export type ReportPreview = {
     title: string;
-    templateOptions: string[];
-    selectedTemplate: string;
     selectedCardIds: string[];
     amountLabel: string;
-    amount: string;
+    issuedAt: string;
+    documentNumber: string;
+    subject: string;
     recipient: string;
     issuer: string;
-    overview: string;
-    pages: {
-        title: string;
-        lines: string[];
-    }[];
-    extraFields: {
-        label: string;
-        value: string;
-    }[];
+    externalNote: string;
+    paymentAccount?: string;
+    proviso?: string;
 };
 
 export type Project = {
@@ -116,17 +110,26 @@ export type CsvFile = {
     status: CsvStatus;
 };
 
-export type EntryDraft = {
-    projectName: string;
-    customerName: string;
-    siteAddress: string;
-    owner: string;
+export type EntryProductDraft = {
+    id: string;
     productName: string;
     productLabel: string;
     productMeasurement: string;
     productUnit: string;
     productFixedAmount: string;
     productMemo: string;
+};
+
+export type EntryDraftField = Exclude<keyof EntryDraft, 'products'>;
+
+export type EntryProductDraftField = Exclude<keyof EntryProductDraft, 'id'>;
+
+export type EntryDraft = {
+    projectName: string;
+    customerName: string;
+    siteAddress: string;
+    owner: string;
+    products: EntryProductDraft[];
     note: string;
 };
 
@@ -135,13 +138,26 @@ export const initialEntryDraft: EntryDraft = {
     customerName: '株式会社サンプル商事',
     siteAddress: '東京都目黒区青葉台1-2-3 青葉台レジデンス401',
     owner: '佐藤 美咲',
-    productName: '省エネ給湯器 GT-2460SAWX',
-    productLabel: '給湯器本体',
-    productMeasurement: '1',
-    productUnit: '台',
-    // 金額は確定金額の文字列として扱い、自動計算や再計算は入れない。
-    productFixedAmount: '305,000円',
-    productMemo: '既存品番と搬入寸法を訪問前に確認',
+    products: [
+        {
+            id: 'entry-product-1',
+            productName: '省エネ給湯器 GT-2460SAWX',
+            productLabel: '給湯器本体',
+            productMeasurement: '1',
+            productUnit: '台',
+            productFixedAmount: '305,000円',
+            productMemo: '既存品番と搬入寸法を訪問前に確認',
+        },
+        {
+            id: 'entry-product-2',
+            productName: 'リモコンセット MBC-240V',
+            productLabel: '台所・浴室リモコン',
+            productMeasurement: '1',
+            productUnit: '式',
+            productFixedAmount: '48,000円',
+            productMemo: '既存配線の再利用可否を現地で確認',
+        },
+    ],
     note: '管理組合への連絡後、CSV作成へ進める。',
 };
 
@@ -475,104 +491,38 @@ export const projects: Project[] = [
         reports: {
             estimate: {
                 title: '御見積書',
-                templateOptions: ['標準見積_v4.xlsx', '工事項目多め_v4.xlsx', '商品多め_v4.xlsx'],
-                selectedTemplate: '標準見積_v4.xlsx',
                 selectedCardIds: ['card-work-001', 'card-product-001', 'card-expense-001', 'card-adjustment-001'],
                 amountLabel: '御見積金額',
-                amount: '220,000円',
+                issuedAt: '2026/06/14',
+                documentNumber: 'EST-20260614-001',
+                subject: '青葉台レジデンス 401号室 給湯配管交換工事',
                 recipient: '株式会社サンプル商事 御中',
                 issuer: '株式会社サンプル設備',
-                overview: 'Excelテンプレートへ対象カードを差し込む将来構想のプレビューです。',
-                pages: [
-                    {
-                        title: '1面目 表紙 / 概要',
-                        lines: ['案件名、顧客名、提出日、会社情報', '対象カードの概要', '御見積金額'],
-                    },
-                    {
-                        title: '2面目 明細',
-                        lines: ['工事費', '商品', '諸経費', '調整'],
-                    },
-                    {
-                        title: '3面目 まとめ',
-                        lines: ['カテゴリ別整理', '提出メモ', '合計欄'],
-                    },
-                ],
-                extraFields: [
-                    {
-                        label: '出力形式',
-                        value: 'Excel出力 / 必要ならPDF変換',
-                    },
-                ],
+                externalNote: '本見積は現地確認時点の内容に基づく概算です。追加作業が発生する場合は事前にご相談します。',
             },
             invoice: {
                 title: '御請求書',
-                templateOptions: ['標準請求_v4.xlsx', '振込先強調_v4.xlsx', '検収条件つき_v4.xlsx'],
-                selectedTemplate: '標準請求_v4.xlsx',
                 selectedCardIds: ['card-work-001', 'card-product-001', 'card-expense-001', 'card-adjustment-001'],
                 amountLabel: '御請求金額',
-                amount: '220,000円',
+                issuedAt: '2026/06/21',
+                documentNumber: 'INV-20260621-001',
+                subject: '青葉台レジデンス 401号室 給湯配管交換工事',
                 recipient: '株式会社サンプル商事 御中',
                 issuer: '株式会社サンプル設備',
-                overview: '請求対象カードだけを選び、振込先と支払条件を提出書類風に見せます。',
-                pages: [
-                    {
-                        title: '1面目 請求表紙',
-                        lines: ['請求金額', '支払条件', '振込先'],
-                    },
-                    {
-                        title: '2面目 請求明細',
-                        lines: ['請求対象カード', '非対象カードは除外表示', 'カテゴリ別明細'],
-                    },
-                    {
-                        title: '3面目 ご確認欄',
-                        lines: ['検収メモ', '支払期日', '担当者欄'],
-                    },
-                ],
-                extraFields: [
-                    {
-                        label: '振込先',
-                        value: 'サンプル銀行 青葉台支店 普通 1234567',
-                    },
-                    {
-                        label: '支払条件',
-                        value: '2026年7月末日までにお振込み',
-                    },
-                ],
+                externalNote: 'お支払い期日は2026年7月末日です。ご入金確認後、領収書を発行いたします。',
+                paymentAccount: 'サンプル銀行 青葉台支店 普通 1234567',
             },
             receipt: {
                 title: '領収書',
-                templateOptions: ['標準領収_v4.xlsx', '印影欄あり_v4.xlsx', '但し書き強調_v4.xlsx'],
-                selectedTemplate: '印影欄あり_v4.xlsx',
                 selectedCardIds: ['card-work-001', 'card-product-001', 'card-expense-001', 'card-adjustment-001'],
                 amountLabel: '領収金額',
-                amount: '220,000円',
+                issuedAt: '2026/07/01',
+                documentNumber: 'REC-20260701-001',
+                subject: '青葉台レジデンス 401号室 給湯配管交換工事',
                 recipient: '株式会社サンプル商事 様',
                 issuer: '株式会社サンプル設備',
-                overview: '領収対象カードから領収書面を確認するための提出書類風プレビューです。',
-                pages: [
-                    {
-                        title: '1面目 領収書面',
-                        lines: ['領収金額', '但し書き', '発行者情報', '印影欄'],
-                    },
-                    {
-                        title: '2面目 控え',
-                        lines: ['対象カード一覧', '領収対象外の除外', '発行メモ'],
-                    },
-                    {
-                        title: '3面目 保管メモ',
-                        lines: ['発行日', '担当者', '再発行欄'],
-                    },
-                ],
-                extraFields: [
-                    {
-                        label: '但し書き',
-                        value: '給湯配管交換工事代として',
-                    },
-                    {
-                        label: '印影欄',
-                        value: '右下に押印スペース',
-                    },
-                ],
+                externalNote: '上記金額を正に領収いたしました。',
+                proviso: '給湯配管交換工事代として',
             },
         },
     },
@@ -636,18 +586,10 @@ export const screenSteps: {
 }[] = [
     {
         key: 'entry',
-        label: 'FORM',
-    },
-    {
-        key: 'csv',
-        label: '一括取込',
+        label: '案件登録',
     },
     {
         key: 'projects',
         label: '案件一覧',
-    },
-    {
-        key: 'project-detail',
-        label: '案件詳細',
     },
 ];

@@ -1,5 +1,5 @@
 /**
- * 工事発注管理・請求システム 新MOCK の Page Component です。
+ * 工事発注管理・請求システム MOCK の Page Component です。
  *
  * 画面導線、カード構造、帳票構造、現場アクセス導線、ADR / レイヤード分解の材料を
  * 固定データだけで確認します。DB保存、CSV実取込、ファイル保存、帳票生成は行いません。
@@ -18,7 +18,11 @@ import {
     projects,
 } from '@/Components/Lab/ConstructionOrderNewMock/mockData';
 import type {
+    CardKind,
     EntryDraft,
+    EntryDraftField,
+    EntryProductDraft,
+    EntryProductDraftField,
     MockScreen,
     Project,
     ProjectDetailTab,
@@ -30,42 +34,166 @@ export default function ConstructionOrderNewMock() {
     const [activeScreen, setActiveScreen] = useState<MockScreen>('entry');
     const [entryPreviewed, setEntryPreviewed] = useState(false);
     const [entryDraft, setEntryDraft] = useState<EntryDraft>(initialEntryDraft);
-    const [selectedProject, setSelectedProject] = useState<Project>(projects[0]);
-    const [selectedCard, setSelectedCard] = useState<WorkCard>(
-        projects[0].cards[0],
+    const [mockProjects, setMockProjects] = useState<Project[]>(projects);
+    const [selectedProjectId, setSelectedProjectId] = useState(projects[0].id);
+    const [selectedCardId, setSelectedCardId] = useState<string | null>(
+        projects[0].cards[0]?.id ?? null,
     );
     const [activeProjectTab, setActiveProjectTab] =
         useState<ProjectDetailTab>('access');
 
-    const updateEntryDraft = (field: keyof EntryDraft, value: string) => {
+    const selectedProject =
+        mockProjects.find((project) => project.id === selectedProjectId) ??
+        mockProjects[0];
+    const selectedCard =
+        selectedProject.cards.find((card) => card.id === selectedCardId) ??
+        selectedProject.cards[0] ??
+        null;
+
+    const updateEntryDraft = (field: EntryDraftField, value: string) => {
         setEntryDraft((current) => ({
             ...current,
             [field]: value,
         }));
     };
 
-    // UI MOCK flow: FORM / CSV / 案件一覧 -> 案件詳細 -> カード詳細。
+    const updateEntryProduct = (
+        productId: string,
+        field: EntryProductDraftField,
+        value: string,
+    ) => {
+        setEntryDraft((current) => ({
+            ...current,
+            products: current.products.map((product) =>
+                product.id === productId
+                    ? {
+                          ...product,
+                          [field]: value,
+                      }
+                    : product,
+            ),
+        }));
+    };
+
+    const addEntryProduct = () => {
+        setEntryDraft((current) => ({
+            ...current,
+            products: [
+                ...current.products,
+                createEntryProductDraft(current.products.length + 1),
+            ],
+        }));
+    };
+
+    const duplicateEntryProduct = (product: EntryProductDraft) => {
+        setEntryDraft((current) => ({
+            ...current,
+            products: [
+                ...current.products,
+                {
+                    ...product,
+                    id: `entry-product-${Date.now()}`,
+                    productLabel: `${product.productLabel} コピー`,
+                },
+            ],
+        }));
+    };
+
+    const removeEntryProduct = (productId: string) => {
+        setEntryDraft((current) => ({
+            ...current,
+            products: current.products.filter((product) => product.id !== productId),
+        }));
+    };
+
+    // UI MOCK flow: 案件登録 / CSV作成 / 案件一覧 -> 案件詳細 -> カード詳細。
     const openProject = (project: Project) => {
-        setSelectedProject(project);
-        setSelectedCard(project.cards[0] ?? selectedCard);
+        setSelectedProjectId(project.id);
+        setSelectedCardId(project.cards[0]?.id ?? null);
         setActiveProjectTab('access');
         setActiveScreen('project-detail');
     };
 
     // Card detail stays behind card selection so the route shape matches the real workflow.
     const openCard = (card: WorkCard) => {
-        setSelectedCard(card);
+        setSelectedCardId(card.id);
         setActiveScreen('card-detail');
+    };
+
+    const addWorkCard = (kind: CardKind) => {
+        const newCard = createMockWorkCard(kind);
+
+        setMockProjects((current) =>
+            current.map((project) => {
+                if (project.id !== selectedProject.id) {
+                    return project;
+                }
+
+                const cards = [...project.cards, newCard];
+
+                return {
+                    ...project,
+                    cards,
+                    cardCount: `${cards.length}枚`,
+                    hasFollowUp: project.hasFollowUp || kind === 'followUp',
+                    hasIssue: project.hasIssue || kind === 'issue',
+                };
+            }),
+        );
+        setSelectedCardId(newCard.id);
+        setActiveProjectTab('cards');
+    };
+
+    const saveWorkCard = (updatedCard: WorkCard) => {
+        setMockProjects((current) =>
+            current.map((project) => {
+                if (project.id !== selectedProject.id) {
+                    return project;
+                }
+
+                return {
+                    ...project,
+                    cards: project.cards.map((card) =>
+                        card.id === updatedCard.id ? updatedCard : card,
+                    ),
+                };
+            }),
+        );
+        setSelectedCardId(updatedCard.id);
+    };
+
+    const deleteWorkCard = (cardId: string) => {
+        const remainingCards = selectedProject.cards.filter(
+            (card) => card.id !== cardId,
+        );
+
+        setMockProjects((current) =>
+            current.map((project) => {
+                if (project.id !== selectedProject.id) {
+                    return project;
+                }
+
+                return {
+                    ...project,
+                    cards: remainingCards,
+                    cardCount: `${remainingCards.length}枚`,
+                    hasFollowUp: remainingCards.some((card) => card.followUp),
+                    hasIssue: remainingCards.some((card) => card.issue),
+                };
+            }),
+        );
+        setSelectedCardId(remainingCards[0]?.id ?? null);
+        setActiveProjectTab('cards');
+        setActiveScreen('project-detail');
     };
 
     const isEntryFlow =
         activeScreen === 'entry' ||
-        activeScreen === 'csv' ||
         activeScreen === 'projects';
 
     return (
         <PublicLayout className="h-dvh overflow-hidden bg-[#f4f8fb] text-slate-900">
-            <Head title="工事発注管理・請求システム 新MOCK" />
+            <Head title="工事発注管理・請求システム MOCK" />
 
             <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-2 overflow-hidden p-3 sm:p-4">
                 {isEntryFlow && (
@@ -81,6 +209,10 @@ export default function ConstructionOrderNewMock() {
                             draft={entryDraft}
                             previewed={entryPreviewed}
                             onDraftChange={updateEntryDraft}
+                            onProductChange={updateEntryProduct}
+                            onProductAdd={addEntryProduct}
+                            onProductDuplicate={duplicateEntryProduct}
+                            onProductRemove={removeEntryProduct}
                             onPreview={() => setEntryPreviewed(true)}
                             onNext={() => setActiveScreen('csv')}
                         />
@@ -94,7 +226,7 @@ export default function ConstructionOrderNewMock() {
 
                     {activeScreen === 'projects' && (
                         <ProjectListPanel
-                            projects={projects}
+                            projects={mockProjects}
                             onSelectProject={openProject}
                         />
                     )}
@@ -106,17 +238,98 @@ export default function ConstructionOrderNewMock() {
                             onTabChange={setActiveProjectTab}
                             onBackToProjects={() => setActiveScreen('projects')}
                             onOpenCard={openCard}
+                            onAddCard={addWorkCard}
                         />
                     )}
 
-                    {activeScreen === 'card-detail' && (
+                    {activeScreen === 'card-detail' && selectedCard && (
                         <WorkCardDetailPanel
                             card={selectedCard}
                             onBackToProject={() => setActiveScreen('project-detail')}
+                            onSaveCard={saveWorkCard}
+                            onDeleteCard={deleteWorkCard}
                         />
                     )}
                 </main>
             </div>
         </PublicLayout>
     );
+}
+
+function createEntryProductDraft(index: number): EntryProductDraft {
+    return {
+        id: `entry-product-${Date.now()}`,
+        productName: `追加商品 ${index}`,
+        productLabel: '表示ラベル',
+        productMeasurement: '1',
+        productUnit: '式',
+        productFixedAmount: '0円',
+        productMemo: '',
+    };
+}
+
+function createMockWorkCard(kind: CardKind): WorkCard {
+    const id = `card-${kind}-${Date.now()}`;
+    const defaultAmount = kind === 'adjustment' ? '-4,000円' : '0円';
+
+    return {
+        id,
+        kind,
+        title: getDefaultCardTitle(kind),
+        status: '下書き',
+        amount: defaultAmount,
+        category: getDefaultCardCategory(kind),
+        hasMemo: true,
+        hasPhotos: false,
+        hasFiles: false,
+        billingTarget: kind === 'issue' || kind === 'followUp' ? '非対象' : '請求対象',
+        receiptTarget:
+            kind === 'issue' || kind === 'followUp' ? '領収対象外' : '領収対象',
+        followUp: kind === 'followUp',
+        issue: kind === 'issue',
+        summary: '追加したカードの内容をMOCK上で確認します。',
+        detailRows: [
+            {
+                id: `row-${id}`,
+                content: getDefaultCardTitle(kind),
+                displayLabel: '数量',
+                measuredValue: '1',
+                unit: '式',
+                fixedAmount: defaultAmount,
+                memo: '追加時の仮明細',
+            },
+        ],
+        photos: [],
+        files: [],
+        memo: '追加カードのメモをここで編集します。',
+    };
+}
+
+function getDefaultCardTitle(kind: CardKind) {
+    const titles: Record<CardKind, string> = {
+        work: '追加作業',
+        product: '追加商品',
+        expense: '追加諸経費',
+        adjustment: '追加調整',
+        issue: '追加問題対応',
+        followUp: '追加後日対応',
+    };
+
+    return titles[kind];
+}
+
+function getDefaultCardCategory(kind: CardKind): WorkCard['category'] {
+    if (kind === 'product') {
+        return '商品';
+    }
+
+    if (kind === 'expense') {
+        return '諸経費';
+    }
+
+    if (kind === 'adjustment') {
+        return '調整';
+    }
+
+    return '工事費';
 }
