@@ -35,7 +35,7 @@ export default function ConstructionOrderNewMock() {
         projects[0].cards[0],
     );
     const [activeProjectTab, setActiveProjectTab] =
-        useState<ProjectDetailTab>('cards');
+        useState<ProjectDetailTab>('access');
 
     const updateEntryDraft = (field: keyof EntryDraft, value: string) => {
         setEntryDraft((current) => ({
@@ -44,13 +44,15 @@ export default function ConstructionOrderNewMock() {
         }));
     };
 
+    // UI MOCK flow: FORM / CSV / 案件一覧 -> 案件詳細 -> カード詳細。
     const openProject = (project: Project) => {
         setSelectedProject(project);
         setSelectedCard(project.cards[0] ?? selectedCard);
-        setActiveProjectTab('cards');
+        setActiveProjectTab('access');
         setActiveScreen('project-detail');
     };
 
+    // Card detail stays behind card selection so the route shape matches the real workflow.
     const openCard = (card: WorkCard) => {
         setSelectedCard(card);
         setActiveScreen('card-detail');
@@ -60,13 +62,13 @@ export default function ConstructionOrderNewMock() {
         <PublicLayout className="bg-[#f4f8fb] px-4 py-4 sm:px-6 lg:px-8">
             <Head title="工事発注管理・請求システム 新MOCK" />
 
-            <div className="mx-auto grid min-h-screen w-full max-w-7xl gap-4 pb-10 lg:grid-cols-[22rem_minmax(0,1fr)]">
+            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-3 pb-8">
                 <ConstructionOrderNewMockHeader
                     activeScreen={activeScreen}
                     onScreenChange={setActiveScreen}
                 />
 
-                <main className="min-w-0">
+                <main className="min-h-0 min-w-0">
                     {activeScreen === 'entry' && (
                         <EntryFormPanel
                             draft={entryDraft}

@@ -10,20 +10,14 @@ export default function ProjectListPanel({
     onSelectProject,
 }: ProjectListPanelProps) {
     return (
-        <section className="grid gap-4">
+        <section className="max-h-[calc(100vh-9rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    PROJECT QUERY
-                </p>
-                <h2 className="mt-2 text-xl font-bold text-slate-950">
+                <h2 className="text-xl font-bold text-slate-950">
                     案件一覧
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                    案件カードから案件詳細へ進む入口です。固定データのQuery表示として扱い、DB取得は行いません。
-                </p>
             </div>
 
-            <div className="grid gap-3">
+            <div className="mt-4 grid gap-3">
                 {projects.map((project) => (
                     <button
                         key={project.id}

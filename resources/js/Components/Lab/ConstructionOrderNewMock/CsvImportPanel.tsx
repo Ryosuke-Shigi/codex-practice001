@@ -13,18 +13,12 @@ const statusClassNames: Record<CsvStatus, string> = {
 
 export default function CsvImportPanel({ onNext }: CsvImportPanelProps) {
     return (
-        <section className="grid gap-4">
+        <section className="max-h-[calc(100vh-9rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                 <div className="grid gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        CSV ENTRY
-                    </p>
                     <h2 className="text-xl font-bold text-slate-950">
                         CSV一括取り込み
                     </h2>
-                    <p className="text-sm leading-7 text-slate-600">
-                        実CSV取込は行いません。複数CSVを投入する入口、ファイル状態、件数、メモの見え方だけを確認します。
-                    </p>
                 </div>
 
                 <div className="mt-5 grid min-h-48 place-items-center rounded-lg border-2 border-dashed border-sky-300 bg-sky-50 p-5 text-center">
@@ -32,20 +26,17 @@ export default function CsvImportPanel({ onNext }: CsvImportPanelProps) {
                         <p className="text-lg font-bold text-sky-950">
                             ドラッグ＆ドロップ
                         </p>
-                        <p className="text-sm leading-7 text-sky-900">
-                            複数CSV選択の見た目確認です。ファイル保存、CSV解析、DB登録は行いません。
-                        </p>
                         <button
                             type="button"
                             className="mx-auto min-h-11 rounded-lg border border-sky-500 bg-white px-4 text-sm font-bold text-sky-800 transition hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                         >
-                            複数CSVを選択（MOCK）
+                            複数CSVを選択
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="grid gap-3">
+            <div className="mt-4 grid gap-3">
                 {csvFiles.map((file) => (
                     <article
                         key={file.id}

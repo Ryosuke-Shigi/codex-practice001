@@ -1,6 +1,17 @@
-export type MockScreen = 'entry' | 'csv' | 'projects' | 'project-detail' | 'card-detail';
+export type MockScreen =
+    | 'entry'
+    | 'csv'
+    | 'projects'
+    | 'project-detail'
+    | 'card-detail';
 
-export type ProjectDetailTab = 'cards' | 'progress' | 'estimate' | 'invoice' | 'receipt';
+export type ProjectDetailTab =
+    | 'access'
+    | 'cards'
+    | 'progress'
+    | 'estimate'
+    | 'invoice'
+    | 'receipt';
 
 export type DocumentType = 'estimate' | 'invoice' | 'receipt';
 
@@ -110,6 +121,12 @@ export type EntryDraft = {
     customerName: string;
     siteAddress: string;
     owner: string;
+    productName: string;
+    productLabel: string;
+    productMeasurement: string;
+    productUnit: string;
+    productFixedAmount: string;
+    productMemo: string;
     note: string;
 };
 
@@ -118,7 +135,14 @@ export const initialEntryDraft: EntryDraft = {
     customerName: '株式会社サンプル商事',
     siteAddress: '東京都目黒区青葉台1-2-3 青葉台レジデンス401',
     owner: '佐藤 美咲',
-    note: 'FORM入力からCSV作成へつなげる入口確認用。保存は行わない。',
+    productName: '省エネ給湯器 GT-2460SAWX',
+    productLabel: '給湯器本体',
+    productMeasurement: '1',
+    productUnit: '台',
+    // 金額は確定金額の文字列として扱い、自動計算や再計算は入れない。
+    productFixedAmount: '305,000円',
+    productMemo: '既存品番と搬入寸法を訪問前に確認',
+    note: '管理組合への連絡後、CSV作成へ進める。',
 };
 
 export const csvFiles: CsvFile[] = [
@@ -217,7 +241,7 @@ const sharedFiles: FileImportItem[] = [
         id: 'file-2',
         fileName: 'site_note.xlsx',
         displayName: '現場メモ',
-        memo: 'Storage保存は行わない',
+        memo: '現場メモ添付',
         status: '投入待ち',
     },
 ];
@@ -277,7 +301,7 @@ export const projects: Project[] = [
                 ],
                 photos: sharedPhotos,
                 files: [],
-                memo: '作業カードは Query で詳細取得、Command で行追加・編集・削除する候補。',
+                memo: '配管まわりの写真を確認してから明細を更新する。',
             },
             {
                 id: 'card-product-001',
@@ -380,12 +404,12 @@ export const projects: Project[] = [
                         measuredValue: '1',
                         unit: '式',
                         fixedAmount: '-4,000円',
-                        memo: '丸め計算ではなく確定金額として保持',
+                        memo: '確定金額として保持',
                     },
                 ],
                 photos: [],
                 files: [],
-                memo: '調整金額も文字列の確定金額として表示し、自動丸めはしない。',
+                memo: '調整金額も文字列の確定金額として表示。',
             },
             {
                 id: 'card-issue-001',
@@ -445,7 +469,7 @@ export const projects: Project[] = [
                 ],
                 photos: [],
                 files: [],
-                memo: '後日対応は状態遷移未実装。UI上で判別できることだけ確認する。',
+                memo: '訪問日が決まり次第、担当者へ連絡する。',
             },
         ],
         reports: {
@@ -475,7 +499,7 @@ export const projects: Project[] = [
                 ],
                 extraFields: [
                     {
-                        label: '将来出力',
+                        label: '出力形式',
                         value: 'Excel出力 / 必要ならPDF変換',
                     },
                 ],
@@ -579,63 +603,51 @@ projects[1].reports = projects[0].reports;
 export const projectDetailTabs: {
     key: ProjectDetailTab;
     label: string;
-    boundary: string;
 }[] = [
+    {
+        key: 'access',
+        label: '現場アクセス',
+    },
     {
         key: 'cards',
         label: 'カード一覧',
-        boundary: 'Query / Command候補',
     },
     {
         key: 'progress',
         label: '案件進行',
-        boundary: 'Query + 状態変更Command候補',
     },
     {
         key: 'estimate',
         label: '見積書',
-        boundary: 'Strategy + Responder候補',
     },
     {
         key: 'invoice',
         label: '請求書',
-        boundary: 'Strategy + Responder候補',
     },
     {
         key: 'receipt',
         label: '領収書',
-        boundary: 'Strategy + Responder候補',
     },
 ];
 
 export const screenSteps: {
     key: MockScreen;
     label: string;
-    description: string;
 }[] = [
     {
         key: 'entry',
-        label: '案件登録FORM',
-        description: 'DB保存せず、CSV作成につながる入口だけを確認',
+        label: 'FORM',
     },
     {
         key: 'csv',
-        label: 'CSV一括取り込み',
-        description: '複数CSV投入の待機、受付、エラー表示を確認',
+        label: '一括取込',
     },
     {
         key: 'projects',
         label: '案件一覧',
-        description: '案件カードから案件詳細へ進む導線を確認',
     },
     {
         key: 'project-detail',
         label: '案件詳細',
-        description: 'カード一覧、進行、帳票プレビューを確認',
-    },
-    {
-        key: 'card-detail',
-        label: 'カード詳細',
-        description: '詳細表、写真、ファイル、メモを確認',
     },
 ];

@@ -13,7 +13,7 @@ export default function WorkCardDetailPanel({
     const styles = cardKindStyles[card.kind];
 
     return (
-        <section className="grid gap-4">
+        <section className="grid max-h-[calc(100vh-9rem)] gap-4 overflow-y-auto">
             <div className={`rounded-lg border p-4 shadow-sm ${styles.panel}`}>
                 <button
                     type="button"
@@ -32,9 +32,6 @@ export default function WorkCardDetailPanel({
                     <h2 className="break-words text-2xl font-bold text-slate-950">
                         {card.title}
                     </h2>
-                    <p className="text-sm leading-7 text-slate-700">
-                        カード単独の詳細画面です。Queryで詳細取得、Commandで行追加・書き込み・編集・削除する候補として見せます。
-                    </p>
                 </div>
             </div>
 
@@ -58,9 +55,6 @@ export default function WorkCardDetailPanel({
                         <h3 className="text-lg font-bold text-slate-950">
                             作業詳細表 / 商品詳細表
                         </h3>
-                        <p className="mt-2 text-sm leading-7 text-slate-600">
-                            数量固定の列にせず、内容、表示ラベル、計測値、単位、確定金額、メモを行として表示します。
-                        </p>
                     </div>
                     <div className="grid w-full grid-cols-4 gap-2 sm:w-auto">
                         {['行追加', '書き込み', '編集', '削除'].map((label) => (
@@ -103,9 +97,6 @@ export default function WorkCardDetailPanel({
                             <h3 className="text-lg font-bold text-blue-950">
                                 写真連続撮影
                             </h3>
-                            <p className="mt-2 text-sm leading-7 text-blue-900">
-                                実カメラ起動、圧縮、アップロードは行いません。
-                            </p>
                         </div>
                         <button
                             type="button"
@@ -168,9 +159,6 @@ export default function WorkCardDetailPanel({
                             <h3 className="text-lg font-bold text-emerald-950">
                                 ファイル取り込み
                             </h3>
-                            <p className="mt-2 text-sm leading-7 text-emerald-900">
-                                実Storage保存は行わず、ファイル選択とドラッグ＆ドロップの入口だけを見せます。
-                            </p>
                         </div>
                         <button
                             type="button"

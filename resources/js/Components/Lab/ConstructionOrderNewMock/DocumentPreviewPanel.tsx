@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import type { DocumentType, Project } from './mockData';
 import { cardKindLabels, cardKindStyles } from './mockData';
 
@@ -17,22 +19,33 @@ export default function DocumentPreviewPanel({
     project,
 }: DocumentPreviewPanelProps) {
     const preview = project.reports[documentType];
-    const selectedCards = project.cards.filter((card) =>
-        preview.selectedCardIds.includes(card.id),
+    const [selectedCardIds, setSelectedCardIds] = useState<string[]>(
+        preview.selectedCardIds,
     );
 
+    // Checkbox selection is local UI state; Excel/PDF generation is still outside this MOCK.
+    useEffect(() => {
+        setSelectedCardIds(preview.selectedCardIds);
+    }, [preview.selectedCardIds]);
+
+    const selectedCards = project.cards.filter((card) =>
+        selectedCardIds.includes(card.id),
+    );
+
+    const toggleCard = (cardId: string) => {
+        setSelectedCardIds((current) =>
+            current.includes(cardId)
+                ? current.filter((id) => id !== cardId)
+                : [...current, cardId],
+        );
+    };
+
     return (
-        <section className="grid gap-4">
+        <section className="grid max-h-[calc(100vh-16rem)] gap-4 overflow-y-auto">
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    EXCEL TEMPLATE / DOCUMENT PREVIEW
-                </p>
-                <h3 className="mt-2 text-lg font-bold text-slate-950">
+                <h3 className="text-lg font-bold text-slate-950">
                     {documentLead[documentType]}
                 </h3>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                    Excelテンプレート保存、対象カード収集、カテゴリ整理、Excel差し込み、Excel出力、必要ならPDF変換という将来構想をUIで見せるだけです。
-                </p>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
@@ -70,7 +83,7 @@ export default function DocumentPreviewPanel({
                                         <input
                                             type="checkbox"
                                             checked={checked}
-                                            readOnly
+                                            onChange={() => toggleCard(card.id)}
                                             className="mt-1 h-4 w-4"
                                         />
                                         <span className="min-w-0">
@@ -94,20 +107,20 @@ export default function DocumentPreviewPanel({
 
                     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                         <h4 className="text-sm font-bold text-slate-800">
-                            将来出力
+                            出力
                         </h4>
                         <div className="mt-3 grid grid-cols-2 gap-2">
                             <button
                                 type="button"
                                 className="min-h-10 rounded-lg border border-slate-300 bg-slate-50 px-3 text-xs font-bold text-slate-700"
                             >
-                                Excel出力（将来）
+                                Excel出力
                             </button>
                             <button
                                 type="button"
                                 className="min-h-10 rounded-lg border border-slate-300 bg-slate-50 px-3 text-xs font-bold text-slate-700"
                             >
-                                PDF変換（将来）
+                                PDF変換
                             </button>
                         </div>
                     </section>
@@ -138,8 +151,8 @@ export default function DocumentPreviewPanel({
                             <p className="mt-2 text-3xl font-bold text-rose-600">
                                 {preview.amount}
                             </p>
-                            <p className="mt-3 text-sm leading-7 text-slate-600">
-                                {preview.overview}
+                            <p className="mt-3 text-sm font-bold text-slate-600">
+                                対象カード {selectedCards.length}件
                             </p>
                         </div>
 

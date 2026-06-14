@@ -32,9 +32,6 @@ export default function ProjectDetailPanel({
                 </button>
 
                 <div className="mt-4 grid gap-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        PROJECT DETAIL QUERY
-                    </p>
                     <h2 className="break-words text-2xl font-bold text-slate-950">
                         {project.name}
                     </h2>
@@ -55,12 +52,8 @@ export default function ProjectDetailPanel({
                 </div>
             </div>
 
-            <SiteAccessPanel project={project} />
-
-            <nav
-                aria-label="案件詳細タブ"
-                className="grid grid-cols-2 gap-2 sm:grid-cols-5"
-            >
+            {/* Detail tabs are kept visible on mobile so the workflow choices do not disappear. */}
+            <nav aria-label="案件詳細タブ" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {projectDetailTabs.map((tab) => {
                     const isActive = tab.key === activeTab;
 
@@ -71,26 +64,19 @@ export default function ProjectDetailPanel({
                             aria-pressed={isActive}
                             onClick={() => onTabChange(tab.key)}
                             className={[
-                                'min-h-14 rounded-lg border px-3 py-2 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100',
+                                'inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border px-2 text-center text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 sm:px-3 sm:text-sm',
                                 isActive
                                     ? 'border-sky-500 bg-sky-700 text-white'
                                     : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50',
                             ].join(' ')}
                         >
-                            <span className="block text-sm font-bold">{tab.label}</span>
-                            <span
-                                className={[
-                                    'mt-1 block text-[11px] leading-4',
-                                    isActive ? 'text-sky-50' : 'text-slate-500',
-                                ].join(' ')}
-                            >
-                                {tab.boundary}
-                            </span>
+                            <span className="whitespace-nowrap">{tab.label}</span>
                         </button>
                     );
                 })}
             </nav>
 
+            {activeTab === 'access' && <SiteAccessPanel project={project} />}
             {activeTab === 'cards' && (
                 <WorkCardListPanel project={project} onOpenCard={onOpenCard} />
             )}
