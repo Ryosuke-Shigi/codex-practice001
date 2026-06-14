@@ -224,7 +224,7 @@ Route::get('/lab', function () {
              */
             'id' => 'construction-order-workflow-idea-board',
             'title' => '工事発注管理・請求システム',
-            'summary' => 'Excel入口、CSV連携、Laravel正本化、画像管理、工程管理、請求書テンプレート選択型出力までをまとめた構想説明枠です。',
+            'summary' => 'Form / ExcelをCSV作成・投入入口にそろえ、案件中心に発注、作業カード、請求、領収、履歴を管理する構想説明枠です。',
             'status' => 'アイデアボード',
             'category' => 'IDEA-BOARD',
             'href' => '/lab/construction-order-workflow-idea-board',
@@ -233,9 +233,9 @@ Route::get('/lab', function () {
                 '工事発注',
                 '請求',
                 'CSV連携',
-                '画像管理',
-                '工程管理',
-                '帳票',
+                '案件管理',
+                '作業カード',
+                '領収',
             ],
         ],
         [

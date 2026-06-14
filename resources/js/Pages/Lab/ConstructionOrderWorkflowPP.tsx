@@ -7,12 +7,16 @@ import { Head } from '@inertiajs/react';
 
 import BasicConceptCards from '@/Components/Lab/ConstructionOrderWorkflowPP/BasicConceptCards';
 import ConceptHero from '@/Components/Lab/ConstructionOrderWorkflowPP/ConceptHero';
-import ConstructionBillingArchitectureSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingArchitectureSection';
-import ConstructionBillingFlowSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingFlowSection';
-import ConstructionBillingFormExcelSystemSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingFormExcelSystemSection';
-import ConstructionBillingProblemSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingProblemSection';
+import ConstructionBillingBillingGateSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingBillingGateSection';
+import ConstructionBillingBillingLifecycleSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingBillingLifecycleSection';
+import ConstructionBillingCaseStructureSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingCaseStructureSection';
+import ConstructionBillingCsvEntrySection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingCsvEntrySection';
+import ConstructionBillingCsvProcessingSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingCsvProcessingSection';
 import ConstructionBillingScreenSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingScreenSection';
+import ConstructionBillingSkipHoldSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingSkipHoldSection';
 import ConstructionBillingStatusChartSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingStatusChartSection';
+import ConstructionBillingTechNotesSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingTechNotesSection';
+import ConstructionBillingWorkCardSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingWorkCardSection';
 import PublicLayout from '@/Layouts/PublicLayout';
 
 export default function ConstructionOrderWorkflowPP() {
@@ -31,15 +35,19 @@ export default function ConstructionOrderWorkflowPP() {
 
                 {/*
                     ここから下は説明用の図解です。
-                    DB保存、CRUD、CSV取込本実装は追加せず、固定データで
-                    業務課題、役割分離、状態可視化、責務分離を読むための静的な見せ方に限定します。
+                    固定データでCSV入口、System側処理、案件中心構造、作業カード、
+                    請求条件、状態可視化、画面イメージを読むための静的な見せ方に限定します。
                 */}
-                <ConstructionBillingProblemSection />
-                <ConstructionBillingFormExcelSystemSection />
-                <ConstructionBillingFlowSection />
-                <ConstructionBillingScreenSection />
+                <ConstructionBillingCsvEntrySection />
+                <ConstructionBillingCsvProcessingSection />
+                <ConstructionBillingCaseStructureSection />
+                <ConstructionBillingWorkCardSection />
+                <ConstructionBillingSkipHoldSection />
+                <ConstructionBillingBillingLifecycleSection />
+                <ConstructionBillingBillingGateSection />
                 <ConstructionBillingStatusChartSection />
-                <ConstructionBillingArchitectureSection />
+                <ConstructionBillingScreenSection />
+                <ConstructionBillingTechNotesSection />
             </div>
         </PublicLayout>
     );
