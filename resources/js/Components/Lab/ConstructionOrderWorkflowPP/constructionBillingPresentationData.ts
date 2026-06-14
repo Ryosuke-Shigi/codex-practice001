@@ -41,6 +41,33 @@ export type StatusChart = {
     option: EChartsOption;
 };
 
+/**
+ * CSV一括アップロード入口で表示する、ファイル単位の仮状態です。
+ *
+ * 実アップロード結果ではなく、IDEA BOARD上で状態表示の粒度を伝えるために使います。
+ */
+export type UploadFilePreview = {
+    fileName: string;
+    size: string;
+    status: string;
+    count: string;
+    detail: string;
+    tone: 'waiting' | 'accepted' | 'error';
+};
+
+/**
+ * 連続撮影・添付アップロードのキュー表示用仮データです。
+ *
+ * 保存前後の削除や再試行を見せるための表示専用データであり、S3保存状態とは接続しません。
+ */
+export type UploadQueuePreview = {
+    title: string;
+    status: string;
+    detail: string;
+    meta: string;
+    tone: 'processing' | 'saved' | 'failed';
+};
+
 export const overviewCards: TextCard[] = [
     {
         title: '案件登録と管理・請求を切り離す',
@@ -107,6 +134,233 @@ export const csvEntryFlowChart = `flowchart TD
     start --> form --> formCsv --> drop
     start --> excel --> excelCsv --> drop
     drop --> wait --> endNode`;
+
+export const csvBulkUploadCards: TextCard[] = [
+    {
+        title: 'Formとは別のCSV入口',
+        detail: 'Formは画面入力からCSVを作る入口、CSV一括アップロードは作成済みCSVをまとめて投入先へ置く入口として分けて見せます。',
+    },
+    {
+        title: '複数CSVをまとめて投入',
+        detail: '複数選択とドラッグ＆ドロップで投入し、ファイルごとに投入待ち、受付済み、エラーを表示する構想です。',
+    },
+    {
+        title: 'System側の検知対象へ渡す',
+        detail: '投入後はLaravel Scheduler、S3原本退避、Job / Queue、CSV解析・検証、DB登録、ログ管理へ進む流れへつなぎます。',
+    },
+    {
+        title: '入口では判断しない',
+        detail: 'CSV一括アップロード入口ではDB登録、請求判断、状態遷移判断を行わず、投入と状態表示までに限定します。',
+    },
+];
+
+export const csvBulkUploadFiles: UploadFilePreview[] = [
+    {
+        fileName: 'orders_2026-06-14.csv',
+        size: '184KB',
+        status: '投入待ち',
+        count: '42件',
+        detail: '複数CSV選択後、System側の検知対象へ置く前の状態です。',
+        tone: 'waiting',
+    },
+    {
+        fileName: 'invoice_ready_cases.csv',
+        size: '96KB',
+        status: '受付済み',
+        count: '18件',
+        detail: '投入先へ置かれ、以後はScheduler検知と非同期処理の対象になります。',
+        tone: 'accepted',
+    },
+    {
+        fileName: 'receipts_retry.csv',
+        size: '32KB',
+        status: 'エラー',
+        count: '3件',
+        detail: '列不足などをファイル単位で表示し、この入口では登録可否を確定しません。',
+        tone: 'error',
+    },
+];
+
+export const csvBulkUploadFlowChart = `flowchart TD
+    title["題：CSV一括アップロード入口とSystem側処理の分担"]
+    start(["Start"])
+    selectFiles["複数CSV選択・ドラッグ＆ドロップ"]
+    statusList["ファイルごとの状態・件数表示"]
+    entryRule["入口ではDB登録・請求判断をしない"]
+    drop["CSV投入先へ置く"]
+    scheduler["Laravel Schedulerで検知"]
+    s3["S3へ原本退避"]
+    queue["Job / Queue投入"]
+    parse["CSV解析・検証"]
+    database["DB登録"]
+    logs["処理結果・ログ管理"]
+    endNode(["End"])
+    title --> start
+    start --> selectFiles --> statusList --> entryRule --> drop
+    drop --> scheduler --> s3 --> queue --> parse --> database --> logs --> endNode`;
+
+export const uploadUseCases: TextCard[] = [
+    { title: 'csv_bulk_upload', detail: '複数CSVをまとめて投入する入口' },
+    { title: 'continuous_photo_upload', detail: '撮るたびに保存へ進める連続撮影' },
+    { title: 'pdf_bulk_upload', detail: 'PDFを一括保存する入口' },
+    { title: 'work_card_photo_upload', detail: '作業カード写真の添付' },
+    { title: 'invoice_attachment', detail: '請求書まわりの添付' },
+    { title: 'receipt_attachment', detail: '領収書まわりの添付' },
+    { title: 'history_attachment', detail: '履歴へ紐づく添付' },
+];
+
+export const uploadFoundationResponsibilities: RoleColumn[] = [
+    {
+        title: 'UploadField',
+        role: '構想上の共通UI名',
+        points: [
+            'ファイル選択、撮影、圧縮、サムネイルを扱う',
+            'プレビュー、削除、再試行、状態表示を扱う',
+            '保存先パスやS3キーを組み立てない',
+            '今回共通Componentとして実装しない',
+        ],
+    },
+    {
+        title: 'Factory / Strategy / Service',
+        role: 'Laravel側の保存先制御候補',
+        points: [
+            '用途と対象IDから保存先ルールを切り替える',
+            '許可ルール、形式判定、保存先決定を扱う',
+            '用途ごとの分岐をフロントへ漏らさない',
+            '今回バックエンドクラスとして実装しない',
+        ],
+    },
+    {
+        title: 'StorageRepository',
+        role: 'Laravel Storage / S3境界候補',
+        points: [
+            'ファイル本体の保存境界を担当する',
+            'Storage / S3の詳細を上位へ漏らさない',
+            '説明メタ情報の業務判断は持たない',
+            '今回Repositoryとして実装しない',
+        ],
+    },
+    {
+        title: 'UploadDestinationResponder',
+        role: '返却整形だけの候補',
+        points: [
+            'Inertia props、JSON、署名付きURL、結果一覧を整形する',
+            '保存先決定を担当しない',
+            'Service / Factory / Strategyの判断結果を返すだけにする',
+            '今回Responderとして実装しない',
+        ],
+    },
+];
+
+export const continuousPhotoSteps: TextCard[] = [
+    { title: '写真撮影', detail: 'カメラ起動は実装せず、連続撮影できるUI構想として見せます。' },
+    { title: 'フロント圧縮', detail: '実画像圧縮は行わず、撮影後に軽量化してキューへ入る流れだけを示します。' },
+    { title: 'アップロードキューへ追加', detail: 'まとめて保存ではなく、撮るたびに保存へ進める基本方針です。' },
+    { title: 'Laravel側で保存先発行', detail: 'フロントは用途と対象IDを渡し、保存先パスはLaravel側で決める構想です。' },
+    { title: 'S3保存', detail: '実S3保存は行わず、Storage / S3へ本体を置く将来像として表示します。' },
+    { title: 'サムネイル表示', detail: '保存済みの見え方を固定データのサムネイル枠として表現します。' },
+    { title: 'プレビュー / 削除 / 再試行', detail: '保存前削除はローカルキュー、保存後削除は将来の履歴対象にできる操作として分けます。' },
+    { title: '後からメモ編集', detail: 'メモ編集APIは作らず、将来の管理イメージとしてだけ示します。' },
+];
+
+export const continuousPhotoPolicies: TextCard[] = [
+    {
+        title: '最大枚数制限なし',
+        detail: '枚数で先に閉じず、表示名、用途、メモで探しやすくする考え方です。',
+    },
+    {
+        title: '撮るたび保存が基本',
+        detail: '撮影完了ボタンは保存開始ではなく、撮影セッション終了として扱う構想です。',
+    },
+    {
+        title: '削除の意味を分ける',
+        detail: '保存前削除はローカルキューから削除、保存後削除は削除操作として扱う将来像です。',
+    },
+];
+
+export const uploadQueuePreviews: UploadQueuePreview[] = [
+    {
+        title: '施工前 001',
+        status: '圧縮中',
+        detail: '撮影直後。保存先はまだフロントでは知らない状態です。',
+        meta: '撮影操作日時 2026-06-14 09:18 / 元ファイル名なし',
+        tone: 'processing',
+    },
+    {
+        title: '検収写真 014',
+        status: '保存済み',
+        detail: 'サムネイルからプレビュー、削除、再試行の導線を見せます。',
+        meta: '生成ファイル名 inspection-014.jpg / アップロード者 現場担当',
+        tone: 'saved',
+    },
+    {
+        title: '領収添付 PDF',
+        status: '再試行待ち',
+        detail: '写真だけでなくPDFや添付にも同じ状態表示を使う構想です。',
+        meta: '元ファイル名 receipt-aoba.pdf / 用途 receipt_attachment',
+        tone: 'failed',
+    },
+];
+
+export const continuousPhotoFlowChart = `flowchart TD
+    title["題：共通UploadFieldと連続撮影アップロードの流れ"]
+    start(["Start"])
+    shoot["写真撮影"]
+    compress["フロント圧縮"]
+    queue["アップロードキューへ追加"]
+    issueDestination["Laravel側で保存先発行"]
+    s3["S3保存"]
+    thumbnail["サムネイル表示"]
+    actions["プレビュー・削除・再試行"]
+    memo["後からメモ編集"]
+    endNode(["End"])
+    title --> start
+    start --> shoot --> compress --> queue --> issueDestination --> s3 --> thumbnail --> actions --> memo --> endNode`;
+
+export const uploadDestinationFlowChart = `flowchart TD
+    title["題：保存先をフロントで決めない構成"]
+    uploadField["UploadField 用途と対象IDだけ渡す"]
+    service["Service 許可・形式・保存先ルール"]
+    factory["Factory / Strategy 用途別ルール切替"]
+    repository["Repository Laravel Storage / S3境界"]
+    responder["Responder 返却形式だけ整形"]
+    response["UIへ状態・URL・結果一覧を返す"]
+    uploadField --> service --> factory --> repository
+    service --> responder --> response
+    response --> uploadField`;
+
+export const uploadMetadataGroups: RoleColumn[] = [
+    {
+        title: '用途と紐づき',
+        role: '何のためのファイルかを探せるようにする',
+        points: ['アップロード用途', '紐づき先種別', '紐づき先ID', '削除状態', '削除理由'],
+    },
+    {
+        title: 'ファイル本体情報',
+        role: 'Storage / S3上の本体を追えるようにする',
+        points: ['元ファイル名 / 生成ファイル名', '保存先キー', 'MIME type', 'ファイルサイズ', 'サムネイル有無'],
+    },
+    {
+        title: '説明と操作履歴',
+        role: '後から意味を補足できるようにする',
+        points: ['表示名', 'メモ', '撮影操作日時', 'アップロード者', 'アップロード日時'],
+    },
+];
+
+export const uploadMetadataNotes: TextCard[] = [
+    {
+        title: 'ファイル本体と説明を分ける',
+        detail: '写真、CSV、PDF、請求添付、領収添付、履歴添付の本体はStorage / S3へ置き、説明や用途は将来DBメタ情報として扱います。',
+    },
+    {
+        title: '元ファイル名がない撮影に対応',
+        detail: '撮影データは元ファイル名がない場合があるため、元ファイル名 / 生成ファイル名の両方で表現します。',
+    },
+    {
+        title: 'EXIF前提にしない',
+        detail: '撮影日時はEXIFではなく、撮影操作日時またはアップロード日時として扱う構想です。位置情報取得や画像解析は扱いません。',
+    },
+];
 
 export const csvProcessingSteps: TextCard[] = [
     {

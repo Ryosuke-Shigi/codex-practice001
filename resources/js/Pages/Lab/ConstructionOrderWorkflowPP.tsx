@@ -16,6 +16,7 @@ import ConstructionBillingScreenSection from '@/Components/Lab/ConstructionOrder
 import ConstructionBillingSkipHoldSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingSkipHoldSection';
 import ConstructionBillingStatusChartSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingStatusChartSection';
 import ConstructionBillingTechNotesSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingTechNotesSection';
+import ConstructionBillingUploadFoundationSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingUploadFoundationSection';
 import ConstructionBillingWorkCardSection from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionBillingWorkCardSection';
 import PublicLayout from '@/Layouts/PublicLayout';
 
@@ -39,6 +40,7 @@ export default function ConstructionOrderWorkflowPP() {
                     請求条件、状態可視化、画面イメージを読むための静的な見せ方に限定します。
                 */}
                 <ConstructionBillingCsvEntrySection />
+                <ConstructionBillingUploadFoundationSection />
                 <ConstructionBillingCsvProcessingSection />
                 <ConstructionBillingCaseStructureSection />
                 <ConstructionBillingWorkCardSection />
