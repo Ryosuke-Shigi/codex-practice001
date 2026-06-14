@@ -251,7 +251,9 @@ Pull Request
 READMEは外部向けの概要です。内部の設計・テスト・AI運用ルールは、用途別のMarkdownへ分離しています。
 
 - [AGENTS.md](AGENTS.md): 作業時に守る入口ルール
+- [AI Docs Index](docs/ai/index.md): AI作業用MDの索引
 - [Documentation Index](docs/index.md): 用途別の正本と参照先
+- [MD Router](docs/ai/workflows/md-router.md): 作業種別ごとの参照範囲と停止条件
 - [Docker Command Registry](docs/operations/command-registry.md): Docker経由コマンドとGit境界
 - [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
 - [UI Development Flow](docs/ui-development-flow.md): MOCK / PROTOTYPE / PRODUCTのUI作成工程
@@ -265,5 +267,5 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [Context Management](docs/context-management.md): 文脈読込と理解再起動
 - [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
 - [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
-- [Instruction Summary Template](docs/templates/instruction-summary.md): CodexAppへ渡す指示用まとめの型
+- [PR Summary Template](docs/templates/pr-summary.md): Pull Request本文のレビュー用まとめ
 - [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時の停止条件

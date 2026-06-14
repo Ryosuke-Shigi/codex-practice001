@@ -31,8 +31,9 @@ MDルーターは、docsを軽く扱うためのものではない。
 全作業で最初に確認するもの。
 
 * AGENTS.md
+* docs/ai/index.md
 * docs/index.md
-* docs/md-router.md
+* docs/ai/workflows/md-router.md
 
 作業種別が決まった後、対応表に従って読むdocsを固定する。
 
@@ -41,12 +42,13 @@ MDルーターは、docsを軽く扱うためのものではない。
 原則として以下の順番で読む。
 
 1. AGENTS.md
-2. docs/index.md
-3. docs/md-router.md
-4. 作業種別ごとの共通docs
-5. 対象feature docs
-6. 対象Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test
-7. 依存が判明した場合のみ追加ファイル
+2. docs/ai/index.md
+3. docs/index.md
+4. docs/ai/workflows/md-router.md
+5. 作業種別ごとの共通docs
+6. 対象feature docs
+7. 対象Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test
+8. 依存が判明した場合のみ追加ファイル
 
 最初からリポジトリ全体を探索しない。
 
@@ -119,8 +121,8 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | --- | --- | --- | --- | --- |
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
-| 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
-| AI駆動開発方針修正 | docs/context-management.md / docs/development-flow.md / docs/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
+| 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
+| AI駆動開発方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | MOCK作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration |
 | PROTOTYPE作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
 | PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test | 無関係feature docs |
@@ -138,7 +140,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Docker修正 | コマンド台帳が存在する場合は読む / 存在する運用docs | Lightsail / Docker運用docsが存在する場合は読む | docker-compose.yml / docker / nginx / queue / scheduler | Laravel feature全体 |
 | 本番反映手順修正 | コマンド台帳が存在する場合は読む / 存在する運用docs | Lightsail / Docker / Git運用docsが存在する場合は読む | docker-compose.yml / deploy手順 / build手順 | 無関係featureコード |
 | GitHub Actions / CI修正 | コマンド台帳が存在する場合は読む / docs/testing.md | CI関連docsが存在する場合は読む | .github/workflows / composer / package scripts | 無関係featureコード |
-| PRレビュー | docs/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
+| PRレビュー | docs/ai/workflows/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
 | コメント / PHPDoc / JSDoc整備 | docs/architecture.md / 対象言語docsが存在する場合は読む | 対象feature docs | 対象ファイルのみ | 仕様変更につながる周辺修正 |
 | 失敗改善ログ作成 | docs/context-management.md / docs/development-flow.md | 対象PR / 対象docs | 必要な差分のみ | 無関係コード全体 |
 

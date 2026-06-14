@@ -17,7 +17,8 @@
 ### 全体ルール・禁止事項
 
 - `AGENTS.md`
-- `docs/md-router.md`
+- `docs/ai/index.md`
+- `docs/ai/workflows/md-router.md`
 - 共通方針docs
 
 ### コマンド実行・Git境界
@@ -90,45 +91,24 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | 文書 | 役割 |
 |---|---|
 | `AGENTS.md` | AI・人間が作業時に守る入口ルール |
+| `docs/ai/index.md` | AI作業用MDの索引 |
 | `docs/index.md` | docsの索引、正本の役割分担、用語 |
-| `docs/md-router.md` | 作業種別ごとに読むdocs、読まないdocs、停止条件、作業後の保守ルール |
+| `docs/ai/workflows/md-router.md` | 作業種別ごとに読むdocs、読まないdocs、停止条件、作業後の保守ルール |
 
 ## MD作業ルーター
 
 MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
 
-詳細な作業種別別ルーティング、PRレビュー強度との接続、停止条件、作業後の保守ルールは `docs/md-router.md` を正本とします。
+詳細な作業種別別ルーティング、PRレビュー強度との接続、停止条件、作業後の保守ルールは `docs/ai/workflows/md-router.md` を正本とします。
 
-作業前に次を宣言します。
-
-- 作業種別
-- 今回読むdocs
-- 今回読まないdocs
-- 編集禁止ファイル
-- 除外対象
-- Git境界
-- 停止条件
-- 必要な確認コマンド
-
-| 作業種別 | Git境界 | 今回読むdocs | 今回読まないdocs | 編集禁止ファイル | 停止条件・確認 |
-|---|---|---|---|---|---|
-| docsのみ更新 | `/src` 側repo | `AGENTS.md`, `docs/index.md`, 対象docs, 必要なら `docs/operations/command-registry.md` | アプリ実装docs、feature docs、UI docsは対象外なら読まない | `app/`, `routes/`, `resources/`, `tests/`, Docker / CI設定 | docs以外に差分が出る場合は停止。`git diff --check` |
-| UI MOCK | `/src` 側repo | `docs/ui-development-flow.md`, `docs/ui.md`, `docs/frontend.md`, `docs/prototype-policy.md` | Backend / DB / Docker docsは対象外なら読まない | Productコード、Route、DB、既存MOCK削除 | MOCK範囲を超える場合は停止。必要に応じてbuild |
-| UI PROTOTYPE | `/src` 側repo | `docs/ui-development-flow.md`, `docs/ui.md`, `docs/frontend.md`, `docs/prototype-policy.md`, 対象feature docs | Backend / DB docsは接続対象外なら読まない | Productコード、DB、CI設定 | 画面接続の確認範囲を超える場合は停止。必要に応じてbuild |
-| PRODUCT化 | `/src` 側repo | `docs/development-flow.md`, `docs/ui-development-flow.md`, `docs/architecture.md`, `docs/testing.md`, 対象feature docs | 無関係なfeature docs、Docker docs | MOCK / PROTOTYPEの無断削除、対象外機能 | 仕様・責務・テストが矛盾する場合は停止。対象テストから確認 |
-| Backend実装 | `/src` 側repo | `docs/architecture.md`, `docs/testing.md`, `docs/coding-standards.md`, `docs/commenting.md`, 対象feature docs | UI docs、Docker docsは対象外なら読まない | `resources/js/`, UI、Docker / CI設定 | 責務境界やDB条件が不明なら停止。対象テストから確認 |
-| Frontend実装 | `/src` 側repo | `docs/frontend.md`, `docs/ui.md`, `docs/coding-standards.md`, 対象feature docs | Backend / DB docsはAPI変更がなければ読まない | Controller、Action、Service、Repository、DB、Docker / CI設定 | props/API契約が不明なら停止。必要に応じてtest / build |
-| Feature docs更新 | `/src` 側repo | 対象 `docs/features/`, `docs/index.md`, 関連する成功テスト | 無関係なfeature docs、UI / Backend共通docsは不要なら読まない | アプリコード、Route、DB、Docker / CI設定 | 現在のコード・テストと矛盾する場合は停止 |
-| PR確認 | `/src` 側repo | `docs/operations/pr-review-strength.md`, `docs/index.md`, 変更ファイルに対応するdocs | 変更範囲外のdocs | レビュー対象外ファイル | レビュー強度・影響範囲が不明なら停止 |
-| Git / CI確認 | 作業対象repo | `docs/operations/command-registry.md`, `docs/operations/pr-review-strength.md` | 実装docs、UI docsは不要なら読まない | アプリコード、Docker設定は確認目的なら編集禁止 | 対象repoやCI正本が不明なら停止 |
-| Docker / command確認 | 外側repo | `docs/operations/command-registry.md` | Laravel / React / feature docs | `/src` 側アプリコード、docs、tests | Docker構成確認の範囲を超える場合は停止 |
+作業前に宣言する項目は `docs/ai/workflows/md-router.md` を確認してください。
 
 ## 作業内容に応じて確認する文書
 
 | 文書 | 読む条件 |
 |---|---|
 | `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
-| `docs/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
+| `docs/ai/workflows/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |

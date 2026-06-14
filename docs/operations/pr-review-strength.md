@@ -131,6 +131,7 @@ PRレビューでは、リポジトリ全体理解から入りません。差分
 - changed files
 - 関連docs
 - AGENTS.md
+- `docs/ai/index.md`
 - `docs/operations/command-registry.md`
 - migration / model / repository / service / test
 - Docker構成
