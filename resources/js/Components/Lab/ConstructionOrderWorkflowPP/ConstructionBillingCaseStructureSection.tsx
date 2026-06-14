@@ -1,32 +1,35 @@
 /**
- * 工事発注 idea-board の課題整理 section Component です。
+ * 工事発注 idea-board の案件中心データ構造 section Component です。
  *
- * 説明用カードと図を表示するだけで、現行業務仕様の正本や要件確定資料としては扱いません。
+ * 説明用カードと図を表示するだけで、正式なDB設計やMigrationの正本としては扱いません。
  */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
-import { problemCards, problemFlowChart } from './constructionBillingPresentationData';
+import {
+    caseStructureCards,
+    caseStructureFlowChart,
+} from './constructionBillingPresentationData';
 
 const diagramClassName =
     'mt-4 [&_svg]:mx-auto [&_svg]:!w-[min(100%,620px)] [&_svg]:!max-w-full';
 
-export default function ConstructionBillingProblemSection() {
+export default function ConstructionBillingCaseStructureSection() {
     return (
         <section className="min-w-0 rounded-lg border border-white/18 bg-slate-950/58 p-5 backdrop-blur-2xl sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
-                Problem
+                Case Structure
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-white">
-                何を解決するシステムか
+                案件中心のデータ構造
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                工事、発注、請求を同じ場所に置くだけでは、現場で見たい状態と管理すべき状態が混ざります。
-                このアイデアボードでは、Form入力とExcel/CSV入力を同じ発注登録へ集約し、状態管理をSystem側へ寄せる境界を見せます。
+                CSVから登録された後は、案件を中心にして発注、作業カード、請求、領収、履歴を紐づける考え方です。
+                ここでは正式なテーブル設計ではなく、構想段階の関係イメージとして見せます。
             </p>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                    {problemCards.map((card) => (
+                    {caseStructureCards.map((card) => (
                         <article
                             key={card.title}
                             className="min-w-0 rounded-lg border border-white/14 bg-white/8 p-4 text-white"
@@ -41,12 +44,11 @@ export default function ConstructionBillingProblemSection() {
 
                 <article className="min-w-0 rounded-lg border border-cyan-100/30 bg-cyan-100/10 p-4">
                     <p className="text-sm leading-6 text-cyan-50/88">
-                        課題は「Excelが悪い」ではなく、Excelに状態判断まで閉じ込めてしまうことです。
-                        既存ExcelはCSVを出す入力元として活かし、発注登録と状態管理はSystem側へ集約します。
+                        案件を中心に置くことで、発注の数、作業カードの進み具合、請求・領収、理由付き履歴を同じ文脈で追えるようにします。
                     </p>
                     <MermaidDiagram
-                        chart={problemFlowChart}
-                        title="工事発注管理と請求管理の課題"
+                        chart={caseStructureFlowChart}
+                        title="案件中心のデータ構造イメージ"
                         className={diagramClassName}
                     />
                 </article>

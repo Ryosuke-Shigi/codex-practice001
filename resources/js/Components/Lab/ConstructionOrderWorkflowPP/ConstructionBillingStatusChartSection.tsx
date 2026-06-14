@@ -14,11 +14,11 @@ export default function ConstructionBillingStatusChartSection() {
                 Status Charts
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-white">
-                状態をグラフで見える化する
+                視覚化ダッシュボード / グラフ
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                EChartsの共通表示コンポーネントを使い、工事、請求、月別請求額、業者別発注件数を仮データで可視化します。
-                ここでは本番DBには触れず、後でDTOやInertia propsに置き換えやすい形で表示します。
+                EChartsの共通表示コンポーネントを使い、CSV取込処理、作業カード状態、案件ステータス、請求・領収ステータスを仮データで可視化します。
+                業者別発注件数と月別請求額も、運用の見通しを見る補助グラフとして残します。
             </p>
 
             <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">

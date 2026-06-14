@@ -1,13 +1,13 @@
 /**
- * 工事発注 idea-board の Form / Excel / System 比較 section Component です。
+ * 工事発注 idea-board のCSV作成・投入 section Component です。
  *
- * 役割分担の説明表示に限定し、実際のExcel取込やフォーム保存処理は持ちません。
+ * Form / Excel / CSV投入先の説明表示に限定し、登録や請求の処理は持ちません。
  */
 import MermaidDiagram from '@/Components/Common/Visualizations/Diagrams/MermaidDiagram';
 
 import {
-    formExcelSystemFlowChart,
-    formExcelSystemRoles,
+    csvEntryFlowChart,
+    csvEntryRoles,
 } from './constructionBillingPresentationData';
 
 const diagramClassName =
@@ -22,25 +22,25 @@ function roleClassName(title: string) {
         return 'border-amber-200/35 bg-amber-200/10 text-amber-50';
     }
 
-    return 'border-emerald-200/35 bg-emerald-200/10 text-emerald-50';
+    return 'border-violet-200/35 bg-violet-200/10 text-violet-50';
 }
 
-export default function ConstructionBillingFormExcelSystemSection() {
+export default function ConstructionBillingCsvEntrySection() {
     return (
         <section className="min-w-0 rounded-lg border border-white/18 bg-slate-950/58 p-5 backdrop-blur-2xl sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/75">
-                Boundary
+                CSV Entry
             </p>
             <h2 className="mt-3 text-2xl font-semibold text-white">
-                Form / Excel / System の役割を分ける
+                CSV作成・投入領域
             </h2>
             <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-200/80">
-                Formは画面から発注情報を入力する入口、Excelは既存業務からCSVを出す入力元です。
-                どちらの入力でも最終的に同じDTOへ変換し、System側の同じ発注登録処理へ渡します。
+                FormとExcelは、どちらもCSVを作成して投入する入口として扱います。
+                この領域では案件の管理、請求、領収の処理は行わず、CSVを作る・投げるところまでを説明します。
             </p>
 
             <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-                {formExcelSystemRoles.map((column) => (
+                {csvEntryRoles.map((column) => (
                     <article
                         key={column.title}
                         className={`min-w-0 rounded-lg border p-4 ${roleClassName(column.title)}`}
@@ -63,11 +63,12 @@ export default function ConstructionBillingFormExcelSystemSection() {
 
             <div className="mt-5 min-w-0 rounded-lg border border-white/14 bg-white/8 p-4">
                 <p className="text-sm leading-6 text-slate-200/78">
-                    Excelは一覧を見るための正本ではありません。ExcelからCSVを出せれば、Form入力と同じ登録処理に乗せられる、という境界をアイデアボード上で見せます。
+                    Form入力もExcel運用も、CSV投入先へ置くところまでを同じ入口としてそろえます。
+                    その後の検知、退避、登録、管理は次のSystem側処理として分けます。
                 </p>
                 <MermaidDiagram
-                    chart={formExcelSystemFlowChart}
-                    title="Form入力とExcel CSV入力を同じ発注登録へ集約する"
+                    chart={csvEntryFlowChart}
+                    title="FormとExcelはCSVを作る・投入する入口"
                     className={diagramClassName}
                 />
             </div>
