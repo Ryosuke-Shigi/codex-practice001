@@ -106,7 +106,7 @@ export default function ConstructionOrderNewMock() {
         }));
     };
 
-    // UI MOCK flow: 案件登録 / CSV作成 / 案件一覧 -> 案件詳細 -> カード詳細。
+    // UI MOCK flow: 案件登録 / CSV取込 / 案件一覧 -> 案件詳細 -> カード詳細。
     const openProject = (project: Project) => {
         setSelectedProjectId(project.id);
         setSelectedCardId(project.cards[0]?.id ?? null);
@@ -141,7 +141,7 @@ export default function ConstructionOrderNewMock() {
             }),
         );
         setSelectedCardId(newCard.id);
-        setActiveProjectTab('cards');
+        setActiveScreen('card-detail');
     };
 
     const saveWorkCard = (updatedCard: WorkCard) => {

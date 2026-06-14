@@ -98,7 +98,7 @@ export default function WorkCardListPanel({
                                     カード種類選択
                                 </h4>
                                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                                    選んだ種類で入力用カードを追加し、カード一覧へ戻ります。
+                                    選んだ種類でカードを追加し、そのまま詳細入力画面を開きます。
                                 </p>
                             </div>
                             <button

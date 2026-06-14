@@ -158,7 +158,7 @@ export const initialEntryDraft: EntryDraft = {
             productMemo: '既存配線の再利用可否を現地で確認',
         },
     ],
-    note: '管理組合への連絡後、CSV作成へ進める。',
+    note: '管理組合への連絡後、CSV取込へ進める。',
 };
 
 export const csvFiles: CsvFile[] = [

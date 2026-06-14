@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 import type { Project } from './mockData';
 
 type SiteAccessPanelProps = {
@@ -5,12 +7,37 @@ type SiteAccessPanelProps = {
 };
 
 export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
+    const [accessMemos, setAccessMemos] = useState({
+        parking: project.parkingMemo,
+        loading: project.loadingMemo,
+        visit: project.visitNote,
+    });
+    const [savedMemoKey, setSavedMemoKey] = useState<keyof typeof accessMemos | null>(
+        null,
+    );
     const encodedAddress = encodeURIComponent(project.siteAddress);
     // Address-based mock links only: no Maps API key, SDK, geocoding, or current location.
     const mapPreviewUrl = `https://maps.google.com/maps?q=${encodedAddress}&output=embed`;
-    const googleMapUrl = `https://www.google.com/maps/search/${encodedAddress}`;
-    const googleRouteUrl = `https://www.google.com/maps/dir/?destination=${encodedAddress}`;
-    const yahooMapUrl = `https://map.yahoo.co.jp/search?p=${encodedAddress}`;
+    const googleMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    const googleRouteUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+    const yahooMapUrl = `https://map.yahoo.co.jp/search?p=${encodedAddress}&ei=UTF-8`;
+
+    useEffect(() => {
+        setAccessMemos({
+            parking: project.parkingMemo,
+            loading: project.loadingMemo,
+            visit: project.visitNote,
+        });
+        setSavedMemoKey(null);
+    }, [project]);
+
+    const updateMemo = (key: keyof typeof accessMemos, value: string) => {
+        setAccessMemos((current) => ({
+            ...current,
+            [key]: value,
+        }));
+        setSavedMemoKey(null);
+    };
 
     return (
         <section className="rounded-lg border border-sky-200 bg-sky-50 p-4 shadow-sm sm:p-5">
@@ -71,20 +98,69 @@ export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-3">
-                    <AccessMemo title="駐車メモ" body={project.parkingMemo} />
-                    <AccessMemo title="搬入口メモ" body={project.loadingMemo} />
-                    <AccessMemo title="訪問注意事項" body={project.visitNote} />
+                    <AccessMemoEditor
+                        title="駐車メモ"
+                        value={accessMemos.parking}
+                        saved={savedMemoKey === 'parking'}
+                        onChange={(value) => updateMemo('parking', value)}
+                        onSave={() => setSavedMemoKey('parking')}
+                    />
+                    <AccessMemoEditor
+                        title="搬入口メモ"
+                        value={accessMemos.loading}
+                        saved={savedMemoKey === 'loading'}
+                        onChange={(value) => updateMemo('loading', value)}
+                        onSave={() => setSavedMemoKey('loading')}
+                    />
+                    <AccessMemoEditor
+                        title="訪問注意事項"
+                        value={accessMemos.visit}
+                        saved={savedMemoKey === 'visit'}
+                        onChange={(value) => updateMemo('visit', value)}
+                        onSave={() => setSavedMemoKey('visit')}
+                    />
                 </div>
             </div>
         </section>
     );
 }
 
-function AccessMemo({ title, body }: { title: string; body: string }) {
+function AccessMemoEditor({
+    title,
+    value,
+    saved,
+    onChange,
+    onSave,
+}: {
+    title: string;
+    value: string;
+    saved: boolean;
+    onChange: (value: string) => void;
+    onSave: () => void;
+}) {
     return (
-        <article className="rounded-lg border border-sky-200 bg-white p-3">
-            <h4 className="text-sm font-bold text-sky-950">{title}</h4>
-            <p className="mt-2 text-sm leading-6 text-slate-700">{body}</p>
+        <article className="grid gap-2 rounded-lg border border-sky-200 bg-white p-3">
+            <div className="flex items-center justify-between gap-2">
+                <h4 className="text-sm font-bold text-sky-950">{title}</h4>
+                {saved && (
+                    <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-900">
+                        保存済み
+                    </span>
+                )}
+            </div>
+            <textarea
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                rows={4}
+                className="min-h-24 rounded-md border border-sky-200 bg-sky-50 px-2 py-1.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-sky-500 focus:bg-white focus:ring-4 focus:ring-sky-100"
+            />
+            <button
+                type="button"
+                onClick={onSave}
+                className="min-h-9 rounded-md bg-sky-700 px-3 text-xs font-bold text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+            >
+                保存
+            </button>
         </article>
     );
 }

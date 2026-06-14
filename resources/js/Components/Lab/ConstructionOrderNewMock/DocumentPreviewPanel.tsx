@@ -153,49 +153,22 @@ export default function DocumentPreviewPanel({
             </div>
 
             <article className="rounded-md border border-slate-200 bg-slate-100 p-2 shadow-sm">
-                <div className="mb-2 grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setActivePageIndex((current) => Math.max(current - 1, 0))
-                        }
-                        disabled={activePageIndex === 0}
-                        className="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                    >
-                        前へ
-                    </button>
-                    <div className="flex flex-wrap items-center justify-center gap-1">
-                        <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-700">
-                            {activePageIndex + 1} / {pages.length}
-                        </span>
-                        {pages.map((page, index) => (
-                            <button
-                                key={`${page.kind}-${page.label}`}
-                                type="button"
-                                onClick={() => setActivePageIndex(index)}
-                                className={[
-                                    'h-8 rounded-md border px-2 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100',
-                                    index === activePageIndex
-                                        ? 'border-sky-600 bg-sky-700 text-white'
-                                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
-                                ].join(' ')}
-                            >
-                                {index + 1}
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setActivePageIndex((current) =>
-                                Math.min(current + 1, pages.length - 1),
-                            )
-                        }
-                        disabled={activePageIndex === pages.length - 1}
-                        className="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                    >
-                        次へ
-                    </button>
+                <div className="mb-2 flex flex-wrap justify-center gap-1">
+                    {pages.map((page, index) => (
+                        <button
+                            key={`${page.kind}-${page.label}`}
+                            type="button"
+                            onClick={() => setActivePageIndex(index)}
+                            className={[
+                                'h-8 rounded-md border px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100',
+                                index === activePageIndex
+                                    ? 'border-sky-600 bg-sky-700 text-white'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+                            ].join(' ')}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
                 </div>
 
                 <div className="mx-auto min-h-[28rem] max-w-[44rem] bg-white p-4 text-slate-950 shadow-[0_12px_28px_rgba(15,23,42,0.12)] sm:p-6">

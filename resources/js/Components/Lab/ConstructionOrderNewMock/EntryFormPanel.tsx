@@ -49,7 +49,7 @@ const productFields: {
     label: string;
     multiline?: boolean;
 }[] = [
-    // 案件登録時点で商品候補を持たせ、CSV作成と商品カード化の流れを確認する。
+    // 案件登録時点で商品候補を持たせ、CSV取込と商品カード化の流れを確認する。
     {
         key: 'productName',
         label: '商品名',
@@ -104,22 +104,22 @@ export default function EntryFormPanel({
         <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
                 <h2 className="text-base font-bold text-slate-950">
-                    案件登録
+                    案件登録FORM
                 </h2>
                 <div className="flex gap-2">
                     <button
                         type="button"
-                        onClick={onPreview}
-                        className="h-8 rounded-md bg-sky-700 px-3 text-xs font-bold text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                        aria-pressed="true"
+                        className="h-8 rounded-md bg-sky-700 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     >
-                        仮登録
+                        FORM
                     </button>
                     <button
                         type="button"
                         onClick={onNext}
                         className="h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     >
-                        CSV作成
+                        CSV取込
                     </button>
                 </div>
             </div>
@@ -241,12 +241,22 @@ export default function EntryFormPanel({
                             )}
                             {!previewed && (
                                 <p className="mt-2 text-emerald-800">
-                                    仮登録を押すと、CSVプレビュー用の内容を確認できます。
+                                    登録を押すと、CSVプレビュー用の内容を確認できます。
                                 </p>
                             )}
                         </aside>
                     </div>
                 </div>
+            </div>
+
+            <div className="flex shrink-0 justify-end border-t border-slate-200 bg-white px-3 py-2">
+                <button
+                    type="button"
+                    onClick={onPreview}
+                    className="min-h-10 rounded-md bg-sky-700 px-5 text-sm font-bold text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                >
+                    登録
+                </button>
             </div>
         </section>
     );
