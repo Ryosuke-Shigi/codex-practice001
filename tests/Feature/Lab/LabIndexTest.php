@@ -87,11 +87,11 @@ class LabIndexTest extends TestCase
             );
     }
 
-    public function test_lab_keeps_existing_mock_links_and_new_construction_mock_link(): void
+    public function test_lab_keeps_existing_mock_links_and_construction_workflow_mock_link(): void
     {
         /*
          * 既存の MOCK 導線を壊さないことも仕様です。
-         * API Preview、QuakeWave Preview、工事発注の新MOCKが開けることを、
+         * API Preview、QuakeWave Preview、工事発注MOCKが開けることを、
          * LabのInertia props上で固定します。
          */
         $this
@@ -119,11 +119,11 @@ class LabIndexTest extends TestCase
                 ->where('experiments.13.status', 'Mock')
                 ->where('experiments.13.category', 'MOCK')
                 ->where('experiments.13.href', '/quakewave-preview')
-                ->where('experiments.14.id', 'construction-order-new-mock')
-                ->where('experiments.14.title', '工事発注管理・請求システム 新MOCK')
+                ->where('experiments.14.id', 'construction-order-workflow-mock')
+                ->where('experiments.14.title', '工事発注管理・請求システム MOCK')
                 ->where('experiments.14.status', 'Mock')
                 ->where('experiments.14.category', 'MOCK')
-                ->where('experiments.14.href', '/lab/construction-order-new-mock')
+                ->where('experiments.14.href', '/lab/construction-order-workflow-mock')
             );
     }
 
@@ -166,13 +166,20 @@ class LabIndexTest extends TestCase
             );
     }
 
-    public function test_construction_order_new_mock_page_is_available(): void
+    public function test_construction_order_workflow_mock_page_is_available(): void
     {
         $this
-            ->get('/lab/construction-order-new-mock')
+            ->get('/lab/construction-order-workflow-mock')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/ConstructionOrderNewMock', false)
             );
+    }
+
+    public function test_construction_order_new_mock_url_redirects_to_workflow_mock(): void
+    {
+        $this
+            ->get('/lab/construction-order-new-mock')
+            ->assertRedirect('/lab/construction-order-workflow-mock');
     }
 }
