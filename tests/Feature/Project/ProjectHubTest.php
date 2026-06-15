@@ -75,13 +75,6 @@ class ProjectHubTest extends TestCase
             );
 
         $this
-            ->get('/lab/spec-flow-trainer')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Lab/SpecFlowTrainer', false)
-            );
-
-        $this
             ->get('/lab/construction-order-workflow-idea-board')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page

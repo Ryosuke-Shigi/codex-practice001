@@ -2,8 +2,7 @@ export type ProjectId =
     | 'api-discovery-hub'
     | 'dance-shorts'
     | 'japan-quake-wave-map'
-    | 'construction-order'
-    | 'spec-flow-trainer';
+    | 'construction-order';
 
 export type ProjectIconKey =
     | 'bar-chart'
@@ -14,8 +13,7 @@ export type ProjectIconKey =
     | 'lightbulb'
     | 'play'
     | 'radar'
-    | 'rocket'
-    | 'sparkles';
+    | 'rocket';
 
 export type StageKind = 'product' | 'prototype' | 'mock' | 'idea-board';
 
@@ -325,34 +323,6 @@ export const projects: Project[] = [
                 status: 'available',
                 iconKey: 'clipboard',
                 route: '/lab/construction-order-workflow-mock',
-            },
-        ],
-    },
-    {
-        id: 'spec-flow-trainer',
-        name: 'Spec Flow Trainer',
-        description:
-            'コードを書く前の設計を、仕様・DTO・ADR責務・TDD・AI指示として視覚化する開発補助Projectです。',
-        iconKey: 'sparkles',
-        theme: {
-            background: '#1c1730',
-            backgroundGlow: '#a78bfa',
-            sphere: '#c084fc',
-            sphereShadow: 'rgba(192, 132, 252, 0.38)',
-            accent: '#67e8f9',
-            surface: 'rgba(49, 46, 129, 0.48)',
-            text: '#f8f7ff',
-            muted: '#ddd6fe',
-        },
-        stages: [
-            {
-                kind: 'idea-board',
-                name: 'IDEA BOARD',
-                description:
-                    '仕様駆動開発、DTO、TDD、AIエージェント指示の流れを整理・相談する入口です。',
-                status: 'available',
-                iconKey: 'lightbulb',
-                route: '/lab/spec-flow-trainer',
             },
         ],
     },

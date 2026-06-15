@@ -113,15 +113,6 @@ Route::get('/lab/construction-order-workflow-idea-board', function () {
     return Inertia::render('Lab/ConstructionOrderWorkflowPP');
 })->name('lab.construction-order-workflow-idea-board');
 
-Route::get('/lab/spec-flow-trainer', function () {
-    /*
-     * SpecFlowTrainer の構想紹介ページです。
-     * 実体アプリの保存処理、Mermaid生成、React Flow編集はまだ持たせず、
-     * portfolio 上のアイデアボードとして「何を作る予定か」を静的に説明する責務に限定します。
-     */
-    return Inertia::render('Lab/SpecFlowTrainer');
-})->name('lab.spec-flow-trainer');
-
 /*
  * QuakeWave Preview の開発確認入口です。
  * index / mock / xml / map / sync status を分け、表示確認、XML確認、DB保存済みpin表示、

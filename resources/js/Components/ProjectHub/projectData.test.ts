@@ -9,7 +9,6 @@ describe('ProjectHub static project data', () => {
             'dance-shorts',
             'japan-quake-wave-map',
             'construction-order',
-            'spec-flow-trainer',
         ]);
     });
 
