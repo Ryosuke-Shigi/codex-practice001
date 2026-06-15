@@ -8,7 +8,7 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築しているポー�
 
 このリポジトリは、単にLaravelアプリを作るだけではなく、AI駆動開発を安全に進めるための設計・ドキュメント・テスト・Pull Request運用まで含めたポートフォリオです。
 
-ChatGPTで仕様整理、責務分離、テスト観点、レビュー観点、CodexApp向け指示用まとめを整理し、CodexAppで対象コードの調査、実装、差分適用、テスト追加・実行を行う前提で開発しています。
+ChatGPTで仕様整理、責務分離、テスト観点、レビュー観点、CodexApp向け指示用まとめの作成・圧縮・チェックを行い、CodexAppで渡された指示に従った対象コード調査、実装、差分確認、テスト追加・実行を行う前提で開発しています。詳細な役割境界は [Context Management](docs/context-management.md) を参照してください。
 
 開発では IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階を分け、PRODUCT化ではUI契約・振る舞い・状態・導線を引き継ぎながら、Repository / Service / DTO / Responder / Test へ責務を分離します。
 
@@ -171,11 +171,11 @@ make app-clear
 
 このプロジェクトでは、AIを開発の主体にせず、人間が目的・入力・出力・制約・責務境界・テスト観点・完成判定を決めます。
 
-- ChatGPT: 仕様整理、設計の壁打ち、責務分離、テスト観点、CodexApp向け指示整理
-- CodexApp: 対象コードの調査、実装・修正、差分適用、テスト追加・実行
+- ChatGPT: 仕様整理、設計の壁打ち、責務分離、テスト観点、指示用まとめの作成・圧縮・チェック
+- CodexApp: 渡された指示に従う対象コードの調査、実装・修正、差分確認、テスト追加・実行
 - 人間: 仕様確定、差分確認、完成判定、merge、本番反映判断
 
-AIの出力は、テスト、Pull Request、CI、責務レビューを通して確認します。
+AIの出力は、テスト、Pull Request、CI、責務レビューを通して確認します。詳細な役割境界は [Context Management](docs/context-management.md) に従います。
 
 ## Architecture
 
