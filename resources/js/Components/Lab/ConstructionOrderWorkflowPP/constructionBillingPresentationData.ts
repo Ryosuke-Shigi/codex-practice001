@@ -564,7 +564,7 @@ export const techStackCards: TextCard[] = [
 
 export const conceptNotes: TextCard[] = [
     {
-        title: '構想説明ページ',
+        title: '仕様整理ページ',
         detail: 'このページは検討中の流れを整理するためのIDEA BOARDであり、本実装や確定仕様ではありません。',
     },
     {

@@ -207,10 +207,11 @@ export default function ApiDiscoveryHubPp() {
             */}
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
+                    backHref="/projects/api-discovery-hub"
                     eyebrow="Idea Board"
                     title="API Discovery Hub"
                     lead="公開APIカタログを取得・検索・保存・調査できるポートフォリオ機能"
-                    description="APIs.guruの公開API一覧を起点に、API調査を一覧、詳細、メモ、検索補助までつなげる機能です。紹介ページでは仕様詳細よりも、初見の人が短時間で何を作ったかを理解できることを優先します。"
+                    description="APIs.guruの公開API一覧を起点に、API調査を一覧、詳細、メモ、検索補助までつなげる機能です。ここでは目的、責務境界、画面仕様を確認・相談できる形で整理します。"
                     status="完成済み"
                     keywords={[
                         'API Catalog',
@@ -244,16 +245,16 @@ export default function ApiDiscoveryHubPp() {
                 </PortfolioLpHero>
 
                 <PortfolioLpFeatureGrid
-                    eyebrow="What It Does"
+                    eyebrow="Spec Points"
                     title="何ができるか"
-                    description="実装済み機能の見どころを、ポートフォリオ紹介として短く読める粒度でまとめます。"
+                    description="実装済み画面の仕様と責務境界を、確認・相談しやすい粒度でまとめます。"
                     features={featureItems}
                 />
 
                 <PortfolioLpTechSection
                     eyebrow="Behind The Scenes"
                     title="裏側でやっていること"
-                    description="本番機能側では、外部API取得、DBキャッシュ、差分同期、表示整形をそれぞれの責務に分けています。このLP自体は静的な紹介ページで、同期やDB取得は行いません。"
+                    description="本番機能側では、外部API取得、DBキャッシュ、差分同期、表示整形をそれぞれの責務に分けています。このIDEA BOARD自体は仕様確認用で、同期やDB取得は行いません。"
                     items={techItems}
                     layers={architectureLayers}
                 />

@@ -381,6 +381,7 @@ export default function DanceShortsRadar() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
+                    backHref="/projects/dance-shorts"
                     eyebrow="Idea Board"
                     title="Dance Shorts Radar"
                     lead="YouTube Shorts のダンス候補を、公開APIの統計snapshotと差分から検出する分析ツール"
@@ -416,7 +417,7 @@ export default function DanceShortsRadar() {
                 />
 
                 <PortfolioLpFeatureGrid
-                    eyebrow="What It Does"
+                    eyebrow="Spec Points"
                     title="何を検出する候補か"
                     description="YouTube Shorts から、真似して投稿されやすそうなダンス、音源、振付、投稿パターンの候補を探します。"
                     features={featureItems}

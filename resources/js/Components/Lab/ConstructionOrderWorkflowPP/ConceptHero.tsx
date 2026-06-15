@@ -15,7 +15,7 @@ export default function ConceptHero() {
                             アイデアボード
                         </span>
                         <span className="rounded-md border border-emerald-100/30 bg-emerald-100/12 px-2.5 py-1 text-xs font-semibold text-emerald-50">
-                            構想説明用
+                            仕様整理用
                         </span>
                     </div>
                     <h1 className="mt-4 break-words text-3xl font-semibold leading-tight text-white sm:text-5xl">
@@ -31,16 +31,16 @@ export default function ConceptHero() {
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[320px] lg:grid-cols-1">
                     <Link
-                        href="/lab/construction-order-new-mock"
+                        href="/lab/construction-order-workflow-mock"
                         className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        新MOCKを見る
+                        MOCKを見る
                     </Link>
                     <Link
-                        href="/lab"
+                        href="/projects/construction-order"
                         className="inline-flex min-h-12 items-center justify-center rounded-lg border border-cyan-100/40 bg-cyan-100 px-4 text-sm font-bold text-slate-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        Lab 一覧へ
+                        Project Hubへ戻る
                     </Link>
                 </div>
             </div>

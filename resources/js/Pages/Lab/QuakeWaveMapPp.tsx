@@ -212,10 +212,11 @@ export default function QuakeWaveMapPp() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
+                    backHref="/projects/japan-quake-wave-map"
                     eyebrow="Idea Board"
                     title="Japan Quake Wave Map"
                     lead="気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能"
-                    description="Atom feedから個別XMLを取得し、地図表示に必要な地震情報を抽出してpinとして可視化します。紹介ページでは、外部データ同期、部分失敗、pin生成条件、表示導線の全体像を短く見せます。"
+                    description="Atom feedから個別XMLを取得し、地図表示に必要な地震情報を抽出してpinとして可視化します。ここでは外部データ同期、部分失敗、pin生成条件、表示導線の仕様を確認・相談できる形で整理します。"
                     status="完成済み"
                     keywords={[
                         'JMA XML',
@@ -249,16 +250,16 @@ export default function QuakeWaveMapPp() {
                 </PortfolioLpHero>
 
                 <PortfolioLpFeatureGrid
-                    eyebrow="What It Does"
+                    eyebrow="Spec Points"
                     title="何ができるか"
-                    description="気象庁XMLを取得して終わりではなく、地図上で見える形にするまでをポートフォリオとして説明します。"
+                    description="気象庁XMLを取得して終わりではなく、地図上で見える形にするまでの仕様を整理します。"
                     features={featureItems}
                 />
 
                 <PortfolioLpTechSection
                     eyebrow="Behind The Scenes"
                     title="裏側でやっていること"
-                    description="本番機能側では、外部XML取得、解析、保存、pin生成、同期状態の整形を分離しています。このLP自体は静的な紹介ページで、XML取得や同期処理は行いません。"
+                    description="本番機能側では、外部XML取得、解析、保存、pin生成、同期状態の整形を分離しています。このIDEA BOARD自体は仕様確認用で、XML取得や同期処理は行いません。"
                     items={techItems}
                     layers={architectureLayers}
                 />

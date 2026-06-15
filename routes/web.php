@@ -28,6 +28,16 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('welcome');
 
+Route::get('/projects', function () {
+    return Inertia::render('Projects/Select');
+})->name('projects.select');
+
+Route::get('/projects/{projectId}', function (string $projectId) {
+    return Inertia::render('Projects/Hub', [
+        'projectId' => $projectId,
+    ]);
+})->where('projectId', '[a-z0-9-]+')->name('projects.hub');
+
 Route::get('/design-philosophy', DesignPhilosophyController::class)
     ->name('design-philosophy');
 

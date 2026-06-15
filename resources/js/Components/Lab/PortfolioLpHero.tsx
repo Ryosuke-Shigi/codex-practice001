@@ -14,6 +14,8 @@ type PortfolioLpHeroMetric = {
 };
 
 type PortfolioLpHeroProps = {
+    backHref?: string;
+    backLabel?: string;
     eyebrow: string;
     title: string;
     lead: string;
@@ -31,6 +33,8 @@ type PortfolioLpHeroProps = {
  * 静的な表示要素だけを渡す前提です。
  */
 export default function PortfolioLpHero({
+    backHref = '/projects',
+    backLabel = 'Project Hubへ戻る',
     eyebrow,
     title,
     lead,
@@ -50,10 +54,10 @@ export default function PortfolioLpHero({
             <div className="min-w-0">
                 <nav aria-label="アイデアボードページの戻り導線">
                     <Link
-                        href="/lab?category=IDEA-BOARD"
+                        href={backHref}
                         className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/18 bg-white/10 px-4 text-sm font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        アイデアボード一覧へ戻る
+                        {backLabel}
                     </Link>
                 </nav>
 
@@ -92,7 +96,7 @@ export default function PortfolioLpHero({
             </div>
 
             <aside
-                aria-label="紹介ページの要点"
+                aria-label="アイデアボードの要点"
                 className="grid min-w-0 gap-3 sm:grid-cols-3 lg:grid-cols-1"
             >
                 {metrics.map((metric) => (

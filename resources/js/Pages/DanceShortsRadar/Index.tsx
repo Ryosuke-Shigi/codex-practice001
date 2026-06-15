@@ -70,10 +70,10 @@ export default function DanceShortsRadarIndex({
                         displayHeaderField={displayHeaderField}
                     />
                     <Link
-                        href="/lab"
+                        href="/projects/dance-shorts"
                         className="inline-flex min-h-8 shrink-0 items-center rounded-md border border-slate-700/[0.16] bg-white/[0.18] px-2.5 text-xs font-semibold text-slate-800 shadow-[0_8px_18px_rgba(80,105,140,0.1)] backdrop-blur-xl transition hover:bg-white/[0.26] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-200/[0.45]"
                     >
-                        Labへ戻る
+                        Hubへ戻る
                     </Link>
                 </header>
 

@@ -213,10 +213,10 @@ export default function DanceShortsRadarPage({
                             モックデータ
                         </span>
                         <Link
-                            href="/lab"
+                            href="/projects/dance-shorts"
                             className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/35 bg-white/16 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/26 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            Labへ戻る
+                            Hubへ戻る
                         </Link>
                     </div>
                 </header>

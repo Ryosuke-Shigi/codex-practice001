@@ -1035,10 +1035,10 @@ export default function DanceShortsAnalyzerMock() {
                         </div>
                         <div className="flex min-h-10 shrink-0 items-center gap-2">
                             <Link
-                                href="/lab"
+                                href="/projects/dance-shorts"
                                 className="inline-flex min-h-10 max-w-[34vw] items-center justify-center rounded-lg border border-blue-100/35 bg-white/10 px-3 text-center text-xs font-bold leading-4 text-blue-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
                             >
-                                Labに戻る
+                                Hubへ戻る
                             </Link>
                             {headerAction && (
                                 <button
