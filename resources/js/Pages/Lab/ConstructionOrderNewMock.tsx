@@ -75,12 +75,17 @@ export default function ConstructionOrderNewMock() {
         }));
     };
 
-    const addEntryProduct = () => {
+    const addEntryProduct = (
+        productDraft: Omit<EntryProductDraft, 'id'>,
+    ) => {
         setEntryDraft((current) => ({
             ...current,
             products: [
                 ...current.products,
-                createEntryProductDraft(current.products.length + 1),
+                {
+                    id: `entry-product-${Date.now()}`,
+                    ...productDraft,
+                },
             ],
         }));
     };
@@ -254,18 +259,6 @@ export default function ConstructionOrderNewMock() {
             </div>
         </PublicLayout>
     );
-}
-
-function createEntryProductDraft(index: number): EntryProductDraft {
-    return {
-        id: `entry-product-${Date.now()}`,
-        productName: `追加商品 ${index}`,
-        productLabel: '表示ラベル',
-        productMeasurement: '1',
-        productUnit: '式',
-        productFixedAmount: '0円',
-        productMemo: '',
-    };
 }
 
 function createMockWorkCard(kind: CardKind): WorkCard {

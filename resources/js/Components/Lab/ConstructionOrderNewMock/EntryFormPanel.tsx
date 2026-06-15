@@ -1,9 +1,13 @@
+import { useState } from 'react';
+
 import type {
     EntryDraft,
     EntryDraftField,
     EntryProductDraft,
     EntryProductDraftField,
 } from './mockData';
+
+type EntryProductAddDraft = Omit<EntryProductDraft, 'id'>;
 
 type EntryFormPanelProps = {
     draft: EntryDraft;
@@ -14,7 +18,7 @@ type EntryFormPanelProps = {
         field: EntryProductDraftField,
         value: string,
     ) => void;
-    onProductAdd: () => void;
+    onProductAdd: (product: EntryProductAddDraft) => void;
     onProductDuplicate: (product: EntryProductDraft) => void;
     onProductRemove: (productId: string) => void;
     onPreview: () => void;
@@ -100,6 +104,36 @@ export default function EntryFormPanel({
     onPreview,
     onNext,
 }: EntryFormPanelProps) {
+    const [productAddDraft, setProductAddDraft] =
+        useState<EntryProductAddDraft | null>(null);
+
+    const openProductAddModal = () => {
+        setProductAddDraft(createEmptyProductAddDraft());
+    };
+
+    const updateProductAddDraft = (
+        field: EntryProductDraftField,
+        value: string,
+    ) => {
+        setProductAddDraft((current) =>
+            current
+                ? {
+                      ...current,
+                      [field]: value,
+                  }
+                : current,
+        );
+    };
+
+    const registerProductAddDraft = () => {
+        if (!productAddDraft) {
+            return;
+        }
+
+        onProductAdd(productAddDraft);
+        setProductAddDraft(null);
+    };
+
     return (
         <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
@@ -145,7 +179,7 @@ export default function EntryFormPanel({
                             </h3>
                             <button
                                 type="button"
-                                onClick={onProductAdd}
+                                onClick={openProductAddModal}
                                 className="h-8 rounded-md bg-emerald-700 px-3 text-xs font-bold text-white transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100"
                             >
                                 追加
@@ -258,8 +292,28 @@ export default function EntryFormPanel({
                     登録
                 </button>
             </div>
+
+            {productAddDraft && (
+                <ProductAddModal
+                    draft={productAddDraft}
+                    onChange={updateProductAddDraft}
+                    onClose={() => setProductAddDraft(null)}
+                    onRegister={registerProductAddDraft}
+                />
+            )}
         </section>
     );
+}
+
+function createEmptyProductAddDraft(): EntryProductAddDraft {
+    return {
+        productName: '',
+        productLabel: '',
+        productMeasurement: '1',
+        productUnit: '式',
+        productFixedAmount: '0円',
+        productMemo: '',
+    };
 }
 
 function EntryInput({
@@ -346,6 +400,105 @@ function ProductInput({
                             field.key,
                             event.target.value,
                         )
+                    }
+                    className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                />
+            )}
+        </label>
+    );
+}
+
+function ProductAddModal({
+    draft,
+    onChange,
+    onClose,
+    onRegister,
+}: {
+    draft: EntryProductAddDraft;
+    onChange: (field: EntryProductDraftField, value: string) => void;
+    onClose: () => void;
+    onRegister: () => void;
+}) {
+    return (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3">
+            <div className="max-h-[88dvh] w-full max-w-2xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                    <h4 className="text-base font-bold text-slate-950">
+                        商品情報を追加
+                    </h4>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="h-8 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                    >
+                        閉じる
+                    </button>
+                </div>
+                <div className="max-h-[58dvh] overflow-y-auto px-4 py-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        {productFields.map((field) => (
+                            <ProductAddInput
+                                key={field.key}
+                                field={field}
+                                draft={draft}
+                                onChange={onChange}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="min-h-9 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                    >
+                        キャンセル
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onRegister}
+                        className="min-h-9 rounded-md bg-emerald-700 px-3 text-xs font-bold text-white transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100"
+                    >
+                        登録
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ProductAddInput({
+    field,
+    draft,
+    onChange,
+}: {
+    field: {
+        key: EntryProductDraftField;
+        label: string;
+        multiline?: boolean;
+    };
+    draft: EntryProductAddDraft;
+    onChange: (field: EntryProductDraftField, value: string) => void;
+}) {
+    return (
+        <label className="grid gap-1">
+            <span className="text-xs font-semibold text-slate-700">
+                {field.label}
+            </span>
+            {field.multiline ? (
+                <textarea
+                    value={draft[field.key]}
+                    onChange={(event) =>
+                        onChange(field.key, event.target.value)
+                    }
+                    rows={3}
+                    className="min-h-20 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                />
+            ) : (
+                <input
+                    value={draft[field.key]}
+                    onChange={(event) =>
+                        onChange(field.key, event.target.value)
                     }
                     className="h-9 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                 />
