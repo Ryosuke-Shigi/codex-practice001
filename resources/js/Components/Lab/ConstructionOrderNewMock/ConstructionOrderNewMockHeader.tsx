@@ -13,7 +13,7 @@ export default function ConstructionOrderNewMockHeader({
     return (
         <header className="shrink-0 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
             {/* Entry tabs are the only global tabs; detail screens hide this header. */}
-            <nav aria-label="新MOCK画面タブ" className="grid grid-cols-3 gap-1">
+            <nav aria-label="MOCK画面タブ" className="grid grid-cols-2 gap-1">
                 {screenSteps.map((step, index) => {
                     const isActive = step.key === activeScreen;
 

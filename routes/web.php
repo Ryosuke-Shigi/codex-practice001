@@ -220,7 +220,7 @@ Route::get('/lab', function () {
         [
             /*
              * 工事発注の IDEA BOARD は構想説明枠として残します。
-             * 新MOCKとは別の入口として扱い、説明ページ自体は削除しません。
+             * MOCKとは別の入口として扱い、説明ページ自体は削除しません。
              */
             'id' => 'construction-order-workflow-idea-board',
             'title' => '工事発注管理・請求システム',
@@ -300,13 +300,13 @@ Route::get('/lab', function () {
         [
             // 工事発注管理・請求システムの新しいUI MOCKです。
             // DB 接続、CSV 取込、Storage保存、地図API連携、Excel/PDF生成は行いません。
-            'id' => 'construction-order-new-mock',
-            'title' => '工事発注管理・請求システム 新MOCK',
+            'id' => 'construction-order-workflow-mock',
+            'title' => '工事発注管理・請求システム MOCK',
             'summary' => '案件登録、CSV投入、案件詳細、現場アクセス、カード詳細、見積書・請求書・領収書プレビューを固定データで確認するUI MOCKです。',
             'status' => 'Mock',
             'category' => 'MOCK',
-            'href' => '/lab/construction-order-new-mock',
-            'actionLabel' => '新MOCKを見る',
+            'href' => '/lab/construction-order-workflow-mock',
+            'actionLabel' => 'MOCKを見る',
         ],
     ];
 
@@ -387,10 +387,12 @@ Route::get('/dance-shorts-radar', DanceShortsRadarController::class)
 Route::get('/api/dance-shorts-radar/display-card-window', DanceShortsRadarDisplayCardWindowController::class)
     ->name('dance-shorts-radar.display-card-window');
 
-Route::get('/lab/construction-order-new-mock', function () {
+Route::get('/lab/construction-order-workflow-mock', function () {
     // UI MOCK専用の Inertia ページです。保存、取込、地図API連携、帳票生成は行いません。
     return Inertia::render('Lab/ConstructionOrderNewMock');
-})->name('lab.construction-order-new-mock');
+})->name('lab.construction-order-workflow-mock');
+
+Route::redirect('/lab/construction-order-new-mock', '/lab/construction-order-workflow-mock');
 
 Route::get('/lab/construction-order-workflow-idea-board', function () {
     // 非エンジニア向けの構想説明ページです。本番処理や保存処理は持たせません。
