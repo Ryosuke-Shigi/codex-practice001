@@ -792,6 +792,7 @@ export default function DanceShortsAnalyzer() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
+                    backHref="/projects/dance-shorts"
                     eyebrow="Idea Board"
                     title="Dance Shorts Analyzer"
                     lead="DanceShortsRadar が保存した動画と snapshot を使い、複数動画を選択して比較分析する画面構想"
@@ -827,7 +828,7 @@ export default function DanceShortsAnalyzer() {
                 />
 
                 <PortfolioLpFeatureGrid
-                    eyebrow="What It Does"
+                    eyebrow="Spec Points"
                     title="保存済みShortsを選び、snapshot推移を比較する"
                     description="Dance Shorts Radar の観測結果を再利用して、複数動画の伸び方を並べて見るための後続機能案です。"
                     features={featureItems}

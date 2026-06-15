@@ -500,10 +500,10 @@ export default function SpecFlowTrainer() {
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-5 pb-10">
                 <nav aria-label="アイデアボードページの戻り導線">
                     <Link
-                        href="/lab?category=IDEA-BOARD"
+                        href="/projects/spec-flow-trainer"
                         className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/16 bg-white/10 px-4 text-sm font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        ← アイデアボード一覧へ戻る
+                        Project Hubへ戻る
                     </Link>
                 </nav>
 
@@ -883,10 +883,10 @@ export default function SpecFlowTrainer() {
 
                 <div className="flex justify-center">
                     <Link
-                        href="/lab?category=IDEA-BOARD"
+                        href="/projects/spec-flow-trainer"
                         className="inline-flex min-h-12 items-center justify-center rounded-lg border border-cyan-100/40 bg-cyan-100 px-5 text-sm font-bold text-slate-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        アイデアボード一覧へ戻る
+                        Project Hubへ戻る
                     </Link>
                 </div>
             </div>

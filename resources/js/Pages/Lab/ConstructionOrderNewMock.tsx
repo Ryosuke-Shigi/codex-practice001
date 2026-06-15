@@ -4,7 +4,7 @@
  * 画面導線、カード構造、帳票構造、現場アクセス導線、ADR / レイヤード分解の材料を
  * 固定データだけで確認します。DB保存、CSV実取込、ファイル保存、帳票生成は行いません。
  */
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
 import ConstructionOrderNewMockHeader from '@/Components/Lab/ConstructionOrderNewMock/ConstructionOrderNewMockHeader';
@@ -201,6 +201,23 @@ export default function ConstructionOrderNewMock() {
             <Head title="工事発注管理・請求システム MOCK" />
 
             <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-2 overflow-hidden p-3 sm:p-4">
+                <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                    <div className="min-w-0">
+                        <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-slate-500">
+                            MOCK
+                        </p>
+                        <h1 className="truncate text-sm font-black text-slate-900 sm:text-base">
+                            工事発注管理・請求システム
+                        </h1>
+                    </div>
+                    <Link
+                        href="/projects/construction-order"
+                        className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-900 px-3 text-xs font-bold text-white transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100 sm:text-sm"
+                    >
+                        Hubへ戻る
+                    </Link>
+                </header>
+
                 {isEntryFlow && (
                     <ConstructionOrderNewMockHeader
                         activeScreen={activeScreen}

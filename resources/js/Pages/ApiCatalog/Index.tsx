@@ -18,9 +18,9 @@ import type { ApiCatalogNoteItem } from '@/Components/ApiCatalog/ApiCatalogNotes
 
 /*
  * 本番 API 一覧の戻るボタンは、ブラウザ履歴や直前画面には依存しません。
- * Preview から本番一覧を開いた履歴があっても、画面内ボタンは本番導線の入口へ戻します。
+ * 画面内ボタンは Project Hub の API Discovery Hub へ戻します。
  */
-const API_CATALOG_ENTRY_HREF = '/lab';
+const API_CATALOG_ENTRY_HREF = '/projects/api-discovery-hub';
 const API_CATALOG_SYNC_POLL_INTERVAL_MS = 2500;
 
 type ApiCatalogFilters = {
@@ -615,14 +615,14 @@ export default function Index({
                             {isSyncButtonDisabled ? '同期中' : '同期開始'}
                         </button>
                         {/*
-                            本番API一覧は Lab 配下の独立した本番導線です。
-                            ブラウザ履歴や直前画面ではなく、上位の実験入口へ明示的に戻します。
+                            本番API一覧はブラウザ履歴や直前画面ではなく、
+                            Project Hub の API Discovery Hub へ明示的に戻します。
                         */}
                         <Link
                             href={API_CATALOG_ENTRY_HREF}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            Labへ戻る
+                            Hubへ戻る
                         </Link>
                     </div>
                 </header>

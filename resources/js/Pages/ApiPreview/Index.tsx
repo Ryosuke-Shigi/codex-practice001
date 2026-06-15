@@ -70,10 +70,10 @@ export default function Index({ apis }: IndexProps) {
                     </div>
 
                     <Link
-                        href="/lab"
+                        href="/projects/api-discovery-hub"
                         className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
                     >
-                        Lab
+                        Hub
                     </Link>
                 </header>
 

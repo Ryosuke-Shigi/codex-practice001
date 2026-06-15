@@ -261,17 +261,17 @@ export default function MockIndex() {
 
                     {/*
                         画面状態を示す Mock ラベルを先に置き、戻るボタンを一番右に固定します。
-                        API Preview のモック入口枠へ戻る導線なので、一覧操作とは分けて扱います。
+                        Project Hub へ戻る導線なので、一覧操作とは分けて扱います。
                     */}
                     <div className="flex flex-wrap items-center gap-3">
                         <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
                             Mock
                         </span>
                         <Link
-                            href="/api-preview"
+                            href="/projects/api-discovery-hub"
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            戻る
+                            Hubへ戻る
                         </Link>
                     </div>
                 </header>

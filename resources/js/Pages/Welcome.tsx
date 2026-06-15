@@ -90,7 +90,7 @@ export default function Welcome() {
                         whileTap={{ scale: 0.98 }}
                     >
                         <Link
-                            href="/lab"
+                            href="/projects"
                             className="group relative inline-flex min-h-[68px] min-w-[200px] items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/22 px-11 py-4 text-lg font-bold uppercase tracking-[0.26em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.78),inset_0_-18px_36px_rgba(18,99,131,0.24),0_20px_46px_rgba(2,35,63,0.34)] outline-none backdrop-blur-2xl transition duration-300 hover:bg-white/30 focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:min-h-[76px] sm:min-w-[232px] sm:text-xl [@media(orientation:landscape)_and_(max-height:520px)]:min-h-[46px] [@media(orientation:landscape)_and_(max-height:520px)]:px-8 [@media(orientation:landscape)_and_(max-height:520px)]:py-2 [@media(orientation:landscape)_and_(max-height:520px)]:text-base"
                         >
                             {/*
