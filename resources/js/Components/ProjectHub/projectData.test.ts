@@ -33,4 +33,22 @@ describe('ProjectHub static project data', () => {
             ),
         ).toEqual(['product', 'mock', 'idea-board']);
     });
+
+    it('keeps current Project Hub routes without legacy Lab selection URLs', () => {
+        const routes = projects.flatMap((project) =>
+            project.stages.flatMap((stage) => [
+                stage.route,
+                ...(stage.modules?.map((module) => module.route) ?? []),
+            ]),
+        ).filter((route): route is string => route !== undefined);
+
+        expect(routes).toContain('/lab/construction-order-workflow-idea-board');
+        expect(routes).toContain('/lab/construction-order-workflow-mock');
+        expect(routes).not.toContain('/lab');
+        expect(routes).not.toContain('/lab/construction-order-new-mock');
+        expect(routes).not.toContain('/lab/construction-order-workflow-pp');
+        expect(routes).not.toContain('/lab/api-discovery-hub-pp');
+        expect(routes).not.toContain('/lab/quake-wave-map-pp');
+        expect(routes.some((route) => route.includes('category='))).toBe(false);
+    });
 });

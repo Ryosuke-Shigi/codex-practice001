@@ -167,9 +167,9 @@ const techItems = [
 
 const testItems = [
     {
-        title: '/lab カード',
+        title: 'Project Hub カード',
         description:
-            'Dance Shorts Analyzer の IDEA-BOARD カードが、Dance Shorts Radar の近くに表示されることを固定します。',
+            'Dance Shorts Analyzer の IDEA-BOARD カードが、DanceShorts Project Hub に表示されることを固定します。',
     },
     {
         title: 'IDEA-BOARD ルート',
