@@ -34,6 +34,18 @@ PRODUCT
 
 ただし、MOCKで確認した画面単体のUI構造と、PROTOTYPEで確認した画面間の導線は、`docs/ui-development-flow.md` に従ってProductへ引き継ぎます。
 
+## Project Select / Project Hub
+
+既存TOPのSTART後の正規入口は Project Select です。
+
+Project Select から各 Project の Project Hub へ入り、Project Hub で Project ごとの Stage / Module を確認します。
+
+Project / Stage / Module の一覧は `resources/js/Components/ProjectHub/projectData.ts` の静的TypeScriptデータで管理し、Project Select / Project Hub はDB/APIへ接続しません。
+
+現時点では PROTOTYPE stage は未作成のため表示しません。旧Lab入口、旧Project選択、旧MOCK選択は Project Select / Project Hub へ整理済みです。
+
+現在作成中の新しい工事発注管理システムの IDEA BOARD / MOCK は削除対象ではなく、Project Hub から入る現行Moduleとして扱います。
+
 ## IDEA BOARD
 
 発想、目的、想定利用者、未確定事項、調査対象を整理する段階です。

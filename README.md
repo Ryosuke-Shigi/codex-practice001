@@ -16,6 +16,8 @@ AIの出力は完成品として扱わず、テスト、Pull Request、CI、責�
 
 ## Projects
 
+既存TOPのSTARTから `/projects` の Project Select に入り、各Projectの `/projects/{projectId}` Project Hub で Stage / Module を確認します。Project Select / Project Hub は静的TypeScriptデータで管理し、DB/APIへ接続しません。現時点ではPROTOTYPEは未作成のため表示していません。
+
 新しく作ったものを上に並べています。  
 モック段階・構想段階のものは、この一覧には含めていません。
 

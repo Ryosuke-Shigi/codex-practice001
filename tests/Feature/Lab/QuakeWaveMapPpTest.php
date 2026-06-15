@@ -11,7 +11,7 @@ class QuakeWaveMapPpTest extends TestCase
     {
         /*
          * Japan Quake Wave Map の紹介LPも、本体のXML取得や同期処理とは切り離した静的ページです。
-         * ここでは地図データの中身ではなく、/lab から遷移する紹介入口が壊れていないことを守ります。
+         * ここでは地図データの中身ではなく、Project Hub から遷移する紹介入口が壊れていないことを守ります。
          */
         $this
             ->get('/lab/quake-wave-map-idea-board')
