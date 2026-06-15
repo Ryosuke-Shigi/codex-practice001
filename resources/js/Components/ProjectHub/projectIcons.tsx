@@ -9,7 +9,6 @@ import {
     Play,
     Radar,
     Rocket,
-    Sparkles,
 } from 'lucide-react';
 
 import type { ProjectIconKey } from './projectData';
@@ -24,7 +23,6 @@ const projectIconMap: Record<ProjectIconKey, LucideIcon> = {
     play: Play,
     radar: Radar,
     rocket: Rocket,
-    sparkles: Sparkles,
 };
 
 export function resolveProjectIcon(iconKey: ProjectIconKey): LucideIcon {
