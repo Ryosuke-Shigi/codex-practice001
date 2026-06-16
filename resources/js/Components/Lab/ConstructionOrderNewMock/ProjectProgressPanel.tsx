@@ -19,7 +19,7 @@ export default function ProjectProgressPanel({
         <section className="grid gap-2">
             <div className="rounded-md border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-base font-bold text-slate-950">工程</h3>
+                    <h3 className="text-base font-bold text-slate-950">詳細区分</h3>
                     <span className="rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-900">
                         {project.progressStatus}
                     </span>

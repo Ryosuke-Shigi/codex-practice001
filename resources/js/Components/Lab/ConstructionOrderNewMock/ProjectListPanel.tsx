@@ -44,9 +44,8 @@ export default function ProjectListPanel({
 
                             <div className="flex flex-wrap gap-1.5">
                                 <ProjectMeta label="カード数" value={project.cardCount} />
-                                <ProjectMeta label="案件パターン" value={project.pattern} />
                                 <ProjectMeta
-                                    label="工程進捗"
+                                    label="詳細状態"
                                     value={project.progressStatus}
                                 />
                                 <ProjectMeta

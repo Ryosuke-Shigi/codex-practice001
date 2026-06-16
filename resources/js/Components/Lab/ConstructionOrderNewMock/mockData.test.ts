@@ -45,7 +45,6 @@ describe('ConstructionOrderNewMock fixed data', () => {
         expect(Object.values(cardKindLabels)).toEqual([
             '商品カード',
             '作業カード',
-            '諸経費カード',
             '調整カード',
             '例外対応カード',
         ]);
@@ -104,32 +103,24 @@ describe('ConstructionOrderNewMock fixed data', () => {
         });
     });
 
-    it('separates target-excluded stages from skipped stages', () => {
-        const stageStatuses = projects.flatMap((project) =>
-            project.workflowStages.map((stage) => stage.status),
+    it('keeps the detail sections aligned to the four-section mock', () => {
+        const sectionLabels = projects[0].workflowStages.map((stage) => stage.label);
+        const sectionCardIds = Object.fromEntries(
+            projects[0].workflowStages.map((stage) => [stage.id, stage.cardIds]),
         );
 
-        expect(stageStatuses).toContain('対象外');
-        expect(stageStatuses).toContain('SKIP');
+        expect(sectionLabels).toEqual(['商品', '作業', '調整', '例外対応']);
+        expect(sectionCardIds.product).toEqual(['card-product-001']);
+        expect(sectionCardIds.work).toEqual(['card-work-001']);
+        expect(sectionCardIds.adjustment).toEqual([]);
+        expect(sectionCardIds.exception).toEqual([]);
     });
 
-    it('keeps exception cards in their own workflow stage', () => {
+    it('keeps adjustment and exception cards as add-only initial sections', () => {
         const project = projects[0];
-        const exceptionStage = project.workflowStages.find(
-            (stage) => stage.id === 'exception-support',
-        );
-        const exceptionCard = project.cards.find(
-            (card) => card.id === 'card-exception-001',
-        );
-        const normalStageCardIds = project.workflowStages
-            .filter((stage) => stage.id !== 'exception-support')
-            .flatMap((stage) => stage.cardIds);
 
-        expect(exceptionStage?.label).toBe('例外対応');
-        expect(exceptionStage?.cardIds).toEqual(['card-exception-001']);
-        expect(exceptionCard?.kind).toBe('exception');
-        expect(exceptionCard?.phaseId).toBe('exception-support');
-        expect(normalStageCardIds).not.toContain('card-exception-001');
+        expect(project.cards.some((card) => card.kind === 'adjustment')).toBe(false);
+        expect(project.cards.some((card) => card.kind === 'exception')).toBe(false);
     });
 
     it('uses numeric amounts for cards and detail rows', () => {
@@ -138,7 +129,6 @@ describe('ConstructionOrderNewMock fixed data', () => {
 
         expect(cards.every((card) => typeof card.amount === 'number')).toBe(true);
         expect(rows.every((row) => typeof row.amount === 'number')).toBe(true);
-        expect(cards.some((card) => card.amount < 0)).toBe(true);
     });
 
     it('does not bring back legacy wording in the active MOCK data', () => {
@@ -154,6 +144,11 @@ describe('ConstructionOrderNewMock fixed data', () => {
             ['後日対応', 'カード'],
             ['帳票', '確認'],
             ['カード', '確認'],
+            ['商品', '確認'],
+            ['発注', '確認'],
+            ['納品', '確認'],
+            ['請求', '確認'],
+            ['入金・領収', '確認'],
         ].map((parts) => parts.join(''));
 
         legacyWords.forEach((word) => {

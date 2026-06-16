@@ -233,7 +233,7 @@ export default function WorkCardDetailPanel({
                             <div className="mt-3 grid gap-2 rounded-lg border border-fuchsia-200 bg-fuchsia-50 p-3 text-sm leading-6 text-fuchsia-950">
                                 <p className="font-bold">例外対応の接続</p>
                                 <p>例外種別: {card.exceptionType}</p>
-                                <p>関連工程: {card.relatedStageLabel}</p>
+                                <p>関連区分: {card.relatedStageLabel}</p>
                                 <p>関連案件化: {card.relatedProjectLabel}</p>
                             </div>
                         )}
