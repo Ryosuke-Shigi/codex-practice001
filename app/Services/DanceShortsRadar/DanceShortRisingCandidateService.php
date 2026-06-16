@@ -7,15 +7,16 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
 
 /*
- * DanceShortsRadar の上昇候補判定を担当する Service です。
+ * DanceShortsRadar の上昇候補の意味と JP 比較状態を定義する Service です。
  *
- * Repository には「US / KR / JP の最新 snapshot と比較元 snapshot を取る条件」だけを置き、
- * その snapshot から作られた通常ランキング DTO をこの Service が比較します。上昇候補かどうかは
- * 「海外側で増加している」「JP 側が未観測、または JP 側の増加量が海外側より小さい」という業務判断なので、
- * DB query 境界の Repository ではなく Service に閉じます。
+ * buildRisingCandidates() は、通常ランキング DTO 配列から上昇候補 DTO を組み立てる既存経路の正本です。
+ * RISING タブの displayCardField では Repository が window 取得のために SQL 上で source / JP /
+ * previous snapshot を結合し、read model 行を prefilter しますが、JP 未観測や JP 側の伸びが小さい
+ * という状態値の定義、null metric を 0 に潰さない扱いはこの Service に集約します。
  *
- * この Service は既に計算済みの RankingItemDTO を受け取り、view_count_delta / view_growth_rate を
- * 再計算しません。null metric も 0 に潰さず、候補除外や表示用 DTO の null として扱います。
+ * この Service は既に計算済みの RankingItemDTO または read model の metric を受け取り、
+ * view_count_delta / view_growth_rate を再計算しません。DB query、Inertia props、React 表示構造も
+ * ここには置きません。
  */
 class DanceShortRisingCandidateService
 {
@@ -27,6 +28,35 @@ class DanceShortRisingCandidateService
     public const JAPAN_STATUS_UNOBSERVED = 'unobserved';
 
     public const JAPAN_STATUS_SMALLER_DELTA = 'smaller_delta';
+
+    /**
+     * 上昇候補 DTO で使う JP 側の比較状態を返します。
+     *
+     * Repository の RISING read model は DB 上で候補行を prefilter しますが、状態値の意味は
+     * DTO 配列経路と同じこの Service で決めます。source delta が算出できない、または増加していない場合や、
+     * JP 側に current はあるが比較 delta を算出できない場合は候補状態を返しません。
+     */
+    public function japanComparisonStatusForCandidate(
+        ?int $sourceViewCountDelta,
+        bool $hasJapanCurrentSnapshot,
+        ?int $japanViewCountDelta,
+    ): ?string {
+        if ($sourceViewCountDelta === null || $sourceViewCountDelta <= 0) {
+            return null;
+        }
+
+        if (! $hasJapanCurrentSnapshot) {
+            return self::JAPAN_STATUS_UNOBSERVED;
+        }
+
+        if ($japanViewCountDelta === null) {
+            return null;
+        }
+
+        return $japanViewCountDelta < $sourceViewCountDelta
+            ? self::JAPAN_STATUS_SMALLER_DELTA
+            : null;
+    }
 
     /**
      * @param  array<int, DanceShortVideoRankingItemDTO>  $sourceItems
@@ -111,22 +141,16 @@ class DanceShortRisingCandidateService
         DanceShortVideoRankingItemDTO $sourceItem,
         ?DanceShortVideoRankingItemDTO $japanItem,
     ): ?string {
-        if ($japanItem === null) {
-            return self::JAPAN_STATUS_UNOBSERVED;
-        }
-
         /*
          * JP 側の viewCountDelta が null の場合も 0 扱いにはしません。
          * 今回の候補条件は「JP 未観測」または「JP delta が海外側より小さい」なので、
          * JP に current はあるが比較値が算出できない動画は、条件を満たしたものとして扱いません。
          */
-        if ($japanItem->viewCountDelta === null) {
-            return null;
-        }
-
-        return $japanItem->viewCountDelta < $sourceItem->viewCountDelta
-            ? self::JAPAN_STATUS_SMALLER_DELTA
-            : null;
+        return $this->japanComparisonStatusForCandidate(
+            sourceViewCountDelta: $sourceItem->viewCountDelta,
+            hasJapanCurrentSnapshot: $japanItem !== null,
+            japanViewCountDelta: $japanItem?->viewCountDelta,
+        );
     }
 
     /**

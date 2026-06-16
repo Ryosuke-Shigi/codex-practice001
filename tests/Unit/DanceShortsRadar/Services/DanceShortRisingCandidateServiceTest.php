@@ -73,6 +73,48 @@ class DanceShortRisingCandidateServiceTest extends TestCase
         $this->assertSame(DanceShortRisingCandidateService::JAPAN_STATUS_SMALLER_DELTA, $list->items[0]->japanComparisonStatus);
     }
 
+    public function test_japan_comparison_status_for_candidate_keeps_service_state_definition(): void
+    {
+        $service = $this->service();
+
+        $this->assertSame(
+            DanceShortRisingCandidateService::JAPAN_STATUS_UNOBSERVED,
+            $service->japanComparisonStatusForCandidate(
+                sourceViewCountDelta: 500,
+                hasJapanCurrentSnapshot: false,
+                japanViewCountDelta: null,
+            ),
+        );
+        $this->assertSame(
+            DanceShortRisingCandidateService::JAPAN_STATUS_SMALLER_DELTA,
+            $service->japanComparisonStatusForCandidate(
+                sourceViewCountDelta: 500,
+                hasJapanCurrentSnapshot: true,
+                japanViewCountDelta: 200,
+            ),
+        );
+        $this->assertNull($service->japanComparisonStatusForCandidate(
+            sourceViewCountDelta: 500,
+            hasJapanCurrentSnapshot: true,
+            japanViewCountDelta: null,
+        ));
+        $this->assertNull($service->japanComparisonStatusForCandidate(
+            sourceViewCountDelta: 500,
+            hasJapanCurrentSnapshot: true,
+            japanViewCountDelta: 500,
+        ));
+        $this->assertNull($service->japanComparisonStatusForCandidate(
+            sourceViewCountDelta: 0,
+            hasJapanCurrentSnapshot: false,
+            japanViewCountDelta: null,
+        ));
+        $this->assertNull($service->japanComparisonStatusForCandidate(
+            sourceViewCountDelta: null,
+            hasJapanCurrentSnapshot: false,
+            japanViewCountDelta: null,
+        ));
+    }
+
     public function test_source_null_delta_is_not_candidate_and_is_not_converted_to_zero(): void
     {
         $list = $this->service()->buildRisingCandidates(

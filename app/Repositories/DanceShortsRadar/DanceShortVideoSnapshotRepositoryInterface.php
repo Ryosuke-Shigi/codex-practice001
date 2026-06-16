@@ -70,8 +70,9 @@ interface DanceShortVideoSnapshotRepositoryInterface
     /**
      * displayCardField の上昇候補 window 用 read model を取得します。
      *
-     * US / KR などの source region に対し、海外側で増加していて、JP 側が未観測または
-     * JP 側の増加量が source より小さい候補だけを startRank から windowSize + 1 件取得します。
+     * US / KR などの source region に対し、RISING タブで必要な source / JP / previous snapshot を
+     * DB 上で結合し、window 取得できる候補行へ prefilter します。JP 比較状態の意味づけや
+     * 表示 DTO 化は Repository では行いません。
      *
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>
@@ -86,7 +87,8 @@ interface DanceShortVideoSnapshotRepositoryInterface
     /**
      * displayCardField の選択カード基準 window 用に、上昇候補全体順の read model を取得します。
      *
-     * Repository は上昇候補 query と既存の並び順だけを扱い、選択カード前後の切り出しは行いません。
+     * Repository は RISING タブ用の read model query / prefilter と既存の並び順だけを扱い、
+     * 選択カード前後の切り出し、DTO 化、表示 props 生成は行いません。
      *
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>
