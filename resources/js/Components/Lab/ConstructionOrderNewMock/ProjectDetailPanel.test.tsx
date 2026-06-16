@@ -19,8 +19,9 @@ describe('ProjectDetailPanel', () => {
                 project={projects[0]}
                 onAddCard={noop}
                 onBackToProjects={noop}
+                onDeleteCard={noop}
                 onDocumentTypeChange={noop}
-                onOpenCard={noop}
+                onSaveCard={noop}
                 onViewChange={noop}
             />,
         );
@@ -39,18 +40,30 @@ describe('ProjectDetailPanel', () => {
         expect(markup).not.toContain('帳票ファイル');
     });
 
-    it('renders work detail as a section switcher instead of one-shot content', () => {
+    it('renders work detail top as the four-section selection screen', () => {
         const markup = renderProjectDetail('work-detail');
 
-        expect(markup).toContain('概要');
-        expect(markup).toContain('工程・カード');
-        expect(markup).toContain('履歴');
-        expect(markup).toContain('関連');
-        expect(markup).toContain('完了確認');
-        expect(markup).toContain('写真・証跡');
-        expect(markup).not.toContain('工程内カード');
-        expect(markup).not.toContain('対象外: 最初から不要');
-        expect(markup).not.toContain('関連案件へ接続');
+        expect(markup).toContain('商品');
+        expect(markup).toContain('作業');
+        expect(markup).toContain('調整');
+        expect(markup).toContain('例外対応');
+        expect(markup).toContain('あり');
+        expect(markup).toContain('未追加');
+        expect(markup).not.toContain('区分を選択してください');
+        expect(markup).not.toContain('あり / なし の状態をここで確認できます');
+        expect(markup).not.toContain('案件パターン');
+        expect(markup).not.toContain('工程・カード');
+        expect(markup).not.toContain('商品確認');
+        expect(markup).not.toContain('発注確認');
+        expect(markup).not.toContain('納品確認');
+        expect(markup).not.toContain('請求確認');
+        expect(markup).not.toContain('入金・領収確認');
+        expect(markup).not.toContain('対象外');
+        expect(markup).not.toContain('SKIP');
+        expect(markup).not.toContain('見積書');
+        expect(markup).not.toContain('請求書');
+        expect(markup).not.toContain('領収書');
+        expect(markup).not.toContain('現場アクセス');
     });
 
     it('renders site access with a Yahoo map search URL for the real mock address', () => {
@@ -82,7 +95,8 @@ describe('ProjectDetailPanel', () => {
         expect(markup).toContain('出力明細の選択');
         expect(markup).toContain('印刷');
         expect(markup).toContain('PDF');
-        expect(markup).toContain('Excel風');
+        expect(markup).toContain('Excel');
+        expect(markup).not.toContain('Excel風');
         expect(markup).not.toContain('外部向け備考');
         expect(markup).not.toContain('メモ');
     });

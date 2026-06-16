@@ -10,6 +10,7 @@ import DocumentWorkspacePanel from './DocumentWorkspacePanel';
 import ProjectWorkDetailPanel from './ProjectWorkDetailPanel';
 import SiteAccessPanel from './SiteAccessPanel';
 import type {
+    CardInputDraft,
     CardKind,
     DocumentType,
     Project,
@@ -25,8 +26,9 @@ type ProjectDetailPanelProps = {
     onViewChange: (view: ProjectDetailView) => void;
     onDocumentTypeChange: (documentType: DocumentType) => void;
     onBackToProjects: () => void;
-    onOpenCard: (card: WorkCard) => void;
-    onAddCard: (kind: CardKind) => void;
+    onAddCard: (kind: CardKind, draft?: CardInputDraft) => void;
+    onDeleteCard: (cardId: string) => void;
+    onSaveCard: (card: WorkCard) => void;
 };
 
 export default function ProjectDetailPanel({
@@ -36,8 +38,9 @@ export default function ProjectDetailPanel({
     onViewChange,
     onDocumentTypeChange,
     onBackToProjects,
-    onOpenCard,
     onAddCard,
+    onDeleteCard,
+    onSaveCard,
 }: ProjectDetailPanelProps) {
     const activeViewLabel = {
         hub: '案件詳細',
@@ -101,8 +104,9 @@ export default function ProjectDetailPanel({
                 {activeView === 'work-detail' && (
                     <ProjectWorkDetailPanel
                         project={project}
-                        onOpenCard={onOpenCard}
                         onAddCard={onAddCard}
+                        onDeleteCard={onDeleteCard}
+                        onSaveCard={onSaveCard}
                     />
                 )}
 

@@ -1,16 +1,23 @@
 export type MockScreen =
     | 'entry'
     | 'projects'
-    | 'project-detail'
-    | 'card-detail';
+    | 'project-detail';
 
 export type ProjectDetailView = 'hub' | 'site-access' | 'work-detail' | 'documents';
 
 export type DocumentType = 'estimate' | 'invoice' | 'receipt';
 
-export type CardKind = 'product' | 'work' | 'expense' | 'adjustment' | 'exception';
+export type CardKind = 'product' | 'work' | 'adjustment' | 'exception';
 
-export type CardCategory = '商品' | '作業' | '諸経費' | '調整' | '例外対応';
+export type CardInputDraft = {
+    title?: string;
+    item1?: string;
+    item2?: string;
+    item3?: string;
+    memo?: string;
+};
+
+export type CardCategory = '商品' | '作業' | '調整' | '例外対応';
 
 export type CsvStatus = '投入待ち' | '受付済み' | 'エラー';
 
@@ -18,8 +25,6 @@ export type StageStatus =
     | 'できていない'
     | '確認中'
     | 'できている'
-    | '対象外'
-    | 'SKIP'
     | '差戻し';
 
 export type DetailRow = {
@@ -63,7 +68,7 @@ export type WorkCard = {
     hasPhotos: boolean;
     hasFiles: boolean;
     billingTarget: '請求対象' | '非対象';
-    receiptTarget: '領収対象' | '領収対象外';
+    receiptTarget: '領収対象' | '非対象';
     requiresRelatedProject: boolean;
     summary: string;
     detailRows: DetailRow[];
@@ -270,7 +275,7 @@ export const csvFiles: CsvFile[] = [
         fileName: 'aobadai_401_work_cards.csv',
         size: '42 KB',
         rowCount: '18件',
-        memo: '商品カード、作業カード、諸経費カードを含む',
+        memo: '商品カード、作業カードを含む',
         status: '受付済み',
     },
     {
@@ -294,7 +299,6 @@ export const csvFiles: CsvFile[] = [
 export const cardKindLabels: Record<CardKind, string> = {
     product: '商品カード',
     work: '作業カード',
-    expense: '諸経費カード',
     adjustment: '調整カード',
     exception: '例外対応カード',
 };
@@ -313,10 +317,6 @@ export const cardKindStyles: Record<
     work: {
         panel: 'border-blue-300 bg-blue-50',
         badge: 'border-blue-300 bg-blue-100 text-blue-900',
-    },
-    expense: {
-        panel: 'border-amber-300 bg-amber-50',
-        badge: 'border-amber-300 bg-amber-100 text-amber-950',
     },
     adjustment: {
         panel: 'border-rose-300 bg-rose-50',
@@ -360,7 +360,7 @@ const sharedFiles: FileImportItem[] = [
         id: 'file-parking',
         fileName: 'parking_receipt.jpg',
         displayName: '駐車場領収証',
-        memo: '諸経費カードの証跡',
+        memo: '作業カードの補足ファイル',
         status: '受付済み',
         classification: '領収証跡',
     },
@@ -381,15 +381,15 @@ const osakaProject: Project = {
         owner: '佐藤 美咲',
         pattern: '標準工事 + 例外対応',
         status: '案件詳細レビュー中',
-        cardCount: '5枚',
-        pendingCardCount: 2,
-        confirmCount: 3,
+        cardCount: '2枚',
+        pendingCardCount: 0,
+        confirmCount: 0,
         estimateStatus: '見積プレビュー確認中',
         invoiceStatus: '請求書未確定',
         receiptStatus: '領収書未発行',
-        hasRelatedProjects: true,
-        progressStatus: '工程別に確認中',
-        amountSummary: 220000,
+        hasRelatedProjects: false,
+        progressStatus: '4区分で確認中',
+        amountSummary: 206000,
         lastUpdated: '2026/06/16 10:30',
         cards: [
             {
@@ -438,7 +438,7 @@ const osakaProject: Project = {
                 id: 'card-work-001',
                 kind: 'work',
                 phaseId: 'site-check',
-                title: '既設配管撤去と新規配管',
+                title: '現地確認',
                 status: 'できている',
                 amount: 120000,
                 category: '作業',
@@ -448,12 +448,12 @@ const osakaProject: Project = {
                 billingTarget: '請求対象',
                 receiptTarget: '領収対象',
                 requiresRelatedProject: false,
-                summary: '作業内容、数量、連続撮影の証跡を確認する作業カード。',
+                summary: '作業カードの見た目確認用カード。',
                 detailRows: [
                     {
                         id: 'row-work-1',
-                        content: '既設配管撤去',
-                        displayLabel: '撤去作業',
+                        content: '現地確認',
+                        displayLabel: '作業',
                         quantity: 1,
                         unit: '式',
                         unitPrice: 45000,
@@ -462,10 +462,10 @@ const osakaProject: Project = {
                     },
                     {
                         id: 'row-work-2',
-                        content: '新規配管敷設',
-                        displayLabel: '配管長',
-                        quantity: 12.5,
-                        unit: 'm',
+                        content: '施工日調整',
+                        displayLabel: '作業',
+                        quantity: 1,
+                        unit: '式',
                         unitPrice: 6000,
                         amount: 75000,
                         memo: '数量と単位を分けて保持する',
@@ -473,271 +473,61 @@ const osakaProject: Project = {
                 ],
                 photos: sharedPhotos,
                 files: [],
-                memo: '配管まわりの写真を確認してから明細を更新する。',
+                memo: '作業カードの細部は次回以降に詰める。',
                 documentReflection: '見積書・請求書・領収書へ反映',
-            },
-            {
-                id: 'card-expense-001',
-                kind: 'expense',
-                phaseId: 'work-support',
-                title: '駐車場・養生費',
-                status: '確認中',
-                amount: 18000,
-                category: '諸経費',
-                hasMemo: true,
-                hasPhotos: false,
-                hasFiles: true,
-                billingTarget: '請求対象',
-                receiptTarget: '領収対象',
-                requiresRelatedProject: false,
-                summary: '現場諸経費を商品・作業・調整と並べて確認するカード。',
-                detailRows: [
-                    {
-                        id: 'row-expense-1',
-                        content: '近隣駐車場',
-                        displayLabel: '利用日',
-                        quantity: 2,
-                        unit: '日',
-                        unitPrice: 4000,
-                        amount: 8000,
-                        memo: '領収書ファイル添付あり',
-                    },
-                    {
-                        id: 'row-expense-2',
-                        content: '共用部養生',
-                        displayLabel: '基本工事',
-                        quantity: 1,
-                        unit: '式',
-                        unitPrice: 10000,
-                        amount: 10000,
-                        memo: '請求対象',
-                    },
-                ],
-                photos: [],
-                files: sharedFiles.slice(1),
-                memo: '諸経費は帳票明細で別カテゴリ扱い。',
-                documentReflection: '見積書・請求書・領収書へ反映',
-            },
-            {
-                id: 'card-adjustment-001',
-                kind: 'adjustment',
-                phaseId: 'billing-check',
-                title: '端数調整',
-                status: '見積反映済み',
-                amount: -4000,
-                category: '調整',
-                hasMemo: true,
-                hasPhotos: false,
-                hasFiles: false,
-                billingTarget: '請求対象',
-                receiptTarget: '領収対象',
-                requiresRelatedProject: false,
-                summary: '割引や端数調整を数値保存し、表示側で赤文字にするカード。',
-                detailRows: [
-                    {
-                        id: 'row-adjustment-1',
-                        content: '端数調整',
-                        displayLabel: '調整',
-                        quantity: 1,
-                        unit: '式',
-                        unitPrice: -4000,
-                        amount: -4000,
-                        memo: '保存値は -4000、表示は -4,000円',
-                    },
-                ],
-                photos: [],
-                files: [],
-                memo: '保存値と表示は分ける。マイナス金額は表示側で赤文字にする。',
-                documentReflection: '見積書・請求書・領収書へ反映',
-            },
-            {
-                id: 'card-exception-001',
-                kind: 'exception',
-                phaseId: 'exception-support',
-                title: '床下点検口まわり補修',
-                status: '差戻し',
-                amount: 32000,
-                category: '例外対応',
-                hasMemo: true,
-                hasPhotos: true,
-                hasFiles: true,
-                billingTarget: '非対象',
-                receiptTarget: '領収対象外',
-                requiresRelatedProject: true,
-                summary: '破損対応を通常作業や諸経費に混ぜず、関連案件化まで見るカード。',
-                detailRows: [
-                    {
-                        id: 'row-exception-1',
-                        content: '床下点検口まわり補修',
-                        displayLabel: '補修範囲',
-                        quantity: 1,
-                        unit: '箇所',
-                        unitPrice: 32000,
-                        amount: 32000,
-                        memo: '請求対象外として表示',
-                    },
-                ],
-                photos: sharedPhotos,
-                files: sharedFiles.slice(0, 1),
-                memo: '例外対応カードから関連案件を作成し、工事後対応案件へつなげる。',
-                exceptionType: '破損対応',
-                relatedStageLabel: '作業対応',
-                relatedProjectLabel: '工事後対応案件: 点検口補修の再確認',
-                documentReflection: '帳票へは非対象として表示',
             },
         ],
         workflowStages: [
             {
-                id: 'product-check',
-                label: '商品確認',
-                description: '商品カードとメーカー資料を確認する。',
+                id: 'product',
+                label: '商品',
+                description: '商品カードを扱う区分。',
                 status: 'できている',
-                statusNote: '商品カードと仕様書の紐づけ確認済み。',
+                statusNote: '商品取扱はあり。',
                 cardIds: ['card-product-001'],
-                evidenceSummary: 'メーカー仕様書 1件',
-                completionNote: '品番、数量、単価を確認済み。',
+                evidenceSummary: '商品カード 1件',
+                completionNote: '商品カードを表示する。',
             },
             {
-                id: 'site-check',
-                label: '現場確認',
-                description: '現場写真、作業範囲、搬入条件を確認する。',
-                status: '確認中',
-                statusNote: '施工後写真の検収待ち。',
+                id: 'work',
+                label: '作業',
+                description: '作業カードを扱う区分。',
+                status: 'できている',
+                statusNote: '作業取扱はあり。',
                 cardIds: ['card-work-001'],
-                evidenceSummary: '着工前証跡 / 完了証跡',
-                completionNote: '検収用写真を追加確認する。',
+                evidenceSummary: '作業カード 1件',
+                completionNote: 'カード追加から入力モーダルまで確認する。',
             },
             {
-                id: 'work-support',
-                label: '作業対応',
-                description: '作業カード、諸経費カード、証跡を扱う。',
-                status: '確認中',
-                statusNote: '駐車場領収証と養生費の確認中。',
-                cardIds: ['card-expense-001'],
-                evidenceSummary: '駐車場領収証',
-                completionNote: '諸経費の証跡確認後に完了。',
-            },
-            {
-                id: 'exception-support',
-                label: '例外対応',
-                description: '例外対応カードを通常作業、諸経費、調整と分けて扱う。',
-                status: '差戻し',
-                statusNote: '破損対応を関連案件化する必要がある。',
-                cardIds: ['card-exception-001'],
-                evidenceSummary: '補修写真、メーカー資料',
-                completionNote: '関連工程: 作業対応 / 関連カード: 床下点検口まわり補修',
-            },
-            {
-                id: 'billing-check',
-                label: '請求確認',
-                description: '調整カードと帳票への反映状態を確認する。',
-                status: 'SKIP',
-                statusNote: '請求書発行前レビューを担当者判断で一時スキップ。',
-                cardIds: ['card-adjustment-001'],
-                evidenceSummary: '端数調整メモ',
-                completionNote: 'SKIP理由を履歴に残している。',
-            },
-            {
-                id: 'receipt-check',
-                label: '入金・領収確認',
-                description: '入金確認と領収書への反映状態を確認する。',
+                id: 'adjustment',
+                label: '調整',
+                description: '必要時に調整カードを追加する区分。',
                 status: 'できていない',
-                statusNote: '請求書確定後に確認する。',
+                statusNote: '調整カードは未追加。',
                 cardIds: [],
-                evidenceSummary: '入金確認待ち',
-                completionNote: '領収書発行前。',
+                evidenceSummary: '調整カードなし',
+                completionNote: '必要時に追加する。',
             },
             {
-                id: 'warranty-check',
-                label: '保証部材確認',
-                description: 'この案件では保証部材がないため最初から不要。',
-                status: '対象外',
-                statusNote: '対象外は最初から不要な工程、SKIPとは別扱い。',
+                id: 'exception',
+                label: '例外対応',
+                description: '必要時に例外対応カードを追加する区分。',
+                status: 'できていない',
+                statusNote: '例外対応カードは未追加。',
                 cardIds: [],
-                evidenceSummary: '対象外',
-                completionNote: '保証部材なし。',
+                evidenceSummary: '例外対応カードなし',
+                completionNote: '必要時に追加する。',
             },
         ],
-        histories: [
-            {
-                id: 'history-1',
-                action: '案件作成',
-                operator: '佐藤 美咲',
-                actedAt: '2026/06/14 09:10',
-                reason: '管理組合からの依頼受付',
-                relatedStage: '案件登録',
-                relatedCard: '-',
-                relatedProject: '-',
-            },
-            {
-                id: 'history-2',
-                action: '工程SKIP',
-                operator: '佐藤 美咲',
-                actedAt: '2026/06/15 17:20',
-                reason: '請求書発行前レビューを担当者判断で一時スキップ',
-                relatedStage: '請求確認',
-                relatedCard: '端数調整',
-                relatedProject: '-',
-            },
-            {
-                id: 'history-3',
-                action: '関連案件作成',
-                operator: '高橋 直人',
-                actedAt: '2026/06/16 10:30',
-                reason: '破損対応を完了済み案件へ混ぜず工事後対応として分離',
-                relatedStage: '作業対応',
-                relatedCard: '床下点検口まわり補修',
-                relatedProject: '点検口補修の再確認',
-            },
-        ],
-        relatedProjects: [
-            {
-                id: 'related-1',
-                title: '点検口補修の再確認',
-                relationType: '工事後対応',
-                status: '起票待ち',
-                reason: '破損対応が元案件内で完結しないため。',
-                sourceCardTitle: '床下点検口まわり補修',
-                owner: '高橋 直人',
-            },
-            {
-                id: 'related-2',
-                title: '水圧再確認訪問',
-                relationType: '追加作業',
-                status: '日程調整中',
-                reason: '完了後の軽微な確認では済まず、再訪問が必要。',
-                sourceCardTitle: '既設配管撤去と新規配管',
-                owner: '佐藤 美咲',
-            },
-        ],
-        completionChecks: [
-            {
-                id: 'complete-1',
-                label: '商品・作業・諸経費の反映',
-                status: '確認済み',
-                note: '見積書へ反映済み。',
-            },
-            {
-                id: 'complete-2',
-                label: '例外対応の扱い',
-                status: '確認中',
-                note: '関連案件化して元案件の履歴に残す。',
-            },
-            {
-                id: 'complete-3',
-                label: '入金・領収確認',
-                status: '未確認',
-                note: '請求書確定後に領収書へ反映する。',
-            },
-        ],
+        histories: [],
+        relatedProjects: [],
+        completionChecks: [],
         reports: {
             estimate: {
                 title: '御見積書',
                 selectedCardIds: [
                     'card-product-001',
                     'card-work-001',
-                    'card-expense-001',
-                    'card-adjustment-001',
                 ],
                 amountLabel: '御見積金額',
                 issuedAt: '2026/06/14',
@@ -746,18 +536,16 @@ const osakaProject: Project = {
                 recipient: '株式会社サンプル商事 御中',
                 issuer: '株式会社サンプル設備',
                 status: '発行前レビュー',
-                targetSummary: '商品、作業、諸経費、端数調整を対象にした作業前見積。',
+                targetSummary: '商品、作業を対象にした作業前見積。',
                 fileLabel: 'EST-20260614-001_preview.pdf',
                 externalNote: '本見積は現地確認時点の内容に基づく概算です。追加作業が発生する場合は事前にご相談します。',
-                memo: '例外対応カードは見積対象外として関連案件側で扱う。',
+                memo: '調整カードと例外対応カードは詳細側では必要時追加として扱う。',
             },
             invoice: {
                 title: '御請求書',
                 selectedCardIds: [
                     'card-product-001',
                     'card-work-001',
-                    'card-expense-001',
-                    'card-adjustment-001',
                 ],
                 amountLabel: '御請求金額',
                 issuedAt: '2026/06/21',
@@ -766,7 +554,7 @@ const osakaProject: Project = {
                 recipient: '株式会社サンプル商事 御中',
                 issuer: '株式会社サンプル設備',
                 status: '請求書未確定',
-                targetSummary: '完了済み作業、商品、諸経費、調整金額を請求対象にする。',
+                targetSummary: '商品、作業を請求対象にする。',
                 fileLabel: 'INV-20260621-001_draft.pdf',
                 externalNote: 'お支払い期日は2026年7月末日です。ご入金確認後、領収書を発行いたします。',
                 memo: '対象カード件数ではなく、対象内容、金額、状態を確認する。',
@@ -778,8 +566,6 @@ const osakaProject: Project = {
                 selectedCardIds: [
                     'card-product-001',
                     'card-work-001',
-                    'card-expense-001',
-                    'card-adjustment-001',
                 ],
                 amountLabel: '領収金額',
                 issuedAt: '2026/07/01',
@@ -791,7 +577,7 @@ const osakaProject: Project = {
                 targetSummary: '請求対象内容および領収金額。',
                 fileLabel: 'REC-20260701-001_draft.pdf',
                 externalNote: '上記金額を正に領収いたしました。',
-                memo: '入金・領収確認に紐づく帳票成果物。',
+                memo: '書類入口側で扱う成果物。',
                 proviso: '給湯配管交換工事代として',
                 receiptStatus: '未発行',
             },
@@ -813,25 +599,18 @@ const sakuragaokaProject: Project = {
         owner: '高橋 直人',
         pattern: '一次対応 + 追加作業候補',
         status: 'CSV受付済み',
-        cardCount: '4枚',
-        pendingCardCount: 1,
-        confirmCount: 1,
+        cardCount: '2枚',
+        pendingCardCount: 0,
+        confirmCount: 0,
         estimateStatus: '見積未作成',
         invoiceStatus: '請求未作成',
         receiptStatus: '領収書未発行',
         hasRelatedProjects: false,
-        progressStatus: '現場確認待ち',
-        amountSummary: 188000,
+        progressStatus: '4区分で確認中',
+        amountSummary: 206000,
         lastUpdated: '2026/06/15 18:00',
-        cards: osakaProject.cards.slice(0, 4),
-        workflowStages: osakaProject.workflowStages
-            .filter((stage) => stage.id !== 'exception-support')
-            .map((stage) => ({
-                ...stage,
-                cardIds: stage.cardIds.filter(
-                    (cardId) => cardId !== 'card-exception-001',
-                ),
-            })),
+        cards: osakaProject.cards,
+        workflowStages: osakaProject.workflowStages,
         histories: osakaProject.histories.slice(0, 2),
         relatedProjects: [],
         completionChecks: osakaProject.completionChecks.slice(0, 2),

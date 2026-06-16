@@ -38,7 +38,7 @@ const documentLead: Record<DocumentType, string> = {
     receipt: '領収書プレビュー',
 };
 
-const outputButtons = ['印刷', 'PDF', 'Excel風'];
+const outputButtons = ['印刷', 'PDF', 'Excel'];
 
 export default function DocumentPreviewPanel({
     documentType,
