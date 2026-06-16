@@ -18,6 +18,8 @@ use Inertia\Response;
  * Responder は Query Action の DTO を Inertia / React が描きやすい props へ変換します。
  * ここでは href、表示ラベル、空状態メッセージ、region tab の active 状態など、出力形式に近い
  * 整形だけを扱います。DB query、YouTube API 呼び出し、snapshot metric の再計算は行いません。
+ * 上昇候補の抽出や JP 比較状態は Action / Service / Strategy 側で確定済みとして受け取り、
+ * Responder は snake_case props と表示ラベルへの変換に留めます。
  *
  * React 側が query 文字列を組み立てたり metric を再計算したりしないよう、選択肢ごとの href と
  * ranking item の表示値はここで明示的に渡します。
@@ -165,7 +167,7 @@ final readonly class DanceShortVideoRankingResponder
     {
         /*
          * RISING と ALL はどちらも表示専用タブです。
-         * RISING は上昇候補 Service が作った観測候補、ALL は Responder が地域別 DTO をまとめた表示であり、
+         * RISING は上昇候補として確定済みの DTO、ALL は地域別 DTO をまとめた表示であり、
          * どちらも dance_short_regions へ追加しません。href は Query Action が識別できる tab 値だけを
          * query に置き、Repository へ RISING / ALL が渡らない境界は Action 側で保ちます。
          */

@@ -231,9 +231,12 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     private function risingRowsQuery(array $sourceRegionCodes, int $comparisonDays): ?Builder
     {
         /*
-         * 上昇候補は「US / KR で伸び、JP では未観測または伸びが小さい」行だけを返します。
+         * RISING タブの displayCardField は startRank から windowSize + 1 件だけを返す必要があるため、
+         * Repository で source / JP / previous snapshot を結合し、DB 上で候補行を prefilter します。
+         *
          * JP は比較対象であり source region ではないため、入力に混ざっていても source から外します。
-         * ここでは read model 用の row を返すだけで、DTO 化やカード文言の判断は Strategy に戻します。
+         * ここでは read model 用の row、並び順、window 取得に必要な SQL 条件だけを扱い、JP 比較状態の
+         * 意味づけ、DTO 化、カード文言、Inertia props 生成は Service / Strategy / Responder へ残します。
          */
         $safeSourceRegionCodes = array_values(array_intersect(
             ['US', 'KR'],

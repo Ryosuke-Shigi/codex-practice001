@@ -7,8 +7,9 @@ use Carbon\CarbonInterface;
 /*
  * DanceShortsRadar の上昇候補1件を運ぶ DTO です。
  *
- * 上昇候補は DB region ではなく、US / KR 側の通常ランキング item と JP 側の通常ランキング item を
- * Service が比較した結果です。DTO には比較済みの値だけを保持し、DB 取得、候補判定、Inertia props
+ * 上昇候補は DB region ではなく、source region と JP 側の観測状態を比較した結果です。
+ * Service が通常ランキング DTO 配列から組み立てる場合も、Strategy が Repository の read model row を
+ * 詰め替える場合も、この DTO には比較済みの値だけを保持します。DB 取得、候補判定、Inertia props
  * 生成、表示文言の組み立ては持たせません。
  *
  * sourceViewGrowthRate や japanViewGrowthRate は null を許容します。null を 0 に潰すと
