@@ -1,4 +1,5 @@
 import type { Project } from './mockData';
+import { formatYen } from './mockData';
 
 type ProjectListPanelProps = {
     projects: Project[];
@@ -43,6 +44,19 @@ export default function ProjectListPanel({
 
                             <div className="flex flex-wrap gap-1.5">
                                 <ProjectMeta label="カード数" value={project.cardCount} />
+                                <ProjectMeta label="案件パターン" value={project.pattern} />
+                                <ProjectMeta
+                                    label="工程進捗"
+                                    value={project.progressStatus}
+                                />
+                                <ProjectMeta
+                                    label="未完了"
+                                    value={`${project.pendingCardCount}件`}
+                                />
+                                <ProjectMeta
+                                    label="要確認"
+                                    value={`${project.confirmCount}件`}
+                                />
                                 <ProjectMeta
                                     label="見積状態"
                                     value={project.estimateStatus}
@@ -52,16 +66,24 @@ export default function ProjectListPanel({
                                     value={project.invoiceStatus}
                                 />
                                 <ProjectMeta
-                                    label="後日対応"
-                                    value={project.hasFollowUp ? 'あり' : 'なし'}
+                                    label="領収状態"
+                                    value={project.receiptStatus}
                                 />
                                 <ProjectMeta
-                                    label="問題対応"
-                                    value={project.hasIssue ? 'あり' : 'なし'}
+                                    label="関連案件"
+                                    value={project.hasRelatedProjects ? 'あり' : 'なし'}
                                 />
                                 <ProjectMeta
                                     label="担当者"
                                     value={project.owner}
+                                />
+                                <ProjectMeta
+                                    label="金額"
+                                    value={formatYen(project.amountSummary)}
+                                />
+                                <ProjectMeta
+                                    label="最終更新"
+                                    value={project.lastUpdated}
                                 />
                             </div>
                         </div>

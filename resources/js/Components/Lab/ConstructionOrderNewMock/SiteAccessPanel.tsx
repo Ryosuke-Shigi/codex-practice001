@@ -6,32 +6,35 @@ type SiteAccessPanelProps = {
     project: Project;
 };
 
+type AccessMemoKey =
+    | 'parking'
+    | 'loading'
+    | 'access'
+    | 'key'
+    | 'visit'
+    | 'emergency'
+    | 'site';
+
+type AccessMemos = Record<AccessMemoKey, string>;
+
 export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
-    const [accessMemos, setAccessMemos] = useState({
-        parking: project.parkingMemo,
-        loading: project.loadingMemo,
-        visit: project.visitNote,
-    });
-    const [savedMemoKey, setSavedMemoKey] = useState<keyof typeof accessMemos | null>(
-        null,
+    const [accessMemos, setAccessMemos] = useState<AccessMemos>(() =>
+        createAccessMemos(project),
     );
+    const [savedMemoKey, setSavedMemoKey] = useState<AccessMemoKey | null>(null);
     const encodedAddress = encodeURIComponent(project.siteAddress);
-    // Address-based mock links only: no Maps API key, SDK, geocoding, or current location.
     const mapPreviewUrl = `https://maps.google.com/maps?q=${encodedAddress}&output=embed`;
     const googleMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
     const googleRouteUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-    const yahooMapUrl = `https://map.yahoo.co.jp/search?p=${encodedAddress}&ei=UTF-8`;
+    // Yahoo!マップの検索語は q。p はページ番号扱いになり、住所検索が空になる。
+    const yahooMapUrl = `https://map.yahoo.co.jp/search?q=${encodedAddress}`;
 
     useEffect(() => {
-        setAccessMemos({
-            parking: project.parkingMemo,
-            loading: project.loadingMemo,
-            visit: project.visitNote,
-        });
+        setAccessMemos(createAccessMemos(project));
         setSavedMemoKey(null);
     }, [project]);
 
-    const updateMemo = (key: keyof typeof accessMemos, value: string) => {
+    const updateMemo = (key: AccessMemoKey, value: string) => {
         setAccessMemos((current) => ({
             ...current,
             [key]: value,
@@ -42,11 +45,7 @@ export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
     return (
         <section className="rounded-lg border border-sky-200 bg-sky-50 p-4 shadow-sm sm:p-5">
             <div className="grid gap-3">
-                <div>
-                    <h3 className="text-lg font-bold text-sky-950">
-                        現場アクセス
-                    </h3>
-                </div>
+                <h3 className="text-lg font-bold text-sky-950">現場アクセス</h3>
 
                 <div className="rounded-lg border border-sky-200 bg-white p-3">
                     <p className="text-xs font-bold text-slate-500">現場住所</p>
@@ -71,57 +70,102 @@ export default function SiteAccessPanel({ project }: SiteAccessPanelProps) {
                 </div>
 
                 <div className="grid gap-2 sm:grid-cols-3">
-                    <a
-                        href={googleMapUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-sky-700 px-3 text-center text-sm font-bold text-white transition hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                    >
-                        Google Mapsで現場を開く
-                    </a>
-                    <a
-                        href={googleRouteUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg bg-slate-950 px-3 text-center text-sm font-bold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-200"
-                    >
-                        Google Mapsで経路を見る
-                    </a>
-                    <a
-                        href={yahooMapUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-300 bg-white px-3 text-center text-sm font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
-                    >
-                        Yahoo!マップで現場を開く
-                    </a>
+                    <MapLink href={googleMapUrl} label="Google Maps" />
+                    <MapLink href={googleRouteUrl} label="経路検索" dark />
+                    <MapLink href={yahooMapUrl} label="Yahoo!マップ" />
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-3">
                     <AccessMemoEditor
-                        title="駐車メモ"
+                        title="駐車場"
                         value={accessMemos.parking}
                         saved={savedMemoKey === 'parking'}
                         onChange={(value) => updateMemo('parking', value)}
                         onSave={() => setSavedMemoKey('parking')}
                     />
                     <AccessMemoEditor
-                        title="搬入口メモ"
+                        title="搬入経路"
                         value={accessMemos.loading}
                         saved={savedMemoKey === 'loading'}
                         onChange={(value) => updateMemo('loading', value)}
                         onSave={() => setSavedMemoKey('loading')}
                     />
                     <AccessMemoEditor
-                        title="訪問注意事項"
+                        title="入場方法"
+                        value={accessMemos.access}
+                        saved={savedMemoKey === 'access'}
+                        onChange={(value) => updateMemo('access', value)}
+                        onSave={() => setSavedMemoKey('access')}
+                    />
+                    <AccessMemoEditor
+                        title="鍵・オートロック"
+                        value={accessMemos.key}
+                        saved={savedMemoKey === 'key'}
+                        onChange={(value) => updateMemo('key', value)}
+                        onSave={() => setSavedMemoKey('key')}
+                    />
+                    <AccessMemoEditor
+                        title="訪問時注意事項"
                         value={accessMemos.visit}
                         saved={savedMemoKey === 'visit'}
                         onChange={(value) => updateMemo('visit', value)}
                         onSave={() => setSavedMemoKey('visit')}
                     />
+                    <AccessMemoEditor
+                        title="緊急連絡先"
+                        value={accessMemos.emergency}
+                        saved={savedMemoKey === 'emergency'}
+                        onChange={(value) => updateMemo('emergency', value)}
+                        onSave={() => setSavedMemoKey('emergency')}
+                    />
+                    <AccessMemoEditor
+                        title="現場メモ"
+                        value={accessMemos.site}
+                        saved={savedMemoKey === 'site'}
+                        onChange={(value) => updateMemo('site', value)}
+                        onSave={() => setSavedMemoKey('site')}
+                    />
                 </div>
             </div>
         </section>
+    );
+}
+
+function createAccessMemos(project: Project): AccessMemos {
+    return {
+        parking: project.parkingMemo,
+        loading: project.loadingMemo,
+        access: project.accessMethod,
+        key: project.keyNote,
+        visit: project.visitNote,
+        emergency: project.emergencyContact,
+        site: project.siteMemo,
+    };
+}
+
+function MapLink({
+    href,
+    label,
+    dark = false,
+}: {
+    href: string;
+    label: string;
+    dark?: boolean;
+}) {
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className={[
+                'inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-lg px-3 text-center text-sm font-bold transition focus-visible:outline-none focus-visible:ring-4',
+                dark
+                    ? 'bg-slate-950 text-white hover:bg-slate-800 focus-visible:ring-slate-200'
+                    : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 focus-visible:ring-sky-100',
+            ].join(' ')}
+        >
+            {label}
+        </a>
     );
 }
 

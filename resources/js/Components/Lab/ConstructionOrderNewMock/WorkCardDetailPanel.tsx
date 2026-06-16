@@ -6,7 +6,14 @@ import type {
     PhotoQueueItem,
     WorkCard,
 } from './mockData';
-import { cardKindLabels, cardKindStyles } from './mockData';
+import {
+    cardKindLabels,
+    cardKindStyles,
+    formatQuantity,
+    formatYen,
+    isNegativeAmount,
+    parseYenInput,
+} from './mockData';
 
 type WorkCardDetailPanelProps = {
     card: WorkCard;
@@ -63,7 +70,7 @@ export default function WorkCardDetailPanel({
             draft: {
                 title: card.title,
                 status: card.status,
-                amount: card.amount,
+                amount: String(card.amount),
                 summary: card.summary,
             },
         });
@@ -78,9 +85,10 @@ export default function WorkCardDetailPanel({
                     id: `row-${card.id}-${Date.now()}`,
                     content: '追加明細',
                     displayLabel: '数量',
-                    measuredValue: '1',
+                    quantity: 1,
                     unit: '式',
-                    fixedAmount: '0円',
+                    unitPrice: 0,
+                    amount: 0,
                     memo: '',
                 },
             ],
@@ -95,7 +103,10 @@ export default function WorkCardDetailPanel({
         if (editModal.type === 'basic') {
             onSaveCard({
                 ...card,
-                ...editModal.draft,
+                title: editModal.draft.title,
+                status: editModal.draft.status,
+                amount: parseYenInput(editModal.draft.amount),
+                summary: editModal.draft.summary,
             });
         }
 
@@ -201,8 +212,9 @@ export default function WorkCardDetailPanel({
                             />
                             <InfoButton
                                 label="金額"
-                                value={card.amount}
+                                value={formatYen(card.amount)}
                                 onClick={openBasicEdit}
+                                danger={isNegativeAmount(card.amount)}
                             />
                             <InfoButton
                                 label="作業内容メモ"
@@ -217,6 +229,14 @@ export default function WorkCardDetailPanel({
                                 onClick={openBasicEdit}
                             />
                         </div>
+                        {card.kind === 'exception' && (
+                            <div className="mt-3 grid gap-2 rounded-lg border border-fuchsia-200 bg-fuchsia-50 p-3 text-sm leading-6 text-fuchsia-950">
+                                <p className="font-bold">例外対応の接続</p>
+                                <p>例外種別: {card.exceptionType}</p>
+                                <p>関連工程: {card.relatedStageLabel}</p>
+                                <p>関連案件化: {card.relatedProjectLabel}</p>
+                            </div>
+                        )}
                     </section>
 
                     <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
@@ -253,12 +273,18 @@ export default function WorkCardDetailPanel({
                                         value={row.displayLabel}
                                     />
                                     <DetailValue
-                                        label="計測値 / 単位"
-                                        value={`${row.measuredValue} ${row.unit}`}
+                                        label="数量 / 単位"
+                                        value={formatQuantity(row.quantity, row.unit)}
                                     />
                                     <DetailValue
-                                        label="確定金額"
-                                        value={row.fixedAmount}
+                                        label="単価"
+                                        value={formatYen(row.unitPrice)}
+                                        danger={isNegativeAmount(row.unitPrice)}
+                                    />
+                                    <DetailValue
+                                        label="小計"
+                                        value={formatYen(row.amount)}
+                                        danger={isNegativeAmount(row.amount)}
                                     />
                                     <DetailValue label="メモ" value={row.memo} />
                                     <span className="self-end text-xs font-bold text-sky-700">
@@ -313,6 +339,8 @@ export default function WorkCardDetailPanel({
                                               title: 'サムネイル枠',
                                               memo: '写真なしの空状態',
                                               status: '投入待ち',
+                                              classification: '写真',
+                                              capturedAt: '-',
                                           },
                                       ]
                             }
@@ -339,6 +367,7 @@ export default function WorkCardDetailPanel({
                                               displayName: 'ファイルなし',
                                               memo: '空状態',
                                               status: '投入待ち',
+                                              classification: 'ファイル',
                                           },
                                       ]
                             }
@@ -407,7 +436,7 @@ export default function WorkCardDetailPanel({
                                 }
                             />
                             <TextField
-                                label="作業内容メモ"
+                                label="内容メモ"
                                 value={editModal.draft.summary}
                                 onChange={(value) =>
                                     setEditModal({
@@ -453,17 +482,17 @@ export default function WorkCardDetailPanel({
                             />
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <TextField
-                                    label="計測値"
-                                    value={editModal.draft.measuredValue}
-                                    onChange={(value) =>
-                                        setEditModal({
-                                            ...editModal,
-                                            draft: {
-                                                ...editModal.draft,
-                                                measuredValue: value,
-                                            },
-                                        })
-                                    }
+                                label="数量"
+                                value={String(editModal.draft.quantity)}
+                                onChange={(value) =>
+                                    setEditModal({
+                                        ...editModal,
+                                        draft: {
+                                            ...editModal.draft,
+                                            quantity: parseNumberInput(value),
+                                        },
+                                    })
+                                }
                                 />
                                 <TextField
                                     label="単位"
@@ -480,14 +509,27 @@ export default function WorkCardDetailPanel({
                                 />
                             </div>
                             <TextField
-                                label="確定金額"
-                                value={editModal.draft.fixedAmount}
+                                label="単価（保存値）"
+                                value={String(editModal.draft.unitPrice)}
                                 onChange={(value) =>
                                     setEditModal({
                                         ...editModal,
                                         draft: {
                                             ...editModal.draft,
-                                            fixedAmount: value,
+                                            unitPrice: parseYenInput(value),
+                                        },
+                                    })
+                                }
+                            />
+                            <TextField
+                                label="小計（保存値）"
+                                value={String(editModal.draft.amount)}
+                                onChange={(value) =>
+                                    setEditModal({
+                                        ...editModal,
+                                        draft: {
+                                            ...editModal.draft,
+                                            amount: parseYenInput(value),
                                         },
                                     })
                                 }
@@ -649,10 +691,12 @@ function InfoButton({
     label,
     value,
     onClick,
+    danger = false,
 }: {
     label: string;
     value: string;
     onClick: () => void;
+    danger?: boolean;
 }) {
     return (
         <button
@@ -664,7 +708,7 @@ function InfoButton({
             <span
                 className={[
                     'break-words text-sm font-bold',
-                    isNegativeAmount(value) ? 'text-rose-600' : 'text-slate-900',
+                    danger ? 'text-rose-600' : 'text-slate-900',
                 ].join(' ')}
             >
                 {value}
@@ -673,14 +717,22 @@ function InfoButton({
     );
 }
 
-function DetailValue({ label, value }: { label: string; value: string }) {
+function DetailValue({
+    label,
+    value,
+    danger = false,
+}: {
+    label: string;
+    value: string;
+    danger?: boolean;
+}) {
     return (
         <span className="grid gap-1">
             <span className="text-xs font-semibold text-slate-500">{label}</span>
             <span
                 className={[
                     'break-words text-sm font-bold',
-                    isNegativeAmount(value) ? 'text-rose-600' : 'text-slate-900',
+                    danger ? 'text-rose-600' : 'text-slate-900',
                 ].join(' ')}
             >
                 {value}
@@ -905,6 +957,8 @@ function getEditModalTitle(editModal: EditModal) {
     return 'ファイル情報を編集';
 }
 
-function isNegativeAmount(value: string) {
-    return value.trim().startsWith('-');
+function parseNumberInput(value: string) {
+    const numericValue = Number(value);
+
+    return Number.isFinite(numericValue) ? numericValue : 0;
 }
