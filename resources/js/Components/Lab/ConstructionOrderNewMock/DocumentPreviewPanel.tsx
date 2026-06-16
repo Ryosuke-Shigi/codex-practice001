@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { DocumentType, Project, WorkCard } from './mockData';
+import { formatQuantity, formatYen, isNegativeAmount } from './mockData';
 
 type DocumentPreviewPanelProps = {
     documentType: DocumentType;
@@ -11,9 +12,9 @@ type DocumentLine = {
     id: string;
     content: string;
     displayLabel: string;
-    measuredValue: string;
+    quantity: number;
     unit: string;
-    fixedAmount: string;
+    amount: number;
 };
 
 type PreviewPage =
@@ -37,7 +38,7 @@ const documentLead: Record<DocumentType, string> = {
     receipt: '領収書プレビュー',
 };
 
-const outputButtons = ['印刷', 'PDF', 'EXCEL'];
+const outputButtons = ['印刷', 'PDF', 'Excel風'];
 
 export default function DocumentPreviewPanel({
     documentType,
@@ -52,7 +53,7 @@ export default function DocumentPreviewPanel({
     useEffect(() => {
         setSelectedItemIds(preview.selectedCardIds);
         setActivePageIndex(0);
-    }, [preview.selectedCardIds]);
+    }, [documentType, preview.selectedCardIds, project.id]);
 
     const selectedItems = project.cards.filter((item) =>
         selectedItemIds.includes(item.id),
@@ -64,10 +65,7 @@ export default function DocumentPreviewPanel({
     const lineGroups = chunkLines(documentLines, 6);
     const pages = buildPreviewPages(lineGroups.length);
     const activePage = pages[activePageIndex] ?? pages[0];
-    const subtotal = documentLines.reduce(
-        (total, line) => total + parseYen(line.fixedAmount),
-        0,
-    );
+    const subtotal = documentLines.reduce((total, line) => total + line.amount, 0);
     const tax = Math.floor(subtotal * 0.1);
     const total = subtotal + tax;
 
@@ -89,9 +87,14 @@ export default function DocumentPreviewPanel({
         <section className="grid gap-2">
             <div className="grid gap-3 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-base font-bold text-slate-950">
-                        {documentLead[documentType]}
-                    </h3>
+                    <div className="min-w-0">
+                        <h3 className="text-base font-bold text-slate-950">
+                            {documentLead[documentType]}
+                        </h3>
+                        <p className="mt-1 text-xs font-bold text-slate-500">
+                            {preview.status} / 帳票ファイル {preview.fileLabel}
+                        </p>
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                         {outputButtons.map((label) => (
                             <button
@@ -120,7 +123,7 @@ export default function DocumentPreviewPanel({
                                 <label
                                     key={item.id}
                                     className={[
-                                        'grid min-h-9 grid-cols-[1.2rem_minmax(0,1fr)_5.8rem] items-center gap-2 rounded-md border px-2 py-1 text-xs',
+                                        'grid min-h-9 grid-cols-[1.2rem_minmax(0,1fr)_6.5rem] items-center gap-2 rounded-md border px-2 py-1 text-xs',
                                         checked
                                             ? 'border-sky-300 bg-white'
                                             : 'border-slate-200 bg-white/70',
@@ -143,7 +146,7 @@ export default function DocumentPreviewPanel({
                                                 : 'text-slate-700',
                                         ].join(' ')}
                                     >
-                                        {item.amount}
+                                        {formatYen(item.amount)}
                                     </span>
                                 </label>
                             );
@@ -230,16 +233,19 @@ function DocumentCoverPage({
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
                 <div>
                     <p className="text-sm font-bold text-slate-700">
-                        {preview.recipient}
+                        宛名 {preview.recipient}
                     </p>
                     <p className="mt-2 text-xs leading-5 text-slate-500">
                         件名: {preview.subject}
                     </p>
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                        対象内容: {preview.targetSummary}
+                    </p>
                 </div>
                 <div className="text-xs leading-5 text-slate-600 sm:text-right">
                     <p>発行日 {preview.issuedAt}</p>
-                    <p>書類番号 {preview.documentNumber}</p>
-                    <p>{preview.issuer}</p>
+                    <p>帳票番号 {preview.documentNumber}</p>
+                    <p>発行者 {preview.issuer}</p>
                     <p>担当 {project.owner}</p>
                 </div>
             </div>
@@ -288,10 +294,10 @@ function DocumentDetailPage({
                                 {line.displayLabel}
                             </td>
                             <td className="px-2 py-2 text-right align-top">
-                                {line.measuredValue} {line.unit}
+                                {formatQuantity(line.quantity, line.unit)}
                             </td>
                             <td className="px-2 py-2 text-right align-top">
-                                <AmountText amount={parseYen(line.fixedAmount)} />
+                                <AmountText amount={line.amount} />
                             </td>
                         </tr>
                     ))}
@@ -322,32 +328,48 @@ function DocumentNotePage({
 }) {
     return (
         <div className="grid gap-4 pt-4">
-            <section className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <h5 className="text-sm font-bold text-slate-950">外部向け備考</h5>
-                <p className="mt-2 text-xs leading-6 text-slate-700">
+            <section className="min-h-32 rounded-md border border-slate-200 p-4">
+                <h5 className="text-sm font-bold text-slate-950">備考</h5>
+                <p className="mt-3 text-xs leading-7 text-slate-700">
                     {preview.externalNote}
                 </p>
             </section>
 
+            {documentType === 'invoice' && preview.paymentDue && (
+                <NoteBlock title="お支払い期限" value={preview.paymentDue} />
+            )}
+
             {documentType === 'invoice' && preview.paymentAccount && (
-                <section className="rounded-md border border-slate-200 p-3 text-xs leading-6 text-slate-700">
-                    <p className="font-bold text-slate-950">振込先</p>
-                    <p>{preview.paymentAccount}</p>
-                </section>
+                <NoteBlock title="お振込先" value={preview.paymentAccount} />
+            )}
+
+            {documentType === 'receipt' && preview.receiptStatus && (
+                <NoteBlock title="領収状態" value={preview.receiptStatus} />
             )}
 
             {documentType === 'receipt' && preview.proviso && (
-                <section className="rounded-md border border-slate-200 p-3 text-xs leading-6 text-slate-700">
-                    <p className="font-bold text-slate-950">但し書き</p>
-                    <p>{preview.proviso}</p>
-                </section>
+                <NoteBlock title="但し書き" value={preview.proviso} />
             )}
 
-            <section className="rounded-md border border-slate-200 p-3 text-xs leading-6 text-slate-700">
-                <p className="font-bold text-slate-950">発行者情報</p>
-                <p>{preview.issuer}</p>
+            <section className="grid gap-2 rounded-md border border-slate-200 p-4 text-xs leading-6 text-slate-700 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div>
+                    <p className="font-bold text-slate-950">発行者</p>
+                    <p className="mt-1">{preview.issuer}</p>
+                </div>
+                <div className="h-16 w-16 rounded-full border border-slate-300 text-center leading-[4rem] text-[11px] font-bold text-slate-500">
+                    印
+                </div>
             </section>
         </div>
+    );
+}
+
+function NoteBlock({ title, value }: { title: string; value: string }) {
+    return (
+        <section className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <h5 className="text-sm font-bold text-slate-950">{title}</h5>
+            <p className="mt-2 text-xs leading-6 text-slate-700">{value}</p>
+        </section>
     );
 }
 
@@ -402,7 +424,7 @@ function AmountText({
         <span
             className={[
                 'inline-flex font-bold tabular-nums',
-                amount < 0 ? 'text-rose-600' : 'text-slate-950',
+                isNegativeAmount(amount) ? 'text-rose-600' : 'text-slate-950',
                 className,
             ].join(' ')}
         >
@@ -417,9 +439,9 @@ function buildDocumentLines(items: WorkCard[]): DocumentLine[] {
             id: `${item.id}-${row.id}`,
             content: row.content,
             displayLabel: row.displayLabel,
-            measuredValue: row.measuredValue,
+            quantity: row.quantity,
             unit: row.unit,
-            fixedAmount: row.fixedAmount,
+            amount: row.amount,
         })),
     );
 }
@@ -456,20 +478,4 @@ function chunkLines(lines: DocumentLine[], size: number) {
     }
 
     return groups;
-}
-
-function parseYen(value: string) {
-    const numericValue = Number(value.replace(/[^\d-]/g, ''));
-
-    return Number.isFinite(numericValue) ? numericValue : 0;
-}
-
-function formatYen(amount: number) {
-    const absoluteAmount = Math.abs(amount).toLocaleString('ja-JP');
-
-    return amount < 0 ? `-${absoluteAmount}円` : `${absoluteAmount}円`;
-}
-
-function isNegativeAmount(value: string) {
-    return value.trim().startsWith('-');
 }

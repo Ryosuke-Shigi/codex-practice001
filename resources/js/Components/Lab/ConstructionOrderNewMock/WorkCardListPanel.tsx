@@ -1,7 +1,12 @@
 import { useState } from 'react';
 
 import type { CardKind, Project, WorkCard } from './mockData';
-import { cardKindLabels, cardKindStyles } from './mockData';
+import {
+    cardKindLabels,
+    cardKindStyles,
+    formatYen,
+    isNegativeAmount,
+} from './mockData';
 
 type WorkCardListPanelProps = {
     project: Project;
@@ -78,7 +83,7 @@ export default function WorkCardListPanel({
                                             : 'text-slate-950',
                                     ].join(' ')}
                                 >
-                                    {card.amount}
+                                    {formatYen(card.amount)}
                                 </span>
                                 <span className="ml-3 text-xs font-bold text-sky-700 sm:ml-0 sm:mt-2 sm:block">
                                     詳細 &gt;
@@ -131,8 +136,4 @@ export default function WorkCardListPanel({
             )}
         </section>
     );
-}
-
-function isNegativeAmount(amount: string) {
-    return amount.trim().startsWith('-');
 }
