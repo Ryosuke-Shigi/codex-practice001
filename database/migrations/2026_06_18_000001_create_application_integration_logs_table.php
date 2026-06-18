@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('method', 16)->nullable();
             $table->unsignedSmallInteger('response_status')->nullable()->index();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->timestamp('occurred_at')->index();
+            $table->dateTime('occurred_at')->index();
 
             $table->timestamps();
             $table->softDeletes();

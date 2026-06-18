@@ -23,8 +23,8 @@ return new class extends Migration
             $table->text('url')->nullable();
             $table->string('method', 16)->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->timestamp('occurred_at')->index();
-            $table->timestamp('resolved_at')->nullable()->index();
+            $table->dateTime('occurred_at')->index();
+            $table->dateTime('resolved_at')->nullable()->index();
             $table->foreignId('resolved_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
