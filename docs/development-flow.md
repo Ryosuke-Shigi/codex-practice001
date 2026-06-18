@@ -164,6 +164,36 @@ Product化前に固定するもの:
 
 同じ目的を成立させるために不可分なAction、Service、Repository、DTO、Responder、Component、Testは同じPRへ含めてよいものとします。複数目的は混ぜません。
 
+## PRODUCT実装前の責務配置
+
+PRODUCT実装では、コードを書き始める前に責務の置き場を固定します。
+
+先に決めるもの:
+
+- 入口はどこか
+- Controller は何を受けるだけか
+- Request は何を検証するか
+- Action はどのユースケース手順を持つか
+- Service はどの業務判断を持つか
+- Repository は何を取得・保存するか
+- DTO / ListDTO は何を運ぶか
+- Responder は何を画面・API向けに整形するか
+- Test は何を仕様として固定するか
+
+ディレクトリやファイルは、責務の置き場を決めてから作成します。
+
+ディレクトリを先に作るのではなく、責務配置を先に決めます。
+
+## MOCK / PROTOTYPE では作りすぎない
+
+MOCK段階では、Repository / Service / DTO / Responder を先に作り込みません。
+
+MOCKは画面単体と導線確認を優先します。
+
+PROTOTYPE段階では、画面間接続、props、fixture、操作感の確認を優先します。
+
+ADR Pattern / レイヤードに沿った本格的なディレクトリ作成は、PRODUCT実装段階で行います。
+
 ## Product実装の基本手順
 
 ```text
@@ -178,6 +208,8 @@ docs/coding-standards.md と docs/commenting.md で実装作法・型・コメ�
 目的・入力・出力・実装しないことを固定
     ↓
 成功条件・失敗条件・責務境界を固定
+    ↓
+責務配置を固定
     ↓
 PROTOTYPEで確認済みの振る舞いをPRODUCTで守る仕様として先にTestへ記述
     ↓

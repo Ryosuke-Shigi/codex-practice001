@@ -47,6 +47,7 @@ MDルーターは、docsを軽く扱うためのものではない。
 * 作業段階:
 * 変更対象:
 * 変更しない対象:
+* 責務配置:
 * 読むMD:
 * 読まないMD:
 * 編集禁止:
@@ -144,8 +145,8 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | AI駆動開発方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | MOCK作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration |
 | PROTOTYPE作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
-| PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test | 無関係feature docs |
-| PRODUCT修正 | docs/architecture.md / docs/testing.md | 対象feature docs / 対象PRの差分 | 変更対象レイヤーと直接依存先 | リポジトリ全体の無差別探索 |
+| PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
+| PRODUCT修正 | docs/architecture.md / docs/testing.md | 対象feature docs / 対象PRの差分 | 変更対象レイヤーと直接依存先（変更対象レイヤーと影響する責務を先に宣言） | リポジトリ全体の無差別探索 |
 | Service修正 | docs/architecture.md / docs/testing.md | 対象feature docs | Service / DTO / Action / Test | UI全体 |
 | Repository修正 | docs/architecture.md / docs/testing.md | 対象feature docsが存在する場合は読む | Repository / Model / Migration / Test | 無関係Component |
 | DTO修正 | docs/architecture.md / docs/testing.md | 対象feature docs | DTO / ListDTO / Action / Responder / Test | 無関係Repository全体 |
@@ -162,6 +163,14 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | PRレビュー | docs/ai/workflows/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
 | コメント / PHPDoc / JSDoc整備 | docs/architecture.md / 対象言語docsが存在する場合は読む | 対象feature docs | 対象ファイルのみ | 仕様変更につながる周辺修正 |
 | 失敗改善ログ作成 | docs/context-management.md / docs/development-flow.md | 対象PR / 対象docs | 必要な差分のみ | 無関係コード全体 |
+
+## PRODUCT作業の責務配置
+
+PRODUCT新規実装では、作業開始宣言で Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test の責務配置を先に宣言し、固定してから実装します。
+
+PRODUCT修正では、変更対象レイヤーと影響する責務を先に宣言してから修正します。
+
+責務配置を作れない場合は、推測で実装せず停止して報告します。
 
 ## レビュー強度との対応
 
@@ -228,6 +237,9 @@ feature docsは共通方針を上書きできない。
 * Laravel / React / app docs / tests / feature docs の作業なのに、外側repo `laravel11-docker` に差分が出ている
 * Docker / compose / nginx / deploy / Lightsail運用作業ではないのに、外側repo `laravel11-docker` にPRを作成しようとしている
 * 外側repoから開始したアプリ作業で、内側アプリrepo `codex-practice001` の remote / branch / status を確認できない
+* PRODUCT実装なのに責務配置を固定できない
+* MOCK / PROTOTYPE段階なのに Repository / Service / DTO / Responder を作り込もうとしている
+* ディレクトリ作成が責務設計より先行している
 * 確認コマンドが未定義で、代替実行すると危険がある
 * 存在しないdocsを前提にしている
 * docsパスを確認せずに新規参照として追加しようとしている
