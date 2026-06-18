@@ -26,6 +26,9 @@ ADR Pattern / レイヤードアーキテクチャにより、Controller / Reque
 
 - 移植元repoは読むだけにする
 - 移植先repoだけに差分を出す
+- sandboxで作業対象にするのは移植先repoだけ
+- 移植元repoはGitHub上の参照情報として読むだけ
+- 複数repoを同一sandboxで同時編集できる前提にしない
 - 移植元repoを移植作業中に勝手に修正しない
 - 移植元の仮コードをPRODUCTとして扱わない
 - 移植前にFeature移植マニフェストを作る

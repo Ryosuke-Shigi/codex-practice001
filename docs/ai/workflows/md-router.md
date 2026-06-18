@@ -252,6 +252,8 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 停止条件:
 
 - 移植元repoに差分を出そうとしている
+- 複数repoを同一sandboxで同時編集できる前提にしている
+- 移植元repoをGitHub参照ではなく作業対象repoとして扱っている
 - 移植モードを確定できない
 - 移植対象ファイルを固定できない
 - 移植先で差し替えるenv / config / route / provider / DB / queue / schedulerを確認できない
