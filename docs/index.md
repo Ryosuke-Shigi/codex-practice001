@@ -109,6 +109,7 @@ MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を
 |---|---|
 | `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
+| `docs/feature-module-portability.md` | Feature Module移植ルール。Feature全体移植 / PRODUCTのみ移植 / MOCKのみ移植 / PROTOTYPEのみ移植 / IDEA BOARDのみ移植、移植元repoは読むだけ、移植先repoだけに差分を出す原則、移植対象・差し替え対象・移植しない対象の固定、個別Feature移植マニフェストの追加方針 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
