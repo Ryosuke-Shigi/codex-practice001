@@ -4,15 +4,38 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築しているポー�
 
 公開URL: https://ada-works.dev
 
+## このポートフォリオで証明していること
+
+このリポジトリは、単にLaravelアプリを作るだけではなく、設計、テスト、Pull Request、CI、AI駆動開発の運用まで含めて、変更を安全に進める力を示すためのポートフォリオです。
+
+- Laravel 11 / Inertia / React / TypeScript による実装力
+- ADR Pattern とレイヤードアーキテクチャによる責務分離
+- Feature / Unit Test による仕様固定
+- Pull Request / CI / review による変更管理
+- ChatGPT / CodexApp を分担させるAI駆動開発
+- docs / MD Router / 指示用まとめによるAI作業の再現性
+- [Feature Module移植ルール](docs/feature-module-portability.md) による別Laravelプロジェクトへの展開可能性
+
+AIの出力は完成品として扱わず、人間が仕様、責務境界、差分確認、完成判定、merge、本番反映判断を握ります。
+
+## 最初に見る場所
+
+| 見る場所 | 何を見るか |
+|---|---|
+| [公開URL](https://ada-works.dev) | 実際の入口とProject Select |
+| [Projects](#projects) | 代表Featureと、それぞれが証明している設計要素 |
+| [AI Driven Development](#ai-driven-development) | ChatGPT / CodexApp / 人間の役割分担 |
+| [Architecture](#architecture) | ADR Pattern と各レイヤーの責務 |
+| [Testing](#testing) | Feature / Unit / React test で固定する仕様 |
+| [Documentation / Skills](#documentation--skills) | AI作業用docs、MD Router、作業ルール |
+
+代表Featureとして、[DanceShortsRadar](#danceshortsradar)、[Japan Quake Wave Map](#japan-quake-wave-map)、[API Discovery Hub](#api-discovery-hub) を見ると、外部API連携、保存・同期、ランキング、地図表示、Queue / Scheduler、責務分離、テスト固定の見え方を確認できます。
+
 ## このリポジトリについて
-
-このリポジトリは、単にLaravelアプリを作るだけではなく、AI駆動開発を安全に進めるための設計・ドキュメント・テスト・Pull Request運用まで含めたポートフォリオです。
-
-ChatGPTで仕様整理、責務分離、テスト観点、レビュー観点、CodexApp向け指示用まとめの作成・圧縮・チェックを行い、CodexAppで渡された指示に従った対象コード調査、実装、差分確認、テスト追加・実行を行う前提で開発しています。詳細な役割境界は [Context Management](docs/context-management.md) を参照してください。
 
 開発では IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階を分け、PRODUCT化ではUI契約・振る舞い・状態・導線を引き継ぎながら、Repository / Service / DTO / Responder / Test へ責務を分離します。
 
-AIの出力は完成品として扱わず、テスト、Pull Request、CI、責務レビュー、人間のmerge判断を通して確認します。
+詳細な開発フローは [Development Flow](docs/development-flow.md)、AI作業の役割境界は [Context Management](docs/context-management.md) を参照してください。
 
 ## Projects
 
@@ -25,15 +48,12 @@ AIの出力は完成品として扱わず、テスト、Pull Request、CI、責�
 
 YouTube Shorts のダンス動画を対象に、地域・比較日数・並び順を切り替えながら、伸びている動画を確認する機能です。
 
-主な要素:
+証明している設計要素:
 
-- YouTube Data API 連携
-- 動画データ同期
-- snapshot 保存
-- ranking Query
-- comparisonDays / sort
-- selectedVideoId 基準の5枚 window
+- YouTube Data API 連携、動画データ同期、snapshot 保存
+- ranking Query、comparisonDays / sort、selectedVideoId 基準の5枚 window
 - Strategy / Factory によるランキング表示制御
+- RISING の責務整理
 - Repository / Service / Action / Strategy / Responder の責務分離
 - Feature / Unit Test による仕様固定
 
@@ -43,11 +63,10 @@ YouTube Shorts のダンス動画を対象に、地域・比較日数・並び�
 
 気象庁の地震火山情報 Atom feed と個別XMLを取得し、地震情報を保存・解析・地図表示する機能です。
 
-主な要素:
+証明している設計要素:
 
 - 気象庁 Atom feed の取得
-- feed entry 保存
-- entry_id を基準にした insert / update / skip
+- feed entry 保存、entry_id を基準にした insert / update / skip
 - 個別XMLから震源座標・最大震度・マグニチュード・深さを抽出
 - 緯度・経度・最大震度を持つデータのみ map pin 化
 - 震度なしデータ・座標なしデータを map pin 化しない制御
@@ -59,12 +78,11 @@ YouTube Shorts のダンス動画を対象に、地域・比較日数・並び�
 
 APIs.guru の `list.json` を取得し、公開APIカタログを検索・保存・調査できる機能です。
 
-主な要素:
+証明している設計要素:
 
 - APIs.guru `list.json` の取得
 - `api_catalog_cache` への同期キャッシュ保存
-- insert / update / skip の差分同期
-- `payload_hash` による変更検知
+- insert / update / skip の差分同期、`payload_hash` による変更検知
 - API 一覧検索
 - provider / domain 絞り込み
 - API詳細表示
@@ -142,20 +160,7 @@ MinIO / Mailpit / Adminer はローカル開発用です。
 
 本番では AWS S3 を使い、ローカル開発では MinIO を S3 互換ストレージとして使います。
 
-Laravel 側の保存処理は `Storage::disk('s3')` に統一し、接続先の違いは `.env` と Docker Compose で切り替えます。
-
-ローカル用の設定例:
-
-```dotenv
-FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=minio
-AWS_SECRET_ACCESS_KEY=minio_password
-AWS_DEFAULT_REGION=ap-northeast-1
-AWS_BUCKET=local-bucket
-AWS_ENDPOINT=http://minio:9000
-AWS_URL=http://localhost:9000/local-bucket
-AWS_USE_PATH_STYLE_ENDPOINT=true
-```
+Laravel 側の保存処理は `Storage::disk('s3')` に統一し、接続先の違いは環境変数ファイルと Docker Compose で切り替えます。READMEには認証値や本番接続情報を載せません。
 
 MinIO Console は以下で確認します。
 
@@ -163,7 +168,7 @@ MinIO Console は以下で確認します。
 http://localhost:9001
 ```
 
-`.env` 変更後は、Laravel の設定キャッシュをクリアします。
+設定変更後は、Laravel の設定キャッシュをクリアします。
 
 ```bash
 make app-clear
@@ -173,11 +178,11 @@ make app-clear
 
 このプロジェクトでは、AIを開発の主体にせず、人間が目的・入力・出力・制約・責務境界・テスト観点・完成判定を決めます。
 
-- ChatGPT: 仕様整理、設計の壁打ち、責務分離、テスト観点、指示用まとめの作成・圧縮・チェック
+- ChatGPT: 仕様整理、責務分離、指示用まとめ、テスト観点、PRレビュー観点
 - CodexApp: 渡された指示に従う対象コードの調査、実装・修正、差分確認、テスト追加・実行
 - 人間: 仕様確定、差分確認、完成判定、merge、本番反映判断
 
-AIの出力は、テスト、Pull Request、CI、責務レビューを通して確認します。詳細な役割境界は [Context Management](docs/context-management.md) に従います。
+AI出力は完成品扱いせず、テスト、Pull Request、CI、責務レビューを通して確認します。詳細な役割境界は [Context Management](docs/context-management.md) に従います。
 
 ## Architecture
 
@@ -188,16 +193,38 @@ Controller / Request
         ↓
 Command Action / Query Action
         ↓
-Service / Repository / DTO / Strategy
+Service / Repository / DTO / Strategy / Factory
         ↓
 Responder
         ↓
 React / Inertia
 ```
 
-Controllerへ業務判断、Repositoryへ表示判断、ServiceへHTTP都合を混ぜず、必要な責務だけを使用します。
+各責務を混ぜないことを重視し、必要なレイヤーだけを使います。
+
+| レイヤー | 責務 |
+|---|---|
+| Controller / Request | HTTP入口と入力形式の検証 |
+| Action | 1ユースケースの手順 |
+| Service | 業務判断・ドメインルール |
+| Repository | DBまたは外部データソースとの境界 |
+| DTO / ListDTO | レイヤー間のデータキャリア |
+| Strategy / Factory | 処理差分の切り替え、生成、選択 |
+| Responder | Inertia props、JSON等の出力整形 |
+| React / Inertia | 表示、ユーザー操作、UI状態 |
+
+Controllerへ業務判断、Repositoryへ表示判断、ServiceへHTTP都合、DTOへレスポンス生成を混ぜません。
 
 詳細は [Architecture](docs/architecture.md) を参照してください。
+
+## Feature Module Portability
+
+Featureを別Laravelプロジェクトへ移植可能な単位として扱うため、[Feature Module移植ルール](docs/feature-module-portability.md) を分離しています。
+
+- 移植モードを `full` / `product-only` / `mock-only` / `prototype-only` / `idea-board-only` に分ける
+- `product-only` では Lab / MOCK / PROTOTYPE / IDEA BOARD をPRODUCT移植対象へ混ぜない
+- route、config、provider、migration、seeder、tests、docs、queue、schedulerの差し替え点を確認する
+- 「移植しやすい構成」と「そのままコピーで動く」は別として扱う
 
 ## Testing
 
@@ -267,6 +294,7 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [UI](docs/ui.md): UI、Common、モバイル、Effects
 - [Security](docs/security.md): 秘密情報、本番接続、破壊的操作
 - [Context Management](docs/context-management.md): 文脈読込と理解再起動
+- [Feature Module Portability](docs/feature-module-portability.md): Feature移植モードとPRODUCT移植対象
 - [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
 - [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
 - [PR Summary Template](docs/templates/pr-summary.md): Pull Request本文のレビュー用まとめ
