@@ -143,6 +143,10 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
 | AI駆動開発方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
+| Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
+| Feature移植マニフェスト作成 | docs/feature-module-portability.md / 対象feature docs / docs/index.md / docs/architecture.md | 必要に応じて docs/testing.md / docs/frontend.md | 対象Feature配下 / routes/web.php / routes/console.php / config / providers / migrations / seeders / tests / frontend Pages・Components | 無関係Feature / 移植しない段階のコード |
+| Feature移植先実装 | docs/feature-module-portability.md / 移植元feature docs / 移植先repoのAGENTS・INDEX・ROUTER | 移植先repoの architecture / testing docs | 移植元Featureの移植対象 / 移植先Laravel構成 / 移植先route・config・provider・migration・seeder・tests | 移植対象外Feature / 移植モード外のLab・MOCK・PROTOTYPE・IDEA BOARD |
+| PRODUCTのみ移植 | docs/feature-module-portability.md / 対象feature docs / docs/architecture.md / docs/testing.md | docs/frontend.md / docs/ui-development-flow.md | PRODUCT Controller / Request / Action / Service / Repository / DTO / Responder / Strategy / Factory / Job / Enum / Model / Migration / Seeder / Config / Product routes / Console・Scheduler / Product Page・Component / Product tests | IDEA BOARD / MOCK固定データ / MOCK専用Page・Component / PROTOTYPE仮通信 / PROTOTYPE検証Route・Controller / Lab配下の紹介ページ / モック用画像 / 一時的な調査ログ |
 | MOCK作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration |
 | PROTOTYPE作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
 | PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
@@ -163,6 +167,147 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | PRレビュー | docs/ai/workflows/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
 | コメント / PHPDoc / JSDoc整備 | docs/architecture.md / 対象言語docsが存在する場合は読む | 対象feature docs | 対象ファイルのみ | 仕様変更につながる周辺修正 |
 | 失敗改善ログ作成 | docs/context-management.md / docs/development-flow.md | 対象PR / 対象docs | 必要な差分のみ | 無関係コード全体 |
+
+## Feature移植系作業の詳細
+
+### Feature移植準備
+
+読むMD:
+
+- `docs/feature-module-portability.md`
+- `docs/architecture.md`
+- `docs/development-flow.md`
+- `docs/prototype-policy.md`
+- `docs/ui-development-flow.md`
+- 対象feature docs
+
+主に読むコード:
+
+- 対象Feature配下
+- route
+- console
+- config
+- provider
+- migration
+- seeder
+- tests
+
+読まないもの:
+
+- 無関係Feature
+- 移植対象外のLab / MOCK / PROTOTYPE / IDEA BOARDコード
+
+停止条件:
+
+- 移植モードを確定できない
+- 移植対象ファイル一覧を固定できない
+- Feature docs と現在コードが矛盾している
+
+### Feature移植マニフェスト作成
+
+読むMD:
+
+- `docs/feature-module-portability.md`
+- 対象feature docs
+- `docs/index.md`
+- `docs/architecture.md`
+
+主に読むコード:
+
+- 対象Feature配下
+- `routes/web.php`
+- `routes/console.php`
+- config
+- providers
+- migrations
+- seeders
+- tests
+- frontend Pages / Components
+
+読まないもの:
+
+- 無関係Feature
+- 移植しない段階のコード
+
+停止条件:
+
+- 移植モードを確定できない
+- 移植対象と移植しない対象を分けられない
+- 存在しないファイルを存在する前提でマニフェストへ書こうとしている
+
+### Feature移植先実装
+
+読むMD:
+
+- `docs/feature-module-portability.md`
+- 移植元feature docs
+- 移植先repoのAGENTS / INDEX / ROUTER / architecture / testing docs
+
+主に読むコード:
+
+- 移植元Featureの移植対象
+- 移植先Laravel構成
+- 移植先route / config / provider / migration / seeder / tests
+
+停止条件:
+
+- 移植元repoに差分を出そうとしている
+- 移植モードを確定できない
+- 移植対象ファイルを固定できない
+- 移植先で差し替えるenv / config / route / provider / DB / queue / schedulerを確認できない
+- 移植先repoのLaravel構成を確認できない
+- 移植元と移植先の責務境界が矛盾している
+- Feature docs と現在コードが矛盾している
+
+### PRODUCTのみ移植
+
+読むMD:
+
+- `docs/feature-module-portability.md`
+- 対象feature docs
+- `docs/architecture.md`
+- `docs/testing.md`
+- `docs/frontend.md`
+- `docs/ui-development-flow.md`
+
+主に読むコード:
+
+- PRODUCT Controller
+- Request
+- Action
+- Service
+- Repository
+- DTO
+- Responder
+- Strategy
+- Factory
+- Job
+- Enum
+- Model
+- Migration
+- Seeder
+- Config
+- Product routes
+- Console / Scheduler
+- Product Page / Component
+- Product tests
+
+読まないもの:
+
+- IDEA BOARD
+- MOCK固定データ
+- MOCK専用Page / Component
+- PROTOTYPE仮通信
+- PROTOTYPE検証Route / Controller
+- Lab配下の紹介ページ
+- モック用画像
+- 一時的な調査ログ
+
+停止条件:
+
+- PRODUCTのみ移植なのに Lab / MOCK / PROTOTYPE / IDEA BOARD を混ぜようとしている
+- PRODUCT実装に必要なroute / config / provider / migration / seeder / testを確認できない
+- 移植対象と移植しない対象を分けられない
 
 ## PRODUCT作業の責務配置
 
