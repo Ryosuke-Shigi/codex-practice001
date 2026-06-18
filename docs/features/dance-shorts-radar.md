@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: DanceShortsRadar
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-18
 - Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
@@ -141,11 +141,54 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - `ALL`
 - 地域別ランキング
 
+### RISING / 上昇候補の責務境界
+
+RISING は `dance_short_regions` の地域ではなく、表示専用タブです。
+
+上昇候補は、US / KR などの source region 側で伸びていて、JP 側が未観測または source 側より伸びが小さい動画を継続観測候補として扱うための区分です。
+
+Repository は RISING タブ用の source / JP / previous snapshot をDB上で結合し、window取得可能な read model row へ prefilter します。
+
+Repositoryが扱うこと:
+
+- active動画、active region、最新snapshot、previous snapshot のDB取得条件
+- source region を US / KR に限定する条件
+- source側の増加量が正である候補行への prefilter
+- JP側が未観測、またはJP側の増加量がsource側より小さい候補行への prefilter
+- 同じYouTube動画が複数source regionに出た場合の代表行選択
+- RISING固有の固定順と `windowSize + 1` のlookahead取得
+
+Repositoryが扱わないこと:
+
+- 上昇候補の業務上の意味づけ
+- JP比較状態の値や意味の定義
+- 表示ラベル、観測メモ、空状態文言
+- Inertia / React props生成
+- 選択カード前後のwindow切り出し
+
+Service は上昇候補の意味と JP比較状態を定義します。
+
+`DanceShortRisingCandidateService::japanComparisonStatusForCandidate()` は、source側の増加量、JP current snapshot の有無、JP側の増加量から次の状態を返します。
+
+- `unobserved`: source側は増加していて、JP側の current snapshot がない
+- `smaller_delta`: source側は増加していて、JP側の増加量がsource側より小さい
+- `null`: source側が増加していない、source deltaを算出できない、またはJP側の比較deltaを算出できない
+
+Service は null metric を 0 へ潰しません。`view_count_delta`、`view_growth_rate`、`views_per_hour` の null は「算出不可」として保持し、0とは区別します。
+
+Strategy は Repository row を表示カード用DTOへ詰め替えます。JP比較状態の値は Service の状態定義を使い、Strategy自身では `unobserved` や `smaller_delta` の意味を定義しません。
+
+window切り出しは `DanceShortDisplayCardWindowService` へ委譲します。選択カードがない通常windowでは Repository が取得したlookahead行から表示分と pagination を作り、選択カードがある場合は上昇候補全体順から選択カード前後の最大5件を切り出します。
+
+Responder は確定済みDTOを Inertia / React 用の snake_case props と表示ラベルへ変換します。候補判定、JP比較状態の再定義、metric再計算は行いません。
+
+DTO は比較済みの値を運ぶデータキャリアです。DB取得、上昇候補判定、Inertia props生成、表示文言生成は持ちません。
+
 `selectedVideoId` が指定されたdisplay-card-windowでは、次の順序で処理します。
 
 1. 選択中タブ、比較日数、並び順でランキング全体順を確定する
 2. 選択カードの順位を特定する
-3. 選択カードの前後を含む最大5件をServiceで切り出す
+3. 選択カードの前後を含む最大5件を `DanceShortDisplayCardWindowService` で切り出す
 
 Repositoryはランキング全体のread model取得を担当し、選択カード探索やwindow表示判断は行いません。
 
@@ -221,7 +264,14 @@ inactive、standard、1ページ設定は除外します。
 - comparisonDays / sort条件
 - `selectedVideoId` を基準にした全体順位
 - 最大5件のdisplay-card-window
-- RepositoryとServiceの責務境界
+- RISING Repositoryはsource / JP / previous snapshot をDB上で結合し、read model row へ prefilterする
+- RISING Repositoryは上昇候補の意味づけ、JP比較状態、表示文言、Inertia props生成を持たない
+- `DanceShortRisingCandidateService::japanComparisonStatusForCandidate()` がJP比較状態を定義する
+- Serviceは null metric を0へ潰さない
+- StrategyはRepository rowをDTOへ詰め替え、JP比較状態はServiceの定義を使う
+- window切り出しは `DanceShortDisplayCardWindowService` へ委譲する
+- Responderは確定済みDTOをsnake_case propsと表示ラベルへ変換する
+- DTOは比較済みの値を運ぶデータキャリアに留める
 
 ## 変更時の確認
 
@@ -230,6 +280,11 @@ inactive、standard、1ページ設定は除外します。
 - API quotaへ影響しないか
 - 通常同期・page2同期・snapshot専用同期の役割が混ざっていないか
 - Repositoryへ保存判断・表示判断・tracking statusの意味判断が入っていないか
+- RISING Repositoryへ上昇候補の意味定義、JP比較状態、表示文言、Inertia props生成が入っていないか
+- RISING Serviceが上昇候補の意味、JP比較状態、null metricの扱いを持っているか
+- RISING StrategyがDTO詰め替えとwindow取得委譲に留まり、JP比較状態の意味定義を持っていないか
+- RISING Responderがprops変換と表示ラベル生成に留まり、候補判定やmetric再計算をしていないか
+- RISING DTOがデータキャリアに留まり、DB取得、候補判定、props生成、表示文言生成を持っていないか
 - 共通保存処理を重複実装していないか
 - Schedulerの実行時刻が競合しないか
 - snapshot・ranking・window表示の既存テストを壊していないか
