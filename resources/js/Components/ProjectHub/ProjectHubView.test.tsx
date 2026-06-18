@@ -52,6 +52,7 @@ describe('ProjectHubView', () => {
                 projectId="logs"
                 applicationLogs={{
                     activeTab: 'api',
+                    resolveConfirmationKeyword: 'resolve',
                     tabs: [
                         { id: 'api', label: 'API' },
                         { id: 'error', label: 'ERROR' },

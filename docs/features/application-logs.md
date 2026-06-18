@@ -26,6 +26,8 @@ ERRORタブは `application_error_logs` を表示します。
 
 どちらも一覧表は「時間」「内容」の2列に留め、詳細分析用の多列管理表にはしません。
 
+logs閲覧は公開ポートフォリオ上の確認画面として扱い、ログイン機能は追加しません。
+
 ## 保存先
 
 保存先は用途ごとに分けます。
@@ -36,6 +38,12 @@ ERRORタブは `application_error_logs` を表示します。
 API連携ログには対応済み概念を持たせません。
 
 ERRORログだけ、未対応ログを対応済みにできます。対応済み時は `resolved_at` と `resolved_by` を保存します。対応済み解除はPR1では扱いません。
+
+ERRORログの対応済み操作は、ERROR行クリック後の詳細モーダル内で行います。モーダル内の confirmation 入力が `config/application_logs.php` の `resolve_confirmation_keyword` と一致した場合だけPOSTします。
+
+現在の confirmation keyword は `resolve` です。この値は秘密情報ではなく、公開ポートフォリオ上の軽い誤操作防止用です。認証・認可・管理者確認としては扱いません。
+
+confirmation keyword はENVへ置かず、`config/application_logs.php` に固定します。入力された confirmation はDB保存せず、アプリログにも記録しません。
 
 ## 保存フロー
 
@@ -90,6 +98,8 @@ React側は `ProjectLogsField` でタブ切り替え、2列表、empty状態、E
 
 ComponentはDB取得、保存可否判断、権限判断を持ちません。
 
+ERRORタブでは行クリックで詳細モーダルを開きます。APIタブの行クリックでは対応済みモーダルを出しません。
+
 ## テストで固定する仕様
 
 - Eventが発生事実だけを持つ
@@ -98,10 +108,13 @@ ComponentはDB取得、保存可否判断、権限判断を持ちません。
 - secret、payload、token、cookie、session、stack trace全文を保存しない
 - API連携ログとERRORログを別テーブルに保存する
 - API連携ログに対応済み概念を持たせない
-- ERRORログだけ対応済みにできる
+- ERRORログだけ confirmation keyword 一致時に対応済みにできる
+- confirmationなし、不一致ではERRORログを対応済みにできない
+- confirmation入力値を保存しない
 - `/projects/logs` にAPI / ERRORタブと分離された行を渡す
 - ERROR内容に file:line を含める
 - React側の表は「時間」「内容」の2列で表示する
+- ERROR行クリックで詳細モーダルを表示する
 
 ## 変更時の確認
 
@@ -110,6 +123,8 @@ ComponentはDB取得、保存可否判断、権限判断を持ちません。
 - Repositoryへ業務判断や表示判断を置いていないか
 - Responderへ業務判断を置いていないか
 - ComponentへDB操作や状態遷移可否判断を置いていないか
+- confirmation を認証・認可・秘密情報として扱っていないか
+- confirmation 入力値を保存、ログ出力していないか
 - 表示を多列管理表へ広げていないか
 - Reverb / Broadcasting / Echo / Slack / メール通知を混ぜていないか
 - Docker / nginx / queue / scheduler / 親Git側へ差分を出していないか

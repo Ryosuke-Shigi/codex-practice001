@@ -1,6 +1,11 @@
 import { router } from '@inertiajs/react';
-import { CheckCircle2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CheckCircle2, X } from 'lucide-react';
+import {
+    useEffect,
+    useState,
+    type ChangeEvent,
+    type KeyboardEvent,
+} from 'react';
 
 export type ProjectLogTabId = 'api' | 'error';
 
@@ -9,18 +14,19 @@ type ProjectLogTab = {
     label: string;
 };
 
-type ApiLogRow = {
+export type ApiLogRow = {
     id: number;
     occurredAt: string;
     content: string;
     status: string;
 };
 
-type ErrorLogRow = {
+export type ErrorLogRow = {
     id: number;
     occurredAt: string;
     content: string;
     level: string;
+    location: string | null;
     isResolved: boolean;
     canResolve: boolean;
     resolveUrl: string;
@@ -37,6 +43,7 @@ export type ProjectLogsProps = {
      * 画面内クリック後はローカル state で切り替え、再訪問時だけ props へ追従します。
      */
     activeTab: ProjectLogTabId;
+    resolveConfirmationKeyword: string;
     tabs: ProjectLogTab[];
     api: LogTable<ApiLogRow>;
     error: LogTable<ErrorLogRow>;
@@ -46,8 +53,14 @@ type ProjectLogsFieldProps = {
     logs: ProjectLogsProps;
 };
 
+type ErrorLogResolvePostOptions = {
+    onSuccess?: () => void;
+    onFinish?: () => void;
+};
+
 export const emptyProjectLogs: ProjectLogsProps = {
     activeTab: 'api',
+    resolveConfirmationKeyword: 'resolve',
     tabs: [
         { id: 'api', label: 'API' },
         { id: 'error', label: 'ERROR' },
@@ -62,38 +75,119 @@ export const emptyProjectLogs: ProjectLogsProps = {
     },
 };
 
+export function canSubmitErrorLogResolve(
+    row: ErrorLogRow | null,
+    confirmation: string,
+    expectedConfirmation: string,
+    resolvingErrorLogId: number | null,
+): boolean {
+    return (
+        row !== null &&
+        row.canResolve &&
+        !row.isResolved &&
+        resolvingErrorLogId === null &&
+        expectedConfirmation !== '' &&
+        confirmation === expectedConfirmation
+    );
+}
+
+export function postErrorLogResolve(
+    row: ErrorLogRow,
+    confirmation: string,
+    options: ErrorLogResolvePostOptions = {},
+) {
+    router.post(
+        row.resolveUrl,
+        { confirmation },
+        {
+            preserveScroll: true,
+            onSuccess: () => options.onSuccess?.(),
+            onFinish: () => options.onFinish?.(),
+        },
+    );
+}
+
 export default function ProjectLogsField({ logs }: ProjectLogsFieldProps) {
     const [activeTab, setActiveTab] = useState<ProjectLogTabId>(
         logs.activeTab,
     );
+    const [selectedErrorLog, setSelectedErrorLog] =
+        useState<ErrorLogRow | null>(null);
+    const [confirmation, setConfirmation] = useState('');
     const [resolvingErrorLogId, setResolvingErrorLogId] = useState<
         number | null
     >(null);
 
+    const closeErrorLogModal = () => {
+        setSelectedErrorLog(null);
+        setConfirmation('');
+    };
+
     useEffect(() => {
         setActiveTab(logs.activeTab);
+
+        if (logs.activeTab !== 'error') {
+            closeErrorLogModal();
+        }
     }, [logs.activeTab]);
+
+    useEffect(() => {
+        setSelectedErrorLog((current) => {
+            if (current === null) {
+                return null;
+            }
+
+            return (
+                logs.error.rows.find((row) => row.id === current.id) ?? null
+            );
+        });
+    }, [logs.error.rows]);
 
     const activeRows =
         activeTab === 'api' ? logs.api.rows : logs.error.rows;
     const emptyMessage =
         activeTab === 'api' ? logs.api.emptyMessage : logs.error.emptyMessage;
 
-    const handleResolve = (row: ErrorLogRow) => {
-        if (!row.canResolve || resolvingErrorLogId !== null) {
+    const handleTabSelect = (tabId: ProjectLogTabId) => {
+        setActiveTab(tabId);
+
+        if (tabId !== 'error') {
+            closeErrorLogModal();
+        }
+    };
+
+    const handleOpenErrorLog = (row: ErrorLogRow) => {
+        setSelectedErrorLog(row);
+        setConfirmation('');
+    };
+
+    const handleResolve = () => {
+        const row = selectedErrorLog;
+
+        if (
+            row === null ||
+            !canSubmitErrorLogResolve(
+                row,
+                confirmation,
+                logs.resolveConfirmationKeyword,
+                resolvingErrorLogId,
+            )
+        ) {
             return;
         }
 
-        // 二重送信を避けつつ、Inertia の再描画で最新の resolved 状態を受け取ります。
+        /*
+         * confirmation は誤操作防止用の一時入力です。
+         * 送信後または画面更新後に残さないよう、成功時と終了時の両方でクリアします。
+         */
         setResolvingErrorLogId(row.id);
-        router.post(
-            row.resolveUrl,
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => setResolvingErrorLogId(null),
+        postErrorLogResolve(row, confirmation, {
+            onSuccess: closeErrorLogModal,
+            onFinish: () => {
+                setResolvingErrorLogId(null);
+                setConfirmation('');
             },
-        );
+        });
     };
 
     return (
@@ -110,7 +204,7 @@ export default function ProjectLogsField({ logs }: ProjectLogsFieldProps) {
                         role="tab"
                         className="project-logs-tab"
                         aria-selected={activeTab === tab.id}
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabSelect(tab.id)}
                     >
                         {tab.label}
                     </button>
@@ -137,27 +231,40 @@ export default function ProjectLogsField({ logs }: ProjectLogsFieldProps) {
                                       <ErrorLogTableRow
                                           key={row.id}
                                           row={row}
-                                          isResolving={
-                                              resolvingErrorLogId === row.id
-                                          }
-                                          onResolve={handleResolve}
+                                          onSelect={handleOpenErrorLog}
                                       />
                                   ))}
                         </tbody>
                     </table>
                 )}
             </div>
+
+            {selectedErrorLog !== null && (
+                <ErrorLogDetailModal
+                    row={selectedErrorLog}
+                    confirmation={confirmation}
+                    resolveConfirmationKeyword={
+                        logs.resolveConfirmationKeyword
+                    }
+                    resolvingErrorLogId={resolvingErrorLogId}
+                    onConfirmationChange={setConfirmation}
+                    onClose={closeErrorLogModal}
+                    onResolve={handleResolve}
+                />
+            )}
         </section>
     );
 }
 
-function ApiLogTableRow({ row }: { row: ApiLogRow }) {
+export function ApiLogTableRow({ row }: { row: ApiLogRow }) {
     return (
         <tr>
             <td>{row.occurredAt}</td>
             <td>
                 <div className="project-log-content">
-                    <span className={`project-log-label project-log-label--${row.status}`}>
+                    <span
+                        className={`project-log-label project-log-label--${row.status}`}
+                    >
                         [{row.status}]
                     </span>
                     <span>{row.content}</span>
@@ -167,41 +274,168 @@ function ApiLogTableRow({ row }: { row: ApiLogRow }) {
     );
 }
 
-function ErrorLogTableRow({
+export function ErrorLogTableRow({
     row,
-    isResolving,
-    onResolve,
+    onSelect,
 }: {
     row: ErrorLogRow;
-    isResolving: boolean;
-    onResolve: (row: ErrorLogRow) => void;
+    onSelect: (row: ErrorLogRow) => void;
 }) {
+    const handleKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+
+        event.preventDefault();
+        onSelect(row);
+    };
+
     return (
-        <tr>
+        <tr
+            className="project-log-clickable-row"
+            role="button"
+            tabIndex={0}
+            aria-label={`ERRORログ詳細を開く ${row.occurredAt}`}
+            onClick={() => onSelect(row)}
+            onKeyDown={handleKeyDown}
+        >
             <td>{row.occurredAt}</td>
             <td>
                 <div className="project-log-content">
-                    <span className={`project-log-label project-log-label--${row.level}`}>
+                    <span
+                        className={`project-log-label project-log-label--${row.level}`}
+                    >
                         [{row.level}]
                     </span>
                     <span>{row.content}</span>
-                    {row.isResolved ? (
+                    {row.isResolved && (
                         <span className="project-log-resolved">
                             <CheckCircle2 aria-hidden="true" size={15} />
                             resolved
                         </span>
-                    ) : (
-                        <button
-                            type="button"
-                            className="project-log-resolve-button"
-                            disabled={!row.canResolve || isResolving}
-                            onClick={() => onResolve(row)}
-                        >
-                            {isResolving ? 'saving' : '対応済み'}
-                        </button>
                     )}
                 </div>
             </td>
         </tr>
+    );
+}
+
+export function ErrorLogDetailModal({
+    row,
+    confirmation,
+    resolveConfirmationKeyword,
+    resolvingErrorLogId,
+    onConfirmationChange,
+    onClose,
+    onResolve,
+}: {
+    row: ErrorLogRow;
+    confirmation: string;
+    resolveConfirmationKeyword: string;
+    resolvingErrorLogId: number | null;
+    onConfirmationChange: (confirmation: string) => void;
+    onClose: () => void;
+    onResolve: () => void;
+}) {
+    const canSubmit = canSubmitErrorLogResolve(
+        row,
+        confirmation,
+        resolveConfirmationKeyword,
+        resolvingErrorLogId,
+    );
+    const isResolving = resolvingErrorLogId === row.id;
+    const resolvedState = row.isResolved ? 'resolved' : 'unresolved';
+
+    const handleConfirmationChange = (
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        onConfirmationChange(event.target.value);
+    };
+
+    return (
+        <div className="project-log-modal-backdrop">
+            <section
+                className="project-log-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="project-log-modal-title"
+            >
+                <header className="project-log-modal-header">
+                    <h2 id="project-log-modal-title">ERROR detail</h2>
+                    <button
+                        type="button"
+                        className="project-log-modal-icon-button"
+                        aria-label="閉じる"
+                        onClick={onClose}
+                    >
+                        <X aria-hidden="true" size={18} />
+                    </button>
+                </header>
+
+                <dl className="project-log-detail-list">
+                    <div>
+                        <dt>時間</dt>
+                        <dd>{row.occurredAt}</dd>
+                    </div>
+                    <div>
+                        <dt>内容</dt>
+                        <dd>{row.content}</dd>
+                    </div>
+                    <div>
+                        <dt>level</dt>
+                        <dd>
+                            <span
+                                className={`project-log-label project-log-label--${row.level}`}
+                            >
+                                [{row.level}]
+                            </span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>file:line</dt>
+                        <dd>{row.location ?? 'recorded without file:line'}</dd>
+                    </div>
+                    <div>
+                        <dt>resolved状態</dt>
+                        <dd>
+                            <span className="project-log-resolved-state">
+                                {resolvedState}
+                            </span>
+                        </dd>
+                    </div>
+                </dl>
+
+                <label className="project-log-confirmation-field">
+                    <span>confirmation</span>
+                    <input
+                        type="text"
+                        value={confirmation}
+                        placeholder={resolveConfirmationKeyword}
+                        autoComplete="off"
+                        disabled={!row.canResolve || row.isResolved}
+                        onChange={handleConfirmationChange}
+                    />
+                </label>
+
+                <div className="project-log-modal-actions">
+                    <button
+                        type="button"
+                        className="project-log-resolve-button"
+                        disabled={!canSubmit}
+                        onClick={onResolve}
+                    >
+                        <CheckCircle2 aria-hidden="true" size={16} />
+                        {isResolving ? 'saving' : '対応済みにする'}
+                    </button>
+                    <button
+                        type="button"
+                        className="project-log-modal-close-button"
+                        onClick={onClose}
+                    >
+                        閉じる
+                    </button>
+                </div>
+            </section>
+        </div>
     );
 }

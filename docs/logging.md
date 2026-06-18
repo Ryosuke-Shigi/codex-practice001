@@ -94,6 +94,8 @@ Project Hub の `logs` から確認するアプリ内ログは、Laravel標準�
 
 API連携ログとERRORログは保存先も責務も分けます。ERRORログだけ対応済み管理を持ち、API連携ログには `resolved_at` / `resolved_by` を持たせません。
 
+logs閲覧は公開のまま扱います。ERRORログの対応済み操作は `config/application_logs.php` の confirmation keyword による誤操作防止を挟みますが、これは認証・認可ではありません。ENVは使わず、confirmation 入力値はDBにもログにも保存しません。
+
 request payload全文、response body全文、API key、token、cookie、session、個人情報、stack trace全文はDBへ保存しません。詳細仕様は `docs/features/application-logs.md` に置きます。
 
 ### operation

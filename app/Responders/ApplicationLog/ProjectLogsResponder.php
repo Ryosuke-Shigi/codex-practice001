@@ -24,6 +24,7 @@ final readonly class ProjectLogsResponder
             'projectId' => 'logs',
             'applicationLogs' => [
                 'activeTab' => $page->activeTab,
+                'resolveConfirmationKeyword' => (string) config('application_logs.resolve_confirmation_keyword'),
                 'tabs' => [
                     ['id' => 'api', 'label' => 'API'],
                     ['id' => 'error', 'label' => 'ERROR'],
@@ -72,6 +73,7 @@ final readonly class ProjectLogsResponder
      *     occurredAt: string,
      *     content: string,
      *     level: string,
+     *     location: string|null,
      *     isResolved: bool,
      *     canResolve: bool,
      *     resolveUrl: string
@@ -95,6 +97,7 @@ final readonly class ProjectLogsResponder
             'occurredAt' => $item->occurredAt->format('Y-m-d H:i'),
             'content' => implode(' / ', $summary),
             'level' => $item->level,
+            'location' => $location,
             'isResolved' => $item->isResolved,
             'canResolve' => ! $item->isResolved,
             'resolveUrl' => route('application-error-logs.resolve', ['log' => $item->id], false),
