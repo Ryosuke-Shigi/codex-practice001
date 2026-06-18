@@ -66,6 +66,32 @@ Command Action / Query ActionはActionの分類です。Artisan CommandはJobを
 
 すべての機能で全責務を必ず作るわけではありません。必要な責務だけを使います。
 
+## ディレクトリ作成前の責務設計
+
+ADR Pattern / レイヤードアーキテクチャでは、ディレクトリやファイルを先に作るのではなく、責務の置き場を先に決めます。
+
+責務配置が未確定のまま Controller / Service / Repository / DTO / Responder を作成すると、AIが名前だけで実装を進め、責務混在を起こしやすくなります。
+
+そのため PRODUCT実装では、以下を先に固定します。
+
+- Controller: HTTP入口
+- Request: 入力形式の検証
+- Action: ユースケース手順
+- Service: 業務判断・ドメインルール
+- Repository: DB操作・外部データ取得境界
+- DTO / ListDTO: レイヤー間のデータキャリア
+- Responder: 画面・API向けの出力整形
+- Component: 表示責務
+- Test: 固定する仕様
+
+レイヤー名に合わせて機械的にファイルを作らず、必要な責務だけを作ります。
+
+DTO / ListDTO はデータキャリアであり、業務判断、DBアクセス、表示判断を持たせません。
+
+Service / Repository / Responder / Component の責務を混ぜません。
+
+責務配置を固定できない場合は、推測で実装せず、必要な確認事項を報告して停止します。
+
 ## Controller の責務
 
 ControllerはHTTPの入口を担当します。
