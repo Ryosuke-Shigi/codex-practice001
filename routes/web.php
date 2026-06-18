@@ -5,12 +5,14 @@ use App\Http\Controllers\ApiCatalogNoteController;
 use App\Http\Controllers\ApiCatalogSyncController;
 use App\Http\Controllers\ApiPreviewController;
 use App\Http\Controllers\ApisGuruPreviewController;
+use App\Http\Controllers\ApplicationErrorLogResolveController;
 use App\Http\Controllers\DanceShortsAnalyzerAnalyzeController;
 use App\Http\Controllers\DanceShortsAnalyzerController;
 use App\Http\Controllers\DanceShortsRadarController;
 use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\DesignPhilosophyController;
+use App\Http\Controllers\ProjectLogsController;
 use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncStatusController;
@@ -32,11 +34,18 @@ Route::get('/projects', function () {
     return Inertia::render('Projects/Select');
 })->name('projects.select');
 
+Route::get('/projects/logs', ProjectLogsController::class)
+    ->name('projects.logs');
+
 Route::get('/projects/{projectId}', function (string $projectId) {
     return Inertia::render('Projects/Hub', [
         'projectId' => $projectId,
     ]);
 })->where('projectId', '[a-z0-9-]+')->name('projects.hub');
+
+Route::post('/application-error-logs/{log}/resolve', ApplicationErrorLogResolveController::class)
+    ->whereNumber('log')
+    ->name('application-error-logs.resolve');
 
 Route::get('/design-philosophy', DesignPhilosophyController::class)
     ->name('design-philosophy');

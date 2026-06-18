@@ -83,6 +83,19 @@ APIキー、Authorization header、秘密情報、レスポンス全文は記録
 
 同じ例外を複数レイヤーで重複記録しないようにします。
 
+### application_logs
+
+Project Hub の `logs` から確認するアプリ内ログは、Laravel標準ログの代替ではなく、画面確認用のDB保存ログとして扱います。
+
+保存先:
+
+- API連携ログ: `application_integration_logs`
+- ERRORログ: `application_error_logs`
+
+API連携ログとERRORログは保存先も責務も分けます。ERRORログだけ対応済み管理を持ち、API連携ログには `resolved_at` / `resolved_by` を持たせません。
+
+request payload全文、response body全文、API key、token、cookie、session、個人情報、stack trace全文はDBへ保存しません。詳細仕様は `docs/features/application-logs.md` に置きます。
+
 ### operation
 
 ユーザー操作や管理操作のうち、後から確認する必要がある重要な操作を記録します。

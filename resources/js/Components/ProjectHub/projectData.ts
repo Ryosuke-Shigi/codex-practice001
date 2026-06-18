@@ -2,7 +2,8 @@ export type ProjectId =
     | 'api-discovery-hub'
     | 'dance-shorts'
     | 'japan-quake-wave-map'
-    | 'construction-order';
+    | 'construction-order'
+    | 'logs';
 
 export type ProjectIconKey =
     | 'bar-chart'
@@ -325,6 +326,24 @@ export const projects: Project[] = [
                 route: '/lab/construction-order-workflow-mock',
             },
         ],
+    },
+    {
+        id: 'logs',
+        name: 'logs',
+        description:
+            'アプリ内で保存したAPI連携ログとERRORログを確認するための入口です。',
+        iconKey: 'clipboard',
+        theme: {
+            background: '#111827',
+            backgroundGlow: '#14b8a6',
+            sphere: '#f97316',
+            sphereShadow: 'rgba(249, 115, 22, 0.34)',
+            accent: '#facc15',
+            surface: 'rgba(17, 24, 39, 0.68)',
+            text: '#f8fafc',
+            muted: '#bfdbfe',
+        },
+        stages: [],
     },
 ];
 
