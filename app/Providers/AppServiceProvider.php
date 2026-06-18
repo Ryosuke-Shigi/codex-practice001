@@ -12,6 +12,10 @@ use App\Repositories\ApiCatalog\ApisGuruRepository;
 use App\Repositories\ApiCatalog\ApisGuruRepositoryInterface;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepositoryInterface;
+use App\Repositories\ApplicationLog\ApplicationErrorLogRepository;
+use App\Repositories\ApplicationLog\ApplicationErrorLogRepositoryInterface;
+use App\Repositories\ApplicationLog\ApplicationIntegrationLogRepository;
+use App\Repositories\ApplicationLog\ApplicationIntegrationLogRepositoryInterface;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoAnalysisRepository;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoAnalysisRepositoryInterface;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepository;
@@ -63,6 +67,13 @@ class AppServiceProvider extends ServiceProvider
          * Action は Interface に依存し、実 HTTP 通信は ApisGuruPreviewRepository が担当します。
          */
         $this->app->bind(ApisGuruPreviewRepositoryInterface::class, ApisGuruPreviewRepository::class);
+
+        /*
+         * Project Hub の logs 表示と Event 経由保存で使うアプリログ依存です。
+         * API 連携ログと ERROR ログは保存先も責務も分けます。
+         */
+        $this->app->bind(ApplicationIntegrationLogRepositoryInterface::class, ApplicationIntegrationLogRepository::class);
+        $this->app->bind(ApplicationErrorLogRepositoryInterface::class, ApplicationErrorLogRepository::class);
 
         /*
          * DanceShortsAnalyzer 側は保存済み動画の検索だけを担当します。

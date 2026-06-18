@@ -15,6 +15,7 @@
 | [../../features/dance-shorts-analyzer.md](../../features/dance-shorts-analyzer.md) | DanceShortsAnalyzerの保存済み動画検索、Analyze表示、snapshot計算、テスト固定仕様 |
 | [../../features/dance-shorts-radar.md](../../features/dance-shorts-radar.md) | DanceShortsRadarの同期、ランキング、テスト固定仕様 |
 | [../../features/japan-quake-wave-map.md](../../features/japan-quake-wave-map.md) | Japan Quake Wave Mapのfeed、XML、map pin、status API |
+| [../../features/application-logs.md](../../features/application-logs.md) | Project Hub logsのAPI連携ログ、ERRORログ、対応済み管理、テスト固定仕様 |
 
 ## 配置ルール
 

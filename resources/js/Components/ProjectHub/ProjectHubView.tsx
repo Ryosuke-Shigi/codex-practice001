@@ -12,9 +12,14 @@ import {
     type Stage,
 } from './projectData';
 import { resolveProjectIcon } from './projectIcons';
+import ProjectLogsField, {
+    emptyProjectLogs,
+    type ProjectLogsProps,
+} from './ProjectLogsField';
 
 type ProjectHubViewProps = {
     projectId?: string;
+    applicationLogs?: ProjectLogsProps;
 };
 
 type ProjectThemeStyle = CSSProperties & {
@@ -28,10 +33,14 @@ type ProjectThemeStyle = CSSProperties & {
     '--project-text': string;
 };
 
-export default function ProjectHubView({ projectId }: ProjectHubViewProps) {
+export default function ProjectHubView({
+    projectId,
+    applicationLogs,
+}: ProjectHubViewProps) {
     const project = getProjectById(projectId) ?? projects[0];
     const ProjectIcon = resolveProjectIcon(project.iconKey);
     const orderedStages = sortStagesForProjectHub(project.stages);
+    const isLogsProject = project.id === 'logs';
 
     return (
         <section
@@ -64,14 +73,20 @@ export default function ProjectHubView({ projectId }: ProjectHubViewProps) {
                     </div>
                 </section>
 
-                <section
-                    className="project-hub-stage-grid"
-                    aria-label={`${project.name} stages`}
-                >
-                    {orderedStages.map((stage) => (
-                        <StagePanel key={stage.kind} stage={stage} />
-                    ))}
-                </section>
+                {isLogsProject ? (
+                    <ProjectLogsField
+                        logs={applicationLogs ?? emptyProjectLogs}
+                    />
+                ) : (
+                    <section
+                        className="project-hub-stage-grid"
+                        aria-label={`${project.name} stages`}
+                    >
+                        {orderedStages.map((stage) => (
+                            <StagePanel key={stage.kind} stage={stage} />
+                        ))}
+                    </section>
+                )}
             </main>
         </section>
     );

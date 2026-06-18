@@ -66,7 +66,12 @@
 .project-sphere-button:focus-visible,
 .project-select-arrow:focus-visible,
 .project-hub-stage-link:focus-visible,
-.project-hub-module-row:focus-visible {
+.project-hub-module-row:focus-visible,
+.project-logs-tab:focus-visible,
+.project-log-clickable-row:focus-visible,
+.project-log-resolve-button:focus-visible,
+.project-log-modal-icon-button:focus-visible,
+.project-log-modal-close-button:focus-visible {
     outline: 3px solid color-mix(in srgb, var(--project-accent) 72%, white);
     outline-offset: 4px;
 }
@@ -456,6 +461,303 @@
     color: var(--project-muted);
 }
 
+.project-logs-field {
+    display: grid;
+    gap: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    background: var(--project-surface);
+    padding: 1rem;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 1.1rem 2.4rem rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(18px);
+}
+
+.project-logs-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.project-logs-tab {
+    min-height: 2.5rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.55rem 0.95rem;
+    color: var(--project-muted);
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+}
+
+.project-logs-tab[aria-selected='true'] {
+    border-color: color-mix(in srgb, var(--project-accent) 72%, white);
+    background: color-mix(in srgb, var(--project-accent) 24%, rgba(255, 255, 255, 0.12));
+    color: var(--project-text);
+}
+
+.project-logs-table-frame {
+    max-height: min(56dvh, 34rem);
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(2, 6, 23, 0.38);
+}
+
+.project-logs-empty {
+    margin: 0;
+    padding: 1rem;
+    color: color-mix(in srgb, var(--project-text) 82%, transparent);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.project-logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.project-logs-table th,
+.project-logs-table td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.project-logs-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: rgba(15, 23, 42, 0.94);
+    color: var(--project-muted);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+}
+
+.project-logs-table th:first-child,
+.project-logs-table td:first-child {
+    width: 9.5rem;
+}
+
+.project-logs-table td {
+    color: color-mix(in srgb, var(--project-text) 88%, transparent);
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.project-log-clickable-row {
+    cursor: pointer;
+    transition: background 180ms ease;
+}
+
+.project-log-clickable-row:hover td,
+.project-log-clickable-row:focus-visible td {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.project-log-content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.project-log-label,
+.project-log-resolved,
+.project-log-resolve-button {
+    display: inline-flex;
+    min-height: 1.65rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    border-radius: 8px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 900;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.project-log-label {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--project-text);
+}
+
+.project-log-label--success,
+.project-log-label--info {
+    color: #bbf7d0;
+}
+
+.project-log-label--failed,
+.project-log-label--error,
+.project-log-label--critical {
+    color: #fecaca;
+}
+
+.project-log-label--warning,
+.project-log-label--skipped,
+.project-log-label--pending {
+    color: #fde68a;
+}
+
+.project-log-resolved {
+    border: 1px solid rgba(187, 247, 208, 0.28);
+    color: #bbf7d0;
+}
+
+.project-log-resolve-button {
+    cursor: pointer;
+    border: 1px solid color-mix(in srgb, var(--project-accent) 62%, white);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--project-text);
+}
+
+.project-log-resolve-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+}
+
+.project-log-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--project-layer-message);
+    display: grid;
+    place-items: center;
+    background: rgba(2, 6, 23, 0.68);
+    padding: 1rem;
+    backdrop-filter: blur(14px);
+}
+
+.project-log-modal {
+    display: grid;
+    width: min(100%, 34rem);
+    max-height: min(88dvh, 38rem);
+    gap: 0.9rem;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent),
+        color-mix(in srgb, var(--project-surface) 88%, #020617);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 1.5rem 4rem rgba(0, 0, 0, 0.42);
+    padding: 1rem;
+}
+
+.project-log-modal-header,
+.project-log-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.project-log-modal-header h2 {
+    margin: 0;
+    color: var(--project-text);
+    font-size: 0.92rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.project-log-modal-icon-button {
+    display: grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    cursor: pointer;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--project-text);
+}
+
+.project-log-detail-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+}
+
+.project-log-detail-list div {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding-bottom: 0.55rem;
+}
+
+.project-log-detail-list dt {
+    color: var(--project-muted);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.project-log-detail-list dd {
+    margin: 0;
+    color: color-mix(in srgb, var(--project-text) 88%, transparent);
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.project-log-resolved-state {
+    color: #bbf7d0;
+    font-weight: 900;
+}
+
+.project-log-confirmation-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.project-log-confirmation-field span {
+    color: var(--project-muted);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.project-log-confirmation-field input {
+    min-height: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    background: rgba(2, 6, 23, 0.46);
+    padding: 0.55rem 0.75rem;
+    color: var(--project-text);
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.project-log-confirmation-field input:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+}
+
+.project-log-modal-close-button {
+    min-height: 2.3rem;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.45rem 0.75rem;
+    color: var(--project-muted);
+    font-size: 0.76rem;
+    font-weight: 900;
+}
+
 @keyframes project-sphere-float {
     0%,
     100% {
@@ -560,6 +862,47 @@
 
     .project-hub-stage {
         min-height: 0;
+    }
+
+    .project-logs-field {
+        padding: 0.75rem;
+    }
+
+    .project-logs-table-frame {
+        max-height: 58dvh;
+    }
+
+    .project-logs-table th,
+    .project-logs-table td {
+        padding: 0.62rem;
+    }
+
+    .project-logs-table th:first-child,
+    .project-logs-table td:first-child {
+        width: 6.25rem;
+    }
+
+    .project-logs-table td {
+        font-size: 0.78rem;
+    }
+
+    .project-log-modal {
+        padding: 0.85rem;
+    }
+
+    .project-log-detail-list div {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+    }
+
+    .project-log-modal-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .project-log-resolve-button,
+    .project-log-modal-close-button {
+        width: 100%;
     }
 }
 

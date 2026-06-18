@@ -134,6 +134,7 @@ MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を
 | `docs/features/dance-shorts-analyzer.md` | DanceShortsAnalyzerの保存済み動画検索、Analyze表示、snapshot計算、テスト固定仕様 |
 | `docs/features/dance-shorts-radar.md` | DanceShortsRadarの同期、ランキング、テスト固定仕様 |
 | `docs/features/japan-quake-wave-map.md` | Japan Quake Wave Mapのfeed、XML、map pin、status API |
+| `docs/features/application-logs.md` | Project Hub logsのAPI連携ログ、ERRORログ、対応済み管理、テスト固定仕様 |
 
 新しい機能固有文書を追加した場合は、この一覧も更新します。
 
