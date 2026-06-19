@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Earthquake;
 
+use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -29,7 +30,7 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
                 fetchedAt: now()->toIso8601String(),
                 responseTimeMs: 0.0,
                 statusCode: null,
-                errorMessage: 'JMA earthquake XML document URL is not allowed.',
+                errorMessage: '気象庁XML以外のURLは取得できません。',
             );
         }
 
@@ -41,19 +42,28 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
                 ->retry(2, 200, throw: false)
                 ->withHeaders(self::REQUEST_HEADERS)
                 ->get($url);
-        } catch (Throwable $exception) {
-            return $this->failureResult(
+        } catch (Throwable) {
+            $message = '気象庁 個別XMLに接続できませんでした。理由：ネットワーク、DNS、TLS、タイムアウトの可能性があります。';
+            $result = $this->failureResult(
                 endpoint: $url,
                 fetchedAt: $fetchedAt,
                 responseTimeMs: $this->responseTimeMs($startedAt),
                 statusCode: null,
-                errorMessage: $exception->getMessage(),
+                errorMessage: $message,
             );
+            $this->dispatchIntegrationLog(
+                status: 'failed',
+                message: $message,
+                endpoint: $url,
+                responseStatus: null,
+            );
+
+            return $result;
         }
 
         $success = $response->successful() && trim($response->body()) !== '';
 
-        return [
+        $result = [
             'endpoint' => $url,
             'method' => 'GET',
             'request_headers' => self::REQUEST_HEADERS,
@@ -64,6 +74,17 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
             'body' => $response->body(),
             'error_message' => $success ? null : $this->errorMessage($response->status()),
         ];
+
+        $this->dispatchIntegrationLog(
+            status: $success ? 'success' : 'failed',
+            message: $success
+                ? '取得しました。'
+                : (string) $result['error_message'],
+            endpoint: $url,
+            responseStatus: $response->status(),
+        );
+
+        return $result;
     }
 
     /**
@@ -97,9 +118,46 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
     private function errorMessage(int $statusCode): string
     {
         if ($statusCode < 200 || $statusCode >= 300) {
-            return sprintf('JMA earthquake XML document request failed. Status: %d', $statusCode);
+            return '気象庁 個別XMLの取得先がエラーを返しました。理由：'.$this->httpStatusReason($statusCode);
         }
 
-        return 'JMA earthquake XML document response was empty.';
+        return '気象庁 個別XMLの内容が空でした。';
+    }
+
+    private function httpStatusReason(int $statusCode): string
+    {
+        /*
+         * 個別XMLの取得失敗では、本文全文より「なぜ追加できなかったか」が重要です。
+         * レスポンス本文は保存せず、HTTP statusから説明できる範囲に絞って理由を作ります。
+         */
+        return match (true) {
+            $statusCode === 400 => '取得先がリクエストを受け付けませんでした。',
+            in_array($statusCode, [401, 403], true) => '取得先でアクセスが拒否されました。',
+            $statusCode === 404 => 'XMLファイルが見つかりません。',
+            $statusCode === 408 => '取得先の応答が時間内に返りませんでした。',
+            $statusCode === 429 => '取得回数が多く、取得先に制限されました。',
+            $statusCode >= 500 => '取得先のサーバー側で障害が発生しています。',
+            default => '取得先が正常ではない応答を返しました。',
+        };
+    }
+
+    private function dispatchIntegrationLog(
+        string $status,
+        string $message,
+        string $endpoint,
+        ?int $responseStatus,
+    ): void {
+        event(new ApplicationIntegrationLogged(
+            integrationType: 'external_api',
+            serviceName: '気象庁XML',
+            action: '個別XML取得',
+            status: $status,
+            message: $message,
+            targetType: 'jma_xml_endpoint',
+            targetId: 'document',
+            url: $endpoint,
+            method: 'GET',
+            responseStatus: $responseStatus,
+        ));
     }
 }

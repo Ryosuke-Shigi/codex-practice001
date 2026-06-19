@@ -7,6 +7,7 @@ use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Models\EarthquakeFeedEntry;
 use App\Models\EarthquakeMapPin;
@@ -17,6 +18,7 @@ use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Services\Earthquake\EarthquakeDetailXmlParseService;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -274,6 +276,44 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
             'event_id' => '20260511112751',
             'area_name' => '青森県東方沖',
         ]);
+    }
+
+    public function test_map_pin_build_service_dispatches_error_log_when_detail_xml_parse_fails(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class]);
+        $sourceEntry = $this->createFeedEntry('urn:jma:earthquake:invalid-detail');
+        $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, new class implements EarthquakeDetailXmlRepositoryInterface
+        {
+            public function fetch(string $url): array
+            {
+                return [
+                    'endpoint' => $url,
+                    'method' => 'GET',
+                    'request_headers' => [],
+                    'success' => true,
+                    'status_code' => 200,
+                    'fetched_at' => '2026-05-11T11:32:00+09:00',
+                    'response_time_ms' => 12.3,
+                    'body' => 'not xml',
+                    'error_message' => null,
+                ];
+            }
+        });
+        $syncRunId = app(EarthquakeMapPinSyncRunRepositoryInterface::class)->createPending();
+
+        $result = app(EarthquakeMapPinBuildService::class)->sync($syncRunId);
+
+        $this->assertSame(1, $result->totalCount);
+        $this->assertSame(1, $result->failedCount);
+        $this->assertDatabaseCount('earthquake_map_pins', 0);
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_parse_failed'
+                && $event->url === $sourceEntry->xml_url
+                && $event->method === 'GET'
+                && str_contains($event->message, '対象フィードID: '.(string) $sourceEntry->getKey())
+                && ! str_contains($event->message, 'not xml'),
+        );
     }
 
     public function test_map_pin_sync_job_preserves_partial_insert_when_repository_fails_after_first_pin(): void

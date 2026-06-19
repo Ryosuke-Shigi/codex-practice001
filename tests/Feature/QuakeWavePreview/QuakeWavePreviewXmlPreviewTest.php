@@ -346,7 +346,7 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
                 ->where('result.statusCode', 503)
                 ->where('result.feed', null)
                 ->where('result.error.status', 503)
-                ->where('result.error.message', 'JMA earthquake XML feed request failed. Status: 503')
+                ->where('result.error.message', '気象庁 高頻度フィードの取得先がエラーを返しました。理由：取得先のサーバー側で障害が発生しています。')
             );
     }
 

@@ -62,8 +62,8 @@ export const emptyProjectLogs: ProjectLogsProps = {
     activeTab: 'api',
     resolveConfirmationKeyword: 'resolve',
     tabs: [
-        { id: 'api', label: 'API' },
-        { id: 'error', label: 'ERROR' },
+        { id: 'api', label: 'API連携' },
+        { id: 'error', label: 'エラー' },
     ],
     api: {
         rows: [],
@@ -71,7 +71,7 @@ export const emptyProjectLogs: ProjectLogsProps = {
     },
     error: {
         rows: [],
-        emptyMessage: 'ERRORログはまだありません。',
+        emptyMessage: 'エラーログはまだありません。',
     },
 };
 
@@ -195,7 +195,7 @@ export default function ProjectLogsField({ logs }: ProjectLogsFieldProps) {
             <div
                 className="project-logs-tabs"
                 role="tablist"
-                aria-label="Log type"
+                aria-label="ログ種別"
             >
                 {logs.tabs.map((tab) => (
                     <button
@@ -265,7 +265,7 @@ export function ApiLogTableRow({ row }: { row: ApiLogRow }) {
                     <span
                         className={`project-log-label project-log-label--${row.status}`}
                     >
-                        [{row.status}]
+                        [{apiStatusLabel(row.status)}]
                     </span>
                     <span>{row.content}</span>
                 </div>
@@ -295,7 +295,7 @@ export function ErrorLogTableRow({
             className="project-log-clickable-row"
             role="button"
             tabIndex={0}
-            aria-label={`ERRORログ詳細を開く ${row.occurredAt}`}
+            aria-label={`エラーログ詳細を開く ${row.occurredAt}`}
             onClick={() => onSelect(row)}
             onKeyDown={handleKeyDown}
         >
@@ -305,13 +305,13 @@ export function ErrorLogTableRow({
                     <span
                         className={`project-log-label project-log-label--${row.level}`}
                     >
-                        [{row.level}]
+                        [{errorLevelLabel(row.level)}]
                     </span>
                     <span>{row.content}</span>
                     {row.isResolved && (
                         <span className="project-log-resolved">
                             <CheckCircle2 aria-hidden="true" size={15} />
-                            resolved
+                            対応済み
                         </span>
                     )}
                 </div>
@@ -344,7 +344,7 @@ export function ErrorLogDetailModal({
         resolvingErrorLogId,
     );
     const isResolving = resolvingErrorLogId === row.id;
-    const resolvedState = row.isResolved ? 'resolved' : 'unresolved';
+    const resolvedState = row.isResolved ? '対応済み' : '未対応';
 
     const handleConfirmationChange = (
         event: ChangeEvent<HTMLInputElement>,
@@ -361,7 +361,7 @@ export function ErrorLogDetailModal({
                 aria-labelledby="project-log-modal-title"
             >
                 <header className="project-log-modal-header">
-                    <h2 id="project-log-modal-title">ERROR detail</h2>
+                    <h2 id="project-log-modal-title">エラーログ詳細</h2>
                     <button
                         type="button"
                         className="project-log-modal-icon-button"
@@ -382,21 +382,21 @@ export function ErrorLogDetailModal({
                         <dd>{row.content}</dd>
                     </div>
                     <div>
-                        <dt>level</dt>
+                        <dt>種別</dt>
                         <dd>
                             <span
                                 className={`project-log-label project-log-label--${row.level}`}
                             >
-                                [{row.level}]
+                                [{errorLevelLabel(row.level)}]
                             </span>
                         </dd>
                     </div>
                     <div>
-                        <dt>file:line</dt>
-                        <dd>{row.location ?? 'recorded without file:line'}</dd>
+                        <dt>発生箇所</dt>
+                        <dd>{row.location ?? '発生箇所は記録されていません'}</dd>
                     </div>
                     <div>
-                        <dt>resolved状態</dt>
+                        <dt>対応状況</dt>
                         <dd>
                             <span className="project-log-resolved-state">
                                 {resolvedState}
@@ -406,7 +406,7 @@ export function ErrorLogDetailModal({
                 </dl>
 
                 <label className="project-log-confirmation-field">
-                    <span>confirmation</span>
+                    <span>確認入力</span>
                     <input
                         type="text"
                         value={confirmation}
@@ -425,7 +425,7 @@ export function ErrorLogDetailModal({
                         onClick={onResolve}
                     >
                         <CheckCircle2 aria-hidden="true" size={16} />
-                        {isResolving ? 'saving' : '対応済みにする'}
+                        {isResolving ? '保存中' : '対応済みにする'}
                     </button>
                     <button
                         type="button"
@@ -438,4 +438,28 @@ export function ErrorLogDetailModal({
             </section>
         </div>
     );
+}
+
+function apiStatusLabel(status: string): string {
+    if (status === 'success') {
+        return '成功';
+    }
+
+    if (status === 'failed') {
+        return '失敗';
+    }
+
+    return status;
+}
+
+function errorLevelLabel(level: string): string {
+    if (level === 'error') {
+        return 'エラー';
+    }
+
+    if (level === 'warning') {
+        return '警告';
+    }
+
+    return level;
 }

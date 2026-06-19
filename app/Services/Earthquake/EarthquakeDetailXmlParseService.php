@@ -38,7 +38,7 @@ class EarthquakeDetailXmlParseService
             $xml = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
 
             if (! $xml instanceof SimpleXMLElement) {
-                throw new RuntimeException('JMA earthquake detail XML parse failed.');
+                throw new RuntimeException('気象庁 個別XMLを解析できませんでした。');
             }
 
             $head = $xml->children(self::JMAXML_INFORMATION_NAMESPACE)->Head;
@@ -73,7 +73,7 @@ class EarthquakeDetailXmlParseService
                     ?? $this->nullableText($head->Headline->Text),
             );
         } catch (Throwable $exception) {
-            throw new RuntimeException('JMA earthquake detail XML could not be parsed.', 0, $exception);
+            throw new RuntimeException('気象庁 個別XMLを解析できませんでした。', 0, $exception);
         } finally {
             libxml_clear_errors();
             libxml_use_internal_errors($previous);

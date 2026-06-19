@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: DanceShortsRadar
-- Last reviewed: 2026-06-18
+- Last reviewed: 2026-06-19
 - Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
@@ -19,6 +19,8 @@ YouTube API Repositoryは、YouTube Data APIとの通信境界を担当します
 - `videos.list` の呼び出し
 - 外部レスポンスからDTOへの変換
 - API制約に合わせたリクエスト分割
+- `search.list` / `videos.list` のHTTP request 1回ごとにAPI連携ログを発火する
+- 認証・quota・rate limit系のHTTP失敗とYouTube側5xxだけをERRORログへ残す
 
 `videos.list` は、動画IDを50件単位に分割して取得し、結果DTOを集約します。
 
@@ -278,6 +280,8 @@ inactive、standard、1ページ設定は除外します。
 この機能を変更する場合は、最低限次を確認します。
 
 - API quotaへ影響しないか
+- API連携ログへAPI key、Authorization、response body全文を保存していないか
+- YouTube HTTP 400 / 404 などを不用意にERRORログ対象へ広げていないか
 - 通常同期・page2同期・snapshot専用同期の役割が混ざっていないか
 - Repositoryへ保存判断・表示判断・tracking statusの意味判断が入っていないか
 - RISING Repositoryへ上昇候補の意味定義、JP比較状態、表示文言、Inertia props生成が入っていないか

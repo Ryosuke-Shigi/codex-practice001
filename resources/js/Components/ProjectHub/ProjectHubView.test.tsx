@@ -46,7 +46,7 @@ describe('ProjectHubView', () => {
         expect(markup).not.toContain('construction-order-new-mock');
     });
 
-    it('renders logs project with API and ERROR tabs instead of stage cards', () => {
+    it('renders logs project with API and error tabs instead of stage cards', () => {
         const markup = renderToStaticMarkup(
             <ProjectHubView
                 projectId="logs"
@@ -54,8 +54,8 @@ describe('ProjectHubView', () => {
                     activeTab: 'api',
                     resolveConfirmationKeyword: 'resolve',
                     tabs: [
-                        { id: 'api', label: 'API' },
-                        { id: 'error', label: 'ERROR' },
+                        { id: 'api', label: 'API連携' },
+                        { id: 'error', label: 'エラー' },
                     ],
                     api: {
                         rows: [
@@ -70,18 +70,18 @@ describe('ProjectHubView', () => {
                     },
                     error: {
                         rows: [],
-                        emptyMessage: 'ERRORログはまだありません。',
+                        emptyMessage: 'エラーログはまだありません。',
                     },
                 }}
             />,
         );
 
-        expect(markup).toContain('logs');
-        expect(markup).toContain('API');
-        expect(markup).toContain('ERROR');
+        expect(markup).toContain('アプリログ');
+        expect(markup).toContain('API連携');
+        expect(markup).toContain('エラー');
         expect(markup).toContain('時間');
         expect(markup).toContain('内容');
-        expect(markup).toContain('[success]');
+        expect(markup).toContain('[成功]');
         expect(markup).not.toContain('IDEA BOARD');
         expect(markup).not.toContain('PRODUCT');
     });

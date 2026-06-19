@@ -53,7 +53,7 @@ class PreviewMockApisGuruErrorAction
             fetchedAt: '2026-05-04 15:00:00',
             totalCount: null,
             responseTimeMs: 123,
-            errorMessage: 'APIs.guru preview error sample.',
+            errorMessage: 'APIs.guru のエラー表示サンプルです。',
             requestHeaders: [
                 'Accept' => 'application/json',
             ],
@@ -61,7 +61,7 @@ class PreviewMockApisGuruErrorAction
             responsePreview: null,
             rawPayloadPreview: <<<'JSON'
 {
-  "message": "APIs.guru preview error sample."
+  "message": "APIs.guru のエラー表示サンプルです。"
 }
 JSON,
         );

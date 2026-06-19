@@ -27,7 +27,7 @@ class ListApiPreviewsAction
             [
                 'id' => 'apis-guru',
                 'name' => 'APIs.guru list.json',
-                'summary' => 'Public API catalog の list.json を取得して、DTO 設計前のレスポンス構造を確認します。',
+                'summary' => '公開APIカタログの list.json を取得して、保存前にデータ構造を確認します。',
                 'endpoint' => 'https://api.apis.guru/v2/list.json',
                 'method' => 'GET',
                 'href' => '/api-preview/apis-guru',
@@ -56,7 +56,7 @@ class ListApiPreviewsAction
             [
                 'id' => 'github-api',
                 'name' => 'GitHub API',
-                'summary' => 'headers, rate limit, error response を確認する予定の枠です。',
+                'summary' => 'ヘッダー、利用制限、エラー応答を確認する予定の枠です。',
                 'endpoint' => 'https://api.github.com',
                 'method' => 'GET',
                 'href' => '/api-preview/github',
@@ -68,7 +68,7 @@ class ListApiPreviewsAction
             [
                 'id' => 'hacker-news',
                 'name' => 'Hacker News API',
-                'summary' => 'item/topstories のレスポンス構造を確認する予定の枠です。',
+                'summary' => 'item / topstories の応答データを確認する予定の枠です。',
                 'endpoint' => 'https://hacker-news.firebaseio.com/v0',
                 'method' => 'GET',
                 'href' => '/api-preview/hacker-news',
@@ -80,7 +80,7 @@ class ListApiPreviewsAction
             [
                 'id' => 'openalex',
                 'name' => 'OpenAlex API',
-                'summary' => 'works/authors などの検索レスポンスを確認する予定の枠です。',
+                'summary' => 'works / authors などの検索結果を確認する予定の枠です。',
                 'endpoint' => 'https://api.openalex.org',
                 'method' => 'GET',
                 'href' => '/api-preview/openalex',

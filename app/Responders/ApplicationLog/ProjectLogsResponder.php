@@ -26,8 +26,8 @@ final readonly class ProjectLogsResponder
                 'activeTab' => $page->activeTab,
                 'resolveConfirmationKeyword' => (string) config('application_logs.resolve_confirmation_keyword'),
                 'tabs' => [
-                    ['id' => 'api', 'label' => 'API'],
-                    ['id' => 'error', 'label' => 'ERROR'],
+                    ['id' => 'api', 'label' => 'API連携'],
+                    ['id' => 'error', 'label' => 'エラー'],
                 ],
                 'api' => [
                     'rows' => array_map(
@@ -41,7 +41,7 @@ final readonly class ProjectLogsResponder
                         fn (ApplicationErrorLogListItemDTO $item): array => $this->errorLogRowProps($item),
                         $page->errorLogs,
                     ),
-                    'emptyMessage' => 'ERRORログはまだありません。',
+                    'emptyMessage' => 'エラーログはまだありません。',
                 ],
             ],
         ]);
@@ -52,11 +52,14 @@ final readonly class ProjectLogsResponder
      */
     private function apiLogRowProps(ApplicationIntegrationLogListItemDTO $item): array
     {
-        // status は UI 側の badge として別表示するため、content へは混ぜません。
+        /*
+         * content は公開画面でそのまま読む文章です。
+         * HTTP status はDBへ保存して調査には使えるように残しますが、通常一覧では
+         * 「response_status: 200」のような機械的な表示を出さず、message 側の日本語説明へ寄せます。
+         */
         $summary = array_filter([
             $item->serviceName === null ? $item->action : $item->serviceName.' / '.$item->action,
             $item->message,
-            $item->responseStatus === null ? null : 'response_status: '.$item->responseStatus,
         ], fn (?string $value): bool => $value !== null && $value !== '');
 
         return [

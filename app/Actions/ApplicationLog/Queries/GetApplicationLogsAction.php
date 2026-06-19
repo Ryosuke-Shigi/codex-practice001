@@ -12,7 +12,7 @@ use App\Repositories\ApplicationLog\ApplicationErrorLogRepositoryInterface;
 use App\Repositories\ApplicationLog\ApplicationIntegrationLogRepositoryInterface;
 
 /**
- * Project Hub の logs 表示に必要な API / ERROR ログを取得する Query Action です。
+ * Project Hub の logs 表示に必要な API連携 / エラーログを取得する Query Action です。
  */
 final readonly class GetApplicationLogsAction
 {
@@ -22,7 +22,7 @@ final readonly class GetApplicationLogsAction
     ) {}
 
     /**
-     * API / ERROR を同じ画面用 DTO にまとめます。
+     * API連携 / エラーを同じ画面用 DTO にまとめます。
      *
      * 表示文言の連結は Responder に残し、ここでは DB モデルを一覧行 DTO へ移すだけにします。
      */

@@ -51,7 +51,7 @@ class ApisGuruPreviewRepository implements ApisGuruPreviewRepositoryInterface
                 ->retry(2, 200, throw: false)
                 ->withHeaders(self::REQUEST_HEADERS)
                 ->get(self::LIST_URL, self::QUERY_PARAMETERS);
-        } catch (Throwable $exception) {
+        } catch (Throwable) {
             /*
              * DNS、timeout、TLS など HTTP response を受け取れない失敗も画面で観察したいため、
              * 例外を投げ直さず transport result として返します。
@@ -59,7 +59,7 @@ class ApisGuruPreviewRepository implements ApisGuruPreviewRepositoryInterface
             return $this->failureResult(
                 fetchedAt: $fetchedAt,
                 responseTimeMs: $this->responseTimeMs($startedAt),
-                errorMessage: $exception->getMessage(),
+                errorMessage: 'APIs.guru list.json に接続できませんでした。',
             );
         }
 
@@ -118,14 +118,14 @@ class ApisGuruPreviewRepository implements ApisGuruPreviewRepositoryInterface
     {
         // まず HTTP status を優先して表示し、upstream 側の失敗をすぐ確認できるようにします。
         if ($statusCode < 200 || $statusCode >= 300) {
-            return sprintf('APIs.guru list.json request failed. Status: %d', $statusCode);
+            return 'APIs.guru list.json の取得先がエラーを返しました。';
         }
 
         // HTTP は成功していても JSON として観察できない場合は、レスポンス構造の問題として扱います。
         if (! $payloadIsArray) {
-            return 'APIs.guru list.json response was not a JSON object.';
+            return 'APIs.guru list.json のJSON形式が想定外です。';
         }
 
-        return 'APIs.guru list.json response could not be previewed.';
+        return 'APIs.guru list.json を表示できませんでした。';
     }
 }

@@ -329,9 +329,9 @@ export const projects: Project[] = [
     },
     {
         id: 'logs',
-        name: 'logs',
+        name: 'アプリログ',
         description:
-            'アプリ内で保存したAPI連携ログとERRORログを確認するための入口です。',
+            'アプリ内で保存したAPI連携ログとエラーログを確認するための入口です。',
         iconKey: 'clipboard',
         theme: {
             background: '#111827',

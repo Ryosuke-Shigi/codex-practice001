@@ -29,6 +29,8 @@ APIs.guruの `list.json` を取得し、公開APIカタログを検索・保存�
 
 外部データは `api_catalog_cache` へ保存します。
 
+APIs.guru `list.json` 取得は外部API呼び出し1回ごとにAPI連携ログを発火します。
+
 同期結果は次に分けます。
 
 - insert
@@ -123,6 +125,7 @@ DB Modelや不要な内部カラムをそのままpropsへ渡しません。
 
 - 外部APIレスポンスをそのまま画面へ渡していないか
 - payload全文や秘密情報をログへ残していないか
+- APIs.guru `list.json` ログへresponse body全文を保存していないか
 - Repositoryへ業務判断・所有判断が入っていないか
 - DTO / Responder / Componentの境界が崩れていないか
 - filter・pagination・return URLの既存仕様を壊していないか

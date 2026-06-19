@@ -2,12 +2,12 @@
 
 - Status: active
 - Scope: Project Hub logs
-- Last reviewed: 2026-06-18
+- Last reviewed: 2026-06-19
 - Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
 
-Project Hub の `logs` 入口、API連携ログとERRORログのDB保存、表示、対応済み管理の仕様をまとめます。
+Project Hub の `logs` 入口、API連携ログとエラーログのDB保存、表示、対応済み管理の仕様をまとめます。
 
 共通責務は `docs/architecture.md`、共通ログ方針は `docs/logging.md`、共通テスト方針は `docs/testing.md` に従います。
 
@@ -17,12 +17,12 @@ Project Hub の `logs` 入口、API連携ログとERRORログのDB保存、表�
 
 `/projects/logs` では、同じ表示Field内に次の2タブを置きます。
 
-- API
-- ERROR
+- API連携
+- エラー
 
 APIタブは `application_integration_logs` を表示します。
 
-ERRORタブは `application_error_logs` を表示します。
+エラータブは `application_error_logs` を表示します。
 
 どちらも一覧表は「時間」「内容」の2列に留め、詳細分析用の多列管理表にはしません。
 
@@ -33,13 +33,13 @@ logs閲覧は公開ポートフォリオ上の確認画面として扱い、ロ�
 保存先は用途ごとに分けます。
 
 - API連携ログ: `application_integration_logs`
-- ERRORログ: `application_error_logs`
+- エラーログ: `application_error_logs`
 
 API連携ログには対応済み概念を持たせません。
 
-ERRORログだけ、未対応ログを対応済みにできます。対応済み時は `resolved_at` と `resolved_by` を保存します。対応済み解除はPR1では扱いません。
+エラーログだけ、未対応ログを対応済みにできます。対応済み時は `resolved_at` と `resolved_by` を保存します。対応済み解除はPR1では扱いません。
 
-ERRORログの対応済み操作は、ERROR行クリック後の詳細モーダル内で行います。モーダル内の confirmation 入力が `config/application_logs.php` の `resolve_confirmation_keyword` と一致した場合だけPOSTします。
+エラーログの対応済み操作は、エラー行クリック後の詳細モーダル内で行います。モーダル内の confirmation 入力が `config/application_logs.php` の `resolve_confirmation_keyword` と一致した場合だけPOSTします。
 
 現在の confirmation keyword は `resolve` です。この値は秘密情報ではなく、公開ポートフォリオ上の軽い誤操作防止用です。認証・認可・管理者確認としては扱いません。
 
@@ -59,7 +59,7 @@ ApplicationIntegrationLogRepository
 application_integration_logs
 ```
 
-ERRORログ:
+エラーログ:
 
 ```text
 ApplicationErrorOccurred
@@ -74,6 +74,20 @@ application_error_logs
 Eventは発生した事実だけを表し、DB保存やUI都合を持ちません。
 
 ListenerはEventをDTOへ移し、Repository経由でDB登録する副作用だけを担当します。
+
+## 接続済みの外部APIログ発火
+
+既存API連携へ接続済みのAPI連携ログは、外部API呼び出し1回ごとに保存します。
+
+- JMA XML feed取得
+- JMA 個別XML取得
+- YouTube Data API `search.list`
+- YouTube Data API `videos.list`
+- APIs.guru `list.json`
+
+API連携ログは成功・失敗の両方を保存します。表示文は日本語で短くし、成功時は完了、失敗時は接続不可、取得先エラー、空レスポンス、JSON/XML解析不可などの理由が分かる文にします。HTTP status はDBへ保存しますが、通常の一覧文には出しません。
+
+エラーログは、XML / JSON parse失敗、API key未設定、APIs.guru同期継続不能など、調査が必要な失敗に限定します。YouTube Data API のHTTP失敗は 401 / 403 / 429 と 5xx をERRORログ対象にし、400 / 404 などの通常のクライアント失敗までは広げません。例外がある失敗では、詳細で見直しに使える file:line も表示します。
 
 ## 保存しない情報
 
@@ -94,11 +108,11 @@ message、url、file は `ApplicationLogSanitizerService` で安全な範囲へ�
 
 `ProjectLogsResponder` は `Projects/Hub` へ `applicationLogs` propsを渡します。
 
-React側は `ProjectLogsField` でタブ切り替え、2列表、empty状態、ERROR対応済み操作を扱います。
+React側は `ProjectLogsField` でタブ切り替え、2列表、empty状態、エラー対応済み操作を扱います。
 
 ComponentはDB取得、保存可否判断、権限判断を持ちません。
 
-ERRORタブでは行クリックで詳細モーダルを開きます。APIタブの行クリックでは対応済みモーダルを出しません。
+エラータブでは行クリックで詳細モーダルを開きます。APIタブの行クリックでは対応済みモーダルを出しません。
 
 ## テストで固定する仕様
 
@@ -106,19 +120,19 @@ ERRORタブでは行クリックで詳細モーダルを開きます。APIタブ
 - ListenerがRepository経由でDB保存する
 - level / statusの許可値をServiceで判定する
 - secret、payload、token、cookie、session、stack trace全文を保存しない
-- API連携ログとERRORログを別テーブルに保存する
+- API連携ログとエラーログを別テーブルに保存する
 - API連携ログに対応済み概念を持たせない
-- ERRORログだけ confirmation keyword 一致時に対応済みにできる
-- confirmationなし、不一致ではERRORログを対応済みにできない
+- エラーログだけ confirmation keyword 一致時に対応済みにできる
+- confirmationなし、不一致ではエラーログを対応済みにできない
 - confirmation入力値を保存しない
-- `/projects/logs` にAPI / ERRORタブと分離された行を渡す
-- ERROR内容に file:line を含める
+- `/projects/logs` にAPI連携 / エラータブと分離された行を渡す
+- エラー内容に file:line を含める
 - React側の表は「時間」「内容」の2列で表示する
-- ERROR行クリックで詳細モーダルを表示する
+- エラー行クリックで詳細モーダルを表示する
 
 ## 変更時の確認
 
-- API連携ログとERRORログの保存先を混ぜていないか
+- API連携ログとエラーログの保存先を混ぜていないか
 - Listenerへユースケース本体を隠していないか
 - Repositoryへ業務判断や表示判断を置いていないか
 - Responderへ業務判断を置いていないか

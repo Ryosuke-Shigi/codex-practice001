@@ -41,7 +41,7 @@ final class ApplicationErrorLogResolveRequest extends FormRequest
             $confirmation = (string) $this->input('confirmation');
 
             if ($expected === '' || ! hash_equals($expected, $confirmation)) {
-                $validator->errors()->add('confirmation', 'confirmation is invalid.');
+                $validator->errors()->add('confirmation', '確認入力が一致しません。');
             }
         });
     }
