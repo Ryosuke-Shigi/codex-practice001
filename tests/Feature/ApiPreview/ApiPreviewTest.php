@@ -104,7 +104,7 @@ class ApiPreviewTest extends TestCase
                 ->where('result.status_code', 503)
                 ->where('result.total_count', null)
                 ->where('result.items', null)
-                ->where('result.error_message', 'APIs.guru list.json request failed. Status: 503')
+                ->where('result.error_message', 'APIs.guru list.json の取得先がエラーを返しました。')
             );
     }
 
@@ -154,7 +154,7 @@ class ApiPreviewTest extends TestCase
                 ->where('result.status_code', 500)
                 ->where('result.total_count', null)
                 ->where('result.items', null)
-                ->where('result.error_message', 'APIs.guru preview error sample.')
+                ->where('result.error_message', 'APIs.guru のエラー表示サンプルです。')
             );
 
         Http::assertNothingSent();

@@ -32,12 +32,12 @@ describe('ProjectLogsField', () => {
             <ProjectLogsField logs={logsFixture('api')} />,
         );
 
-        expect(markup).toContain('API');
-        expect(markup).toContain('ERROR');
+        expect(markup).toContain('API連携');
+        expect(markup).toContain('エラー');
         expect(markup).toContain('時間');
         expect(markup).toContain('内容');
         expect(markup).toContain('2026-06-18 16:30');
-        expect(markup).toContain('[success]');
+        expect(markup).toContain('[成功]');
         expect(markup).toContain('YouTube API / rising candidates');
         expect(markup).not.toContain('role="dialog"');
         expect(markup).not.toContain('対応済みにする');
@@ -52,9 +52,9 @@ describe('ProjectLogsField', () => {
         expect(markup).toContain('時間');
         expect(markup).toContain('内容');
         expect(markup).toContain('role="button"');
-        expect(markup).toContain('ERRORログ詳細を開く 2026-06-18 16:35');
+        expect(markup).toContain('エラーログ詳細を開く 2026-06-18 16:35');
         expect(markup).toContain('2026-06-18 16:35');
-        expect(markup).toContain('[error]');
+        expect(markup).toContain('[エラー]');
         expect(markup).toContain(
             'DanceShortsRadar集計で例外発生 / app/Services/DanceShortsRadarService.php:128',
         );
@@ -110,10 +110,10 @@ describe('ProjectLogsField', () => {
         expect(markup).toContain(
             'DanceShortsRadar集計で例外発生 / app/Services/DanceShortsRadarService.php:128',
         );
-        expect(markup).toContain('[error]');
+        expect(markup).toContain('[エラー]');
         expect(markup).toContain('app/Services/DanceShortsRadarService.php:128');
-        expect(markup).toContain('unresolved');
-        expect(markup).toContain('confirmation');
+        expect(markup).toContain('未対応');
+        expect(markup).toContain('確認入力');
         expect(markup).toContain('disabled=""');
     });
 
@@ -209,8 +209,8 @@ function logsFixture(activeTab: 'api' | 'error'): ProjectLogsProps {
         activeTab,
         resolveConfirmationKeyword: 'resolve',
         tabs: [
-            { id: 'api', label: 'API' },
-            { id: 'error', label: 'ERROR' },
+            { id: 'api', label: 'API連携' },
+            { id: 'error', label: 'エラー' },
         ],
         api: {
             rows: [apiRowFixture()],
@@ -218,7 +218,7 @@ function logsFixture(activeTab: 'api' | 'error'): ProjectLogsProps {
         },
         error: {
             rows: [errorRowFixture()],
-            emptyMessage: 'ERRORログはまだありません。',
+            emptyMessage: 'エラーログはまだありません。',
         },
     };
 }

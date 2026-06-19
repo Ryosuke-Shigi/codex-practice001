@@ -6,15 +6,28 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
+use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Tests\TestCase;
 
 class YouTubeVideoApiRepositoryTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Event::fake([
+            ApplicationErrorOccurred::class,
+            ApplicationIntegrationLogged::class,
+        ]);
+    }
+
     public function test_search_videos_sends_search_query_and_maps_result_items(): void
     {
         $this->configureYoutubeApi();
@@ -67,6 +80,15 @@ class YouTubeVideoApiRepositoryTest extends TestCase
                 && $query['publishedAfter'] === '2026-05-24T00:00:00+00:00'
                 && $query['videoDuration'] === 'short';
         });
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->serviceName === 'YouTube Data API'
+                && $event->action === 'search.list 取得'
+                && $event->status === 'success'
+                && $event->targetId === 'search.list'
+                && $event->url === 'https://www.googleapis.test/youtube/v3/search'
+                && $event->responseStatus === 200,
+        );
     }
 
     public function test_search_video_page_sends_page_token_and_returns_next_page_token(): void
@@ -167,6 +189,14 @@ class YouTubeVideoApiRepositoryTest extends TestCase
                 && $query['part'] === 'snippet,contentDetails,statistics,status'
                 && $query['id'] === 'detail-video-001,detail-video-002';
         });
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'videos.list 取得'
+                && $event->status === 'success'
+                && $event->targetId === 'videos.list'
+                && $event->url === 'https://www.googleapis.test/youtube/v3/videos'
+                && $event->responseStatus === 200,
+        );
     }
 
     public function test_fetch_video_details_splits_ids_into_fifty_id_chunks_and_merges_detail_items(): void
@@ -205,6 +235,7 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             array_slice($youtubeVideoIds, 100, 20),
         ], $requestedChunks);
         Http::assertSentCount(3);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 3);
     }
 
     public function test_fetch_video_details_does_not_send_duplicate_or_empty_ids(): void
@@ -329,10 +360,23 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             $this->repository()->searchVideos($this->condition());
             $this->fail('Expected missing YouTube API key to throw.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('YouTube Data API key is not configured.', $exception->getMessage());
+            $this->assertSame('YouTube Data APIキーが未設定です。', $exception->getMessage());
         }
 
         Http::assertNothingSent();
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'search.list 取得'
+                && $event->status === 'failed'
+                && $event->responseStatus === null
+                && $event->url === 'https://www.googleapis.test/youtube/v3/search'
+                && ! str_contains((string) $event->message, 'test-youtube-api-key'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.api_key_missing'
+                && $event->url === 'https://www.googleapis.test/youtube/v3/search',
+        );
     }
 
     public function test_api_failure_is_exposed_as_runtime_exception_without_response_body(): void
@@ -351,9 +395,52 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             $this->repository()->searchVideos($this->condition());
             $this->fail('Expected YouTube API failure to throw.');
         } catch (RuntimeException $exception) {
-            $this->assertSame('YouTube Data API search.list request failed. Status: 503', $exception->getMessage());
+            $this->assertSame('YouTube Data API search.list の取得先がエラーを返しました。', $exception->getMessage());
             $this->assertStringNotContainsString('upstream error body', $exception->getMessage());
         }
+
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'search.list 取得'
+                && $event->status === 'failed'
+                && $event->responseStatus === 503
+                && $event->url === 'https://www.googleapis.test/youtube/v3/search'
+                && ! str_contains((string) $event->message, 'upstream error body')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+        Event::assertNotDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected',
+        );
+    }
+
+    public function test_invalid_json_dispatches_failed_integration_and_error_logs_without_response_body(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/search*' => Http::response('not json', 200),
+        ]);
+
+        try {
+            $this->repository()->searchVideos($this->condition());
+            $this->fail('Expected invalid YouTube JSON to throw.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('YouTube Data API search.list のJSON形式が想定外です。', $exception->getMessage());
+        }
+
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'search.list 取得'
+                && $event->status === 'failed'
+                && $event->responseStatus === 200
+                && ! str_contains((string) $event->message, 'not json'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.response_json_invalid'
+                && ! str_contains($event->message, 'not json'),
+        );
     }
 
     private function configureYoutubeApi(): void

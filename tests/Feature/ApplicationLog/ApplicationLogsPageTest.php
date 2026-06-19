@@ -43,12 +43,12 @@ class ApplicationLogsPageTest extends TestCase
                 ->where('projectId', 'logs')
                 ->where('applicationLogs.activeTab', 'error')
                 ->where('applicationLogs.resolveConfirmationKeyword', 'resolve')
-                ->where('applicationLogs.tabs.0.label', 'API')
-                ->where('applicationLogs.tabs.1.label', 'ERROR')
+                ->where('applicationLogs.tabs.0.label', 'API連携')
+                ->where('applicationLogs.tabs.1.label', 'エラー')
                 ->has('applicationLogs.api.rows', 1)
                 ->where('applicationLogs.api.rows.0.status', 'success')
                 ->where('applicationLogs.api.rows.0.occurredAt', '2026-06-18 16:30')
-                ->where('applicationLogs.api.rows.0.content', 'YouTube API / rising candidates / 取得完了 / response_status: 200')
+                ->where('applicationLogs.api.rows.0.content', 'YouTube API / rising candidates / 取得完了')
                 ->has('applicationLogs.error.rows', 1)
                 ->where('applicationLogs.error.rows.0.level', 'error')
                 ->where('applicationLogs.error.rows.0.occurredAt', '2026-06-18 16:35')
@@ -73,8 +73,8 @@ class ApplicationLogsPageTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Projects/Hub', false)
                 ->where('projectId', 'logs')
-                ->where('applicationLogs.tabs.0.label', 'API')
-                ->where('applicationLogs.tabs.1.label', 'ERROR')
+                ->where('applicationLogs.tabs.0.label', 'API連携')
+                ->where('applicationLogs.tabs.1.label', 'エラー')
             );
     }
 
@@ -82,7 +82,7 @@ class ApplicationLogsPageTest extends TestCase
     {
         $log = ApplicationErrorLog::query()->create([
             'level' => 'error',
-            'message' => '未対応ERROR',
+            'message' => '未対応エラー',
             'occurred_at' => '2026-06-18 10:00:00',
         ]);
 
@@ -99,7 +99,7 @@ class ApplicationLogsPageTest extends TestCase
     {
         $log = ApplicationErrorLog::query()->create([
             'level' => 'error',
-            'message' => '未対応ERROR',
+            'message' => '未対応エラー',
             'occurred_at' => '2026-06-18 10:00:00',
         ]);
 
@@ -118,7 +118,7 @@ class ApplicationLogsPageTest extends TestCase
     {
         $log = ApplicationErrorLog::query()->create([
             'level' => 'error',
-            'message' => '未対応ERROR',
+            'message' => '未対応エラー',
             'occurred_at' => '2026-06-18 10:00:00',
         ]);
 
@@ -139,7 +139,7 @@ class ApplicationLogsPageTest extends TestCase
     {
         $log = ApplicationErrorLog::query()->create([
             'level' => 'error',
-            'message' => '未対応ERROR',
+            'message' => '未対応エラー',
             'occurred_at' => '2026-06-18 10:00:00',
         ]);
 

@@ -37,6 +37,10 @@ function statusClassName(status: string) {
         : 'border-amber-300/50 bg-amber-300/15 text-amber-50';
 }
 
+function statusLabel(status: string) {
+    return status === 'Ready' ? '利用可' : '準備中';
+}
+
 function linkClassName(style: ApiPreviewLink['style']) {
     // 実取得、成功モック、エラーモックの導線を色で区別します。
     if (style === 'danger') {
@@ -53,19 +57,19 @@ function linkClassName(style: ApiPreviewLink['style']) {
 export default function Index({ apis }: IndexProps) {
     return (
         <PublicLayout className="bg-slate-950/55 px-4 py-6 sm:px-6 lg:px-8">
-            <Head title="API Preview" />
+            <Head title="API確認" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 py-4">
                 <header className="flex flex-col gap-4 border-b border-white/15 pb-5 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/70">
-                            Development Tool
+                            開発確認
                         </p>
                         <h1 className="mt-2 text-3xl font-semibold text-white sm:text-4xl">
-                            API Preview
+                            API確認
                         </h1>
                         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-200/80">
-                            外部 API の疎通、レスポンス構造、header、query parameter、error response を本体実装前に確認するための画面です。
+                            外部APIの疎通、応答データ、ヘッダー、クエリ、エラー応答を本体実装前に確認するための画面です。
                         </p>
                     </div>
 
@@ -73,7 +77,7 @@ export default function Index({ apis }: IndexProps) {
                         href="/projects/api-discovery-hub"
                         className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
                     >
-                        Hub
+                        Hubへ戻る
                     </Link>
                 </header>
 
@@ -85,7 +89,7 @@ export default function Index({ apis }: IndexProps) {
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/70">
-                                API Discovery Hub Mock
+                                API Discovery Hub モック
                             </p>
                             <h2 className="mt-2 text-xl font-semibold text-white">
                                 本体画面モック
@@ -103,7 +107,7 @@ export default function Index({ apis }: IndexProps) {
                         >
                             <div>
                                 <span className="inline-flex rounded-md border border-emerald-300/45 bg-emerald-300/15 px-2.5 py-1 text-xs font-semibold text-emerald-50">
-                                    Ready
+                                    利用可
                                 </span>
                                 <h3 className="mt-3 text-lg font-semibold text-white">
                                     一覧表示
@@ -127,7 +131,7 @@ export default function Index({ apis }: IndexProps) {
                         >
                             <div>
                                 <span className="inline-flex rounded-md border border-emerald-300/45 bg-emerald-300/15 px-2.5 py-1 text-xs font-semibold text-emerald-50">
-                                    Ready
+                                    利用可
                                 </span>
                                 <h3 className="mt-3 text-lg font-semibold text-white">
                                     詳細画面
@@ -152,7 +156,7 @@ export default function Index({ apis }: IndexProps) {
                             <div className="flex flex-col gap-4">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                     <span className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${statusClassName(api.status)}`}>
-                                        {api.status}
+                                        {statusLabel(api.status)}
                                     </span>
                                     <span className="rounded-md border border-sky-200/30 bg-sky-200/10 px-2.5 py-1 font-mono text-xs text-sky-50">
                                         {api.method}

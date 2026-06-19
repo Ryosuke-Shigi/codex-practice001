@@ -3,6 +3,7 @@
 namespace App\Services\Earthquake;
 
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use Carbon\CarbonImmutable;
@@ -38,13 +39,29 @@ class EarthquakeFeedEntrySyncService
         $transport = $this->xmlRepository->fetchHighFrequencyFeed();
 
         if (! ($transport['success'] ?? false)) {
-            throw new RuntimeException($this->safeErrorMessage($transport['error_message'] ?? null));
+            $message = $this->safeErrorMessage($transport['error_message'] ?? null);
+            $this->dispatchErrorLog(
+                message: $message,
+                errorCode: 'earthquake.jma.feed_fetch_failed',
+                url: $this->transportString($transport, 'endpoint'),
+                method: $this->transportString($transport, 'method'),
+            );
+
+            throw new RuntimeException($message);
         }
 
         try {
             $feed = $this->xmlPreviewService->parseHighFrequencyFeedBody((string) ($transport['body'] ?? ''));
         } catch (Throwable $exception) {
-            throw new RuntimeException('JMA earthquake XML feed could not be parsed.', 0, $exception);
+            $this->dispatchErrorLog(
+                message: '気象庁 高頻度フィードのXMLを解析できませんでした。',
+                errorCode: 'earthquake.jma.feed_xml_parse_failed',
+                exception: $exception,
+                url: $this->transportString($transport, 'endpoint'),
+                method: $this->transportString($transport, 'method'),
+            );
+
+            throw new RuntimeException('気象庁 高頻度フィードのXMLを解析できませんでした。', 0, $exception);
         }
 
         $extractedEntries = $this->entryExtractService->extractAll($feed->entries);
@@ -74,9 +91,34 @@ class EarthquakeFeedEntrySyncService
         $message = is_string($message) ? trim($message) : '';
 
         if ($message === '') {
-            return 'JMA earthquake XML feed could not be fetched.';
+            return '気象庁 高頻度フィードを取得できませんでした。';
         }
 
         return mb_strimwidth($message, 0, 180, '...');
+    }
+
+    private function dispatchErrorLog(
+        string $message,
+        string $errorCode,
+        ?Throwable $exception = null,
+        ?string $url = null,
+        ?string $method = null,
+    ): void {
+        event(new ApplicationErrorOccurred(
+            level: 'error',
+            message: $message,
+            errorCode: $errorCode,
+            exception: $exception,
+            url: $url,
+            method: $method,
+        ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $transport
+     */
+    private function transportString(array $transport, string $key): ?string
+    {
+        return is_string($transport[$key] ?? null) ? $transport[$key] : null;
     }
 }

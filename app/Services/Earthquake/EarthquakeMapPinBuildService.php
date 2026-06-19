@@ -4,6 +4,7 @@ namespace App\Services\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
@@ -18,6 +19,8 @@ use Throwable;
  */
 class EarthquakeMapPinBuildService
 {
+    private const JMA_DETAIL_XML_URL_REJECTED_MESSAGE = '気象庁XML以外のURLは取得できません。';
+
     public function __construct(
         private readonly EarthquakeFeedEntryRepositoryInterface $feedEntryRepository,
         private readonly EarthquakeDetailXmlRepositoryInterface $detailXmlRepository,
@@ -59,6 +62,16 @@ class EarthquakeMapPinBuildService
                 $transport = $this->detailXmlRepository->fetch($xmlUrl);
 
                 if (! ($transport['success'] ?? false)) {
+                    if (($transport['error_message'] ?? null) === self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE) {
+                        $this->dispatchErrorLog(
+                            message: '気象庁XML以外のURLのため、地図ピンに追加できませんでした。',
+                            errorCode: 'earthquake.jma.detail_xml_url_rejected',
+                            sourceEntry: $sourceEntry,
+                            url: $xmlUrl,
+                            method: $this->transportString($transport, 'method'),
+                        );
+                    }
+
                     $failedCount++;
 
                     continue;
@@ -82,7 +95,15 @@ class EarthquakeMapPinBuildService
                 }
 
                 $pins[] = $pin;
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                $this->dispatchErrorLog(
+                    message: '気象庁 個別XMLを解析できず、地図ピンに追加できませんでした。',
+                    errorCode: 'earthquake.jma.detail_xml_parse_failed',
+                    exception: $exception,
+                    sourceEntry: $sourceEntry,
+                    url: is_string($xmlUrl) ? $xmlUrl : null,
+                    method: 'GET',
+                );
                 $failedCount++;
             }
         }
@@ -106,5 +127,50 @@ class EarthquakeMapPinBuildService
             startedAt: $startedAt,
             finishedAt: CarbonImmutable::now(),
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $sourceEntry
+     */
+    private function dispatchErrorLog(
+        string $message,
+        string $errorCode,
+        array $sourceEntry,
+        ?Throwable $exception = null,
+        ?string $url = null,
+        ?string $method = null,
+    ): void {
+        event(new ApplicationErrorOccurred(
+            level: 'error',
+            message: $this->sourceEntryMessage($message, $sourceEntry),
+            errorCode: $errorCode,
+            exception: $exception,
+            url: $url,
+            method: $method,
+        ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $sourceEntry
+     */
+    private function sourceEntryMessage(string $message, array $sourceEntry): string
+    {
+        /*
+         * XML本文や気象庁レスポンス全文はログへ入れません。
+         * 追跡に必要な最小情報として、どの保存済みフィードから地図ピン化できなかったかだけを残します。
+         */
+        $sourceEntryId = $sourceEntry['id'] ?? null;
+
+        return is_int($sourceEntryId)
+            ? sprintf('%s 対象フィードID: %d', $message, $sourceEntryId)
+            : $message;
+    }
+
+    /**
+     * @param  array<string, mixed>  $transport
+     */
+    private function transportString(array $transport, string $key): ?string
+    {
+        return is_string($transport[$key] ?? null) ? $transport[$key] : null;
     }
 }

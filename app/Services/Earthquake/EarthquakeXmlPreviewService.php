@@ -5,6 +5,7 @@ namespace App\Services\Earthquake;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewListDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlFeedPreviewDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use SimpleXMLElement;
 use Throwable;
@@ -74,9 +75,17 @@ class EarthquakeXmlPreviewService
 
         try {
             $feed = $this->parseAtomFeed((string) ($transport['body'] ?? ''));
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->dispatchErrorLog(
+                message: '気象庁 高頻度フィードのXMLを解析できませんでした。',
+                errorCode: 'earthquake.jma.feed_xml_parse_failed',
+                exception: $exception,
+                url: $this->transportString($transport, 'endpoint'),
+                method: $this->transportString($transport, 'method'),
+            );
+
             return [
-                'preview' => $this->failurePreview($transport, 'JMA earthquake XML feed could not be parsed.'),
+                'preview' => $this->failurePreview($transport, '気象庁 高頻度フィードのXMLを解析できませんでした。'),
                 'feed' => null,
             ];
         }
@@ -211,12 +220,20 @@ class EarthquakeXmlPreviewService
                 'earthquake' => $this->parseEarthquakeReport((string) ($transport['body'] ?? '')),
                 'error' => null,
             ];
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->dispatchErrorLog(
+                message: '気象庁 個別XMLを解析できませんでした。',
+                errorCode: 'earthquake.jma.detail_xml_parse_failed',
+                exception: $exception,
+                url: $this->transportString($transport, 'endpoint'),
+                method: $this->transportString($transport, 'method'),
+            );
+
             return [
                 'earthquake' => null,
                 'error' => [
                     'status' => $transport['status_code'],
-                    'message' => 'JMA earthquake XML document could not be parsed.',
+                    'message' => '気象庁 個別XMLを解析できませんでした。',
                 ],
             ];
         }
@@ -238,7 +255,7 @@ class EarthquakeXmlPreviewService
             $xml = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
 
             if (! $xml instanceof SimpleXMLElement) {
-                throw new \RuntimeException('JMA earthquake report XML parse failed.');
+                throw new \RuntimeException('気象庁 個別XMLを解析できませんでした。');
             }
 
             $head = $xml->children(self::JMAXML_INFORMATION_NAMESPACE)->Head;
@@ -306,7 +323,7 @@ class EarthquakeXmlPreviewService
             $xml = simplexml_load_string($body, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
 
             if (! $xml instanceof SimpleXMLElement) {
-                throw new \RuntimeException('Atom XML parse failed.');
+                throw new \RuntimeException('気象庁 高頻度フィードのXMLを解析できませんでした。');
             }
 
             $feed = $xml->children(self::ATOM_NAMESPACE);
@@ -450,9 +467,34 @@ class EarthquakeXmlPreviewService
         $message = is_string($message) ? trim($message) : '';
 
         if ($message === '') {
-            return 'JMA earthquake XML feed could not be fetched.';
+            return '気象庁 高頻度フィードを取得できませんでした。';
         }
 
         return mb_strimwidth($message, 0, 180, '...');
+    }
+
+    private function dispatchErrorLog(
+        string $message,
+        string $errorCode,
+        ?Throwable $exception = null,
+        ?string $url = null,
+        ?string $method = null,
+    ): void {
+        event(new ApplicationErrorOccurred(
+            level: 'error',
+            message: $message,
+            errorCode: $errorCode,
+            exception: $exception,
+            url: $url,
+            method: $method,
+        ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $transport
+     */
+    private function transportString(array $transport, string $key): ?string
+    {
+        return is_string($transport[$key] ?? null) ? $transport[$key] : null;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Earthquake;
 
+use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -33,7 +34,7 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
          * この Repository は外部通信だけを担当します。
          * Atom entry の解釈、表示用の並べ替え、DTO 生成、DB 保存、地図 pin 変換は行いません。
          */
-        return $this->fetchXml(self::FEED_URL);
+        return $this->fetchXml(self::FEED_URL, '高頻度フィード取得', 'feed');
     }
 
     public function fetchXmlDocument(string $url): array
@@ -50,17 +51,17 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
                 fetchedAt: $fetchedAt,
                 responseTimeMs: 0.0,
                 statusCode: null,
-                errorMessage: 'JMA earthquake XML document URL is not allowed.',
+                errorMessage: '気象庁XML以外のURLは取得できません。',
             );
         }
 
-        return $this->fetchXml($url);
+        return $this->fetchXml($url, '個別XML取得', 'document');
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function fetchXml(string $endpoint): array
+    private function fetchXml(string $endpoint, string $action, string $targetId): array
     {
         $startedAt = microtime(true);
         $fetchedAt = now()->toIso8601String();
@@ -70,14 +71,27 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
                 ->retry(2, 200, throw: false)
                 ->withHeaders(self::REQUEST_HEADERS)
                 ->get($endpoint);
-        } catch (Throwable $exception) {
-            return $this->failureResult(
+        } catch (Throwable) {
+            $message = $targetId === 'document'
+                ? '気象庁 個別XMLに接続できませんでした。理由：ネットワーク、DNS、TLS、タイムアウトの可能性があります。'
+                : '気象庁 高頻度フィードに接続できませんでした。理由：ネットワーク、DNS、TLS、タイムアウトの可能性があります。';
+            $result = $this->failureResult(
                 endpoint: $endpoint,
                 fetchedAt: $fetchedAt,
                 responseTimeMs: $this->responseTimeMs($startedAt),
                 statusCode: null,
-                errorMessage: $exception->getMessage(),
+                errorMessage: $message,
             );
+            $this->dispatchIntegrationLog(
+                action: $action,
+                status: 'failed',
+                message: $message,
+                targetId: $targetId,
+                endpoint: $endpoint,
+                responseStatus: null,
+            );
+
+            return $result;
         }
 
         /*
@@ -91,7 +105,7 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
          * body は DB へ保存せず、同一 request 内で Service が XML を読むためだけに渡します。
          * 画面にも raw XML 全文は渡さず、Service が DTO や props 用配列に切り出します。
          */
-        return [
+        $result = [
             'endpoint' => $endpoint,
             'method' => 'GET',
             'request_headers' => self::REQUEST_HEADERS,
@@ -100,8 +114,21 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
             'fetched_at' => $fetchedAt,
             'response_time_ms' => $this->responseTimeMs($startedAt),
             'body' => $response->body(),
-            'error_message' => $success ? null : $this->errorMessage($response->status()),
+            'error_message' => $success ? null : $this->errorMessage($response->status(), $targetId),
         ];
+
+        $this->dispatchIntegrationLog(
+            action: $action,
+            status: $success ? 'success' : 'failed',
+            message: $success
+                ? '取得しました。'
+                : (string) $result['error_message'],
+            targetId: $targetId,
+            endpoint: $endpoint,
+            responseStatus: $response->status(),
+        );
+
+        return $result;
     }
 
     /**
@@ -136,13 +163,58 @@ class JmaEarthquakeXmlRepository implements EarthquakeXmlRepositoryInterface
         return round((microtime(true) - $startedAt) * 1000, 2);
     }
 
-    private function errorMessage(int $statusCode): string
+    private function errorMessage(int $statusCode, string $targetId): string
     {
-        // 画面表示では HTTP status と短い説明だけに留め、upstream body 全文は出しません。
+        // 画面表示では短い説明だけに留め、upstream body 全文は出しません。
         if ($statusCode < 200 || $statusCode >= 300) {
-            return sprintf('JMA earthquake XML feed request failed. Status: %d', $statusCode);
+            $message = $targetId === 'document'
+                ? '気象庁 個別XMLの取得先がエラーを返しました。'
+                : '気象庁 高頻度フィードの取得先がエラーを返しました。';
+
+            return $message.'理由：'.$this->httpStatusReason($statusCode);
         }
 
-        return 'JMA earthquake XML feed response was empty.';
+        return $targetId === 'document'
+            ? '気象庁 個別XMLの内容が空でした。'
+            : '気象庁 高頻度フィードの内容が空でした。';
+    }
+
+    private function httpStatusReason(int $statusCode): string
+    {
+        /*
+         * レスポンス本文にはHTMLや長いエラー文が入る可能性があるためログへ保存しません。
+         * ここではHTTP statusから安全に推測できる範囲だけを、日本語の短い理由として表示します。
+         */
+        return match (true) {
+            $statusCode === 400 => '取得先がリクエストを受け付けませんでした。',
+            in_array($statusCode, [401, 403], true) => '取得先でアクセスが拒否されました。',
+            $statusCode === 404 => 'XMLファイルが見つかりません。',
+            $statusCode === 408 => '取得先の応答が時間内に返りませんでした。',
+            $statusCode === 429 => '取得回数が多く、取得先に制限されました。',
+            $statusCode >= 500 => '取得先のサーバー側で障害が発生しています。',
+            default => '取得先が正常ではない応答を返しました。',
+        };
+    }
+
+    private function dispatchIntegrationLog(
+        string $action,
+        string $status,
+        string $message,
+        string $targetId,
+        string $endpoint,
+        ?int $responseStatus,
+    ): void {
+        event(new ApplicationIntegrationLogged(
+            integrationType: 'external_api',
+            serviceName: '気象庁XML',
+            action: $action,
+            status: $status,
+            message: $message,
+            targetType: 'jma_xml_endpoint',
+            targetId: $targetId,
+            url: $endpoint,
+            method: 'GET',
+            responseStatus: $responseStatus,
+        ));
     }
 }

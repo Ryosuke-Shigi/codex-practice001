@@ -6,6 +6,8 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
+use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -49,8 +51,10 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
         DanceShortSearchConditionDTO $condition,
         ?string $pageToken = null,
     ): YouTubeVideoSearchResultDTO {
-        $payload = $this->getJson('search.list', 'search', array_merge([
-            'key' => $this->apiKey(),
+        $apiName = 'search.list';
+        $path = 'search';
+        $payload = $this->getJson($apiName, $path, array_merge([
+            'key' => $this->apiKeyFor($apiName, $path),
             'part' => 'snippet',
             'type' => 'video',
         ], $condition->toArray(), $this->pageTokenQuery($pageToken)));
@@ -85,11 +89,12 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             return [];
         }
 
+        $apiKey = $this->apiKeyFor('videos.list', 'videos');
         $details = [];
 
         foreach (array_chunk($ids, self::VIDEOS_LIST_MAX_IDS) as $chunkedIds) {
             $payload = $this->getJson('videos.list', 'videos', [
-                'key' => $this->apiKey(),
+                'key' => $apiKey,
                 'part' => 'snippet,contentDetails,statistics,status',
                 'id' => implode(',', $chunkedIds),
             ]);
@@ -111,26 +116,108 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
      */
     private function getJson(string $apiName, string $path, array $query): array
     {
+        $endpoint = $this->endpoint($path);
+
         try {
             $response = Http::timeout(self::TIMEOUT_SECONDS)
                 ->acceptJson()
-                ->get($this->endpoint($path), $query);
+                ->get($endpoint, $query);
         } catch (Throwable $exception) {
+            $message = sprintf('YouTube Data API %s に接続できませんでした。', $apiName);
+            $this->dispatchIntegrationLog(
+                apiName: $apiName,
+                status: 'failed',
+                message: $message,
+                endpoint: $endpoint,
+                responseStatus: null,
+            );
+            $this->dispatchErrorLog(
+                message: $message,
+                errorCode: 'dance-shorts.youtube.transport_failed',
+                exception: $exception,
+                endpoint: $endpoint,
+            );
+
             throw new RuntimeException(
-                sprintf('Failed to call YouTube Data API %s.', $apiName),
+                $message,
                 previous: $exception,
             );
         }
 
         if ($response->failed()) {
-            throw new RuntimeException(sprintf(
-                'YouTube Data API %s request failed. Status: %d',
-                $apiName,
-                $response->status(),
-            ));
+            $message = sprintf('YouTube Data API %s の取得先がエラーを返しました。', $apiName);
+            $this->dispatchIntegrationLog(
+                apiName: $apiName,
+                status: 'failed',
+                message: $message,
+                endpoint: $endpoint,
+                responseStatus: $response->status(),
+            );
+
+            if ($this->shouldDispatchRequestError($response->status())) {
+                $this->dispatchErrorLog(
+                    message: $message,
+                    errorCode: 'dance-shorts.youtube.request_rejected',
+                    endpoint: $endpoint,
+                );
+            }
+
+            throw new RuntimeException($message);
         }
 
-        return $this->jsonArray($apiName, $response);
+        try {
+            $payload = $this->jsonArray($apiName, $response);
+        } catch (RuntimeException $exception) {
+            $this->dispatchIntegrationLog(
+                apiName: $apiName,
+                status: 'failed',
+                message: $exception->getMessage(),
+                endpoint: $endpoint,
+                responseStatus: $response->status(),
+            );
+            $this->dispatchErrorLog(
+                message: $exception->getMessage(),
+                errorCode: 'dance-shorts.youtube.response_json_invalid',
+                exception: $exception,
+                endpoint: $endpoint,
+            );
+
+            throw $exception;
+        }
+
+        $this->dispatchIntegrationLog(
+            apiName: $apiName,
+            status: 'success',
+            message: '取得しました。',
+            endpoint: $endpoint,
+            responseStatus: $response->status(),
+        );
+
+        return $payload;
+    }
+
+    private function apiKeyFor(string $apiName, string $path): string
+    {
+        try {
+            return $this->apiKey();
+        } catch (RuntimeException $exception) {
+            $endpoint = $this->endpoint($path);
+            $this->dispatchIntegrationLog(
+                apiName: $apiName,
+                status: 'failed',
+                message: $exception->getMessage(),
+                endpoint: $endpoint,
+                responseStatus: null,
+            );
+            $this->dispatchErrorLog(
+                message: $exception->getMessage(),
+                errorCode: 'dance-shorts.youtube.api_key_missing',
+                exception: $exception,
+                endpoint: $endpoint,
+            );
+
+            throw $exception;
+        }
     }
 
     private function apiKey(): string
@@ -142,7 +229,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
         $apiKey = config('services.youtube.api_key');
 
         if (! is_string($apiKey) || trim($apiKey) === '') {
-            throw new RuntimeException('YouTube Data API key is not configured.');
+            throw new RuntimeException('YouTube Data APIキーが未設定です。');
         }
 
         return trim($apiKey);
@@ -159,6 +246,48 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             rtrim((string) config('services.youtube.base_url'), '/'),
             ltrim($path, '/'),
         );
+    }
+
+    private function shouldDispatchRequestError(int $statusCode): bool
+    {
+        return in_array($statusCode, [401, 403, 429], true);
+    }
+
+    private function dispatchIntegrationLog(
+        string $apiName,
+        string $status,
+        string $message,
+        string $endpoint,
+        ?int $responseStatus,
+    ): void {
+        event(new ApplicationIntegrationLogged(
+            integrationType: 'external_api',
+            serviceName: 'YouTube Data API',
+            action: $apiName.' 取得',
+            status: $status,
+            message: $message,
+            targetType: 'youtube_api_endpoint',
+            targetId: $apiName,
+            url: $endpoint,
+            method: 'GET',
+            responseStatus: $responseStatus,
+        ));
+    }
+
+    private function dispatchErrorLog(
+        string $message,
+        string $errorCode,
+        ?Throwable $exception = null,
+        ?string $endpoint = null,
+    ): void {
+        event(new ApplicationErrorOccurred(
+            level: 'error',
+            message: $message,
+            errorCode: $errorCode,
+            exception: $exception,
+            url: $endpoint,
+            method: 'GET',
+        ));
     }
 
     /**
@@ -185,7 +314,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
 
         if (! is_array($payload)) {
             throw new RuntimeException(sprintf(
-                'YouTube Data API %s response was not an array.',
+                'YouTube Data API %s のJSON形式が想定外です。',
                 $apiName,
             ));
         }

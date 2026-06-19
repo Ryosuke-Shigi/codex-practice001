@@ -6,12 +6,14 @@ use App\Actions\Earthquake\Commands\StartEarthquakeFeedEntrySyncAction;
 use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryDTO;
 use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Jobs\Earthquake\SyncEarthquakeFeedEntriesJob;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use App\Services\Earthquake\EarthquakeFeedEntrySyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -248,6 +250,49 @@ class QuakeWavePreviewFeedEntrySyncTest extends TestCase
         $this->assertDatabaseMissing('earthquake_feed_entries', [
             'entry_id' => 'urn:jma:volcano:1',
         ]);
+    }
+
+    public function test_feed_entry_sync_service_dispatches_error_log_when_atom_feed_parse_fails(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class]);
+        $this->app->instance(EarthquakeXmlRepositoryInterface::class, new class implements EarthquakeXmlRepositoryInterface
+        {
+            public function fetchHighFrequencyFeed(): array
+            {
+                return [
+                    'endpoint' => 'https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml',
+                    'method' => 'GET',
+                    'request_headers' => [],
+                    'success' => true,
+                    'status_code' => 200,
+                    'fetched_at' => '2026-05-11T08:31:00+09:00',
+                    'response_time_ms' => 12.3,
+                    'body' => 'not xml',
+                    'error_message' => null,
+                ];
+            }
+
+            public function fetchXmlDocument(string $url): array
+            {
+                throw new RuntimeException('Individual XML documents are not fetched in this sync.');
+            }
+        });
+        $syncRunId = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class)->createPending();
+
+        try {
+            app(EarthquakeFeedEntrySyncService::class)->sync($syncRunId);
+            $this->fail('Expected invalid JMA feed XML to throw.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('気象庁 高頻度フィードのXMLを解析できませんでした。', $exception->getMessage());
+        }
+
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.feed_xml_parse_failed'
+                && $event->url === 'https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml'
+                && $event->method === 'GET'
+                && ! str_contains($event->message, 'not xml'),
+        );
     }
 
     public function test_sync_job_failed_hook_marks_sync_run_as_failed(): void
