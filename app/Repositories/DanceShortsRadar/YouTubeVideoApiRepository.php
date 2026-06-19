@@ -250,7 +250,12 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
 
     private function shouldDispatchRequestError(int $statusCode): bool
     {
-        return in_array($statusCode, [401, 403, 429], true);
+        /*
+         * 400 / 404 など検索条件由来の通常失敗までは ERROR ログへ広げず、
+         * 認証・quota・rate limit と YouTube 側 5xx だけを調査対象にします。
+         */
+        return in_array($statusCode, [401, 403, 429], true)
+            || ($statusCode >= 500 && $statusCode < 600);
     }
 
     private function dispatchIntegrationLog(

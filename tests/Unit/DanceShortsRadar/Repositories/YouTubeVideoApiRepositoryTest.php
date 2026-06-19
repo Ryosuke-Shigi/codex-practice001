@@ -379,7 +379,7 @@ class YouTubeVideoApiRepositoryTest extends TestCase
         );
     }
 
-    public function test_api_failure_is_exposed_as_runtime_exception_without_response_body(): void
+    public function test_server_api_failure_dispatches_error_log_without_response_body(): void
     {
         $this->configureYoutubeApi();
 
@@ -406,6 +406,46 @@ class YouTubeVideoApiRepositoryTest extends TestCase
                 && $event->responseStatus === 503
                 && $event->url === 'https://www.googleapis.test/youtube/v3/search'
                 && ! str_contains((string) $event->message, 'upstream error body')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected'
+                && $event->message === 'YouTube Data API search.list の取得先がエラーを返しました。'
+                && $event->url === 'https://www.googleapis.test/youtube/v3/search'
+                && $event->method === 'GET'
+                && ! str_contains($event->message, 'upstream error body')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+    }
+
+    public function test_client_api_failure_keeps_error_log_quiet_without_response_body(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/search*' => Http::response([
+                'error' => [
+                    'message' => 'bad request body should not be exposed',
+                ],
+            ], 400),
+        ]);
+
+        try {
+            $this->repository()->searchVideos($this->condition());
+            $this->fail('Expected YouTube API failure to throw.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('YouTube Data API search.list の取得先がエラーを返しました。', $exception->getMessage());
+            $this->assertStringNotContainsString('bad request body', $exception->getMessage());
+        }
+
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'search.list 取得'
+                && $event->status === 'failed'
+                && $event->responseStatus === 400
+                && $event->url === 'https://www.googleapis.test/youtube/v3/search'
+                && ! str_contains((string) $event->message, 'bad request body')
                 && ! str_contains((string) $event->url, 'test-youtube-api-key'),
         );
         Event::assertNotDispatched(
