@@ -31,7 +31,7 @@ class SyncDanceShortVideosActionTest extends TestCase
 
     public function test_execute_searches_active_targets_fetches_details_and_saves_video_and_snapshot(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'));
         config([
             'services.youtube.discover_max_results' => 50,
             'services.youtube.discover_published_after_days' => 7,
@@ -101,7 +101,7 @@ class SyncDanceShortVideosActionTest extends TestCase
         $this->assertSame('JP', $youtubeRepository->searchConditions[0]->regionCode);
         $this->assertSame('ja', $youtubeRepository->searchConditions[0]->relevanceLanguage);
         $this->assertSame(50, $youtubeRepository->searchConditions[0]->maxResults);
-        $this->assertSame('2026-05-24T12:00:00+00:00', $youtubeRepository->searchConditions[0]->toArray()['publishedAfter']);
+        $this->assertSame('2026-05-24T12:00:00+09:00', $youtubeRepository->searchConditions[0]->toArray()['publishedAfter']);
         $this->assertSame([['short-video-001', 'long-video-001']], $youtubeRepository->fetchVideoIdsCalls);
 
         $this->assertDatabaseHas('dance_short_videos', [
@@ -130,7 +130,7 @@ class SyncDanceShortVideosActionTest extends TestCase
 
     public function test_execute_skips_snapshot_for_inactive_video_and_runs_cleanup_after_sync(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'));
         config([
             'services.youtube.discover_max_results' => 50,
             'services.youtube.discover_published_after_days' => 7,
@@ -194,7 +194,7 @@ class SyncDanceShortVideosActionTest extends TestCase
 
     public function test_execute_updates_snapshot_in_same_jst_12_hour_period_instead_of_creating_another_row(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:00:00', 'Asia/Tokyo'));
         config([
             'services.youtube.discover_max_results' => 50,
             'services.youtube.discover_published_after_days' => 7,
@@ -223,13 +223,13 @@ class SyncDanceShortVideosActionTest extends TestCase
             'view_count' => 100,
             'like_count' => 10,
             'comment_count' => 1,
-            'collected_at' => '2026-05-31 16:00:00',
+            'collected_at' => '2026-06-01 01:00:00',
         ]);
         $existingRelation = DanceShortVideoRegion::query()->create([
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
-            'first_detected_at' => '2026-05-31 16:00:00',
-            'last_detected_at' => '2026-05-31 16:00:00',
+            'first_detected_at' => '2026-06-01 01:00:00',
+            'last_detected_at' => '2026-06-01 01:00:00',
         ]);
 
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository);
@@ -245,7 +245,7 @@ class SyncDanceShortVideosActionTest extends TestCase
             'id' => $existingRelation->getKey(),
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
-            'first_detected_at' => '2026-05-31 16:00:00',
+            'first_detected_at' => '2026-06-01 01:00:00',
             'last_detected_at' => '2026-06-01 02:00:00',
         ]);
         $this->assertSame(1, DanceShortVideoSnapshot::query()
@@ -265,7 +265,7 @@ class SyncDanceShortVideosActionTest extends TestCase
 
     public function test_execute_counts_search_api_failure_as_sync_failure_without_saving_data(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'));
 
         $region = DanceShortRegion::query()->create([
             'code' => 'JP',
@@ -396,7 +396,7 @@ class FakeDanceShortYouTubeVideoApiRepository implements YouTubeVideoApiReposito
             channelId: 'channel-001',
             channelTitle: 'Dance Channel',
             thumbnailUrl: 'https://example.test/high.jpg',
-            publishedAt: '2026-05-31T12:00:00Z',
+            publishedAt: '2026-05-31T12:00:00+09:00',
             categoryId: '10',
             tags: ['dance', 'shorts'],
             duration: $duration,
