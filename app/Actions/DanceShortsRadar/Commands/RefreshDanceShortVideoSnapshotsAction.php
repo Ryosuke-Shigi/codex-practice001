@@ -10,6 +10,7 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface
 use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -32,8 +33,8 @@ class RefreshDanceShortVideoSnapshotsAction
          * 同期結果集約の手順をこの Action に閉じます。videos.list の50件分割、
          * API連携ログ集約、chunk失敗集計は Repository / Result DTO に任せます。
          */
-        $executedAt = CarbonImmutable::now();
-        $collectedAt = $executedAt->utc();
+        $executedAt = CarbonImmutable::now(ApplicationTimeZone::name());
+        $collectedAt = $executedAt;
         $snapshotPeriod = $this->snapshotPeriodService->jstTwelveHourPeriod($executedAt);
         $targets = $this->videoRegionRepository->snapshotRefreshTargetsByTrackingStatus(
             trackingStatus: $this->trackingService->snapshotRefreshTargetStatus(),
