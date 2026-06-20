@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\DanceShortsRadar;
 
+use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
 use App\Actions\DanceShortsRadar\Queries\GetDanceShortVideoRankingPageAction;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardListDTO;
@@ -13,6 +14,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
@@ -60,6 +62,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($video, $jp, 1000, '2026-06-01 12:00:00', 789, 12);
         $this->snapshot($usRisingVideo, $us, 1000, '2026-05-31 12:00:00');
         $this->snapshot($usRisingVideo, $us, 1200, '2026-06-01 12:00:00');
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar')
@@ -135,6 +138,7 @@ class DanceShortVideoRankingPageTest extends TestCase
          * 安全に返る必要があります。この画面表示確認では YouTube API を呼びません。
          */
         $this->seed(DanceShortRegionSeeder::class);
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar')
@@ -185,6 +189,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 delta: 700 - ($rank * 100),
             );
         }
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar?tab=JP&comparisonDays=1&sort=view_count_delta')
@@ -213,6 +218,29 @@ class DanceShortVideoRankingPageTest extends TestCase
             );
     }
 
+    public function test_page_reads_active_read_model_after_snapshot_rows_are_removed(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $this->rankingVideoWithDelta(
+            region: $jp,
+            youtubeVideoId: 'jp-read-model-display-video',
+            delta: 450,
+        );
+        $this->buildReadModels();
+
+        DanceShortVideoSnapshot::query()->delete();
+
+        $this
+            ->get('/dance-shorts-radar?tab=JP&comparisonDays=1&sort=view_count_delta')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('displaySelectField.selectedTab', 'JP')
+                ->where('displayCardField.type', 'ranking')
+                ->where('displayCardField.visibleCards.0.youtube_video_id', 'jp-read-model-display-video')
+                ->where('displayCardField.visibleCards.0.view_diff', 450)
+            );
+    }
+
     public function test_display_card_window_api_returns_requested_five_card_window(): void
     {
         $jp = $this->region('JP', '日本', 10);
@@ -224,6 +252,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 delta: 1200 - ($rank * 100),
             );
         }
+        $this->buildReadModels();
 
         $this
             ->getJson('/api/dance-shorts-radar/display-card-window?tab=JP&comparisonDays=1&sort=view_count_delta&startRank=6&windowSize=5')
@@ -259,6 +288,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 delta: 1100 - ($rank * 100),
             );
         }
+        $this->buildReadModels();
 
         $this
             ->getJson('/api/dance-shorts-radar/display-card-window?tab=JP&comparisonDays=1&sort=view_count_delta&selectedVideoId='.$videos[5]->getKey())
@@ -288,6 +318,7 @@ class DanceShortVideoRankingPageTest extends TestCase
                 delta: 700 - ($rank * 100),
             );
         }
+        $this->buildReadModels();
 
         $this
             ->getJson('/api/dance-shorts-radar/display-card-window?tab=JP&comparisonDays=1&sort=view_count_delta&startRank=0&windowSize=999')
@@ -311,6 +342,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($usVideo, $us, 900, '2026-05-31 12:00:00');
         $this->snapshot($usVideo, $us, 1000, '2026-06-01 12:00:00');
         $this->snapshot($usVideo, $us, 300, '2026-05-25 12:00:00');
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar?region=US&comparisonDays=1&sort=view_count_delta&limit=10')
@@ -338,6 +370,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $video = $this->video('initial-only-video', 'Initial only short');
 
         $this->snapshot($video, $jp, 1500, '2026-06-01 12:00:00', 25, 3);
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar?region=JP&comparisonDays=1')
@@ -374,6 +407,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($usVideo, $us, 1000, '2026-06-01 12:00:00');
         $this->snapshot($krVideo, $kr, 700, '2026-05-31 12:00:00');
         $this->snapshot($krVideo, $kr, 1000, '2026-06-01 12:00:00');
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar?region=ALL&sort=view_count_delta')
@@ -419,6 +453,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($notCandidateVideo, $us, 1200, '2026-06-01 12:00:00');
         $this->snapshot($notCandidateVideo, $jp, 1000, '2026-05-31 12:00:00');
         $this->snapshot($notCandidateVideo, $jp, 1600, '2026-06-01 12:00:00');
+        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar?region=RISING&comparisonDays=1')
@@ -455,8 +490,9 @@ class DanceShortVideoRankingPageTest extends TestCase
 
         $this->snapshot($nullGrowthVideo, $us, 0, '2026-05-31 12:00:00');
         $this->snapshot($nullGrowthVideo, $us, 500, '2026-06-01 12:00:00');
+        $this->buildReadModels();
 
-        $this
+        $response = $this
             ->get('/dance-shorts-radar?region=RISING&comparisonDays=1&sort=current_view_count')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -470,6 +506,17 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('displayCardField.visibleCards.1.view_growth_rate', null)
                 ->where('displayCardField.visibleCards.2.youtube_video_id', 'high-current-small-delta')
             );
+
+        $this->assertStringNotContainsString(RankingReadModelSortKey::RISING, $response->getContent());
+
+        $apiResponse = $this
+            ->getJson('/api/dance-shorts-radar/display-card-window?tab=RISING&comparisonDays=1&sort=current_view_count')
+            ->assertOk()
+            ->assertJsonPath('displayCardField.type', 'rising')
+            ->assertJsonPath('displayCardField.visibleCards.0.youtube_video_id', 'lower-current-large-delta')
+            ->assertJsonMissingPath('displayCardField.sortKey');
+
+        $this->assertStringNotContainsString(RankingReadModelSortKey::RISING, $apiResponse->getContent());
     }
 
     public function test_request_allows_only_expected_comparison_days(): void
@@ -706,6 +753,11 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($video, $region, 1000 + $delta, '2026-06-01 12:00:00');
 
         return $video;
+    }
+
+    private function buildReadModels(): void
+    {
+        app(BuildDanceShortRankingReadModelsAction::class)->execute();
     }
 }
 

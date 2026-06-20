@@ -8,12 +8,14 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Enums\DanceShortsRadar\DanceShortSearchScope;
+use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -46,6 +48,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
 
         $youtubeRepository = new Page2FakeDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(SyncDanceShortPage2VideosAction::class)->execute();
 
@@ -93,6 +96,10 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
         $this->assertDatabaseMissing('dance_short_videos', [
             'youtube_video_id' => 'jp-page1-video-ignored',
         ]);
+        Event::assertDispatched(
+            DanceShortRankingReadModelRefreshRequested::class,
+            fn (DanceShortRankingReadModelRefreshRequested $event): bool => $event->source === 'page2_video_search_completed',
+        );
     }
 
     public function test_execute_does_not_fetch_page2_when_first_page_has_no_next_token(): void
@@ -103,6 +110,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
 
         $youtubeRepository = new Page2NoTokenDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(SyncDanceShortPage2VideosAction::class)->execute();
 
@@ -113,6 +121,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
             ['keyword' => 'no token keyword', 'pageToken' => null],
         ], $youtubeRepository->searchPageCalls);
         $this->assertSame([], $youtubeRepository->fetchVideoIdsCalls);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
     }
 
     public function test_execute_never_fetches_beyond_keyword_max_search_pages(): void

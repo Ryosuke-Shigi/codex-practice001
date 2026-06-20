@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: DanceShortsRadar
-- Last reviewed: 2026-06-19
+- Last reviewed: 2026-06-20
 - Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
@@ -145,13 +145,28 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - `ALL`
 - 地域別ランキング
 
+表示時のランキングは snapshot 履歴から再計算しません。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が固定 uniqueId の `BuildDanceShortRankingReadModelsJob` をdispatchします。Job は `BuildDanceShortRankingReadModelsAction` を呼び、read model build を一括生成します。
+
+read model 生成は `build_id` 単位で行います。新しい build の全patternが生成できた後に active build を切り替え、旧buildのrowsを削除します。生成途中で失敗した場合は旧active buildを維持し、表示は直前のread modelを読み続けます。
+
+初回導入や migration 直後は、表示前に read model を手動生成します。local / production とも、各環境の migration 適用後に `dance-shorts-radar:build-ranking-read-models` を実行し、出力された `build_id` が active build として参照できることを確認してからランキング画面を確認します。
+
+生成対象:
+
+- 通常ランキング: `ALL` と active region 全件を対象に、許可された比較日数 x sort key 全patternを生成する
+- `RISING`: 許可された比較日数ごとに生成し、保存内部の `sort_key` は `__rising` に固定する
+
+`__rising` は read model 保存専用の内部キーです。React props、URL query、sort options には出さず、RISING UI は引き続き `showSortKeyOptions=false`、sort label は `上昇候補順` とします。
+
+表示側 Repository は active build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
+
 ### RISING / 上昇候補の責務境界
 
 RISING は `dance_short_regions` の地域ではなく、表示専用タブです。
 
 上昇候補は、US / KR などの source region 側で伸びていて、JP 側が未観測または source 側より伸びが小さい動画を継続観測候補として扱うための区分です。
 
-Repository は RISING タブ用の source / JP / previous snapshot をDB上で結合し、window取得可能な read model row へ prefilter します。
+read model 生成側の Repository / Strategy は RISING タブ用の source / JP / previous snapshot をDB上で結合し、read model row へ prefilter します。
 
 Repositoryが扱うこと:
 
@@ -160,7 +175,7 @@ Repositoryが扱うこと:
 - source側の増加量が正である候補行への prefilter
 - JP側が未観測、またはJP側の増加量がsource側より小さい候補行への prefilter
 - 同じYouTube動画が複数source regionに出た場合の代表行選択
-- RISING固有の固定順と `windowSize + 1` のlookahead取得
+- RISING固有の固定順で read model row を生成するための候補取得
 
 Repositoryが扱わないこと:
 
@@ -182,7 +197,7 @@ Service は null metric を 0 へ潰しません。`view_count_delta`、`view_gr
 
 Strategy は Repository row を表示カード用DTOへ詰め替えます。JP比較状態の値は Service の状態定義を使い、Strategy自身では `unobserved` や `smaller_delta` の意味を定義しません。
 
-window切り出しは `DanceShortDisplayCardWindowService` へ委譲します。選択カードがない通常windowでは Repository が取得したlookahead行から表示分と pagination を作り、選択カードがある場合は上昇候補全体順から選択カード前後の最大5件を切り出します。
+window切り出しは `DanceShortDisplayCardWindowService` へ委譲します。選択カードがない通常windowでは active read model のlookahead行から表示分と pagination を作り、選択カードがある場合は read model 上の順位から選択カード前後の最大5件を切り出します。
 
 Responder は確定済みDTOを Inertia / React 用の snake_case props と表示ラベルへ変換します。候補判定、JP比較状態の再定義、metric再計算は行いません。
 
@@ -255,6 +270,7 @@ inactive、standard、1ページ設定は除外します。
 - `dance-short:sync-snapshots` のArtisan Commandはsnapshot専用Jobをdispatchするだけで、同期本体を直接実行しない
 - snapshot専用Jobは `RefreshDanceShortVideoSnapshotsAction` を呼ぶ
 - snapshot専用Jobは固定uniqueIdで同期全体の同時実行を防ぐ
+- `dance-shorts-radar:build-ranking-read-models` のArtisan Commandは `BuildDanceShortRankingReadModelsAction` を同期実行し、`build_id` / normal pattern count / RISING pattern count / inserted rows を出力する
 
 ### Scheduler
 
@@ -268,9 +284,15 @@ inactive、standard、1ページ設定は除外します。
 
 - Strategyごとの取得条件
 - comparisonDays / sort条件
+- video / snapshot / cleanup の元データ変更がある同期結果だけ read model refresh event を発火し、Listener が ranking read model build Job をdispatchする
+- build Job は待機中の重複を `ShouldBeUniqueUntilProcessing` でまとめ、処理開始後の再要求は次回buildとして残し、`WithoutOverlapping` で同時生成を防ぐ
+- read model は `ALL` + active region の全comparisonDays / sortKey pattern と、`RISING` のcomparisonDays patternを生成する
+- read model 生成成功時だけ active build を切り替え、失敗時は旧active buildを維持する
+- 表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
+- RISING read model の `sort_key` は保存内部で `__rising` とし、props / JSON / URL / sort options へ漏らさない
 - `selectedVideoId` を基準にした全体順位
 - 最大5件のdisplay-card-window
-- RISING Repositoryはsource / JP / previous snapshot をDB上で結合し、read model row へ prefilterする
+- RISING 生成側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合し、read model row へ prefilterする
 - RISING Repositoryは上昇候補の意味づけ、JP比較状態、表示文言、Inertia props生成を持たない
 - `DanceShortRisingCandidateService::japanComparisonStatusForCandidate()` がJP比較状態を定義する
 - Serviceは null metric を0へ潰さない
@@ -288,7 +310,9 @@ inactive、standard、1ページ設定は除外します。
 - YouTube HTTP 400 / 404 などを不用意にERRORログ対象へ広げていないか
 - 通常同期・page2同期・snapshot専用同期の役割が混ざっていないか
 - Repositoryへ保存判断・表示判断・tracking statusの意味判断が入っていないか
-- RISING Repositoryへ上昇候補の意味定義、JP比較状態、表示文言、Inertia props生成が入っていないか
+- 表示Action/APIがsnapshot履歴からランキングを再計算していないか
+- read model 生成失敗時に旧active buildを消していないか
+- RISING 生成側 Repository / Strategyへ上昇候補の意味定義、JP比較状態、表示文言、Inertia props生成が入っていないか
 - RISING Serviceが上昇候補の意味、JP比較状態、null metricの扱いを持っているか
 - RISING StrategyがDTO詰め替えとwindow取得委譲に留まり、JP比較状態の意味定義を持っていないか
 - RISING Responderがprops変換と表示ラベル生成に留まり、候補判定やmetric再計算をしていないか

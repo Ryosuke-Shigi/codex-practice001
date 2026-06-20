@@ -4,6 +4,7 @@ namespace App\Actions\DanceShortsRadar\Commands;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSnapshotRefreshTargetDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
+use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
@@ -41,7 +42,10 @@ class RefreshDanceShortVideoSnapshotsAction
         );
 
         if ($targets === []) {
-            return new DanceShortVideoSyncResultDTO(executedAt: $executedAt);
+            return $this->completeWithOptionalRefreshRequest(
+                new DanceShortVideoSyncResultDTO(executedAt: $executedAt),
+                $executedAt,
+            );
         }
 
         $targetsByYoutubeVideoId = $this->targetsByYoutubeVideoId($targets);
@@ -56,10 +60,13 @@ class RefreshDanceShortVideoSnapshotsAction
         } catch (Throwable) {
             $failedCount = count($targetsByYoutubeVideoId);
 
-            return new DanceShortVideoSyncResultDTO(
-                executedAt: $executedAt,
-                fetchedVideoCount: count($targetsByYoutubeVideoId),
-                failedCount: $failedCount,
+            return $this->completeWithOptionalRefreshRequest(
+                new DanceShortVideoSyncResultDTO(
+                    executedAt: $executedAt,
+                    fetchedVideoCount: count($targetsByYoutubeVideoId),
+                    failedCount: $failedCount,
+                ),
+                $executedAt,
             );
         }
 
@@ -103,15 +110,29 @@ class RefreshDanceShortVideoSnapshotsAction
             }
         }
 
-        return new DanceShortVideoSyncResultDTO(
-            executedAt: $executedAt,
-            fetchedVideoCount: count($targetsByYoutubeVideoId),
-            fetchedVideoDetailCount: $fetchedVideoDetailCount,
-            savedSnapshotCount: $savedSnapshotCount,
-            skippedVideoCount: $skippedVideoCount,
-            skippedPersistenceCount: $skippedPersistenceCount,
-            failedCount: $failedCount,
+        return $this->completeWithOptionalRefreshRequest(
+            new DanceShortVideoSyncResultDTO(
+                executedAt: $executedAt,
+                fetchedVideoCount: count($targetsByYoutubeVideoId),
+                fetchedVideoDetailCount: $fetchedVideoDetailCount,
+                savedSnapshotCount: $savedSnapshotCount,
+                skippedVideoCount: $skippedVideoCount,
+                skippedPersistenceCount: $skippedPersistenceCount,
+                failedCount: $failedCount,
+            ),
+            $executedAt,
         );
+    }
+
+    private function completeWithOptionalRefreshRequest(
+        DanceShortVideoSyncResultDTO $result,
+        CarbonImmutable $executedAt,
+    ): DanceShortVideoSyncResultDTO {
+        if ($result->hasRankingSourceChange()) {
+            event(new DanceShortRankingReadModelRefreshRequested('snapshots_saved', $executedAt));
+        }
+
+        return $result;
     }
 
     private function maxVideosPerRun(): int
