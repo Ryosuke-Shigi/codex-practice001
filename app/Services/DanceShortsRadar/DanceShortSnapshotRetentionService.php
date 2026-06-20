@@ -2,6 +2,7 @@
 
 namespace App\Services\DanceShortsRadar;
 
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Throwable;
@@ -57,19 +58,19 @@ class DanceShortSnapshotRetentionService
     }
 
     /**
-     * Repository の削除条件へ渡す UTC cutoff を返します。
+     * Repository の削除条件へ渡す application timezone cutoff を返します。
      */
     public function cutoffAt(
         CarbonInterface $now,
         int|string|null $configuredRetentionDays = null,
     ): CarbonImmutable {
         /*
-         * snapshot の collected_at は同期時刻として UTC で扱います。
-         * 呼び出し元が Asia/Tokyo などの時刻を渡しても、Repository へ渡す cutoff は UTC に揃え、
-         * DB 条件が環境 timezone に引きずられないようにします。
+         * snapshot の collected_at はアプリケーション timezone で扱います。
+         * このポートフォリオでは APP_TIMEZONE=Asia/Tokyo を前提にし、削除 cutoff も
+         * UTC へ戻さず同じ timezone のまま Repository へ渡します。
          */
         return CarbonImmutable::instance($now)
-            ->utc()
+            ->setTimezone(ApplicationTimeZone::name())
             ->subDays($this->retentionDays($configuredRetentionDays));
     }
 
