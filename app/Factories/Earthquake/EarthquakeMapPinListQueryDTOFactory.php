@@ -3,6 +3,7 @@
 namespace App\Factories\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 
 final readonly class EarthquakeMapPinListQueryDTOFactory
@@ -37,7 +38,7 @@ final readonly class EarthquakeMapPinListQueryDTOFactory
      */
     private function defaultDateRange(): array
     {
-        $endDate = CarbonImmutable::today(config('app.timezone', 'UTC'));
+        $endDate = CarbonImmutable::today(ApplicationTimeZone::name());
         $startDate = $endDate->subDays(3);
 
         return [
