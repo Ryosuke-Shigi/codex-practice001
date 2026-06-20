@@ -89,17 +89,85 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             return [];
         }
 
-        $apiKey = $this->apiKeyFor('videos.list', 'videos');
+        $apiName = 'videos.list';
+        $endpoint = $this->endpoint('videos');
+        $apiCallCount = count(array_chunk($ids, self::VIDEOS_LIST_MAX_IDS));
+        $successfulChunkCount = 0;
+        $failedChunkCount = 0;
+        $lastException = null;
         $details = [];
 
+        try {
+            $apiKey = $this->apiKey();
+        } catch (RuntimeException $exception) {
+            $this->dispatchIntegrationLog(
+                apiName: $apiName,
+                status: 'failed',
+                message: $this->videoDetailsSummaryMessage(
+                    resultMessage: $exception->getMessage(),
+                    targetVideoIdCount: count($ids),
+                    apiCallCount: 0,
+                    successfulChunkCount: 0,
+                    failedChunkCount: 0,
+                    detailCount: 0,
+                ),
+                endpoint: $endpoint,
+                responseStatus: null,
+            );
+            $this->dispatchErrorLog(
+                message: $exception->getMessage(),
+                errorCode: 'dance-shorts.youtube.api_key_missing',
+                exception: $exception,
+                endpoint: $endpoint,
+            );
+
+            throw $exception;
+        }
+
         foreach (array_chunk($ids, self::VIDEOS_LIST_MAX_IDS) as $chunkedIds) {
-            $payload = $this->getJson('videos.list', 'videos', [
-                'key' => $apiKey,
-                'part' => 'snippet,contentDetails,statistics,status',
-                'id' => implode(',', $chunkedIds),
-            ]);
+            try {
+                $payload = $this->getJson(
+                    apiName: $apiName,
+                    path: 'videos',
+                    query: [
+                        'key' => $apiKey,
+                        'part' => 'snippet,contentDetails,statistics,status',
+                        'id' => implode(',', $chunkedIds),
+                    ],
+                    dispatchIntegrationLog: false,
+                );
+                $successfulChunkCount++;
+            } catch (RuntimeException $exception) {
+                $failedChunkCount++;
+                $lastException = $exception;
+
+                continue;
+            }
 
             array_push($details, ...$this->mapDetailItems($payload));
+        }
+
+        $this->dispatchIntegrationLog(
+            apiName: $apiName,
+            status: $failedChunkCount === 0 ? 'success' : 'failed',
+            message: $this->videoDetailsSummaryMessage(
+                resultMessage: match (true) {
+                    $failedChunkCount === 0 => '取得しました。',
+                    $successfulChunkCount === 0 => '取得に失敗しました。',
+                    default => '一部取得に失敗しました。',
+                },
+                targetVideoIdCount: count($ids),
+                apiCallCount: $apiCallCount,
+                successfulChunkCount: $successfulChunkCount,
+                failedChunkCount: $failedChunkCount,
+                detailCount: count($details),
+            ),
+            endpoint: $endpoint,
+            responseStatus: null,
+        );
+
+        if ($successfulChunkCount === 0 && $lastException instanceof RuntimeException) {
+            throw $lastException;
         }
 
         return $details;
@@ -114,8 +182,12 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
      * @param  array<string, string|int>  $query
      * @return array<string, mixed>
      */
-    private function getJson(string $apiName, string $path, array $query): array
-    {
+    private function getJson(
+        string $apiName,
+        string $path,
+        array $query,
+        bool $dispatchIntegrationLog = true,
+    ): array {
         $endpoint = $this->endpoint($path);
 
         try {
@@ -124,13 +196,15 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
                 ->get($endpoint, $query);
         } catch (Throwable $exception) {
             $message = sprintf('YouTube Data API %s に接続できませんでした。', $apiName);
-            $this->dispatchIntegrationLog(
-                apiName: $apiName,
-                status: 'failed',
-                message: $message,
-                endpoint: $endpoint,
-                responseStatus: null,
-            );
+            if ($dispatchIntegrationLog) {
+                $this->dispatchIntegrationLog(
+                    apiName: $apiName,
+                    status: 'failed',
+                    message: $message,
+                    endpoint: $endpoint,
+                    responseStatus: null,
+                );
+            }
             $this->dispatchErrorLog(
                 message: $message,
                 errorCode: 'dance-shorts.youtube.transport_failed',
@@ -146,13 +220,15 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
 
         if ($response->failed()) {
             $message = sprintf('YouTube Data API %s の取得先がエラーを返しました。', $apiName);
-            $this->dispatchIntegrationLog(
-                apiName: $apiName,
-                status: 'failed',
-                message: $message,
-                endpoint: $endpoint,
-                responseStatus: $response->status(),
-            );
+            if ($dispatchIntegrationLog) {
+                $this->dispatchIntegrationLog(
+                    apiName: $apiName,
+                    status: 'failed',
+                    message: $message,
+                    endpoint: $endpoint,
+                    responseStatus: $response->status(),
+                );
+            }
 
             if ($this->shouldDispatchRequestError($response->status())) {
                 $this->dispatchErrorLog(
@@ -168,13 +244,15 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
         try {
             $payload = $this->jsonArray($apiName, $response);
         } catch (RuntimeException $exception) {
-            $this->dispatchIntegrationLog(
-                apiName: $apiName,
-                status: 'failed',
-                message: $exception->getMessage(),
-                endpoint: $endpoint,
-                responseStatus: $response->status(),
-            );
+            if ($dispatchIntegrationLog) {
+                $this->dispatchIntegrationLog(
+                    apiName: $apiName,
+                    status: 'failed',
+                    message: $exception->getMessage(),
+                    endpoint: $endpoint,
+                    responseStatus: $response->status(),
+                );
+            }
             $this->dispatchErrorLog(
                 message: $exception->getMessage(),
                 errorCode: 'dance-shorts.youtube.response_json_invalid',
@@ -185,13 +263,15 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             throw $exception;
         }
 
-        $this->dispatchIntegrationLog(
-            apiName: $apiName,
-            status: 'success',
-            message: '取得しました。',
-            endpoint: $endpoint,
-            responseStatus: $response->status(),
-        );
+        if ($dispatchIntegrationLog) {
+            $this->dispatchIntegrationLog(
+                apiName: $apiName,
+                status: 'success',
+                message: '取得しました。',
+                endpoint: $endpoint,
+                responseStatus: $response->status(),
+            );
+        }
 
         return $payload;
     }
@@ -293,6 +373,32 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             url: $endpoint,
             method: 'GET',
         ));
+    }
+
+    private function videoDetailsSummaryMessage(
+        string $resultMessage,
+        int $targetVideoIdCount,
+        int $apiCallCount,
+        int $successfulChunkCount,
+        int $failedChunkCount,
+        int $detailCount,
+    ): string {
+        $message = sprintf(
+            '%s対象動画ID: %d件 / API呼び出し: %d回',
+            $resultMessage,
+            $targetVideoIdCount,
+            $apiCallCount,
+        );
+
+        if ($failedChunkCount > 0) {
+            $message .= sprintf(
+                ' / 成功: %d回 / 失敗: %d回',
+                $successfulChunkCount,
+                $failedChunkCount,
+            );
+        }
+
+        return sprintf('%s / 取得詳細: %d件', $message, $detailCount);
     }
 
     /**

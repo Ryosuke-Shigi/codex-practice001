@@ -15,8 +15,6 @@ use Throwable;
 
 class RefreshDanceShortVideoSnapshotsAction
 {
-    private const YOUTUBE_VIDEOS_LIST_CHUNK_SIZE = 50;
-
     public function __construct(
         private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
         private readonly DanceShortVideoRegionRepositoryInterface $videoRegionRepository,
@@ -52,50 +50,52 @@ class RefreshDanceShortVideoSnapshotsAction
         $skippedPersistenceCount = 0;
         $failedCount = 0;
 
-        foreach (array_chunk(array_keys($targetsByYoutubeVideoId), self::YOUTUBE_VIDEOS_LIST_CHUNK_SIZE) as $youtubeVideoIds) {
-            try {
-                $details = $this->youTubeVideoApiRepository->fetchVideoDetails($youtubeVideoIds);
-            } catch (Throwable) {
-                $failedCount += count($youtubeVideoIds);
+        try {
+            $details = $this->youTubeVideoApiRepository->fetchVideoDetails(array_keys($targetsByYoutubeVideoId));
+        } catch (Throwable) {
+            $failedCount = count($targetsByYoutubeVideoId);
+
+            return new DanceShortVideoSyncResultDTO(
+                executedAt: $executedAt,
+                fetchedVideoCount: count($targetsByYoutubeVideoId),
+                failedCount: $failedCount,
+            );
+        }
+
+        $fetchedVideoDetailCount = count($details);
+
+        foreach ($details as $detail) {
+            $target = $targetsByYoutubeVideoId[$detail->youtubeVideoId] ?? null;
+
+            if ($target === null) {
+                $skippedVideoCount++;
 
                 continue;
             }
 
-            $fetchedVideoDetailCount += count($details);
+            if ($detail->viewCount === null) {
+                $skippedPersistenceCount += count($target->region_ids);
 
-            foreach ($details as $detail) {
-                $target = $targetsByYoutubeVideoId[$detail->youtubeVideoId] ?? null;
+                continue;
+            }
 
-                if ($target === null) {
-                    $skippedVideoCount++;
+            foreach ($target->region_ids as $regionId) {
+                try {
+                    $snapshotDTO = $this->snapshotCreateDTOFactory->fromYouTubeVideoDetail(
+                        detail: $detail,
+                        videoId: $target->video_id,
+                        regionId: $regionId,
+                        collectedAt: $collectedAt,
+                    );
 
-                    continue;
-                }
-
-                if ($detail->viewCount === null) {
-                    $skippedPersistenceCount += count($target->region_ids);
-
-                    continue;
-                }
-
-                foreach ($target->region_ids as $regionId) {
-                    try {
-                        $snapshotDTO = $this->snapshotCreateDTOFactory->fromYouTubeVideoDetail(
-                            detail: $detail,
-                            videoId: $target->video_id,
-                            regionId: $regionId,
-                            collectedAt: $collectedAt,
-                        );
-
-                        $this->snapshotRepository->updateLatestInPeriodOrCreate(
-                            dto: $snapshotDTO,
-                            periodStartAt: $snapshotPeriod['start'],
-                            periodEndAt: $snapshotPeriod['end'],
-                        );
-                        $savedSnapshotCount++;
-                    } catch (Throwable) {
-                        $failedCount++;
-                    }
+                    $this->snapshotRepository->updateLatestInPeriodOrCreate(
+                        dto: $snapshotDTO,
+                        periodStartAt: $snapshotPeriod['start'],
+                        periodEndAt: $snapshotPeriod['end'],
+                    );
+                    $savedSnapshotCount++;
+                } catch (Throwable) {
+                    $failedCount++;
                 }
             }
         }

@@ -3,8 +3,10 @@
 namespace Tests\Unit\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
+use App\Exceptions\Earthquake\EarthquakeDetailXmlNotMappableException;
 use App\Services\Earthquake\EarthquakeDetailXmlParseService;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class EarthquakeDetailXmlParseServiceTest extends TestCase
 {
@@ -41,6 +43,21 @@ class EarthquakeDetailXmlParseServiceTest extends TestCase
         $this->assertFalse($service->isMappable($this->pin(longitude: '')));
         $this->assertFalse($service->isMappable($this->pin(maxIntensity: null)));
         $this->assertFalse($service->isMappable($this->pin(maxIntensity: '')));
+    }
+
+    public function test_parse_classifies_non_seismology_xml_as_not_mappable(): void
+    {
+        $this->expectException(EarthquakeDetailXmlNotMappableException::class);
+
+        (new EarthquakeDetailXmlParseService)->parse($this->nonSeismologyReportXml(), 456, 'fallback title');
+    }
+
+    public function test_parse_keeps_broken_xml_as_parse_failure(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('気象庁 個別XMLを解析できませんでした。');
+
+        (new EarthquakeDetailXmlParseService)->parse('<Report><broken></Report>', 456, 'fallback title');
     }
 
     private function pin(
@@ -112,6 +129,35 @@ class EarthquakeDetailXmlParseServiceTest extends TestCase
         <MaxInt>5-</MaxInt>
       </Observation>
     </Intensity>
+  </Body>
+</Report>
+XML;
+    }
+
+    private function nonSeismologyReportXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://xml.kishou.go.jp/jmaxml1/" xmlns:jmx="http://xml.kishou.go.jp/jmaxml1/">
+  <Control>
+    <Title>津波情報</Title>
+    <DateTime>2026-05-11T02:31:20Z</DateTime>
+    <Status>通常</Status>
+    <EditorialOffice>気象庁本庁</EditorialOffice>
+    <PublishingOffice>気象庁</PublishingOffice>
+  </Control>
+  <Head xmlns="http://xml.kishou.go.jp/jmaxml1/informationBasis1/">
+    <Title>津波情報</Title>
+    <ReportDateTime>2026-05-11T11:31:00+09:00</ReportDateTime>
+    <TargetDateTime>2026-05-11T11:31:00+09:00</TargetDateTime>
+    <InfoKind>津波情報</InfoKind>
+  </Head>
+  <Body xmlns="http://xml.kishou.go.jp/jmaxml1/body/tsunami1/">
+    <Tsunami>
+      <Forecast>
+        <Code>100</Code>
+      </Forecast>
+    </Tsunami>
   </Body>
 </Report>
 XML;

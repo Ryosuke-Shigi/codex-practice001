@@ -5,6 +5,7 @@ namespace App\Services\Earthquake;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
+use App\Exceptions\Earthquake\EarthquakeDetailXmlNotMappableException;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
@@ -62,15 +63,18 @@ class EarthquakeMapPinBuildService
                 $transport = $this->detailXmlRepository->fetch($xmlUrl);
 
                 if (! ($transport['success'] ?? false)) {
-                    if (($transport['error_message'] ?? null) === self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE) {
-                        $this->dispatchErrorLog(
-                            message: '気象庁XML以外のURLのため、地図ピンに追加できませんでした。',
-                            errorCode: 'earthquake.jma.detail_xml_url_rejected',
-                            sourceEntry: $sourceEntry,
-                            url: $xmlUrl,
-                            method: $this->transportString($transport, 'method'),
-                        );
-                    }
+                    $isRejectedUrl = ($transport['error_message'] ?? null) === self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE;
+                    $this->dispatchErrorLog(
+                        message: $isRejectedUrl
+                            ? '気象庁XML以外のURLのため、地図ピンに追加できませんでした。'
+                            : '気象庁 個別XMLを取得できず、地図ピンに追加できませんでした。',
+                        errorCode: $isRejectedUrl
+                            ? 'earthquake.jma.detail_xml_url_rejected'
+                            : 'earthquake.jma.detail_xml_fetch_failed',
+                        sourceEntry: $sourceEntry,
+                        url: $xmlUrl,
+                        method: $this->transportString($transport, 'method'),
+                    );
 
                     $failedCount++;
 
@@ -95,6 +99,8 @@ class EarthquakeMapPinBuildService
                 }
 
                 $pins[] = $pin;
+            } catch (EarthquakeDetailXmlNotMappableException) {
+                $skippedCount++;
             } catch (Throwable $exception) {
                 $this->dispatchErrorLog(
                     message: '気象庁 個別XMLを解析できず、地図ピンに追加できませんでした。',

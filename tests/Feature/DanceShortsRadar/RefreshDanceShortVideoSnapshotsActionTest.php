@@ -28,7 +28,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_execute_uses_only_active_saved_videos_and_fetches_details_in_50_id_chunks_without_search(): void
+    public function test_execute_uses_only_active_saved_videos_and_fetches_details_once_without_search(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 01:45:00', 'UTC'));
         config(['dance_short.snapshot_refresh.max_videos_per_run' => 8000]);
@@ -64,8 +64,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->assertSame(51, $result->savedSnapshotCount);
         $this->assertSame(0, $result->failedCount);
         $this->assertSame([
-            array_slice($activeYoutubeVideoIds, 0, 50),
-            array_slice($activeYoutubeVideoIds, 50, 1),
+            $activeYoutubeVideoIds,
         ], $youtubeRepository->fetchVideoIdsCalls);
         $this->assertSame(0, $youtubeRepository->searchVideosCallCount);
         $this->assertSame(0, $youtubeRepository->searchVideoPageCallCount);

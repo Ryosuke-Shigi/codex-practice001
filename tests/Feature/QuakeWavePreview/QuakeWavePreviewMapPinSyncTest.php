@@ -316,6 +316,40 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
         );
     }
 
+    public function test_map_pin_build_service_skips_non_mappable_detail_xml_without_error_log(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class]);
+        $this->createFeedEntry('urn:jma:earthquake:not-mappable-detail');
+        $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, new class($this->earthquakeReportXmlWithoutCoordinate()) implements EarthquakeDetailXmlRepositoryInterface
+        {
+            public function __construct(private readonly string $body) {}
+
+            public function fetch(string $url): array
+            {
+                return [
+                    'endpoint' => $url,
+                    'method' => 'GET',
+                    'request_headers' => [],
+                    'success' => true,
+                    'status_code' => 200,
+                    'fetched_at' => '2026-05-11T11:32:00+09:00',
+                    'response_time_ms' => 12.3,
+                    'body' => $this->body,
+                    'error_message' => null,
+                ];
+            }
+        });
+        $syncRunId = app(EarthquakeMapPinSyncRunRepositoryInterface::class)->createPending();
+
+        $result = app(EarthquakeMapPinBuildService::class)->sync($syncRunId);
+
+        $this->assertSame(1, $result->totalCount);
+        $this->assertSame(1, $result->skippedCount);
+        $this->assertSame(0, $result->failedCount);
+        $this->assertDatabaseCount('earthquake_map_pins', 0);
+        Event::assertNotDispatched(ApplicationErrorOccurred::class);
+    }
+
     public function test_map_pin_sync_job_preserves_partial_insert_when_repository_fails_after_first_pin(): void
     {
         $this->createFeedEntry('urn:jma:earthquake:partial-1');
@@ -554,6 +588,50 @@ XML;
           <Name>青森県東方沖</Name>
           <Code type="震央地名">285</Code>
           <jmx_eb:Coordinate description="北緯４１．０度　東経１４２．５度　深さ　５０ｋｍ">+41.0+142.5-50000/</jmx_eb:Coordinate>
+        </Area>
+      </Hypocenter>
+      <jmx_eb:Magnitude type="Mj" description="Ｍ４．０">4.0</jmx_eb:Magnitude>
+    </Earthquake>
+    <Intensity>
+      <Observation>
+        <MaxInt>1</MaxInt>
+      </Observation>
+    </Intensity>
+  </Body>
+</Report>
+XML;
+    }
+
+    private function earthquakeReportXmlWithoutCoordinate(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://xml.kishou.go.jp/jmaxml1/" xmlns:jmx="http://xml.kishou.go.jp/jmaxml1/">
+  <Control>
+    <Title>震源・震度に関する情報</Title>
+    <DateTime>2026-05-11T02:31:20Z</DateTime>
+    <Status>通常</Status>
+    <EditorialOffice>気象庁本庁</EditorialOffice>
+    <PublishingOffice>気象庁</PublishingOffice>
+  </Control>
+  <Head xmlns="http://xml.kishou.go.jp/jmaxml1/informationBasis1/">
+    <Title>震源・震度情報</Title>
+    <ReportDateTime>2026-05-11T11:31:00+09:00</ReportDateTime>
+    <TargetDateTime>2026-05-11T11:31:00+09:00</TargetDateTime>
+    <EventID>20260511112751</EventID>
+    <InfoType>発表</InfoType>
+    <Serial>1</Serial>
+    <InfoKind>地震情報</InfoKind>
+    <InfoKindVersion>1.0_1</InfoKindVersion>
+  </Head>
+  <Body xmlns="http://xml.kishou.go.jp/jmaxml1/body/seismology1/" xmlns:jmx_eb="http://xml.kishou.go.jp/jmaxml1/elementBasis1/">
+    <Earthquake>
+      <OriginTime>2026-05-11T11:27:00+09:00</OriginTime>
+      <ArrivalTime>2026-05-11T11:27:00+09:00</ArrivalTime>
+      <Hypocenter>
+        <Area>
+          <Name>青森県東方沖</Name>
+          <Code type="震央地名">285</Code>
         </Area>
       </Hypocenter>
       <jmx_eb:Magnitude type="Mj" description="Ｍ４．０">4.0</jmx_eb:Magnitude>

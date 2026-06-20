@@ -77,7 +77,9 @@ ListenerはEventをDTOへ移し、Repository経由でDB登録する副作用だ�
 
 ## 接続済みの外部APIログ発火
 
-既存API連携へ接続済みのAPI連携ログは、外部API呼び出し1回ごとに保存します。
+既存API連携へ接続済みのAPI連携ログは、原則として外部API呼び出し1回ごとに保存します。
+
+ただし YouTube Data API `videos.list` は最大50件単位のchunk呼び出しを内部で行うため、成功ログはchunkごとに保存せず、`fetchVideoDetails()` の処理単位で1件の要約ログに集約します。要約には対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を含め、動画ID一覧、request query全文、response body全文、API key、token は保存しません。
 
 - JMA XML feed取得
 - JMA 個別XML取得
@@ -87,7 +89,7 @@ ListenerはEventをDTOへ移し、Repository経由でDB登録する副作用だ�
 
 API連携ログは成功・失敗の両方を保存します。表示文は日本語で短くし、成功時は完了、失敗時は接続不可、取得先エラー、空レスポンス、JSON/XML解析不可などの理由が分かる文にします。HTTP status はDBへ保存しますが、通常の一覧文には出しません。
 
-エラーログは、XML / JSON parse失敗、API key未設定、APIs.guru同期継続不能など、調査が必要な失敗に限定します。YouTube Data API のHTTP失敗は 401 / 403 / 429 と 5xx をERRORログ対象にし、400 / 404 などの通常のクライアント失敗までは広げません。例外がある失敗では、詳細で見直しに使える file:line も表示します。
+エラーログは、XML / JSON parse失敗、API key未設定、APIs.guru同期継続不能など、調査が必要な失敗に限定します。YouTube Data API のHTTP失敗は 401 / 403 / 429 と 5xx をERRORログ対象にし、400 / 404 などの通常のクライアント失敗までは広げません。気象庁 個別XMLの取得失敗やXML構文破損はERRORログ対象にしますが、地図ピンに必要な座標や最大震度がないだけのXMLはERRORではなく skipped として同期結果へ反映します。例外がある失敗では、詳細で見直しに使える file:line も表示します。
 
 ## 保存しない情報
 
