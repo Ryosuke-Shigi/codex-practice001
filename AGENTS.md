@@ -21,6 +21,16 @@
 
 外側repoから開始した場合でも、Laravel / React / app docs / tests を触る作業では、この `src/` 側repoの remote / branch / status を確認します。
 
+## Git作業時のローカル専用ルール
+
+Git作業、branch確認、working tree確認、差分確認、commit前確認、push前確認、PR確認、merge前確認、本番反映前のpull対象確認など、Git状態に関わる作業を行う場合は、作業対象repo直下の `.local-rules/git-operation-rules.local.md` の存在を確認します。
+
+存在する場合は読みます。存在しない場合は読まず、通常の `AGENTS.md` / `docs/index.md` / `docs/ai/workflows/md-router.md` に従って続行します。
+
+`.local-rules/git-operation-rules.local.md` 本体は開発環境ごとのローカル専用MDであり、Git管理対象にしません。
+
+外側repoと `src/` は別repoのため、local専用MDの確認は実際にGit作業を行うrepo直下に限定し、一方のrepoのlocal専用MDをもう一方のrepoのルールとして扱いません。
+
 ## 必読先
 
 | 用途 | 参照先 |
