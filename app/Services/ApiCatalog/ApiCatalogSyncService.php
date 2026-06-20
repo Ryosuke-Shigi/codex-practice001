@@ -7,6 +7,7 @@ use App\DTO\ApiCatalog\Sync\ApiCatalogSyncResultDTO;
 use App\Models\ApiCatalogCache;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiCatalog\ApisGuruRepositoryInterface;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use InvalidArgumentException;
@@ -34,7 +35,7 @@ class ApiCatalogSyncService
     public function sync(): ApiCatalogSyncResultDTO
     {
         $apiList = $this->apisGuruRepository->fetchList();
-        $syncedAt = CarbonImmutable::now();
+        $syncedAt = CarbonImmutable::now(ApplicationTimeZone::name());
 
         $totalCount = count($apiList);
         $insertedCount = 0;
@@ -206,7 +207,7 @@ class ApiCatalogSyncService
         }
 
         try {
-            return CarbonImmutable::parse($updatedAt)->utc();
+            return CarbonImmutable::parse($updatedAt)->setTimezone(ApplicationTimeZone::name());
         } catch (Throwable) {
             return null;
         }
