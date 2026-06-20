@@ -42,7 +42,7 @@ class RefreshDanceShortVideoSnapshotsAction
         );
 
         if ($targets === []) {
-            return $this->completeWithRefreshRequest(
+            return $this->completeWithOptionalRefreshRequest(
                 new DanceShortVideoSyncResultDTO(executedAt: $executedAt),
                 $executedAt,
             );
@@ -60,7 +60,7 @@ class RefreshDanceShortVideoSnapshotsAction
         } catch (Throwable) {
             $failedCount = count($targetsByYoutubeVideoId);
 
-            return $this->completeWithRefreshRequest(
+            return $this->completeWithOptionalRefreshRequest(
                 new DanceShortVideoSyncResultDTO(
                     executedAt: $executedAt,
                     fetchedVideoCount: count($targetsByYoutubeVideoId),
@@ -110,7 +110,7 @@ class RefreshDanceShortVideoSnapshotsAction
             }
         }
 
-        return $this->completeWithRefreshRequest(
+        return $this->completeWithOptionalRefreshRequest(
             new DanceShortVideoSyncResultDTO(
                 executedAt: $executedAt,
                 fetchedVideoCount: count($targetsByYoutubeVideoId),
@@ -124,11 +124,13 @@ class RefreshDanceShortVideoSnapshotsAction
         );
     }
 
-    private function completeWithRefreshRequest(
+    private function completeWithOptionalRefreshRequest(
         DanceShortVideoSyncResultDTO $result,
         CarbonImmutable $executedAt,
     ): DanceShortVideoSyncResultDTO {
-        event(new DanceShortRankingReadModelRefreshRequested('snapshots_saved', $executedAt));
+        if ($result->hasRankingSourceChange()) {
+            event(new DanceShortRankingReadModelRefreshRequested('snapshots_saved', $executedAt));
+        }
 
         return $result;
     }

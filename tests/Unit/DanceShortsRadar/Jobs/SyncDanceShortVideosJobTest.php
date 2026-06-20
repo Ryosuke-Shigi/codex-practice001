@@ -22,7 +22,9 @@ use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -151,6 +153,7 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertSame(0, $result->skippedPersistenceCount);
         $this->assertSame(0, $result->cleanedUpSnapshotCount);
         $this->assertSame(0, $result->failedCount);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
     }
 
     public function test_job_has_queue_runtime_settings(): void
@@ -186,16 +189,20 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertTrue(method_exists($job, 'failed'));
     }
 
-    public function test_ranking_read_model_build_job_has_queue_runtime_settings_and_fixed_unique_id(): void
+    public function test_ranking_read_model_build_job_releases_unique_lock_until_processing_and_serializes_running_builds(): void
     {
         $job = new BuildDanceShortRankingReadModelsJob;
 
-        $this->assertInstanceOf(ShouldBeUnique::class, $job);
+        $this->assertInstanceOf(ShouldBeUniqueUntilProcessing::class, $job);
         $this->assertSame(1, $job->tries);
         $this->assertSame(600, $job->timeout);
         $this->assertTrue($job->failOnTimeout);
         $this->assertSame(1800, $job->uniqueFor);
         $this->assertSame('dance-short-ranking-read-model-build', $job->uniqueId());
+        $this->assertCount(1, $job->middleware());
+        $this->assertInstanceOf(WithoutOverlapping::class, $job->middleware()[0]);
+        $this->assertSame(60, $job->middleware()[0]->releaseAfter);
+        $this->assertSame(900, $job->middleware()[0]->expiresAfter);
         $this->assertTrue(method_exists($job, 'failed'));
     }
 

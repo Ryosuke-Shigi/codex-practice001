@@ -81,7 +81,7 @@ final readonly class DanceShortRankingReadModelRowDTOFactory
             buildId: $input->buildId,
             scope: $input->scope,
             comparisonDays: $input->comparisonDays,
-            sortKey: null,
+            sortKey: $input->sortKey,
             rank: $rank,
             videoId: (int) $row->video_id,
             youtubeVideoId: (string) $row->youtube_video_id,

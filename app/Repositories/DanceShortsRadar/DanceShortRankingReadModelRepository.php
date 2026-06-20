@@ -104,7 +104,7 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
     public function activeRowsWindow(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
         int $startRank,
         int $windowSize,
     ): array {
@@ -125,7 +125,7 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
     public function activeRankForVideo(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
         int $videoId,
     ): ?int {
         $query = $this->activeRowsQuery($scope, $comparisonDays, $sortKey);
@@ -145,7 +145,7 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
     public function activeRowCount(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
     ): int {
         $query = $this->activeRowsQuery($scope, $comparisonDays, $sortKey);
 
@@ -165,7 +165,7 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
     private function activeRowsQuery(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
     ): ?Builder {
         $buildId = $this->activeBuildId();
 
@@ -176,13 +176,8 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
         $query = DB::table(self::ROW_TABLE)
             ->where('build_id', $buildId)
             ->where('scope', $scope)
-            ->where('comparison_days', $comparisonDays);
-
-        if ($sortKey === null) {
-            $query->whereNull('sort_key');
-        } else {
-            $query->where('sort_key', $sortKey);
-        }
+            ->where('comparison_days', $comparisonDays)
+            ->where('sort_key', $sortKey);
 
         return $query;
     }

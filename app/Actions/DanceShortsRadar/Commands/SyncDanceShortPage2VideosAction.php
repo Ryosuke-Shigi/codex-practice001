@@ -105,7 +105,9 @@ class SyncDanceShortPage2VideosAction
             failedCount: $failedCount,
         );
 
-        event(new DanceShortRankingReadModelRefreshRequested('page2_video_search_completed', $executedAt));
+        if ($result->hasRankingSourceChange()) {
+            event(new DanceShortRankingReadModelRefreshRequested('page2_video_search_completed', $executedAt));
+        }
 
         return $result;
     }

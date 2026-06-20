@@ -9,6 +9,7 @@ use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardWindowDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
 use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
 use Carbon\CarbonImmutable;
@@ -41,7 +42,7 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
             $selectedRank = $this->readModelRepository->activeRankForVideo(
                 scope: $scope,
                 comparisonDays: $condition->comparisonDays,
-                sortKey: null,
+                sortKey: RankingReadModelSortKey::RISING,
                 videoId: $condition->selectedVideoId,
             );
 
@@ -51,7 +52,7 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
                     totalItemCount: $this->readModelRepository->activeRowCount(
                         scope: $scope,
                         comparisonDays: $condition->comparisonDays,
-                        sortKey: null,
+                        sortKey: RankingReadModelSortKey::RISING,
                     ),
                     windowSize: $condition->windowSize,
                 );
@@ -63,7 +64,7 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
         $rows = $this->readModelRepository->activeRowsWindow(
             scope: $scope,
             comparisonDays: $condition->comparisonDays,
-            sortKey: null,
+            sortKey: RankingReadModelSortKey::RISING,
             startRank: $startRank,
             windowSize: $condition->windowSize,
         );

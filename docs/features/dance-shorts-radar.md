@@ -145,14 +145,18 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - `ALL`
 - 地域別ランキング
 
-表示時のランキングは snapshot 履歴から再計算しません。通常同期、page2同期、snapshot専用同期の完了後に `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が固定 uniqueId の `BuildDanceShortRankingReadModelsJob` をdispatchします。Job は `BuildDanceShortRankingReadModelsAction` を呼び、read model build を一括生成します。
+表示時のランキングは snapshot 履歴から再計算しません。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が固定 uniqueId の `BuildDanceShortRankingReadModelsJob` をdispatchします。Job は `BuildDanceShortRankingReadModelsAction` を呼び、read model build を一括生成します。
 
 read model 生成は `build_id` 単位で行います。新しい build の全patternが生成できた後に active build を切り替え、旧buildのrowsを削除します。生成途中で失敗した場合は旧active buildを維持し、表示は直前のread modelを読み続けます。
+
+初回導入や migration 直後は、表示前に read model を手動生成します。local / production とも、各環境の migration 適用後に `dance-shorts-radar:build-ranking-read-models` を実行し、出力された `build_id` が active build として参照できることを確認してからランキング画面を確認します。
 
 生成対象:
 
 - 通常ランキング: `ALL` と active region 全件を対象に、許可された比較日数 x sort key 全patternを生成する
-- `RISING`: 許可された比較日数ごとに生成し、`sort_key` は `null` に固定する
+- `RISING`: 許可された比較日数ごとに生成し、保存内部の `sort_key` は `__rising` に固定する
+
+`__rising` は read model 保存専用の内部キーです。React props、URL query、sort options には出さず、RISING UI は引き続き `showSortKeyOptions=false`、sort label は `上昇候補順` とします。
 
 表示側 Repository は active build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
 
@@ -266,6 +270,7 @@ inactive、standard、1ページ設定は除外します。
 - `dance-short:sync-snapshots` のArtisan Commandはsnapshot専用Jobをdispatchするだけで、同期本体を直接実行しない
 - snapshot専用Jobは `RefreshDanceShortVideoSnapshotsAction` を呼ぶ
 - snapshot専用Jobは固定uniqueIdで同期全体の同時実行を防ぐ
+- `dance-shorts-radar:build-ranking-read-models` のArtisan Commandは `BuildDanceShortRankingReadModelsAction` を同期実行し、`build_id` / normal pattern count / RISING pattern count / inserted rows を出力する
 
 ### Scheduler
 
@@ -279,11 +284,12 @@ inactive、standard、1ページ設定は除外します。
 
 - Strategyごとの取得条件
 - comparisonDays / sort条件
-- 同期完了後に read model refresh event が発火し、Listener が ranking read model build Job をdispatchする
-- build Job は固定uniqueIdで同時生成を防ぐ
+- video / snapshot / cleanup の元データ変更がある同期結果だけ read model refresh event を発火し、Listener が ranking read model build Job をdispatchする
+- build Job は待機中の重複を `ShouldBeUniqueUntilProcessing` でまとめ、処理開始後の再要求は次回buildとして残し、`WithoutOverlapping` で同時生成を防ぐ
 - read model は `ALL` + active region の全comparisonDays / sortKey pattern と、`RISING` のcomparisonDays patternを生成する
 - read model 生成成功時だけ active build を切り替え、失敗時は旧active buildを維持する
 - 表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
+- RISING read model の `sort_key` は保存内部で `__rising` とし、props / JSON / URL / sort options へ漏らさない
 - `selectedVideoId` を基準にした全体順位
 - 最大5件のdisplay-card-window
 - RISING 生成側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合し、read model row へ prefilterする

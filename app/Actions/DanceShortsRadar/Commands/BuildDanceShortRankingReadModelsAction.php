@@ -5,6 +5,7 @@ namespace App\Actions\DanceShortsRadar\Commands;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelBuildInputDTO;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelBuildResultDTO;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
 use App\Factories\DanceShortsRadar\DanceShortRankingReadModelStrategyFactory;
 use App\Models\DanceShortRegion;
 use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepositoryInterface;
@@ -69,15 +70,15 @@ class BuildDanceShortRankingReadModelsAction
             }
 
             /*
-             * RISING は固定順の表示専用タブなので sort_key を持たせません。
-             * nullable sort_key により、通常ランキングの同日数patternと区別します。
+             * RISING は固定順の表示専用タブなので、UIに出さない内部sort_keyでpatternを区別します。
+             * NULLを避けることで、同build内の重複rankを unique index で確実に検知できます。
              */
             foreach ($comparisonDaysList as $comparisonDays) {
                 $insertedRowCount += $this->buildPattern(new RankingReadModelBuildInputDTO(
                     buildId: $buildId,
                     scope: DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE,
                     comparisonDays: $comparisonDays,
-                    sortKey: null,
+                    sortKey: RankingReadModelSortKey::RISING,
                     activeRegionCodes: $activeRegionCodes,
                     calculatedAt: $calculatedAt,
                 ));

@@ -276,6 +276,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
@@ -286,6 +287,51 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->assertSame(0, $youtubeRepository->searchVideosCallCount);
         $this->assertSame(0, $youtubeRepository->searchVideoPageCallCount);
         $this->assertDatabaseCount('dance_short_video_snapshots', 0);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
+    }
+
+    public function test_execute_does_not_request_read_model_refresh_when_all_detail_fetches_fail(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
+
+        $region = $this->region();
+        $target = $this->video('detail-fetch-failure-video', 'active');
+        $this->videoRegion($target, $region, '2026-06-01 00:00:00');
+
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
+        $youtubeRepository->throwsOnFetchVideoDetailsResult = true;
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
+
+        $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
+
+        $this->assertSame(1, $result->fetchedVideoCount);
+        $this->assertSame(0, $result->fetchedVideoDetailCount);
+        $this->assertSame(0, $result->savedSnapshotCount);
+        $this->assertSame(1, $result->failedCount);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
+    }
+
+    public function test_execute_does_not_request_read_model_refresh_when_no_snapshot_is_saved(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
+
+        $region = $this->region();
+        $target = $this->video('not-returned-video', 'active');
+        $this->videoRegion($target, $region, '2026-06-01 00:00:00');
+
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
+        $youtubeRepository->returnedVideoIds = [];
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
+
+        $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
+
+        $this->assertSame(1, $result->fetchedVideoCount);
+        $this->assertSame(0, $result->fetchedVideoDetailCount);
+        $this->assertSame(0, $result->savedSnapshotCount);
+        $this->assertSame(0, $result->failedCount);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
     }
 
     private function region(string $code = 'JP', string $name = '日本'): DanceShortRegion
@@ -356,6 +402,8 @@ class SnapshotRefreshFakeYouTubeVideoApiRepository implements YouTubeVideoApiRep
 
     public int $failedTargetVideoIdCount = 0;
 
+    public bool $throwsOnFetchVideoDetailsResult = false;
+
     /**
      * @return array<int, YouTubeVideoSearchItemDTO>
      */
@@ -387,6 +435,11 @@ class SnapshotRefreshFakeYouTubeVideoApiRepository implements YouTubeVideoApiRep
     public function fetchVideoDetailsResult(array $youtubeVideoIds): YouTubeVideoDetailFetchResultDTO
     {
         $this->fetchVideoIdsCalls[] = array_values($youtubeVideoIds);
+
+        if ($this->throwsOnFetchVideoDetailsResult) {
+            throw new RuntimeException('YouTube details fetch failed.');
+        }
+
         $details = $this->detailsFor($this->returnedVideoIds ?? array_values($youtubeVideoIds));
 
         return new YouTubeVideoDetailFetchResultDTO(

@@ -13,7 +13,7 @@ final readonly class RankingReadModelRowDTO
         public string $buildId,
         public string $scope,
         public int $comparisonDays,
-        public ?string $sortKey,
+        public string $sortKey,
         public int $rank,
         public int $videoId,
         public string $youtubeVideoId,

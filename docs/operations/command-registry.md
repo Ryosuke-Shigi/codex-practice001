@@ -151,6 +151,15 @@ docker compose exec php-fpm php artisan route:list
 docker compose exec php-fpm php artisan migrate:status
 ```
 
+DanceShortsRadar のランキング read model 初期生成が必要な場合:
+
+```bash
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan dance-shorts-radar:build-ranking-read-models
+```
+
+local / production とも、migration 適用後にこの command を実行し、出力された `build_id` が active build として参照できる状態になってから `/dance-shorts-radar` を確認します。本番環境の deploy / migrate 実行経路そのものは、この台帳では未確認のため断定しません。
+
 npm は `npm` service で実行します。
 
 ```bash

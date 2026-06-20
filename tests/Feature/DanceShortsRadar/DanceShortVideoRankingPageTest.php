@@ -14,6 +14,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingRegionDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
@@ -491,7 +492,7 @@ class DanceShortVideoRankingPageTest extends TestCase
         $this->snapshot($nullGrowthVideo, $us, 500, '2026-06-01 12:00:00');
         $this->buildReadModels();
 
-        $this
+        $response = $this
             ->get('/dance-shorts-radar?region=RISING&comparisonDays=1&sort=current_view_count')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -505,6 +506,17 @@ class DanceShortVideoRankingPageTest extends TestCase
                 ->where('displayCardField.visibleCards.1.view_growth_rate', null)
                 ->where('displayCardField.visibleCards.2.youtube_video_id', 'high-current-small-delta')
             );
+
+        $this->assertStringNotContainsString(RankingReadModelSortKey::RISING, $response->getContent());
+
+        $apiResponse = $this
+            ->getJson('/api/dance-shorts-radar/display-card-window?tab=RISING&comparisonDays=1&sort=current_view_count')
+            ->assertOk()
+            ->assertJsonPath('displayCardField.type', 'rising')
+            ->assertJsonPath('displayCardField.visibleCards.0.youtube_video_id', 'lower-current-large-delta')
+            ->assertJsonMissingPath('displayCardField.sortKey');
+
+        $this->assertStringNotContainsString(RankingReadModelSortKey::RISING, $apiResponse->getContent());
     }
 
     public function test_request_allows_only_expected_comparison_days(): void

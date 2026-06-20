@@ -98,7 +98,9 @@ class SyncDanceShortVideosAction
             failedCount: $failedCount,
         );
 
-        event(new DanceShortRankingReadModelRefreshRequested('video_search_completed', $executedAt));
+        if ($result->hasRankingSourceChange()) {
+            event(new DanceShortRankingReadModelRefreshRequested('video_search_completed', $executedAt));
+        }
 
         return $result;
     }

@@ -35,7 +35,7 @@ return new class extends Migration
             $table->uuid('build_id');
             $table->string('scope', 32);
             $table->unsignedSmallInteger('comparison_days');
-            $table->string('sort_key', 64)->nullable();
+            $table->string('sort_key', 64);
             $table->unsignedInteger('rank');
 
             $table->foreignId('video_id')->constrained('dance_short_videos')->cascadeOnDelete();

@@ -35,7 +35,7 @@ interface DanceShortRankingReadModelRepositoryInterface
     public function activeRowsWindow(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
         int $startRank,
         int $windowSize,
     ): array;
@@ -46,7 +46,7 @@ interface DanceShortRankingReadModelRepositoryInterface
     public function activeRankForVideo(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
         int $videoId,
     ): ?int;
 
@@ -56,7 +56,7 @@ interface DanceShortRankingReadModelRepositoryInterface
     public function activeRowCount(
         string $scope,
         int $comparisonDays,
-        ?string $sortKey,
+        string $sortKey,
     ): int;
 
     /**

@@ -51,4 +51,38 @@ class DanceShortVideoSyncResultDTOTest extends TestCase
             'failedCount' => 1,
         ], $dto->toArray());
     }
+
+    public function test_has_ranking_source_change_ignores_search_fetch_and_failure_only_results(): void
+    {
+        $dto = new DanceShortVideoSyncResultDTO(
+            executedAt: CarbonImmutable::parse('2026-05-31 12:34:56', 'Asia/Tokyo'),
+            searchedRegionCount: 2,
+            searchedKeywordCount: 5,
+            fetchedVideoCount: 20,
+            fetchedVideoDetailCount: 18,
+            failedCount: 1,
+        );
+
+        $this->assertFalse($dto->hasRankingSourceChange());
+    }
+
+    public function test_has_ranking_source_change_detects_saved_video_snapshot_or_cleanup_changes(): void
+    {
+        $executedAt = CarbonImmutable::parse('2026-05-31 12:34:56', 'Asia/Tokyo');
+
+        foreach ([
+            'insertedVideoCount',
+            'updatedVideoCount',
+            'savedVideoCount',
+            'savedSnapshotCount',
+            'cleanedUpSnapshotCount',
+        ] as $counterName) {
+            $dto = new DanceShortVideoSyncResultDTO(...[
+                'executedAt' => $executedAt,
+                $counterName => 1,
+            ]);
+
+            $this->assertTrue($dto->hasRankingSourceChange(), $counterName);
+        }
+    }
 }

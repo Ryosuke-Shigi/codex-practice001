@@ -3,11 +3,13 @@
 namespace Tests\Feature\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepositoryInterface;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -16,7 +18,7 @@ class DanceShortRankingReadModelBuildTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_build_generates_all_patterns_and_keeps_rising_sort_key_null(): void
+    public function test_build_generates_all_patterns_and_uses_internal_rising_sort_key(): void
     {
         $jp = $this->region('JP', '日本', 10);
         $us = $this->region('US', 'アメリカ', 20);
@@ -44,7 +46,7 @@ class DanceShortRankingReadModelBuildTest extends TestCase
             'build_id' => $result->buildId,
             'scope' => 'RISING',
             'comparison_days' => 1,
-            'sort_key' => null,
+            'sort_key' => RankingReadModelSortKey::RISING,
             'rank' => 1,
             'youtube_video_id' => 'us-rising-read-model-video',
             'source_region_code' => 'US',
@@ -53,8 +55,51 @@ class DanceShortRankingReadModelBuildTest extends TestCase
         ]);
         $this->assertSame(0, DB::table('dance_short_radar_ranking_read_models')
             ->where('scope', 'RISING')
-            ->whereNotNull('sort_key')
+            ->whereNull('sort_key')
             ->count());
+    }
+
+    public function test_rising_read_model_duplicate_rank_is_rejected_by_unique_index(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $us = $this->region('US', 'アメリカ', 20);
+
+        $this->rankingVideoWithDelta($jp, 'jp-read-model-video', 300);
+        $this->rankingVideoWithDelta($us, 'us-rising-read-model-video', 500);
+
+        app(BuildDanceShortRankingReadModelsAction::class)->execute();
+
+        $row = DB::table('dance_short_radar_ranking_read_models')
+            ->where('scope', 'RISING')
+            ->where('comparison_days', 1)
+            ->where('sort_key', RankingReadModelSortKey::RISING)
+            ->first();
+
+        $this->assertNotNull($row);
+
+        $duplicate = (array) $row;
+        unset($duplicate['id']);
+
+        $this->expectException(QueryException::class);
+
+        DB::table('dance_short_radar_ranking_read_models')->insert($duplicate);
+    }
+
+    public function test_build_command_creates_active_build_and_outputs_result_counts(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $this->rankingVideoWithDelta($jp, 'jp-command-read-model-video', 300);
+
+        $this
+            ->artisan('dance-shorts-radar:build-ranking-read-models')
+            ->expectsOutput('DanceShortsRadar ranking read models built.')
+            ->expectsOutputToContain('build_id: ')
+            ->expectsOutputToContain('normal_patterns: ')
+            ->expectsOutputToContain('rising_patterns: ')
+            ->expectsOutputToContain('inserted_rows: ')
+            ->assertExitCode(0);
+
+        $this->assertNotNull(app(DanceShortRankingReadModelRepositoryInterface::class)->activeBuildId());
     }
 
     public function test_successful_build_switches_active_build_and_removes_old_build_rows(): void

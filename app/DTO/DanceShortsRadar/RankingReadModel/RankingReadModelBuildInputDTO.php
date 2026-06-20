@@ -16,7 +16,7 @@ final readonly class RankingReadModelBuildInputDTO
         public string $buildId,
         public string $scope,
         public int $comparisonDays,
-        public ?string $sortKey,
+        public string $sortKey,
         public array $activeRegionCodes,
         public CarbonInterface $calculatedAt,
     ) {}

@@ -291,6 +291,7 @@ class SyncDanceShortVideosActionTest extends TestCase
             YouTubeVideoApiRepositoryInterface::class,
             new FailingSearchDanceShortYouTubeVideoApiRepository,
         );
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
 
@@ -303,6 +304,7 @@ class SyncDanceShortVideosActionTest extends TestCase
         $this->assertSame(1, $result->failedCount);
         $this->assertDatabaseCount('dance_short_videos', 0);
         $this->assertDatabaseCount('dance_short_video_snapshots', 0);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
     }
 }
 

@@ -25,6 +25,22 @@ final readonly class DanceShortVideoSyncResultDTO
     ) {}
 
     /**
+     * ランキング read model の再生成が必要な元データ変更を伴う結果かを返します。
+     */
+    public function hasRankingSourceChange(): bool
+    {
+        /*
+         * search / fetch / failure の発生だけでは表示用ランキングの元データは変わりません。
+         * video / snapshot の保存、または snapshot cleanup があった時だけ refresh event の対象にします。
+         */
+        return $this->insertedVideoCount > 0
+            || $this->updatedVideoCount > 0
+            || $this->savedVideoCount > 0
+            || $this->savedSnapshotCount > 0
+            || $this->cleanedUpSnapshotCount > 0;
+    }
+
+    /**
      * @return array<string, int|string>
      */
     public function toArray(): array

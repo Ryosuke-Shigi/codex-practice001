@@ -110,6 +110,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
 
         $youtubeRepository = new Page2NoTokenDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(SyncDanceShortPage2VideosAction::class)->execute();
 
@@ -120,6 +121,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
             ['keyword' => 'no token keyword', 'pageToken' => null],
         ], $youtubeRepository->searchPageCalls);
         $this->assertSame([], $youtubeRepository->fetchVideoIdsCalls);
+        Event::assertNotDispatched(DanceShortRankingReadModelRefreshRequested::class);
     }
 
     public function test_execute_never_fetches_beyond_keyword_max_search_pages(): void
