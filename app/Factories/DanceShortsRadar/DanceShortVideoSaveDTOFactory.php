@@ -4,6 +4,7 @@ namespace App\Factories\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSaveDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -57,7 +58,9 @@ class DanceShortVideoSaveDTOFactory
         }
 
         try {
-            return CarbonImmutable::parse($value)->utc()->toDateTimeString();
+            return CarbonImmutable::parse($value)
+                ->setTimezone(ApplicationTimeZone::name())
+                ->toDateTimeString();
         } catch (Throwable) {
             return null;
         }
