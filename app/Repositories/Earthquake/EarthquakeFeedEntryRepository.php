@@ -5,6 +5,7 @@ namespace App\Repositories\Earthquake;
 use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryDTO;
 use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\Models\EarthquakeFeedEntry;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Schema;
@@ -46,7 +47,7 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
         $updatedCount = 0;
         $skippedCount = 0;
         $failedCount = 0;
-        $fetchedAt = CarbonImmutable::now();
+        $fetchedAt = CarbonImmutable::now(ApplicationTimeZone::name());
 
         foreach ($entries->items as $entry) {
             if (trim($entry->id) === '') {
@@ -170,7 +171,7 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
         }
 
         try {
-            return CarbonImmutable::parse($value)->utc();
+            return CarbonImmutable::parse($value)->setTimezone(ApplicationTimeZone::name());
         } catch (Throwable) {
             return null;
         }
@@ -206,7 +207,7 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
         }
 
         if (is_string($date)) {
-            return CarbonImmutable::parse($date)->format('Y-m-d H:i:s');
+            return CarbonImmutable::parse($date)->setTimezone(ApplicationTimeZone::name())->format('Y-m-d H:i:s');
         }
 
         return $date->format('Y-m-d H:i:s');
