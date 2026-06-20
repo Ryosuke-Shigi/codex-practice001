@@ -28,8 +28,9 @@ class RefreshDanceShortVideoSnapshotsAction
     {
         /*
          * snapshot 専用同期は保存済み video-region 関係に基づく継続観測だけを行います。
-         * search.list は呼ばず、active 条件の決定、50件単位の videos.list 取得、
-         * JST12時間枠 update/create の手順をこの Action に閉じます。
+         * search.list は呼ばず、active 条件の決定、JST12時間枠 update/create、
+         * 同期結果集約の手順をこの Action に閉じます。videos.list の50件分割、
+         * API連携ログ集約、chunk失敗集計は Repository / Result DTO に任せます。
          */
         $executedAt = CarbonImmutable::now();
         $collectedAt = $executedAt->utc();
