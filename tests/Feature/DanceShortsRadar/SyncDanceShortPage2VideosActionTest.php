@@ -30,7 +30,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
 
     public function test_execute_uses_only_expanded_keywords_deduplicates_page2_ids_and_persists_details(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'));
         config([
             'services.youtube.discover_max_results' => 50,
             'services.youtube.discover_published_after_days' => 7,
@@ -97,7 +97,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
 
     public function test_execute_does_not_fetch_page2_when_first_page_has_no_next_token(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'));
         $jp = $this->region('JP', '日本', true);
         $this->keyword($jp, 'no token keyword', DanceShortSearchScope::Expanded, 2, 10, true);
 
@@ -117,7 +117,7 @@ class SyncDanceShortPage2VideosActionTest extends TestCase
 
     public function test_execute_never_fetches_beyond_keyword_max_search_pages(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'));
         $jp = $this->region('JP', '日本', true);
         $this->keyword($jp, 'three page keyword', DanceShortSearchScope::Expanded, 3, 10, true);
 
@@ -248,7 +248,7 @@ class Page2FakeDanceShortYouTubeVideoApiRepository implements YouTubeVideoApiRep
             channelId: 'channel-001',
             channelTitle: 'Dance Channel',
             thumbnailUrl: 'https://example.test/high.jpg',
-            publishedAt: '2026-06-01T12:00:00Z',
+            publishedAt: '2026-06-01T12:00:00+09:00',
             categoryId: '10',
             tags: ['dance', 'shorts'],
             duration: 'PT58S',
