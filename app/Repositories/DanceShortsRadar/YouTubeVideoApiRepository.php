@@ -4,6 +4,7 @@ namespace App\Repositories\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailFetchResultDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
@@ -24,7 +25,7 @@ use Throwable;
  * API キーは config/services.php 経由の config('services.youtube.api_key') から読みます。
  * 未設定時は実 HTTP 通信を始める前に RuntimeException にして、キー実値を例外文へ含めません。
  */
-class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
+class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, YouTubeVideoDetailFetchResultRepositoryInterface
 {
     private const TIMEOUT_SECONDS = 10;
 
@@ -77,6 +78,16 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
      */
     public function fetchVideoDetails(array $youtubeVideoIds): array
     {
+        return $this->fetchVideoDetailsResult($youtubeVideoIds)->details;
+    }
+
+    /**
+     * videos.list を呼び、動画詳細とchunk失敗の集計値を返します。
+     *
+     * @param  array<int, string>  $youtubeVideoIds
+     */
+    public function fetchVideoDetailsResult(array $youtubeVideoIds): YouTubeVideoDetailFetchResultDTO
+    {
         $ids = array_values(array_unique(array_filter(
             array_map(
                 fn (string $youtubeVideoId): string => trim($youtubeVideoId),
@@ -86,7 +97,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
         )));
 
         if ($ids === []) {
-            return [];
+            return new YouTubeVideoDetailFetchResultDTO(details: []);
         }
 
         $apiName = 'videos.list';
@@ -94,6 +105,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
         $apiCallCount = count(array_chunk($ids, self::VIDEOS_LIST_MAX_IDS));
         $successfulChunkCount = 0;
         $failedChunkCount = 0;
+        $failedTargetVideoIdCount = 0;
         $lastException = null;
         $details = [];
 
@@ -139,6 +151,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
                 $successfulChunkCount++;
             } catch (RuntimeException $exception) {
                 $failedChunkCount++;
+                $failedTargetVideoIdCount += count($chunkedIds);
                 $lastException = $exception;
 
                 continue;
@@ -170,7 +183,14 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
             throw $lastException;
         }
 
-        return $details;
+        return new YouTubeVideoDetailFetchResultDTO(
+            details: $details,
+            targetVideoIdCount: count($ids),
+            apiCallCount: $apiCallCount,
+            successfulChunkCount: $successfulChunkCount,
+            failedChunkCount: $failedChunkCount,
+            failedTargetVideoIdCount: $failedTargetVideoIdCount,
+        );
     }
 
     /**

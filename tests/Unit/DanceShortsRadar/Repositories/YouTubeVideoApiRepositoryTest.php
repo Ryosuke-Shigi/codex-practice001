@@ -4,11 +4,13 @@ namespace Tests\Unit\DanceShortsRadar\Repositories;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailFetchResultDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Event;
@@ -282,9 +284,16 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             range(1, 51),
         );
 
-        $items = $this->repository()->fetchVideoDetails($youtubeVideoIds);
+        $result = $this->detailFetchResultRepository()->fetchVideoDetailsResult($youtubeVideoIds);
+        $items = $result->details;
 
+        $this->assertInstanceOf(YouTubeVideoDetailFetchResultDTO::class, $result);
         $this->assertCount(50, $items);
+        $this->assertSame(51, $result->targetVideoIdCount);
+        $this->assertSame(2, $result->apiCallCount);
+        $this->assertSame(1, $result->successfulChunkCount);
+        $this->assertSame(1, $result->failedChunkCount);
+        $this->assertSame(1, $result->failedTargetVideoIdCount);
         Http::assertSentCount(2);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
         Event::assertDispatched(
@@ -561,6 +570,11 @@ class YouTubeVideoApiRepositoryTest extends TestCase
     private function repository(): YouTubeVideoApiRepositoryInterface
     {
         return app(YouTubeVideoApiRepositoryInterface::class);
+    }
+
+    private function detailFetchResultRepository(): YouTubeVideoDetailFetchResultRepositoryInterface
+    {
+        return app(YouTubeVideoDetailFetchResultRepositoryInterface::class);
     }
 
     private function condition(): DanceShortSearchConditionDTO

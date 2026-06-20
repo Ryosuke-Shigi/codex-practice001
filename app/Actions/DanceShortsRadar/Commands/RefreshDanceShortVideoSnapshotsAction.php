@@ -7,7 +7,7 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
-use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonImmutable;
@@ -16,7 +16,7 @@ use Throwable;
 class RefreshDanceShortVideoSnapshotsAction
 {
     public function __construct(
-        private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
+        private readonly YouTubeVideoDetailFetchResultRepositoryInterface $youTubeVideoApiRepository,
         private readonly DanceShortVideoRegionRepositoryInterface $videoRegionRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
@@ -51,7 +51,7 @@ class RefreshDanceShortVideoSnapshotsAction
         $failedCount = 0;
 
         try {
-            $details = $this->youTubeVideoApiRepository->fetchVideoDetails(array_keys($targetsByYoutubeVideoId));
+            $detailFetchResult = $this->youTubeVideoApiRepository->fetchVideoDetailsResult(array_keys($targetsByYoutubeVideoId));
         } catch (Throwable) {
             $failedCount = count($targetsByYoutubeVideoId);
 
@@ -62,6 +62,8 @@ class RefreshDanceShortVideoSnapshotsAction
             );
         }
 
+        $details = $detailFetchResult->details;
+        $failedCount += $detailFetchResult->failedTargetVideoIdCount;
         $fetchedVideoDetailCount = count($details);
 
         foreach ($details as $detail) {

@@ -79,7 +79,7 @@ ListenerはEventをDTOへ移し、Repository経由でDB登録する副作用だ�
 
 既存API連携へ接続済みのAPI連携ログは、原則として外部API呼び出し1回ごとに保存します。
 
-ただし YouTube Data API `videos.list` は最大50件単位のchunk呼び出しを内部で行うため、成功ログはchunkごとに保存せず、`fetchVideoDetails()` の処理単位で1件の要約ログに集約します。要約には対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を含め、動画ID一覧、request query全文、response body全文、API key、token は保存しません。
+ただし YouTube Data API `videos.list` は最大50件単位のchunk呼び出しを内部で行うため、成功ログはchunkごとに保存せず、`fetchVideoDetails()` / `fetchVideoDetailsResult()` の処理単位で1件の要約ログに集約します。要約には対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を含め、動画ID一覧、request query全文、response body全文、API key、token は保存しません。
 
 - JMA XML feed取得
 - JMA 個別XML取得

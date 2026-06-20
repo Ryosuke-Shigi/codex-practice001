@@ -20,11 +20,11 @@ YouTube API Repositoryは、YouTube Data APIとの通信境界を担当します
 - 外部レスポンスからDTOへの変換
 - API制約に合わせたリクエスト分割
 - `search.list` のHTTP request 1回ごとにAPI連携ログを発火する
-- `videos.list` の成功/失敗は `fetchVideoDetails()` 単位で1件の要約API連携ログに集約する
+- `videos.list` の成功/失敗は `fetchVideoDetails()` / `fetchVideoDetailsResult()` 単位で1件の要約API連携ログに集約する
 - 認証・quota・rate limit系のHTTP失敗とYouTube側5xxだけをERRORログへ残す
 
 `videos.list` は、動画IDを50件単位に分割して取得し、結果DTOを集約します。
-集約ログには対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を残し、動画ID一覧、request query全文、response body全文、API key、token は残しません。
+集約ログには対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を残し、動画ID一覧、request query全文、response body全文、API key、token は残しません。部分chunk失敗時に同期結果へ反映する失敗対象件数は、ID一覧ではなく件数だけをResult DTOでActionへ返します。
 
 Repositoryは次を判断しません。
 
@@ -129,7 +129,7 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - `search.list` は呼ばない
 - tracking statusがactiveの保存済みvideo-region関係だけを対象にする
 - activeの意味判断はServiceが行い、Repositoryは渡されたtracking status条件で取得する
-- snapshot専用同期Actionは対象動画ID一覧を `fetchVideoDetails()` へ渡し、`videos.list` の50件単位分割とログ集約はRepositoryに任せる
+- snapshot専用同期Actionは対象動画ID一覧を `fetchVideoDetailsResult()` へ渡し、`videos.list` の50件単位分割、ログ集約、chunk失敗件数の集計はRepositoryに任せる
 - 1回の最大対象件数は `snapshot_refresh.max_videos_per_run` で管理し、現在の初期値は8000件とする
 - snapshotはJSTの `00:00-11:59` / `12:00-23:59` の12時間枠で扱う
 - 同じ12時間枠に既存snapshotがある場合は最新レコードを更新し、ない場合は新規作成する
@@ -238,7 +238,8 @@ inactive、standard、1ページ設定は除外します。
 
 - tracking statusがactiveの保存済み動画だけを対象にする
 - `search.list` を呼ばず、`videos.list` だけを呼ぶ
-- 動画ID一覧を `fetchVideoDetails()` へ1回渡し、Repository内で50件単位に分割する
+- 動画ID一覧を `fetchVideoDetailsResult()` へ1回渡し、Repository内で50件単位に分割する
+- `videos.list` の一部chunk失敗は、正常chunkで詳細が返らない動画とは区別し、Repositoryから渡された失敗対象件数だけを `failedCount` へ反映する
 - `videos.list` 成功ログがchunk数ぶん出ず、処理単位の要約ログに集約される
 - 取得対象が空の場合は外部API通信しない
 - view countがない動画はsnapshot保存をskipする
