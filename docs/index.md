@@ -27,6 +27,10 @@
 
 ローカル構成では外側Docker repoと `src/` 内アプリrepoが別Git管理のため、作業対象に応じたGit境界の確認は `docs/operations/command-registry.md` を正本とします。
 
+Git作業時の補助ルールとして、作業対象repo直下に `.local-rules/git-operation-rules.local.md` が存在する場合は読みます。
+
+このファイルは開発環境ごとのローカル専用MDであり、共有docsの正本ではありません。存在しない場合は、通常のdocs参照ルールで続行します。
+
 ### PR確認・レビュー強度
 
 - `docs/operations/pr-review-strength.md`

@@ -72,6 +72,38 @@ MDルーターは、docsを軽く扱うためのものではない。
 
 最初からリポジトリ全体を探索しない。
 
+## Git作業 / ローカルGit状態確認
+
+次はGit作業 / ローカルGit状態確認に含める。
+
+* branch確認
+* working tree確認
+* 差分確認
+* commit前確認
+* push前確認
+* PR前確認
+* PR確認
+* merge前確認
+* 本番反映前のpull対象確認
+* 親Git / src Git の切り分け確認
+
+Git作業を含む場合は、通常の共通docs確認に加えて以下の順で読む範囲を固定する。
+
+1. AGENTS.md を読む
+2. docs/index.md を読む
+3. MDルーターで対象repo / 対象階層 / 作業種別を固定する
+4. 作業対象repo直下の `.local-rules/git-operation-rules.local.md` の有無を確認する
+5. 存在する場合は読む
+6. 存在しない場合は通常ルールで続行する
+
+確認コマンド例:
+
+```bash
+test -f .local-rules/git-operation-rules.local.md && sed -n '1,260p' .local-rules/git-operation-rules.local.md
+```
+
+`.local-rules/git-operation-rules.local.md` は開発環境ごとのローカル専用MDであり、共有docsの正本ではない。Git作業以外で無差別に読ませない。
+
 ## 外側環境repoと内側アプリrepoの境界
 
 このプロジェクトでは、外側の Docker / compose / nginx / deploy 用repoと、内側の Laravel / React / docs / tests / app 用repoが分かれている場合がある。
@@ -164,6 +196,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Docker修正 | コマンド台帳が存在する場合は読む / 存在する運用docs | Lightsail / Docker運用docsが存在する場合は読む | docker-compose.yml / docker / nginx / queue / scheduler | Laravel feature全体 |
 | 本番反映手順修正 | コマンド台帳が存在する場合は読む / 存在する運用docs | Lightsail / Docker / Git運用docsが存在する場合は読む | docker-compose.yml / deploy手順 / build手順 | 無関係featureコード |
 | GitHub Actions / CI修正 | コマンド台帳が存在する場合は読む / docs/testing.md | CI関連docsが存在する場合は読む | .github/workflows / composer / package scripts | 無関係featureコード |
+| Git作業 / ローカルGit状態確認 | AGENTS.md / docs/index.md / docs/ai/workflows/md-router.md / コマンド台帳が存在する場合は読む | 作業対象repo直下に `.local-rules/git-operation-rules.local.md` が存在する場合だけ読む | branch / working tree / diff / commit・push・PR前後のGit状態 | Git作業に関係しないfeature docs / Laravel app全体 / Docker構成 |
 | PRレビュー | docs/ai/workflows/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
 | コメント / PHPDoc / JSDoc整備 | docs/architecture.md / 対象言語docsが存在する場合は読む | 対象feature docs | 対象ファイルのみ | 仕様変更につながる周辺修正 |
 | 失敗改善ログ作成 | docs/context-management.md / docs/development-flow.md | 対象PR / 対象docs | 必要な差分のみ | 無関係コード全体 |
