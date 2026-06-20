@@ -8,6 +8,7 @@ use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -34,8 +35,8 @@ class SyncDanceShortVideosAction
          * 動画詳細取得後の保存判定と snapshot 保存は共通 Action に委譲し、page2 同期と
          * Shorts 判定・必須項目判定・動画本体保存・snapshot update/create の実装を共有します。
          */
-        $executedAt = CarbonImmutable::now();
-        $collectedAt = $executedAt->utc();
+        $executedAt = CarbonImmutable::now(ApplicationTimeZone::name());
+        $collectedAt = $executedAt;
         $regions = $this->searchTargetRepository->activeRegions();
 
         $searchedKeywordCount = 0;
