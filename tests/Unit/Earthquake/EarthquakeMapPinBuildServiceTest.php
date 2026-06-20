@@ -5,17 +5,21 @@ namespace Tests\Unit\Earthquake;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
+use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Services\Earthquake\EarthquakeDetailXmlParseService;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Facades\Event;
+use Tests\TestCase;
 
 class EarthquakeMapPinBuildServiceTest extends TestCase
 {
     public function test_sync_builds_only_mappable_pins_and_counts_skipped_and_failed_entries(): void
     {
+        Event::fake([ApplicationErrorOccurred::class]);
+
         $feedEntryRepository = new class implements EarthquakeFeedEntryRepositoryInterface
         {
             public function isStorageReady(): bool
@@ -47,22 +51,24 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     ['id' => 103, 'xmlUrl' => 'https://example.test/no-coordinate.xml', 'title' => '座標なし'],
                     ['id' => 104, 'xmlUrl' => 'https://example.test/fetch-failed.xml', 'title' => '取得失敗'],
                     ['id' => 105, 'xmlUrl' => '', 'title' => 'URLなし'],
+                    ['id' => 106, 'xmlUrl' => 'https://example.test/non-seismology.xml', 'title' => '津波情報'],
                 ];
             }
         };
-        $detailXmlRepository = new class($this->earthquakeReportXml(), $this->earthquakeReportXml(maxIntensity: null), $this->earthquakeReportXml(coordinate: null)) implements EarthquakeDetailXmlRepositoryInterface
+        $detailXmlRepository = new class($this->earthquakeReportXml(), $this->earthquakeReportXml(maxIntensity: null), $this->earthquakeReportXml(coordinate: null), $this->nonSeismologyReportXml()) implements EarthquakeDetailXmlRepositoryInterface
         {
             /**
              * @var array<string, string>
              */
             private array $bodies;
 
-            public function __construct(string $validXml, string $noIntensityXml, string $noCoordinateXml)
+            public function __construct(string $validXml, string $noIntensityXml, string $noCoordinateXml, string $nonSeismologyXml)
             {
                 $this->bodies = [
                     'https://example.test/valid.xml' => $validXml,
                     'https://example.test/no-intensity.xml' => $noIntensityXml,
                     'https://example.test/no-coordinate.xml' => $noCoordinateXml,
+                    'https://example.test/non-seismology.xml' => $nonSeismologyXml,
                 ];
             }
 
@@ -138,10 +144,10 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
 
         $this->assertSame(77, $result->syncRunId);
         $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $result->status);
-        $this->assertSame(5, $result->totalCount);
+        $this->assertSame(6, $result->totalCount);
         $this->assertSame(1, $result->insertedCount);
         $this->assertSame(0, $result->updatedCount);
-        $this->assertSame(3, $result->skippedCount);
+        $this->assertSame(4, $result->skippedCount);
         $this->assertSame(1, $result->failedCount);
 
         $this->assertNotNull($mapPinRepository->receivedPins);
@@ -158,6 +164,17 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame('5-', $pin->maxIntensity);
         $this->assertSame('2026-05-11T11:27:00+09:00', $pin->occurredAt);
         $this->assertSame('2026-05-11T11:31:00+09:00', $pin->reportedAt);
+
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_fetch_failed'
+                && str_contains($event->message, '対象フィードID: 104')
+                && ! str_contains($event->message, 'upstream unavailable'),
+        );
+        Event::assertNotDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_parse_failed',
+        );
     }
 
     private function earthquakeReportXml(
@@ -214,6 +231,35 @@ XML;
       <jmx_eb:Magnitude type="Mj" description="Ｍ４．０">4.0</jmx_eb:Magnitude>
     </Earthquake>
 {$intensityNode}
+  </Body>
+</Report>
+XML;
+    }
+
+    private function nonSeismologyReportXml(): string
+    {
+        return <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://xml.kishou.go.jp/jmaxml1/" xmlns:jmx="http://xml.kishou.go.jp/jmaxml1/">
+  <Control>
+    <Title>津波情報</Title>
+    <DateTime>2026-05-11T02:31:20Z</DateTime>
+    <Status>通常</Status>
+    <EditorialOffice>気象庁本庁</EditorialOffice>
+    <PublishingOffice>気象庁</PublishingOffice>
+  </Control>
+  <Head xmlns="http://xml.kishou.go.jp/jmaxml1/informationBasis1/">
+    <Title>津波情報</Title>
+    <ReportDateTime>2026-05-11T11:31:00+09:00</ReportDateTime>
+    <TargetDateTime>2026-05-11T11:31:00+09:00</TargetDateTime>
+    <InfoKind>津波情報</InfoKind>
+  </Head>
+  <Body xmlns="http://xml.kishou.go.jp/jmaxml1/body/tsunami1/">
+    <Tsunami>
+      <Forecast>
+        <Code>100</Code>
+      </Forecast>
+    </Tsunami>
   </Body>
 </Report>
 XML;

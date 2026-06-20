@@ -7,7 +7,7 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Factories\DanceShortsRadar\DanceShortVideoSnapshotCreateDTOFactory;
 use App\Repositories\DanceShortsRadar\DanceShortVideoRegionRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
-use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotPeriodService;
 use App\Services\DanceShortsRadar\DanceShortVideoTrackingService;
 use Carbon\CarbonImmutable;
@@ -15,10 +15,8 @@ use Throwable;
 
 class RefreshDanceShortVideoSnapshotsAction
 {
-    private const YOUTUBE_VIDEOS_LIST_CHUNK_SIZE = 50;
-
     public function __construct(
-        private readonly YouTubeVideoApiRepositoryInterface $youTubeVideoApiRepository,
+        private readonly YouTubeVideoDetailFetchResultRepositoryInterface $youTubeVideoApiRepository,
         private readonly DanceShortVideoRegionRepositoryInterface $videoRegionRepository,
         private readonly DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private readonly DanceShortVideoSnapshotCreateDTOFactory $snapshotCreateDTOFactory,
@@ -30,8 +28,9 @@ class RefreshDanceShortVideoSnapshotsAction
     {
         /*
          * snapshot 専用同期は保存済み video-region 関係に基づく継続観測だけを行います。
-         * search.list は呼ばず、active 条件の決定、50件単位の videos.list 取得、
-         * JST12時間枠 update/create の手順をこの Action に閉じます。
+         * search.list は呼ばず、active 条件の決定、JST12時間枠 update/create、
+         * 同期結果集約の手順をこの Action に閉じます。videos.list の50件分割、
+         * API連携ログ集約、chunk失敗集計は Repository / Result DTO に任せます。
          */
         $executedAt = CarbonImmutable::now();
         $collectedAt = $executedAt->utc();
@@ -52,50 +51,54 @@ class RefreshDanceShortVideoSnapshotsAction
         $skippedPersistenceCount = 0;
         $failedCount = 0;
 
-        foreach (array_chunk(array_keys($targetsByYoutubeVideoId), self::YOUTUBE_VIDEOS_LIST_CHUNK_SIZE) as $youtubeVideoIds) {
-            try {
-                $details = $this->youTubeVideoApiRepository->fetchVideoDetails($youtubeVideoIds);
-            } catch (Throwable) {
-                $failedCount += count($youtubeVideoIds);
+        try {
+            $detailFetchResult = $this->youTubeVideoApiRepository->fetchVideoDetailsResult(array_keys($targetsByYoutubeVideoId));
+        } catch (Throwable) {
+            $failedCount = count($targetsByYoutubeVideoId);
+
+            return new DanceShortVideoSyncResultDTO(
+                executedAt: $executedAt,
+                fetchedVideoCount: count($targetsByYoutubeVideoId),
+                failedCount: $failedCount,
+            );
+        }
+
+        $details = $detailFetchResult->details;
+        $failedCount += $detailFetchResult->failedTargetVideoIdCount;
+        $fetchedVideoDetailCount = count($details);
+
+        foreach ($details as $detail) {
+            $target = $targetsByYoutubeVideoId[$detail->youtubeVideoId] ?? null;
+
+            if ($target === null) {
+                $skippedVideoCount++;
 
                 continue;
             }
 
-            $fetchedVideoDetailCount += count($details);
+            if ($detail->viewCount === null) {
+                $skippedPersistenceCount += count($target->region_ids);
 
-            foreach ($details as $detail) {
-                $target = $targetsByYoutubeVideoId[$detail->youtubeVideoId] ?? null;
+                continue;
+            }
 
-                if ($target === null) {
-                    $skippedVideoCount++;
+            foreach ($target->region_ids as $regionId) {
+                try {
+                    $snapshotDTO = $this->snapshotCreateDTOFactory->fromYouTubeVideoDetail(
+                        detail: $detail,
+                        videoId: $target->video_id,
+                        regionId: $regionId,
+                        collectedAt: $collectedAt,
+                    );
 
-                    continue;
-                }
-
-                if ($detail->viewCount === null) {
-                    $skippedPersistenceCount += count($target->region_ids);
-
-                    continue;
-                }
-
-                foreach ($target->region_ids as $regionId) {
-                    try {
-                        $snapshotDTO = $this->snapshotCreateDTOFactory->fromYouTubeVideoDetail(
-                            detail: $detail,
-                            videoId: $target->video_id,
-                            regionId: $regionId,
-                            collectedAt: $collectedAt,
-                        );
-
-                        $this->snapshotRepository->updateLatestInPeriodOrCreate(
-                            dto: $snapshotDTO,
-                            periodStartAt: $snapshotPeriod['start'],
-                            periodEndAt: $snapshotPeriod['end'],
-                        );
-                        $savedSnapshotCount++;
-                    } catch (Throwable) {
-                        $failedCount++;
-                    }
+                    $this->snapshotRepository->updateLatestInPeriodOrCreate(
+                        dto: $snapshotDTO,
+                        periodStartAt: $snapshotPeriod['start'],
+                        periodEndAt: $snapshotPeriod['end'],
+                    );
+                    $savedSnapshotCount++;
+                } catch (Throwable) {
+                    $failedCount++;
                 }
             }
         }

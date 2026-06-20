@@ -3,6 +3,7 @@
 namespace App\Services\Earthquake;
 
 use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
+use App\Exceptions\Earthquake\EarthquakeDetailXmlNotMappableException;
 use RuntimeException;
 use SimpleXMLElement;
 use Throwable;
@@ -43,6 +44,11 @@ class EarthquakeDetailXmlParseService
 
             $head = $xml->children(self::JMAXML_INFORMATION_NAMESPACE)->Head;
             $bodyNode = $xml->children(self::JMAXML_SEISMOLOGY_NAMESPACE)->Body;
+
+            if (! isset($bodyNode->Earthquake)) {
+                throw new EarthquakeDetailXmlNotMappableException('気象庁 個別XMLは地図ピン対象外です。');
+            }
+
             $earthquake = $bodyNode->Earthquake;
             $hypocenterArea = $earthquake->Hypocenter->Area;
             $coordinateNode = $hypocenterArea->children(self::JMAXML_ELEMENT_NAMESPACE)->Coordinate;
@@ -72,6 +78,8 @@ class EarthquakeDetailXmlParseService
                 comment: $this->nullableText($head->Comment->Text)
                     ?? $this->nullableText($head->Headline->Text),
             );
+        } catch (EarthquakeDetailXmlNotMappableException $exception) {
+            throw $exception;
         } catch (Throwable $exception) {
             throw new RuntimeException('気象庁 個別XMLを解析できませんでした。', 0, $exception);
         } finally {

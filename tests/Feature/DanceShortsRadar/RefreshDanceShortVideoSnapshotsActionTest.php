@@ -5,6 +5,7 @@ namespace Tests\Feature\DanceShortsRadar;
 use App\Actions\DanceShortsRadar\Commands\RefreshDanceShortVideoSnapshotsAction;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailFetchResultDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Models\DanceShortRegion;
@@ -12,6 +13,7 @@ use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoRegion;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -28,7 +30,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_execute_uses_only_active_saved_videos_and_fetches_details_in_50_id_chunks_without_search(): void
+    public function test_execute_uses_only_active_saved_videos_and_fetches_details_once_without_search(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 01:45:00', 'UTC'));
         config(['dance_short.snapshot_refresh.max_videos_per_run' => 8000]);
@@ -55,7 +57,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->videoRegion($archived, $region, '2026-05-31 00:00:00');
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
@@ -64,8 +66,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->assertSame(51, $result->savedSnapshotCount);
         $this->assertSame(0, $result->failedCount);
         $this->assertSame([
-            array_slice($activeYoutubeVideoIds, 0, 50),
-            array_slice($activeYoutubeVideoIds, 50, 1),
+            $activeYoutubeVideoIds,
         ], $youtubeRepository->fetchVideoIdsCalls);
         $this->assertSame(0, $youtubeRepository->searchVideosCallCount);
         $this->assertSame(0, $youtubeRepository->searchVideoPageCallCount);
@@ -91,7 +92,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $outsidePeriod = $this->snapshot($createTarget, $region, '2026-05-31 14:59:59', 200);
 
         $this->app->instance(
-            YouTubeVideoApiRepositoryInterface::class,
+            YouTubeVideoDetailFetchResultRepositoryInterface::class,
             new SnapshotRefreshFakeYouTubeVideoApiRepository,
         );
 
@@ -139,7 +140,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->assertDatabaseCount('dance_short_video_snapshots', 0);
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
@@ -180,7 +181,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->videoRegion($jpUs, $us, '2026-06-01 00:00:00');
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
@@ -217,6 +218,48 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         ]);
     }
 
+    public function test_execute_counts_failed_video_detail_chunk_targets_without_treating_missing_details_as_failures(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+
+        $region = $this->region();
+        $saved = $this->video('saved-video', 'active');
+        $notReturnedBySuccessfulChunk = $this->video('not-returned-video', 'active');
+        $failedChunkTarget = $this->video('failed-chunk-video', 'active');
+        $this->videoRegion($saved, $region, '2026-06-01 00:00:00');
+        $this->videoRegion($notReturnedBySuccessfulChunk, $region, '2026-06-01 00:00:00');
+        $this->videoRegion($failedChunkTarget, $region, '2026-06-01 00:00:00');
+
+        $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
+        $youtubeRepository->returnedVideoIds = ['saved-video'];
+        $youtubeRepository->failedChunkCount = 1;
+        $youtubeRepository->failedTargetVideoIdCount = 1;
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
+
+        $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
+
+        $this->assertSame(3, $result->fetchedVideoCount);
+        $this->assertSame(1, $result->fetchedVideoDetailCount);
+        $this->assertSame(1, $result->savedSnapshotCount);
+        $this->assertSame(1, $result->failedCount);
+        $this->assertSame([[
+            'saved-video',
+            'not-returned-video',
+            'failed-chunk-video',
+        ]], $youtubeRepository->fetchVideoIdsCalls);
+        $this->assertDatabaseHas('dance_short_video_snapshots', [
+            'video_id' => $saved->getKey(),
+            'region_id' => $region->getKey(),
+            'view_count' => 1234,
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $notReturnedBySuccessfulChunk->getKey(),
+        ]);
+        $this->assertDatabaseMissing('dance_short_video_snapshots', [
+            'video_id' => $failedChunkTarget->getKey(),
+        ]);
+    }
+
     public function test_execute_returns_zero_when_video_regions_are_empty(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
@@ -225,7 +268,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->video('active-without-relation', 'active');
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
-        $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
@@ -286,7 +329,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
     }
 }
 
-class SnapshotRefreshFakeYouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface
+class SnapshotRefreshFakeYouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, YouTubeVideoDetailFetchResultRepositoryInterface
 {
     public int $searchVideosCallCount = 0;
 
@@ -296,6 +339,15 @@ class SnapshotRefreshFakeYouTubeVideoApiRepository implements YouTubeVideoApiRep
      * @var array<int, array<int, string>>
      */
     public array $fetchVideoIdsCalls = [];
+
+    /**
+     * @var array<int, string>|null
+     */
+    public ?array $returnedVideoIds = null;
+
+    public int $failedChunkCount = 0;
+
+    public int $failedTargetVideoIdCount = 0;
 
     /**
      * @return array<int, YouTubeVideoSearchItemDTO>
@@ -322,8 +374,30 @@ class SnapshotRefreshFakeYouTubeVideoApiRepository implements YouTubeVideoApiRep
      */
     public function fetchVideoDetails(array $youtubeVideoIds): array
     {
-        $this->fetchVideoIdsCalls[] = array_values($youtubeVideoIds);
+        return $this->detailsFor($this->returnedVideoIds ?? array_values($youtubeVideoIds));
+    }
 
+    public function fetchVideoDetailsResult(array $youtubeVideoIds): YouTubeVideoDetailFetchResultDTO
+    {
+        $this->fetchVideoIdsCalls[] = array_values($youtubeVideoIds);
+        $details = $this->detailsFor($this->returnedVideoIds ?? array_values($youtubeVideoIds));
+
+        return new YouTubeVideoDetailFetchResultDTO(
+            details: $details,
+            targetVideoIdCount: count($youtubeVideoIds),
+            apiCallCount: $youtubeVideoIds === [] ? 0 : 1,
+            successfulChunkCount: $youtubeVideoIds === [] ? 0 : 1,
+            failedChunkCount: $this->failedChunkCount,
+            failedTargetVideoIdCount: $this->failedTargetVideoIdCount,
+        );
+    }
+
+    /**
+     * @param  array<int, string>  $youtubeVideoIds
+     * @return array<int, YouTubeVideoDetailDTO>
+     */
+    private function detailsFor(array $youtubeVideoIds): array
+    {
         return array_map(
             fn (string $youtubeVideoId): YouTubeVideoDetailDTO => $this->detail($youtubeVideoId),
             $youtubeVideoIds,

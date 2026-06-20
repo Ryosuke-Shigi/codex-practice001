@@ -32,6 +32,7 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepository;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepository;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepository;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
@@ -94,6 +95,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DanceShortVideoRegionRepositoryInterface::class, DanceShortVideoRegionRepository::class);
         $this->app->bind(DanceShortVideoSnapshotRepositoryInterface::class, DanceShortVideoSnapshotRepository::class);
         $this->app->bind(YouTubeVideoApiRepositoryInterface::class, YouTubeVideoApiRepository::class);
+        $this->app->bind(YouTubeVideoDetailFetchResultRepositoryInterface::class, YouTubeVideoApiRepository::class);
 
         /*
          * QuakeWave Preview 側の XML 取得依存です。

@@ -4,11 +4,13 @@ namespace Tests\Unit\DanceShortsRadar\Repositories;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
+use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailFetchResultDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Event;
@@ -193,13 +195,14 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             ApplicationIntegrationLogged::class,
             fn (ApplicationIntegrationLogged $event): bool => $event->action === 'videos.list 取得'
                 && $event->status === 'success'
+                && $event->message === '取得しました。対象動画ID: 2件 / API呼び出し: 1回 / 取得詳細: 1件'
                 && $event->targetId === 'videos.list'
                 && $event->url === 'https://www.googleapis.test/youtube/v3/videos'
-                && $event->responseStatus === 200,
+                && $event->responseStatus === null,
         );
     }
 
-    public function test_fetch_video_details_splits_ids_into_fifty_id_chunks_and_merges_detail_items(): void
+    public function test_fetch_video_details_splits_ids_into_fifty_id_chunks_and_logs_one_summary(): void
     {
         $this->configureYoutubeApi();
         $requestedChunks = [];
@@ -235,7 +238,80 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             array_slice($youtubeVideoIds, 100, 20),
         ], $requestedChunks);
         Http::assertSentCount(3);
-        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 3);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'videos.list 取得'
+                && $event->status === 'success'
+                && $event->message === '取得しました。対象動画ID: 120件 / API呼び出し: 3回 / 取得詳細: 120件'
+                && $event->targetId === 'videos.list'
+                && ! str_contains((string) $event->message, 'detail-video-001')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+    }
+
+    public function test_fetch_video_details_keeps_partial_chunk_failure_to_one_integration_summary_and_error_log(): void
+    {
+        $this->configureYoutubeApi();
+        $requestCount = 0;
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => function (Request $request) use (&$requestCount) {
+                $requestCount++;
+                $query = $this->queryFromRequest($request);
+
+                if ($requestCount === 2) {
+                    return Http::response([
+                        'error' => [
+                            'message' => 'quota details should not be exposed',
+                        ],
+                    ], 503);
+                }
+
+                $ids = explode(',', $query['id']);
+
+                return Http::response([
+                    'items' => array_map(
+                        fn (string $youtubeVideoId): array => $this->detailItemPayload($youtubeVideoId),
+                        $ids,
+                    ),
+                ], 200);
+            },
+        ]);
+
+        $youtubeVideoIds = array_map(
+            fn (int $number): string => sprintf('detail-video-%03d', $number),
+            range(1, 51),
+        );
+
+        $result = $this->detailFetchResultRepository()->fetchVideoDetailsResult($youtubeVideoIds);
+        $items = $result->details;
+
+        $this->assertInstanceOf(YouTubeVideoDetailFetchResultDTO::class, $result);
+        $this->assertCount(50, $items);
+        $this->assertSame(51, $result->targetVideoIdCount);
+        $this->assertSame(2, $result->apiCallCount);
+        $this->assertSame(1, $result->successfulChunkCount);
+        $this->assertSame(1, $result->failedChunkCount);
+        $this->assertSame(1, $result->failedTargetVideoIdCount);
+        Http::assertSentCount(2);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'videos.list 取得'
+                && $event->status === 'failed'
+                && $event->message === '一部取得に失敗しました。対象動画ID: 51件 / API呼び出し: 2回 / 成功: 1回 / 失敗: 1回 / 取得詳細: 50件'
+                && ! str_contains((string) $event->message, 'quota details')
+                && ! str_contains((string) $event->message, 'detail-video-001')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected'
+                && $event->message === 'YouTube Data API videos.list の取得先がエラーを返しました。'
+                && ! str_contains($event->message, 'quota details')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
     }
 
     public function test_fetch_video_details_does_not_send_duplicate_or_empty_ids(): void
@@ -494,6 +570,11 @@ class YouTubeVideoApiRepositoryTest extends TestCase
     private function repository(): YouTubeVideoApiRepositoryInterface
     {
         return app(YouTubeVideoApiRepositoryInterface::class);
+    }
+
+    private function detailFetchResultRepository(): YouTubeVideoDetailFetchResultRepositoryInterface
+    {
+        return app(YouTubeVideoDetailFetchResultRepositoryInterface::class);
     }
 
     private function condition(): DanceShortSearchConditionDTO
