@@ -206,10 +206,15 @@ class ApiCatalogSyncService
         }
 
         try {
-            return CarbonImmutable::parse($updatedAt)->utc();
+            return CarbonImmutable::parse($updatedAt)->setTimezone($this->applicationTimezone());
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function applicationTimezone(): string
+    {
+        return (string) config('app.timezone', 'Asia/Tokyo');
     }
 
     /**

@@ -32,7 +32,7 @@ class ApplicationLogRepositoryTest extends TestCase
             method: 'GET',
             responseStatus: 200,
             userId: null,
-            occurredAt: CarbonImmutable::parse('2026-06-18 10:00:00', 'UTC'),
+            occurredAt: CarbonImmutable::parse('2026-06-18 10:00:00', 'Asia/Tokyo'),
         ));
         $repository->create(new ApplicationIntegrationLogCreateDTO(
             integrationType: 'external_api',
@@ -47,7 +47,7 @@ class ApplicationLogRepositoryTest extends TestCase
             method: 'GET',
             responseStatus: 429,
             userId: null,
-            occurredAt: CarbonImmutable::parse('2026-06-18 11:00:00', 'UTC'),
+            occurredAt: CarbonImmutable::parse('2026-06-18 11:00:00', 'Asia/Tokyo'),
         ));
 
         $logs = $repository->latest(10);
@@ -73,7 +73,7 @@ class ApplicationLogRepositoryTest extends TestCase
             url: null,
             method: 'GET',
             userId: null,
-            occurredAt: CarbonImmutable::parse('2026-06-18 09:00:00', 'UTC'),
+            occurredAt: CarbonImmutable::parse('2026-06-18 09:00:00', 'Asia/Tokyo'),
         ));
         $newer = $repository->create(new ApplicationErrorLogCreateDTO(
             level: 'error',
@@ -85,14 +85,14 @@ class ApplicationLogRepositoryTest extends TestCase
             url: null,
             method: 'GET',
             userId: null,
-            occurredAt: CarbonImmutable::parse('2026-06-18 12:00:00', 'UTC'),
+            occurredAt: CarbonImmutable::parse('2026-06-18 12:00:00', 'Asia/Tokyo'),
         ));
 
         $logs = $repository->latest(10);
         $resolved = $repository->resolve(
             $newer,
             resolvedBy: null,
-            resolvedAt: CarbonImmutable::parse('2026-06-18 13:00:00', 'UTC'),
+            resolvedAt: CarbonImmutable::parse('2026-06-18 13:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertTrue($older->isNot($newer));

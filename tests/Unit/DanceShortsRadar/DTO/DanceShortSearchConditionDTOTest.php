@@ -10,7 +10,7 @@ class DanceShortSearchConditionDTOTest extends TestCase
 {
     public function test_to_array_returns_youtube_search_query_conditions(): void
     {
-        $publishedAfter = CarbonImmutable::parse('2026-05-24 00:00:00', 'UTC');
+        $publishedAfter = CarbonImmutable::parse('2026-05-24 00:00:00', 'Asia/Tokyo');
 
         $dto = new DanceShortSearchConditionDTO(
             keyword: 'dance shorts',
@@ -26,7 +26,7 @@ class DanceShortSearchConditionDTOTest extends TestCase
             'regionCode' => 'JP',
             'relevanceLanguage' => 'ja',
             'maxResults' => 25,
-            'publishedAfter' => '2026-05-24T00:00:00+00:00',
+            'publishedAfter' => '2026-05-24T00:00:00+09:00',
             'videoDuration' => 'short',
         ], $dto->toArray());
     }

@@ -12,14 +12,14 @@ class DanceShortSnapshotCleanupResultDTOTest extends TestCase
     {
         $dto = new DanceShortSnapshotCleanupResultDTO(
             executedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
-            cutoffAt: CarbonImmutable::parse('2026-04-27 03:00:00', 'UTC'),
+            cutoffAt: CarbonImmutable::parse('2026-04-27 12:00:00', 'Asia/Tokyo'),
             retentionDays: 35,
             deletedSnapshotCount: 4,
         );
 
         $this->assertSame([
             'executedAt' => '2026-06-01T12:00:00+09:00',
-            'cutoffAt' => '2026-04-27T03:00:00+00:00',
+            'cutoffAt' => '2026-04-27T12:00:00+09:00',
             'retentionDays' => 35,
             'deletedSnapshotCount' => 4,
         ], $dto->toArray());

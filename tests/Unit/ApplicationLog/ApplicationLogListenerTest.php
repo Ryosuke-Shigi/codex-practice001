@@ -36,7 +36,7 @@ class ApplicationLogListenerTest extends TestCase
             line: 128,
             url: 'https://example.test/path?token=secret-query',
             method: 'get',
-            occurredAt: CarbonImmutable::parse('2026-06-18 12:00:00', 'UTC'),
+            occurredAt: CarbonImmutable::parse('2026-06-18 12:00:00', 'Asia/Tokyo'),
         ));
 
         $this->assertInstanceOf(ApplicationErrorLogCreateDTO::class, $repository->created);
@@ -65,7 +65,7 @@ class ApplicationLogListenerTest extends TestCase
             url: 'https://www.googleapis.test/youtube/v3/search?key=secret-key&q=dance',
             method: 'get',
             responseStatus: 429,
-            occurredAt: CarbonImmutable::parse('2026-06-18 12:10:00', 'UTC'),
+            occurredAt: CarbonImmutable::parse('2026-06-18 12:10:00', 'Asia/Tokyo'),
         ));
 
         $this->assertInstanceOf(ApplicationIntegrationLogCreateDTO::class, $repository->created);

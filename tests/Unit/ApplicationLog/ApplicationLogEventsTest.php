@@ -12,7 +12,7 @@ class ApplicationLogEventsTest extends TestCase
 {
     public function test_application_error_occurred_holds_only_error_fact_values(): void
     {
-        $occurredAt = CarbonImmutable::parse('2026-06-18 10:00:00', 'UTC');
+        $occurredAt = CarbonImmutable::parse('2026-06-18 10:00:00', 'Asia/Tokyo');
         $exception = new RuntimeException('DanceShortsRadar failed.');
         $event = new ApplicationErrorOccurred(
             level: 'error',
@@ -44,7 +44,7 @@ class ApplicationLogEventsTest extends TestCase
 
     public function test_application_integration_logged_holds_only_api_integration_fact_values(): void
     {
-        $occurredAt = CarbonImmutable::parse('2026-06-18 11:00:00', 'UTC');
+        $occurredAt = CarbonImmutable::parse('2026-06-18 11:00:00', 'Asia/Tokyo');
         $event = new ApplicationIntegrationLogged(
             integrationType: 'external_api',
             serviceName: 'YouTube API',

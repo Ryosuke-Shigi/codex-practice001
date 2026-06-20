@@ -170,10 +170,15 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
         }
 
         try {
-            return CarbonImmutable::parse($value)->utc();
+            return CarbonImmutable::parse($value)->setTimezone($this->applicationTimezone());
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function applicationTimezone(): string
+    {
+        return (string) config('app.timezone', 'Asia/Tokyo');
     }
 
     /**

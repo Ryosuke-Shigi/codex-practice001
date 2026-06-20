@@ -7,7 +7,7 @@ use Carbon\CarbonImmutable;
 use PHPUnit\Framework\TestCase;
 
 /**
- * snapshot cleanup の保持期間と UTC cutoff 境界を固定する Unit Test です。
+ * snapshot cleanup の保持期間と JST cutoff 境界を固定する Unit Test です。
  *
  * Repository の削除 query ではなく、Service が担う日数判断と時刻変換だけを確認します。
  */
@@ -41,7 +41,7 @@ class DanceShortSnapshotRetentionServiceTest extends TestCase
             configuredRetentionDays: 35,
         );
 
-        $this->assertSame('2026-04-27 03:00:00', $cutoff->format('Y-m-d H:i:s'));
-        $this->assertSame('UTC', $cutoff->timezoneName);
+        $this->assertSame('2026-04-27 12:00:00', $cutoff->format('Y-m-d H:i:s'));
+        $this->assertSame('Asia/Tokyo', $cutoff->timezoneName);
     }
 }

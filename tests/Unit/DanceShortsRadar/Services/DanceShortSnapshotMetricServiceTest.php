@@ -12,9 +12,9 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
     {
         $metrics = $this->service()->calculateSnapshotMetrics(
             previousViewCount: 700,
-            previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'UTC'),
+            previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'Asia/Tokyo'),
             currentViewCount: 1000,
-            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame(300, $metrics['viewCountDelta']);
@@ -26,9 +26,9 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
     {
         $metrics = $this->service()->calculateSnapshotMetrics(
             previousViewCount: 0,
-            previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'UTC'),
+            previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'Asia/Tokyo'),
             currentViewCount: 1000,
-            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame(1000, $metrics['viewCountDelta']);
@@ -40,15 +40,15 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
     {
         $zeroDiff = $this->service()->calculateSnapshotMetrics(
             previousViewCount: 700,
-            previousCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            previousCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
             currentViewCount: 1000,
-            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
         $negativeDiff = $this->service()->calculateSnapshotMetrics(
             previousViewCount: 700,
-            previousCollectedAt: CarbonImmutable::parse('2026-05-31 13:00:00', 'UTC'),
+            previousCollectedAt: CarbonImmutable::parse('2026-05-31 13:00:00', 'Asia/Tokyo'),
             currentViewCount: 1000,
-            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertNull($zeroDiff['viewsPerHour']);
@@ -61,7 +61,7 @@ class DanceShortSnapshotMetricServiceTest extends TestCase
             previousViewCount: null,
             previousCollectedAt: null,
             currentViewCount: 1000,
-            currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertNull($metrics['viewCountDelta']);

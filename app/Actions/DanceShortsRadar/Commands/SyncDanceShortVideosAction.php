@@ -33,9 +33,9 @@ class SyncDanceShortVideosAction
          * 通常同期は active region / active keyword の page1 だけを検索します。
          * 動画詳細取得後の保存判定と snapshot 保存は共通 Action に委譲し、page2 同期と
          * Shorts 判定・必須項目判定・動画本体保存・snapshot update/create の実装を共有します。
-         */
+        */
         $executedAt = CarbonImmutable::now();
-        $collectedAt = $executedAt->utc();
+        $collectedAt = $executedAt;
         $regions = $this->searchTargetRepository->activeRegions();
 
         $searchedKeywordCount = 0;

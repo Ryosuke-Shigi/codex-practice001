@@ -10,7 +10,7 @@ class DanceShortVideoRegionSaveDTOTest extends TestCase
 {
     public function test_dto_carries_video_region_and_detected_at(): void
     {
-        $detectedAt = CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC');
+        $detectedAt = CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo');
 
         $dto = new DanceShortVideoRegionSaveDTO(
             video_id: 10,

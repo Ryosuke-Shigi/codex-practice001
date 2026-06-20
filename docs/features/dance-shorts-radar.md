@@ -133,7 +133,7 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - 1回の最大対象件数は `snapshot_refresh.max_videos_per_run` で管理し、現在の初期値は8000件とする
 - snapshotはJSTの `00:00-11:59` / `12:00-23:59` の12時間枠で扱う
 - 同じ12時間枠に既存snapshotがある場合は最新レコードを更新し、ない場合は新規作成する
-- `collected_at` とRepositoryへ渡す期間境界はUTCで扱う
+- `collected_at` とRepositoryへ渡す期間境界はアプリ標準 timezone（JST / Asia/Tokyo）で扱う
 
 ## ランキング表示
 

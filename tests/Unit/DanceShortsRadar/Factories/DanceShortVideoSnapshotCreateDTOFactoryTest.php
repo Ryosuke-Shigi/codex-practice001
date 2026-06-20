@@ -34,7 +34,7 @@ class DanceShortVideoSnapshotCreateDTOFactoryTest extends TestCase
             ),
             videoId: 10,
             regionId: 20,
-            collectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            collectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame(10, $dto->video_id);
@@ -72,7 +72,7 @@ class DanceShortVideoSnapshotCreateDTOFactoryTest extends TestCase
             ),
             videoId: 10,
             regionId: 20,
-            collectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            collectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
     }
 }

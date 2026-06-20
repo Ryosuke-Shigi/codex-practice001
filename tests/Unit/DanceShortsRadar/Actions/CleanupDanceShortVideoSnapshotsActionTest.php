@@ -27,8 +27,8 @@ class CleanupDanceShortVideoSnapshotsActionTest extends TestCase
 
         $this->assertSame(7, $result->deletedSnapshotCount);
         $this->assertSame(35, $result->retentionDays);
-        $this->assertSame('2026-04-27 03:00:00', $result->cutoffAt->format('Y-m-d H:i:s'));
-        $this->assertSame('2026-04-27 03:00:00', $repository->deletedBefore?->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-04-27 12:00:00', $result->cutoffAt->format('Y-m-d H:i:s'));
+        $this->assertSame('2026-04-27 12:00:00', $repository->deletedBefore?->format('Y-m-d H:i:s'));
     }
 }
 

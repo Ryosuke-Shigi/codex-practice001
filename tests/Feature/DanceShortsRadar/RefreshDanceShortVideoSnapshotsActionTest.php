@@ -32,7 +32,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
     public function test_execute_uses_only_active_saved_videos_and_fetches_details_once_without_search(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 01:45:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 10:45:00', 'Asia/Tokyo'));
         config(['dance_short.snapshot_refresh.max_videos_per_run' => 8000]);
 
         $region = $this->region();
@@ -80,16 +80,16 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
     public function test_execute_updates_existing_snapshot_in_same_jst_12_hour_period_and_creates_when_missing(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
 
         $region = $this->region();
         $updateTarget = $this->video('same-period-video', 'active');
         $createTarget = $this->video('new-period-video', 'active');
-        $this->videoRegion($updateTarget, $region, '2026-05-31 16:00:00');
-        $this->videoRegion($createTarget, $region, '2026-05-31 14:59:59');
+        $this->videoRegion($updateTarget, $region, '2026-06-01 01:00:00');
+        $this->videoRegion($createTarget, $region, '2026-05-31 23:59:59');
 
-        $existingInPeriod = $this->snapshot($updateTarget, $region, '2026-05-31 16:00:00', 100);
-        $outsidePeriod = $this->snapshot($createTarget, $region, '2026-05-31 14:59:59', 200);
+        $existingInPeriod = $this->snapshot($updateTarget, $region, '2026-06-01 01:00:00', 100);
+        $outsidePeriod = $this->snapshot($createTarget, $region, '2026-05-31 23:59:59', 200);
 
         $this->app->instance(
             YouTubeVideoDetailFetchResultRepositoryInterface::class,
@@ -107,13 +107,13 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
             'view_count' => 1234,
             'like_count' => 123,
             'comment_count' => 12,
-            'collected_at' => '2026-06-01 02:30:00',
+            'collected_at' => '2026-06-01 11:30:00',
         ]);
         $this->assertDatabaseHas('dance_short_video_snapshots', [
             'id' => $outsidePeriod->getKey(),
             'video_id' => $createTarget->getKey(),
             'view_count' => 200,
-            'collected_at' => '2026-05-31 14:59:59',
+            'collected_at' => '2026-05-31 23:59:59',
         ]);
         $this->assertDatabaseHas('dance_short_video_snapshots', [
             'video_id' => $createTarget->getKey(),
@@ -121,13 +121,13 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
             'view_count' => 1234,
             'like_count' => 123,
             'comment_count' => 12,
-            'collected_at' => '2026-06-01 02:30:00',
+            'collected_at' => '2026-06-01 11:30:00',
         ]);
     }
 
     public function test_execute_creates_snapshots_for_active_videos_after_all_snapshots_are_deleted(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
 
         $region = $this->region();
         $active = $this->video('active-without-snapshot', 'active');
@@ -156,7 +156,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
             'view_count' => 1234,
             'like_count' => 123,
             'comment_count' => 12,
-            'collected_at' => '2026-06-01 02:30:00',
+            'collected_at' => '2026-06-01 11:30:00',
         ]);
         $this->assertDatabaseMissing('dance_short_video_snapshots', [
             'video_id' => $inactive->getKey(),
@@ -168,7 +168,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
     public function test_execute_creates_snapshots_only_for_regions_stored_in_video_regions(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
 
         $jp = $this->region('JP', '日本');
         $us = $this->region('US', 'アメリカ');
@@ -220,7 +220,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
     public function test_execute_counts_failed_video_detail_chunk_targets_without_treating_missing_details_as_failures(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
 
         $region = $this->region();
         $saved = $this->video('saved-video', 'active');
@@ -262,7 +262,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
     public function test_execute_returns_zero_when_video_regions_are_empty(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 11:30:00', 'Asia/Tokyo'));
 
         $this->region();
         $this->video('active-without-relation', 'active');

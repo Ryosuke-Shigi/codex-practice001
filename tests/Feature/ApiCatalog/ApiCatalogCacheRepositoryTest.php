@@ -22,8 +22,8 @@ class ApiCatalogCacheRepositoryTest extends TestCase
          * ここでは ApiCatalogItemDTO から api_catalog_cache の保存値へ正しく写ることを確認します。
          */
         $repository = $this->repository();
-        $syncedAt = CarbonImmutable::parse('2026-05-23 12:34:56', 'UTC');
-        $sourceLatestUpdatedAt = CarbonImmutable::parse('2026-05-20 01:02:03', 'UTC');
+        $syncedAt = CarbonImmutable::parse('2026-05-23 12:34:56', 'Asia/Tokyo');
+        $sourceLatestUpdatedAt = CarbonImmutable::parse('2026-05-20 01:02:03', 'Asia/Tokyo');
 
         $inserted = $repository->insert($this->item(
             apiKey: 'github.com:rest',
@@ -59,8 +59,8 @@ class ApiCatalogCacheRepositoryTest extends TestCase
             serviceKey: 'rest',
             title: 'GitHub REST API Updated',
             payloadHash: 'updated-payload-hash',
-            sourceLatestUpdatedAt: CarbonImmutable::parse('2026-05-21 02:03:04', 'UTC'),
-        ), CarbonImmutable::parse('2026-05-24 00:00:01', 'UTC'));
+            sourceLatestUpdatedAt: CarbonImmutable::parse('2026-05-21 02:03:04', 'Asia/Tokyo'),
+        ), CarbonImmutable::parse('2026-05-24 00:00:01', 'Asia/Tokyo'));
 
         $this->assertTrue($updated->is_active);
         $this->assertDatabaseHas('api_catalog_cache', [
@@ -98,7 +98,7 @@ class ApiCatalogCacheRepositoryTest extends TestCase
 
         $updatedCount = $this->repository()->markMissingAsInactive(
             ['keep.example.test', 'keep.example.test'],
-            CarbonImmutable::parse('2026-05-24 10:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-05-24 10:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame(1, $updatedCount);
@@ -129,7 +129,7 @@ class ApiCatalogCacheRepositoryTest extends TestCase
 
         $updatedCount = $this->repository()->markMissingAsInactive(
             [],
-            CarbonImmutable::parse('2026-05-24 10:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-05-24 10:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame(0, $updatedCount);

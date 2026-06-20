@@ -118,7 +118,7 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
             channelTitle: $row->channel_title === null ? null : (string) $row->channel_title,
             thumbnailUrl: $row->thumbnail_url === null ? null : (string) $row->thumbnail_url,
             url: $row->url === null ? null : (string) $row->url,
-            publishedAt: $row->published_at === null ? null : CarbonImmutable::parse((string) $row->published_at, 'UTC'),
+            publishedAt: $row->published_at === null ? null : $this->parseApplicationDate((string) $row->published_at),
             sourceRegionCode: (string) $row->source_region_code,
             sourceRegionName: (string) $row->source_region_name,
             sourceCurrentViewCount: (int) $row->source_current_view_count,
@@ -126,17 +126,22 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
             sourceViewCountDelta: $sourceViewCountDelta,
             sourceViewGrowthRate: $row->source_view_growth_rate === null ? null : (float) $row->source_view_growth_rate,
             sourceViewsPerHour: $row->source_views_per_hour === null ? null : (float) $row->source_views_per_hour,
-            sourceCurrentCollectedAt: CarbonImmutable::parse((string) $row->source_current_collected_at, 'UTC'),
-            sourcePreviousCollectedAt: $row->source_previous_collected_at === null ? null : CarbonImmutable::parse((string) $row->source_previous_collected_at, 'UTC'),
+            sourceCurrentCollectedAt: $this->parseApplicationDate((string) $row->source_current_collected_at),
+            sourcePreviousCollectedAt: $row->source_previous_collected_at === null ? null : $this->parseApplicationDate((string) $row->source_previous_collected_at),
             japanCurrentViewCount: $row->japan_current_view_count === null ? null : (int) $row->japan_current_view_count,
             japanPreviousViewCount: $row->japan_previous_view_count === null ? null : (int) $row->japan_previous_view_count,
             japanViewCountDelta: $japanViewCountDelta,
             japanViewGrowthRate: $row->japan_view_growth_rate === null ? null : (float) $row->japan_view_growth_rate,
             japanViewsPerHour: $row->japan_views_per_hour === null ? null : (float) $row->japan_views_per_hour,
-            japanCurrentCollectedAt: $row->japan_current_collected_at === null ? null : CarbonImmutable::parse((string) $row->japan_current_collected_at, 'UTC'),
-            japanPreviousCollectedAt: $row->japan_previous_collected_at === null ? null : CarbonImmutable::parse((string) $row->japan_previous_collected_at, 'UTC'),
+            japanCurrentCollectedAt: $row->japan_current_collected_at === null ? null : $this->parseApplicationDate((string) $row->japan_current_collected_at),
+            japanPreviousCollectedAt: $row->japan_previous_collected_at === null ? null : $this->parseApplicationDate((string) $row->japan_previous_collected_at),
             japanComparisonStatus: $japanComparisonStatus,
             comparisonDays: $comparisonDays,
         );
+    }
+
+    private function parseApplicationDate(string $value): CarbonImmutable
+    {
+        return CarbonImmutable::parse($value, (string) config('app.timezone', 'Asia/Tokyo'));
     }
 }

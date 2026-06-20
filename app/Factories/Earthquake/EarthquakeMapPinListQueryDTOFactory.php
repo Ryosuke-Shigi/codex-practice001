@@ -37,7 +37,7 @@ final readonly class EarthquakeMapPinListQueryDTOFactory
      */
     private function defaultDateRange(): array
     {
-        $endDate = CarbonImmutable::today(config('app.timezone', 'UTC'));
+        $endDate = CarbonImmutable::today(config('app.timezone', 'Asia/Tokyo'));
         $startDate = $endDate->subDays(3);
 
         return [

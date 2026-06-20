@@ -10,7 +10,7 @@ class ApiCatalogItemDTOTest extends TestCase
 {
     public function test_it_holds_api_catalog_item_values(): void
     {
-        $sourceLatestUpdatedAt = CarbonImmutable::parse('2026-05-23 10:00:00')->utc();
+        $sourceLatestUpdatedAt = CarbonImmutable::parse('2026-05-23 10:00:00', 'Asia/Tokyo');
 
         /*
          * ApiCatalogItemDTO は、Service が作った同期対象1件分の値を
