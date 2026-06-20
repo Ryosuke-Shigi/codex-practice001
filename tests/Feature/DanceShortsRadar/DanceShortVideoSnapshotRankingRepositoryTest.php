@@ -165,7 +165,7 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         $found = $this->repository()->latestSnapshotAtOrBefore(
             (int) $video->getKey(),
             (int) $jp->getKey(),
-            CarbonImmutable::parse('2026-05-24 00:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-05-24 00:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertNotNull($found);
@@ -184,7 +184,7 @@ class DanceShortVideoSnapshotRankingRepositoryTest extends TestCase
         $found = $this->repository()->latestSnapshotAtOrBefore(
             (int) $video->getKey(),
             (int) $jp->getKey(),
-            CarbonImmutable::parse('2026-05-24 00:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-05-24 00:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertNull($found);

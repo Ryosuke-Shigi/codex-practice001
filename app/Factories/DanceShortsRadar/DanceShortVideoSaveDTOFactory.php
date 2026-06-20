@@ -57,9 +57,24 @@ class DanceShortVideoSaveDTOFactory
         }
 
         try {
-            return CarbonImmutable::parse($value)->utc()->toDateTimeString();
+            return CarbonImmutable::parse($value)
+                ->setTimezone($this->applicationTimezone())
+                ->toDateTimeString();
         } catch (Throwable) {
             return null;
+        }
+    }
+
+    private function applicationTimezone(): string
+    {
+        if (! function_exists('config')) {
+            return 'Asia/Tokyo';
+        }
+
+        try {
+            return (string) config('app.timezone', 'Asia/Tokyo');
+        } catch (Throwable) {
+            return 'Asia/Tokyo';
         }
     }
 

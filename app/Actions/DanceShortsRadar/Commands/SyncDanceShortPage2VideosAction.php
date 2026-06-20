@@ -35,9 +35,9 @@ class SyncDanceShortPage2VideosAction
         /*
          * page2 同期は expanded かつ max_search_pages >= 2 の keyword だけを検索します。
          * page1 は nextPageToken を得るために読むだけで、保存候補IDとしては page2 以降だけを集めます。
-         */
+        */
         $executedAt = CarbonImmutable::now();
-        $collectedAt = $executedAt->utc();
+        $collectedAt = $executedAt;
         $regions = $this->searchTargetRepository->activeRegions();
 
         $searchedKeywordCount = 0;

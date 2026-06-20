@@ -31,9 +31,9 @@ class RefreshDanceShortVideoSnapshotsAction
          * search.list は呼ばず、active 条件の決定、JST12時間枠 update/create、
          * 同期結果集約の手順をこの Action に閉じます。videos.list の50件分割、
          * API連携ログ集約、chunk失敗集計は Repository / Result DTO に任せます。
-         */
+        */
         $executedAt = CarbonImmutable::now();
-        $collectedAt = $executedAt->utc();
+        $collectedAt = $executedAt;
         $snapshotPeriod = $this->snapshotPeriodService->jstTwelveHourPeriod($executedAt);
         $targets = $this->videoRegionRepository->snapshotRefreshTargetsByTrackingStatus(
             trackingStatus: $this->trackingService->snapshotRefreshTargetStatus(),

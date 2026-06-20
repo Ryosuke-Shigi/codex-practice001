@@ -57,20 +57,32 @@ class DanceShortSnapshotRetentionService
     }
 
     /**
-     * Repository の削除条件へ渡す UTC cutoff を返します。
+     * Repository の削除条件へ渡す JST cutoff を返します。
      */
     public function cutoffAt(
         CarbonInterface $now,
         int|string|null $configuredRetentionDays = null,
     ): CarbonImmutable {
         /*
-         * snapshot の collected_at は同期時刻として UTC で扱います。
-         * 呼び出し元が Asia/Tokyo などの時刻を渡しても、Repository へ渡す cutoff は UTC に揃え、
-         * DB 条件が環境 timezone に引きずられないようにします。
+         * snapshot の collected_at はアプリ標準 timezone の同期時刻として扱います。
+         * Repository へ渡す cutoff も同じ基準に揃え、DB 条件と保存値を一致させます。
          */
         return CarbonImmutable::instance($now)
-            ->utc()
+            ->setTimezone($this->applicationTimezone())
             ->subDays($this->retentionDays($configuredRetentionDays));
+    }
+
+    private function applicationTimezone(): string
+    {
+        if (! function_exists('config')) {
+            return 'Asia/Tokyo';
+        }
+
+        try {
+            return (string) config('app.timezone', 'Asia/Tokyo');
+        } catch (Throwable) {
+            return 'Asia/Tokyo';
+        }
     }
 
     private function configuredRetentionDays(): int|string|null

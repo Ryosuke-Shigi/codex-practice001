@@ -26,13 +26,13 @@ class DanceShortVideoRegionRepositoryTest extends TestCase
         $created = $repository->upsert(new DanceShortVideoRegionSaveDTO(
             video_id: (int) $video->getKey(),
             region_id: (int) $region->getKey(),
-            detected_at: CarbonImmutable::parse('2026-06-01 00:00:00', 'UTC'),
+            detected_at: CarbonImmutable::parse('2026-06-01 00:00:00', 'Asia/Tokyo'),
         ));
 
         $updated = $repository->upsert(new DanceShortVideoRegionSaveDTO(
             video_id: (int) $video->getKey(),
             region_id: (int) $region->getKey(),
-            detected_at: CarbonImmutable::parse('2026-06-01 12:00:00', 'UTC'),
+            detected_at: CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
         ));
 
         $this->assertTrue($created->is($updated));

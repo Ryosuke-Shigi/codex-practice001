@@ -32,7 +32,7 @@ class DanceShortSearchConditionDTOFactory
             regionCode: $region->code,
             relevanceLanguage: $this->relevanceLanguage($region->code),
             maxResults: $this->discoverMaxResults(),
-            publishedAfter: $executedAt->subDays($this->publishedAfterDays())->utc(),
+            publishedAfter: $executedAt->subDays($this->publishedAfterDays()),
             videoDuration: 'short',
         );
     }

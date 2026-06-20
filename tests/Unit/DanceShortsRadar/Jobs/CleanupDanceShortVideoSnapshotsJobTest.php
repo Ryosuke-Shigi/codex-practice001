@@ -29,7 +29,7 @@ class CleanupDanceShortVideoSnapshotsJobTest extends TestCase
 
                 return new DanceShortSnapshotCleanupResultDTO(
                     executedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
-                    cutoffAt: CarbonImmutable::parse('2026-04-27 03:00:00', 'UTC'),
+                    cutoffAt: CarbonImmutable::parse('2026-04-27 12:00:00', 'Asia/Tokyo'),
                     retentionDays: 35,
                     deletedSnapshotCount: 5,
                 );

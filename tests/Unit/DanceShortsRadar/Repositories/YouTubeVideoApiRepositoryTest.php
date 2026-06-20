@@ -79,7 +79,7 @@ class YouTubeVideoApiRepositoryTest extends TestCase
                 && $query['regionCode'] === 'JP'
                 && $query['relevanceLanguage'] === 'ja'
                 && $query['maxResults'] === '25'
-                && $query['publishedAfter'] === '2026-05-24T00:00:00+00:00'
+                && $query['publishedAfter'] === '2026-05-24T00:00:00+09:00'
                 && $query['videoDuration'] === 'short';
         });
         Event::assertDispatched(
@@ -584,7 +584,7 @@ class YouTubeVideoApiRepositoryTest extends TestCase
             regionCode: 'JP',
             relevanceLanguage: 'ja',
             maxResults: 25,
-            publishedAfter: CarbonImmutable::parse('2026-05-24 00:00:00', 'UTC'),
+            publishedAfter: CarbonImmutable::parse('2026-05-24 00:00:00', 'Asia/Tokyo'),
             videoDuration: 'short',
         );
     }

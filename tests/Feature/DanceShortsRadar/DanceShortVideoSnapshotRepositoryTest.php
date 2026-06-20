@@ -29,7 +29,7 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
             view_count: 123456,
             like_count: 789,
             comment_count: 12,
-            collected_at: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            collected_at: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         ));
 
         $this->assertDatabaseHas('dance_short_video_snapshots', [
@@ -90,7 +90,7 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
             'view_count' => 100,
             'like_count' => 10,
             'comment_count' => 1,
-            'collected_at' => '2026-05-31 16:00:00',
+            'collected_at' => '2026-06-01 00:30:00',
         ]);
         $latestInPeriod = DanceShortVideoSnapshot::query()->create([
             'video_id' => $video->getKey(),
@@ -104,7 +104,7 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
             'view_count' => 300,
-            'collected_at' => '2026-06-01 04:00:00',
+            'collected_at' => '2026-06-01 12:00:00',
         ]);
 
         $saved = $this->repository()->updateLatestInPeriodOrCreate(
@@ -114,10 +114,10 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
                 view_count: 456,
                 like_count: 45,
                 comment_count: 6,
-                collected_at: CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'),
+                collected_at: CarbonImmutable::parse('2026-06-01 02:30:00', 'Asia/Tokyo'),
             ),
-            CarbonImmutable::parse('2026-05-31 15:00:00', 'UTC'),
-            CarbonImmutable::parse('2026-06-01 03:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-06-01 00:00:00', 'Asia/Tokyo'),
+            CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertTrue($latestInPeriod->is($saved));
@@ -132,12 +132,12 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
         $this->assertDatabaseHas('dance_short_video_snapshots', [
             'id' => $olderInPeriod->getKey(),
             'view_count' => 100,
-            'collected_at' => '2026-05-31 16:00:00',
+            'collected_at' => '2026-06-01 00:30:00',
         ]);
         $this->assertDatabaseHas('dance_short_video_snapshots', [
             'id' => $outsidePeriod->getKey(),
             'view_count' => 300,
-            'collected_at' => '2026-06-01 04:00:00',
+            'collected_at' => '2026-06-01 12:00:00',
         ]);
     }
 
@@ -149,7 +149,7 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
             'view_count' => 100,
-            'collected_at' => '2026-05-31 14:59:59',
+            'collected_at' => '2026-05-31 23:59:59',
         ]);
 
         $saved = $this->repository()->updateLatestInPeriodOrCreate(
@@ -159,10 +159,10 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
                 view_count: 789,
                 like_count: 70,
                 comment_count: 8,
-                collected_at: CarbonImmutable::parse('2026-06-01 02:30:00', 'UTC'),
+                collected_at: CarbonImmutable::parse('2026-06-01 02:30:00', 'Asia/Tokyo'),
             ),
-            CarbonImmutable::parse('2026-05-31 15:00:00', 'UTC'),
-            CarbonImmutable::parse('2026-06-01 03:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-06-01 00:00:00', 'Asia/Tokyo'),
+            CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertDatabaseCount('dance_short_video_snapshots', 2);
@@ -211,7 +211,7 @@ class DanceShortVideoSnapshotRepositoryTest extends TestCase
         ]);
 
         $deletedCount = $this->repository()->deleteCollectedBefore(
-            CarbonImmutable::parse('2026-04-27 00:00:00', 'UTC'),
+            CarbonImmutable::parse('2026-04-27 00:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame(1, $deletedCount);

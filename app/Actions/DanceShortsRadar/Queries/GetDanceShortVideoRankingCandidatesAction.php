@@ -290,7 +290,7 @@ class GetDanceShortVideoRankingCandidatesAction
             channelTitle: $row->channel_title === null ? null : (string) $row->channel_title,
             thumbnailUrl: $row->thumbnail_url === null ? null : (string) $row->thumbnail_url,
             url: $row->url === null ? null : (string) $row->url,
-            publishedAt: $row->published_at === null ? null : CarbonImmutable::parse((string) $row->published_at, 'UTC'),
+            publishedAt: $row->published_at === null ? null : $this->parseApplicationDate((string) $row->published_at),
             regionCode: (string) $row->region_code,
             regionName: (string) $row->region_name,
             currentViewCount: (int) $row->current_view_count,
@@ -300,10 +300,15 @@ class GetDanceShortVideoRankingCandidatesAction
             viewsPerHour: $row->views_per_hour === null ? null : (float) $row->views_per_hour,
             likeCount: $row->like_count === null ? null : (int) $row->like_count,
             commentCount: $row->comment_count === null ? null : (int) $row->comment_count,
-            currentCollectedAt: CarbonImmutable::parse((string) $row->current_collected_at, 'UTC'),
-            previousCollectedAt: $row->previous_collected_at === null ? null : CarbonImmutable::parse((string) $row->previous_collected_at, 'UTC'),
+            currentCollectedAt: $this->parseApplicationDate((string) $row->current_collected_at),
+            previousCollectedAt: $row->previous_collected_at === null ? null : $this->parseApplicationDate((string) $row->previous_collected_at),
             comparisonDays: $comparisonDays,
             hasPreviousSnapshot: $row->previous_snapshot_id !== null,
         );
+    }
+
+    private function parseApplicationDate(string $value): CarbonImmutable
+    {
+        return CarbonImmutable::parse($value, (string) config('app.timezone', 'Asia/Tokyo'));
     }
 }

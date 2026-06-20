@@ -16,7 +16,7 @@ class DanceShortVideoSnapshotCreateDTOTest extends TestCase
             view_count: 123456,
             like_count: 789,
             comment_count: 12,
-            collected_at: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
+            collected_at: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
         );
 
         $this->assertSame([

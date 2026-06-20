@@ -44,8 +44,8 @@ class DanceShortVideoRankingListDTOTest extends TestCase
             viewsPerHour: 12.5,
             likeCount: null,
             commentCount: null,
-            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'UTC'),
-            previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
+            previousCollectedAt: CarbonImmutable::parse('2026-05-30 12:00:00', 'Asia/Tokyo'),
             comparisonDays: 1,
             hasPreviousSnapshot: true,
         );

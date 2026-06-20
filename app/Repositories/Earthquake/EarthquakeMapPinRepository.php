@@ -215,7 +215,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
         }
 
         try {
-            return CarbonImmutable::parse($value)->utc();
+            return CarbonImmutable::parse($value)->setTimezone($this->applicationTimezone());
         } catch (Throwable) {
             return null;
         }
@@ -294,7 +294,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
 
     private function applyDateRange(Builder $builder, EarthquakeMapPinListQueryDTO $query): void
     {
-        $timezone = config('app.timezone', 'UTC');
+        $timezone = $this->applicationTimezone();
         $startAt = $this->parseDateBoundary($query->startDate, $timezone, true);
         $endAt = $this->parseDateBoundary($query->endDate, $timezone, false);
 
@@ -336,10 +336,15 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
                 return null;
             }
 
-            return ($startOfDay ? $parsedDate->startOfDay() : $parsedDate->endOfDay())->utc();
+            return $startOfDay ? $parsedDate->startOfDay() : $parsedDate->endOfDay();
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function applicationTimezone(): string
+    {
+        return (string) config('app.timezone', 'Asia/Tokyo');
     }
 
     private function pinToDTO(EarthquakeMapPin $pin): EarthquakeMapPinDTO

@@ -250,7 +250,6 @@ class QuakeWavePreviewMapRequestTest extends TestCase
     private function dateTimeForStorage(string $localDateTime): string
     {
         return CarbonImmutable::parse($localDateTime, config('app.timezone'))
-            ->utc()
             ->toDateTimeString();
     }
 

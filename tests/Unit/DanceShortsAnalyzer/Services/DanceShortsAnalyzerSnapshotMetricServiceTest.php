@@ -118,7 +118,7 @@ class DanceShortsAnalyzerSnapshotMetricServiceTest extends TestCase
             viewCount: $viewCount,
             likeCount: $likeCount,
             commentCount: $commentCount,
-            collectedAt: CarbonImmutable::parse($collectedAt, 'UTC'),
+            collectedAt: CarbonImmutable::parse($collectedAt, 'Asia/Tokyo'),
         );
     }
 }
