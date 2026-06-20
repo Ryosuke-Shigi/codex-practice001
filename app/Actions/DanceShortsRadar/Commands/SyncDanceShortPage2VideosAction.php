@@ -8,6 +8,7 @@ use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -36,8 +37,8 @@ class SyncDanceShortPage2VideosAction
          * page2 同期は expanded かつ max_search_pages >= 2 の keyword だけを検索します。
          * page1 は nextPageToken を得るために読むだけで、保存候補IDとしては page2 以降だけを集めます。
          */
-        $executedAt = CarbonImmutable::now();
-        $collectedAt = $executedAt->utc();
+        $executedAt = CarbonImmutable::now(ApplicationTimeZone::name());
+        $collectedAt = $executedAt;
         $regions = $this->searchTargetRepository->activeRegions();
 
         $searchedKeywordCount = 0;
