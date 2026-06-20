@@ -7,6 +7,7 @@ use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
+use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
 use App\Models\DanceShortVideo;
@@ -15,6 +16,7 @@ use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -76,6 +78,7 @@ class SyncDanceShortVideosActionTest extends TestCase
 
         $youtubeRepository = new FakeDanceShortYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
 
@@ -126,6 +129,10 @@ class SyncDanceShortVideosActionTest extends TestCase
             'comment_count' => 12,
             'collected_at' => '2026-05-31 12:00:00',
         ]);
+        Event::assertDispatched(
+            DanceShortRankingReadModelRefreshRequested::class,
+            fn (DanceShortRankingReadModelRefreshRequested $event): bool => $event->source === 'video_search_completed',
+        );
     }
 
     public function test_execute_skips_snapshot_for_inactive_video_and_runs_cleanup_after_sync(): void

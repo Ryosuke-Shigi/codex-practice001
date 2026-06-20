@@ -4,6 +4,7 @@ namespace App\Strategies\DanceShortsRadar\DisplayCards;
 
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardWindowConditionDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardWindowDTO;
+use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 
 /**
  * ALL タブ用の通常ランキング表示カード Strategy です。
@@ -20,7 +21,7 @@ final readonly class AllRankingDisplayCardStrategy extends RegionRankingDisplayC
     ): DanceShortDisplayCardWindowDTO {
         return $this->rankingWindow(
             condition: $condition,
-            regionCodes: $condition->activeRegionCodes,
+            scope: DanceShortVideoRankingPageInputDTO::ALL_TAB_CODE,
             emptyMessage: count($condition->activeRegionCodes) > 0
                 ? '表示できる通常ランキング候補はまだありません。'
                 : '有効な地域がまだ登録されていません。',

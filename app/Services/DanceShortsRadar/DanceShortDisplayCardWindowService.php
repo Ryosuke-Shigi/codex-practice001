@@ -173,6 +173,18 @@ class DanceShortDisplayCardWindowService
         return $hasVisibleCards ? $startRank + $activeIndex : null;
     }
 
+    public function startRankAroundSelectedRank(
+        int $selectedRank,
+        int $totalItemCount,
+        int $windowSize,
+    ): int {
+        return $this->centeredStartRank(
+            selectedRank: $selectedRank,
+            totalItemCount: $totalItemCount,
+            windowSize: $windowSize,
+        );
+    }
+
     private function centeredStartRank(int $selectedRank, int $totalItemCount, int $windowSize): int
     {
         $maxStartRank = max(1, $totalItemCount - $windowSize + 1);

@@ -8,6 +8,7 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoDetailFetchResultDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
+use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoRegion;
@@ -16,6 +17,7 @@ use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoDetailFetchResultRepositoryInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -58,6 +60,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
@@ -76,6 +79,10 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
         $this->assertSame(1, DanceShortVideoSnapshot::query()
             ->where('video_id', $archived->getKey())
             ->count());
+        Event::assertDispatched(
+            DanceShortRankingReadModelRefreshRequested::class,
+            fn (DanceShortRankingReadModelRefreshRequested $event): bool => $event->source === 'snapshots_saved',
+        );
     }
 
     public function test_execute_updates_existing_snapshot_in_same_jst_12_hour_period_and_creates_when_missing(): void

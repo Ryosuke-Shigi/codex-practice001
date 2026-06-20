@@ -3,6 +3,7 @@
 namespace App\Actions\DanceShortsRadar\Commands;
 
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
+use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 use App\Factories\DanceShortsRadar\DanceShortSearchConditionDTOFactory;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
@@ -79,7 +80,7 @@ class SyncDanceShortVideosAction
 
         $cleanupResult = $this->cleanupAction->execute($executedAt);
 
-        return new DanceShortVideoSyncResultDTO(
+        $result = new DanceShortVideoSyncResultDTO(
             executedAt: $executedAt,
             searchedRegionCount: $regions->count(),
             searchedKeywordCount: $searchedKeywordCount,
@@ -96,6 +97,10 @@ class SyncDanceShortVideosAction
             cleanedUpSnapshotCount: $cleanupResult->deletedSnapshotCount,
             failedCount: $failedCount,
         );
+
+        event(new DanceShortRankingReadModelRefreshRequested('video_search_completed', $executedAt));
+
+        return $result;
     }
 
     /**

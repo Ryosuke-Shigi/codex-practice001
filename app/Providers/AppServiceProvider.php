@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
+use App\Listeners\DanceShortsRadar\RequestDanceShortRankingReadModelRebuildListener;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepository;
 use App\Repositories\ApiCatalog\ApiCatalogCacheRepositoryInterface;
 use App\Repositories\ApiCatalog\ApiCatalogNoteRepository;
@@ -20,6 +22,8 @@ use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoAnalysisReposit
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoAnalysisRepositoryInterface;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepository;
 use App\Repositories\DanceShortsAnalyzer\DanceShortsAnalyzerVideoRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepository;
+use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepository;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoCategoryRepository;
@@ -45,6 +49,7 @@ use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use App\Repositories\Earthquake\JmaEarthquakeDetailXmlRepository;
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -94,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DanceShortVideoRepositoryInterface::class, DanceShortVideoRepository::class);
         $this->app->bind(DanceShortVideoRegionRepositoryInterface::class, DanceShortVideoRegionRepository::class);
         $this->app->bind(DanceShortVideoSnapshotRepositoryInterface::class, DanceShortVideoSnapshotRepository::class);
+        $this->app->bind(DanceShortRankingReadModelRepositoryInterface::class, DanceShortRankingReadModelRepository::class);
         $this->app->bind(YouTubeVideoApiRepositoryInterface::class, YouTubeVideoApiRepository::class);
         $this->app->bind(YouTubeVideoDetailFetchResultRepositoryInterface::class, YouTubeVideoApiRepository::class);
 
@@ -114,6 +120,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Event::listen(
+            DanceShortRankingReadModelRefreshRequested::class,
+            RequestDanceShortRankingReadModelRebuildListener::class,
+        );
     }
 }
