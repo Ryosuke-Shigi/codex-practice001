@@ -7,6 +7,7 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingItemDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingListDTO;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 
 class GetDanceShortVideoRankingCandidatesAction
@@ -18,23 +19,9 @@ class GetDanceShortVideoRankingCandidatesAction
 
     public function execute(DanceShortVideoRankingConditionDTO $condition): DanceShortVideoRankingListDTO
     {
-        /*
-         * この Query Action は保存済み snapshot からランキング用 DTO を作るだけです。
-         * YouTube API 呼び出し、Controller / Inertia props 生成、上昇候補判定は扱いません。
-         */
         $comparisonDays = $this->snapshotMetricService->normalizeComparisonDays($condition->comparisonDays);
         $sortKey = $this->snapshotMetricService->normalizeSortKey($condition->sortKey);
         $limit = max(1, $condition->limit);
-
-        /*
-         * Repository から取得する current は、指定 region の active 動画に紐づく最新 snapshot です。
-         * Action は current 候補を受け取り、comparisonDays から previous cutoff を計算して、
-         * 比較に必要なもう一方の snapshot を同じ Repository に取りに行きます。
-         *
-         * 表示件数 limit は、ここではまだ使いません。
-         * current snapshot の新しさや Repository の返却順はランキング指標ではないため、
-         * 全候補に対して previous を引き、metric を計算してから最後に絞り込みます。
-         */
         $records = [];
         $currentSnapshots = $this->snapshotRepository->latestRankingSnapshotsByRegionCode(
             regionCode: $condition->regionCode,
@@ -50,15 +37,6 @@ class GetDanceShortVideoRankingCandidatesAction
             );
 
             if ($previousSnapshot === null) {
-                /*
-                 * 本番投入直後やローカル確認直後は、snapshot が同日・同時間帯にしか存在しないことがあります。
-                 * その状態で comparisonDays 以前の snapshot だけを要求すると、DB には current / previous が
-                 * あるのに通常ランキングが 0 件になり、「本データ接続できていない」ように見えます。
-                 *
-                 * ここではまず comparisonDays どおりの比較元を探し、見つからない場合だけ直前 snapshot へ
-                 * fallback します。直前 snapshot がある動画は比較 metric を算出できるため、
-                 * current 1件だけの fallback 候補より上位グループとして扱います。
-                 */
                 $previousSnapshot = $this->snapshotRepository->latestSnapshotBefore(
                     videoId: (int) $currentSnapshot->video_id,
                     regionId: (int) $currentSnapshot->region_id,
@@ -67,13 +45,6 @@ class GetDanceShortVideoRankingCandidatesAction
                 );
             }
 
-            /*
-             * 差分や伸び率は Service の責務です。
-             * Action は current / previous の Model を集め、Service の計算結果を DTO へ詰める進行表に留めます。
-             * previous が最後まで見つからない current 1件だけの動画も、取得開始直後の通常ランキングを
-             * 空画面にしないため fallback 候補として DTO 化します。その場合、Service には null を渡し、
-             * viewCountDelta / viewGrowthRate / viewsPerHour を null のまま保ちます。
-             */
             $metrics = $this->snapshotMetricService->calculateSnapshotMetrics(
                 previousViewCount: $previousSnapshot?->view_count,
                 previousCollectedAt: $previousSnapshot?->collected_at,
@@ -83,11 +54,6 @@ class GetDanceShortVideoRankingCandidatesAction
             $video = $currentSnapshot->video;
             $region = $currentSnapshot->region;
 
-            /*
-             * DTO は表示用 camelCase の値を運ぶ境界です。
-             * DB カラム名や Eloquent Model をこの先の Responder / React 接続工程へ漏らさないよう、
-             * Query Action の出口で必要な値だけを DTO に固定します。
-             */
             $records[] = [
                 'item' => new DanceShortVideoRankingItemDTO(
                     videoId: (int) $video->getKey(),
@@ -111,32 +77,16 @@ class GetDanceShortVideoRankingCandidatesAction
                     comparisonDays: $comparisonDays,
                     hasPreviousSnapshot: $previousSnapshot !== null,
                 ),
-                /*
-                 * current 1件だけの fallback 候補同士は metric で比較できないため、
-                 * Repository と同じ collected_at / id の新しい順で並べます。
-                 * snapshot id は表示 props へは出さず、Action 内の安定 sort 用メタデータに留めます。
-                 */
                 'currentSnapshotId' => (int) $currentSnapshot->getKey(),
             ];
         }
 
-        /*
-         * limit はランキング sort 後にだけ適用します。
-         * sort 前に絞ると、Repository の collected_at / id 順に左右され、
-         * 本来は view_count_delta などで上位に来る動画が候補から消えるためです。
-         */
         return new DanceShortVideoRankingListDTO(
             array_slice($this->sortedRecords($records, $sortKey), 0, $limit),
         );
     }
 
     /**
-     * displayCardField の window 取得用入口です。
-     *
-     * 初期表示と先読み API の Strategy はこのメソッドを使い、DB 側で startRank から
-     * windowSize + 1 件だけ取得した row を DTO へ詰め替えます。既存 execute() は後方互換の
-     * 候補一覧 Query として残し、本画面の主表示はこの window 入口へ寄せます。
-     *
      * @param  array<int, string>  $regionCodes
      */
     public function executeWindowForRegionCodes(
@@ -162,12 +112,6 @@ class GetDanceShortVideoRankingCandidatesAction
     }
 
     /**
-     * displayCardField の選択カード基準 window 用入口です。
-     *
-     * Strategy はこのメソッドでランキング全体順の DTO を受け取り、選択カード前後の最大5件を
-     * DanceShortDisplayCardWindowService に切り出させます。Action は DTO 化だけを担当し、
-     * どのカードを中央に置くかは判断しません。
-     *
      * @param  array<int, string>  $regionCodes
      */
     public function executeForRegionCodes(
@@ -194,11 +138,6 @@ class GetDanceShortVideoRankingCandidatesAction
      */
     public function sortedItems(array $items, string $sortKey): array
     {
-        /*
-         * 既存の一覧 Query 利用側が複数 region の RankingItemDTO を集約するときも、
-         * 地域別と同じ ranking sort を使えるよう公開しています。
-         * ここでも metric の再計算は行わず、すでに DTO に入っている値だけを比較します。
-         */
         $records = array_map(
             fn (DanceShortVideoRankingItemDTO $item): array => [
                 'item' => $item,
@@ -216,11 +155,6 @@ class GetDanceShortVideoRankingCandidatesAction
      */
     private function sortedRecords(array $records, string $sortKey): array
     {
-        /*
-         * 並び順の最終適用は Query Action で行います。
-         * Repository は DB 取得条件、Service は比較値計算に閉じ、ランキング表示としての順序は
-         * ListDTO を返す直前のここへ集約します。
-         */
         usort($records, function (
             array $firstRecord,
             array $secondRecord,
@@ -228,11 +162,6 @@ class GetDanceShortVideoRankingCandidatesAction
             $first = $firstRecord['item'];
             $second = $secondRecord['item'];
 
-            /*
-             * 比較可能な通常ランキング候補を、current 1件だけの fallback 候補より優先します。
-             * fallback 候補の metric は null のため、単純な null 末尾 sort だけでは
-             * current_view_count などの sortKey で混ざる可能性があります。
-             */
             if ($first->hasPreviousSnapshot !== $second->hasPreviousSnapshot) {
                 return $first->hasPreviousSnapshot ? -1 : 1;
             }
@@ -246,11 +175,6 @@ class GetDanceShortVideoRankingCandidatesAction
             $firstValue = $this->sortValue($first, $sortKey);
             $secondValue = $this->sortValue($second, $sortKey);
 
-            /*
-             * growthRate / viewsPerHour は計算不能な場合に null になります。
-             * null を 0 扱いすると「実際に 0」なのか「算出不能」なのかが曖昧になるため、
-             * 降順ソートでは null を末尾に寄せます。
-             */
             if ($firstValue === null && $secondValue !== null) {
                 return 1;
             }
@@ -283,6 +207,8 @@ class GetDanceShortVideoRankingCandidatesAction
 
     private function rankingItemFromWindowRow(object $row, int $comparisonDays): DanceShortVideoRankingItemDTO
     {
+        $timezone = ApplicationTimeZone::name();
+
         return new DanceShortVideoRankingItemDTO(
             videoId: (int) $row->video_id,
             youtubeVideoId: (string) $row->youtube_video_id,
@@ -290,7 +216,7 @@ class GetDanceShortVideoRankingCandidatesAction
             channelTitle: $row->channel_title === null ? null : (string) $row->channel_title,
             thumbnailUrl: $row->thumbnail_url === null ? null : (string) $row->thumbnail_url,
             url: $row->url === null ? null : (string) $row->url,
-            publishedAt: $row->published_at === null ? null : CarbonImmutable::parse((string) $row->published_at, 'UTC'),
+            publishedAt: $row->published_at === null ? null : CarbonImmutable::parse((string) $row->published_at, $timezone),
             regionCode: (string) $row->region_code,
             regionName: (string) $row->region_name,
             currentViewCount: (int) $row->current_view_count,
@@ -300,8 +226,8 @@ class GetDanceShortVideoRankingCandidatesAction
             viewsPerHour: $row->views_per_hour === null ? null : (float) $row->views_per_hour,
             likeCount: $row->like_count === null ? null : (int) $row->like_count,
             commentCount: $row->comment_count === null ? null : (int) $row->comment_count,
-            currentCollectedAt: CarbonImmutable::parse((string) $row->current_collected_at, 'UTC'),
-            previousCollectedAt: $row->previous_collected_at === null ? null : CarbonImmutable::parse((string) $row->previous_collected_at, 'UTC'),
+            currentCollectedAt: CarbonImmutable::parse((string) $row->current_collected_at, $timezone),
+            previousCollectedAt: $row->previous_collected_at === null ? null : CarbonImmutable::parse((string) $row->previous_collected_at, $timezone),
             comparisonDays: $comparisonDays,
             hasPreviousSnapshot: $row->previous_snapshot_id !== null,
         );
