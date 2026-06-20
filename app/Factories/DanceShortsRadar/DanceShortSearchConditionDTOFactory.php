@@ -5,6 +5,7 @@ namespace App\Factories\DanceShortsRadar;
 use App\DTO\DanceShortsRadar\Sync\DanceShortSearchConditionDTO;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortSearchKeyword;
+use App\Support\ApplicationTimeZone;
 use Carbon\CarbonImmutable;
 
 /**
@@ -32,7 +33,9 @@ class DanceShortSearchConditionDTOFactory
             regionCode: $region->code,
             relevanceLanguage: $this->relevanceLanguage($region->code),
             maxResults: $this->discoverMaxResults(),
-            publishedAfter: $executedAt->subDays($this->publishedAfterDays())->utc(),
+            publishedAfter: $executedAt
+                ->setTimezone(ApplicationTimeZone::name())
+                ->subDays($this->publishedAfterDays()),
             videoDuration: 'short',
         );
     }
