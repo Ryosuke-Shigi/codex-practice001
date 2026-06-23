@@ -17,8 +17,8 @@
 ### 全体ルール・禁止事項
 
 - `AGENTS.md`
-- `docs/ai/index.md`
-- `docs/ai/workflows/md-router.md`
+- `docs/index.md`
+- `docs/context-management.md`
 - 共通方針docs
 
 ### コマンド実行・Git境界
@@ -93,18 +93,19 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 
 | 文書 | 役割 |
 |---|---|
-| `AGENTS.md` | AI・人間が作業時に守る入口ルール |
-| `docs/ai/index.md` | AI作業用MDの索引 |
+| `AGENTS.md` | 作業時に守る入口ルール |
 | `docs/index.md` | docsの索引、正本の役割分担、用語 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとに読むdocs、読まないdocs、停止条件、作業後の保守ルール |
 
-## MD作業ルーター
+## 作業フロー・参照範囲ルーター
 
-MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
+作業フロー・参照範囲ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
 
 詳細な作業種別別ルーティング、PRレビュー強度との接続、停止条件、作業後の保守ルールは `docs/ai/workflows/md-router.md` を正本とします。
 
 作業前に宣言する項目は `docs/ai/workflows/md-router.md` を確認してください。
+
+`docs/ai/` と `docs/ai/workflows/` は既存配置名です。作業フロー・責務境界・停止条件のdocsとして扱い、将来的に `docs/workflows/` または `docs/process/` へ寄せるかは別PRで判断します。
 
 ## 作業内容に応じて確認する文書
 

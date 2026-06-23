@@ -16,7 +16,7 @@
 
 - リポジトリ全体を毎回読み込まない
 - すべてのdocsを毎回読み込まない
-- `AGENTS.md`、`docs/ai/index.md`、`docs/index.md` を入口にする
+- `AGENTS.md`、`docs/index.md` を入口にし、必要に応じて `docs/ai/index.md` で作業フローと責務境界の参照先を確認する
 - 作業開始時は `docs/ai/workflows/md-router.md` で作業種別ごとの読むdocsを固定する
 - 必要な共通docsとfeature docsだけを読む
 - 検索してから必要なファイルと範囲だけを開く
@@ -71,7 +71,7 @@ MDルーターは毎回必ず更新するものではない。必要がある場
 
 検索の原則:
 
-1. PR本文、AGENTS.md、`docs/ai/index.md`、`docs/index.md` を確認する
+1. PR本文、AGENTS.md、`docs/index.md` を確認する
 2. 作業種別と対象機能を特定する
 3. `docs/ai/workflows/md-router.md` のMDルーターで参照範囲を決める
 4. 読むdocs / 読まないdocs / 編集禁止ファイル / 除外対象 / Git境界 / 停止条件を宣言する
@@ -94,11 +94,10 @@ MDルーターは毎回必ず更新するものではない。必要がある場
 
 ```text
 AGENTS.md
-docs/ai/index.md
 docs/index.md
 ```
 
-`AGENTS.md` は作業ルールの入口、`docs/ai/index.md` はAI作業用MDの索引、`docs/index.md` は用語・文書配置・用途別正本の入口です。
+`AGENTS.md` は作業ルールの入口、`docs/index.md` は用語・文書配置・用途別正本の入口です。必要に応じて `docs/ai/index.md` から作業フロー、責務境界、停止条件の参照先を確認します。
 
 ### 作業内容に応じて確認
 

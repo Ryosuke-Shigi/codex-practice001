@@ -1,13 +1,13 @@
-# AI Docs Index
+# Work Rules Index
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
 
 ## 目的
 
-このファイルは、アプリ側のAI作業用MD索引です。
+このファイルは、アプリ側の作業フロー、責務境界、停止条件への補助索引です。
 
-詳細ルール本文はここに集約せず、作業種別ごとの参照先だけを示します。
+詳細ルール本文はここに集約せず、作業種別ごとの参照先だけを示します。`docs/ai/` は既存配置名であり、個別ツールの操作メモや一時作業条件の格納先ではありません。
 
 ## 参照順
 
@@ -23,7 +23,7 @@
 
 | Path | 役割 |
 |---|---|
-| [rules/agent-working-policy.md](rules/agent-working-policy.md) | AIと人間の役割、Git / PR、作業停止条件、完了確認 |
+| [rules/agent-working-policy.md](rules/agent-working-policy.md) | 作業条件、Git / PR、作業停止条件、完了確認 |
 | [rules/responsibility-boundaries.md](rules/responsibility-boundaries.md) | ADR Pattern、用語、レイヤー責務、DTO禁止事項 |
 | [../architecture.md](../architecture.md) | 実装レイヤー責務の詳細 |
 | [../coding-standards.md](../coding-standards.md) | PHP / TypeScript / React / CSS の実装作法 |
@@ -54,8 +54,8 @@
 
 ## 配置ルール
 
-- 新しい共通AIルールは `rules/` に置く。
+- 新しい共通作業ルールは `rules/` に置く。
 - 新しい作業フロー別ルールは `workflows/` に置く。
-- 新しいプロジェクト固有のAI向け索引は `projects/` に置く。既存feature docsを無理に移動しない。
+- 新しいプロジェクト固有の作業索引は `projects/` に置く。既存feature docsを無理に移動しない。
 - 新しい失敗改善ログ・再発防止ログは `logs/` に置く。
 - 分類に迷うMDは移動せず、この索引から参照するだけにする。
