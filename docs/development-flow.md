@@ -194,6 +194,40 @@ PROTOTYPE段階では、画面間接続、props、fixture、操作感の確認�
 
 ADR Pattern / レイヤードに沿った本格的なディレクトリ作成は、PRODUCT実装段階で行います。
 
+## docs成長ルール
+
+docsは実装と分離した古い説明書ではなく、使っていくうちに成長する保守資産として扱います。機能を追加、変更、削除した場合は、コードだけでなくdocs、ガイド、テスト、コメント、型も必要に応じて更新します。
+
+### 追加時
+
+追加時は、次を確認します。
+
+- 新しい責務、入力、出力、状態、導線がどこに置かれるか
+- バリデーション、業務判断、表示整形、UI状態の境界が既存docsと矛盾しないか
+- feature docs、README、操作ガイド、Project Hub説明へ反映が必要か
+- テストで固定すべきService判断、Request validation、DTO境界、Responder props、UI状態があるか
+- PHPDoc、JSDoc、TypeScript型で意図と変更時の注意を回収できるか
+
+### 変更時
+
+変更時は、次を確認します。
+
+- 既存docsと現在仕様が矛盾していないか
+- 既存テストが古い仕様を固定していないか
+- コメント、PHPDoc、JSDoc、TypeScript型が古くなっていないか
+- フロントエンドとバックエンドの責務分担が崩れていないか
+- 変更理由をコード、テスト、docsから回収できるか
+
+### 削除時
+
+削除時は、次を確認します。
+
+- Route、Controller、Request、Action、Service、Repository、DTO、Responderへの参照
+- Page、Feature Component、Common Component、Hook、Type、Utilityへの参照
+- Test、feature docs、README、ガイド、Project Hub導線への参照
+- unused import、command、scheduler、queue、configへの参照
+- 削除した仕様を参照する古いコメントや型が残っていないか
+
 ## Product実装の基本手順
 
 ```text
@@ -223,7 +257,7 @@ ADR Pattern / レイヤード構成で実装
     ↓
 Pull Request・CI・差分・責務レビュー
     ↓
-理解再起動用まとめへ圧縮
+必要なdocs、コメント、型、テストを更新し、次回読む場所を明確にする
 ```
 
 作業中に対象ファイル、入口となる Route / Action / Component / Command、責務境界、確認コマンドを特定できない場合は、探索範囲を広げて試行錯誤しません。docs とコード、feature docs と共通docs、指示内容とPR差分に矛盾がある場合も、代替実装へ進まず停止して人間の判断を待ちます。
@@ -260,7 +294,7 @@ PR確認時のレビュー強度は `docs/operations/pr-review-strength.md` に�
 
 ## ハーネスエンジニアリング
 
-AIへ自由に実装させるのではなく、AIが速く動いても壊れにくく、間違いを検知しやすい環境を作ります。
+作業者や支援ツールが自由に変更を広げるのではなく、速く動いても壊れにくく、間違いを検知しやすい環境を作ります。
 
 主なガードレール:
 
@@ -275,7 +309,7 @@ AIへ自由に実装させるのではなく、AIが速く動いても壊れに�
 - テストによる実行可能な仕様
 - format check / TypeScript / TSX変更時に必要なtypecheck / buildによる機械確認
 - Pull RequestとCIによる差分検証
-- 理解再起動用まとめによる次回作業の入口固定
+- docs、コメント、型、テストによる次回作業の入口固定
 - 人間による完成判定・merge・本番反映判断
 
 ## 関連文書

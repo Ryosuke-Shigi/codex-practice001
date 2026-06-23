@@ -2,13 +2,13 @@
 
 ## 目的
 
-MDルーターは、AI駆動開発において、作業開始時に読むdocsを固定するためのルールである。
+MDルーターは、このプロジェクトのdocs運用において、作業開始時に読むdocsを固定するためのルールである。
 
-AIに全docsを読ませるのではなく、作業種別ごとに読むdocsを絞る。
+作業者が全docsを読む前提にせず、作業種別ごとに読むdocsを絞る。
 
 目的は以下。
 
-* AIの自己判断による過剰探索を防ぐ
+* 自己判断による過剰探索を防ぐ
 * 無関係docsの読み込みを防ぐ
 * 古いdocsと現在コードの矛盾を検知しやすくする
 * 作業種別ごとに必要な文脈だけを読む
@@ -22,7 +22,7 @@ MDルーターは、docsを軽く扱うためのものではない。
 
 ## 基本原則
 
-作業開始時、AIは最初に作業種別を判定する。
+作業開始時は、最初に作業種別を判定する。
 
 作業種別が不明な場合は、推測で読み進めない。
 
@@ -31,7 +31,6 @@ MDルーターは、docsを軽く扱うためのものではない。
 全作業で最初に確認するもの。
 
 * AGENTS.md
-* docs/ai/index.md
 * docs/index.md
 * docs/ai/workflows/md-router.md
 
@@ -62,13 +61,12 @@ MDルーターは、docsを軽く扱うためのものではない。
 原則として以下の順番で読む。
 
 1. AGENTS.md
-2. docs/ai/index.md
-3. docs/index.md
-4. docs/ai/workflows/md-router.md
-5. 作業種別ごとの共通docs
-6. 対象feature docs
-7. 対象Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test
-8. 依存が判明した場合のみ追加ファイル
+2. docs/index.md
+3. docs/ai/workflows/md-router.md
+4. 作業種別ごとの共通docs
+5. 対象feature docs
+6. 対象Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test
+7. 依存が判明した場合のみ追加ファイル
 
 最初からリポジトリ全体を探索しない。
 
@@ -92,17 +90,11 @@ Git作業を含む場合は、通常の共通docs確認に加えて以下の順�
 1. AGENTS.md を読む
 2. docs/index.md を読む
 3. MDルーターで対象repo / 対象階層 / 作業種別を固定する
-4. 作業対象repo直下の `.local-rules/git-operation-rules.local.md` の有無を確認する
-5. 存在する場合は読む
-6. 存在しない場合は通常ルールで続行する
+4. コマンド台帳が存在する場合は読む
+5. 対象repoの remote / branch / status / diff を確認する
+6. commit / push / PR の前後で差分と作業対象repoを再確認する
 
-確認コマンド例:
-
-```bash
-test -f .local-rules/git-operation-rules.local.md && sed -n '1,260p' .local-rules/git-operation-rules.local.md
-```
-
-`.local-rules/git-operation-rules.local.md` は開発環境ごとのローカル専用MDであり、共有docsの正本ではない。Git作業以外で無差別に読ませない。
+ローカル環境固有の再発防止メモや確認メモは、共有docsの正本ではない。表docsから具体的な中身やファイル名を案内しない。
 
 ## 外側環境repoと内側アプリrepoの境界
 
@@ -174,7 +166,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
-| AI駆動開発方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
+| 作業方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
 | Feature移植マニフェスト作成 | docs/feature-module-portability.md / 対象feature docs / docs/index.md / docs/architecture.md | 必要に応じて docs/testing.md / docs/frontend.md | 対象Feature配下 / routes/web.php / routes/console.php / config / providers / migrations / seeders / tests / frontend Pages・Components | 無関係Feature / 移植しない段階のコード |
 | Feature移植先実装 | docs/feature-module-portability.md / 移植元feature docs / 移植先repoのAGENTS・INDEX・ROUTER | 移植先repoの architecture / testing docs | 移植元Featureの移植対象 / 移植先Laravel構成 / 移植先route・config・provider・migration・seeder・tests | 移植対象外Feature / 移植モード外のLab・MOCK・PROTOTYPE・IDEA BOARD |
@@ -196,7 +188,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Docker修正 | コマンド台帳が存在する場合は読む / 存在する運用docs | Lightsail / Docker運用docsが存在する場合は読む | docker-compose.yml / docker / nginx / queue / scheduler | Laravel feature全体 |
 | 本番反映手順修正 | コマンド台帳が存在する場合は読む / 存在する運用docs | Lightsail / Docker / Git運用docsが存在する場合は読む | docker-compose.yml / deploy手順 / build手順 | 無関係featureコード |
 | GitHub Actions / CI修正 | コマンド台帳が存在する場合は読む / docs/testing.md | CI関連docsが存在する場合は読む | .github/workflows / composer / package scripts | 無関係featureコード |
-| Git作業 / ローカルGit状態確認 | AGENTS.md / docs/index.md / docs/ai/workflows/md-router.md / コマンド台帳が存在する場合は読む | 作業対象repo直下に `.local-rules/git-operation-rules.local.md` が存在する場合だけ読む | branch / working tree / diff / commit・push・PR前後のGit状態 | Git作業に関係しないfeature docs / Laravel app全体 / Docker構成 |
+| Git作業 / ローカルGit状態確認 | AGENTS.md / docs/index.md / docs/ai/workflows/md-router.md / コマンド台帳が存在する場合は読む | なし | branch / working tree / diff / commit・push・PR前後のGit状態 | Git作業に関係しないfeature docs / Laravel app全体 / Docker構成 |
 | PRレビュー | docs/ai/workflows/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
 | コメント / PHPDoc / JSDoc整備 | docs/architecture.md / 対象言語docsが存在する場合は読む | 対象feature docs | 対象ファイルのみ | 仕様変更につながる周辺修正 |
 | 失敗改善ログ作成 | docs/context-management.md / docs/development-flow.md | 対象PR / 対象docs | 必要な差分のみ | 無関係コード全体 |
@@ -378,7 +370,7 @@ Migration、DB、認証認可、Docker、本番反映、Queue、Scheduler、CI�
 
 ## docsとコードが矛盾した場合
 
-コード、テスト、共通docs、feature docsが矛盾している場合、AIは推測で統合しない。
+コード、テスト、共通docs、feature docsが矛盾している場合、作業者は推測で統合しない。
 
 以下を報告して停止する。
 
@@ -398,7 +390,7 @@ feature docsは共通方針を上書きできない。
 
 ## 停止条件
 
-以下の場合、AIは実装や修正へ進まず停止する。
+以下の場合、実装や修正へ進まず停止する。
 
 * 作業種別を判定できない
 * 読むdocsを固定できない
@@ -428,7 +420,7 @@ feature docsは共通方針を上書きできない。
 
 ## docsが古い可能性がある場合
 
-docsが古い可能性がある場合でも、AIは自己判断でdocsを書き換えてから実装しない。
+docsが古い可能性がある場合でも、自己判断でdocsを書き換えてから実装しない。
 
 先に以下を報告する。
 
@@ -481,7 +473,7 @@ MDルーターは一度作って終わりではない。
 * 新しいfeature docsを作成した
 * 本番運用、Docker、Queue、Scheduler、CIなどの新しい運用手順を追加した
 * 既存の対応表では読むdocsを固定できなかった
-* 作業中にAIが過剰探索した
+* 作業中に過剰探索した
 * 作業中に必要docsを読み漏らした
 
 ### 修正する場合
@@ -508,7 +500,7 @@ MDルーターは一度作って終わりではない。
 * 現在の開発フローと合わない参照が残っている
 * 別docsへ統合済みの内容を重複して参照している
 
-古いルーティングを残すと、AIが古いdocsを信じて迷走するため、不要な参照は削除する。
+古いルーティングを残すと、古いdocsを信じて迷走するため、不要な参照は削除する。
 
 ## 作業後チェック
 
@@ -530,22 +522,22 @@ MDルーターは一度作って終わりではない。
 
 毎回チェックし、必要がある場合だけ追加・削除・修正する。
 
-不要な更新を繰り返すと、MDルーター自体が肥大化し、逆にAIの迷走原因になる。
+不要な更新を繰り返すと、MDルーター自体が肥大化し、逆に迷走原因になる。
 
 ## 最終原則
 
-MDルーターは、AIの探索範囲を固定するための運用docsである。
+MDルーターは、作業者の探索範囲を固定するための運用docsである。
 
 開発フロー、docs構成、feature docs、運用手順が変わった場合、MDルーターも更新する。
 
-MDルーターが古くなった場合、AIは古いルーティングを信じて作業してしまう。
+MDルーターが古くなった場合、作業者は古いルーティングを信じて作業してしまう。
 
 そのため、作業ごとにMDルーターの追加・削除・修正の必要性を確認する。
 
-MDルーターは、AIの自由度を奪うためのものではない。
+MDルーターは、作業の自由度を奪うためのものではない。
 
-AIが迷わず力を使えるように、読む入口と読む範囲を固定するためのもの。
+迷わず力を使えるように、読む入口と読む範囲を固定するためのもの。
 
 人間が作業種別と責務境界を握る。
 
-AIは固定された範囲の中で調査、実装、テスト、レビューを行う。
+作業者は固定された範囲の中で調査、実装、テスト、レビューを行う。

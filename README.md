@@ -6,17 +6,17 @@ Laravel 11 + Docker + Inertia + React + TypeScript で構築しているポー�
 
 ## このポートフォリオで証明していること
 
-このリポジトリは、単にLaravelアプリを作るだけではなく、設計、テスト、Pull Request、CI、AI駆動開発の運用まで含めて、変更を安全に進める力を示すためのポートフォリオです。
+このリポジトリは、単にLaravelアプリを作るだけではなく、設計、テスト、Pull Request、CI、docs運用まで含めて、変更を安全に進める力を示すためのポートフォリオです。
 
 - Laravel 11 / Inertia / React / TypeScript による実装力
 - ADR Pattern とレイヤードアーキテクチャによる責務分離
 - Feature / Unit Test による仕様固定
 - Pull Request / CI / review による変更管理
-- ChatGPT / CodexApp を分担させるAI駆動開発
-- docs / MD Router / 指示用まとめによるAI作業の再現性
+- docs / tests / Pull Request による変更理由と責務境界の明文化
+- 理解再起動性を意識した設計・テスト・ドキュメント運用
 - [Feature Module移植ルール](docs/feature-module-portability.md) による別Laravelプロジェクトへの展開可能性
 
-AIの出力は完成品として扱わず、人間が仕様、責務境界、差分確認、完成判定、merge、本番反映判断を握ります。
+支援ツールの出力は完成品として扱わず、人間が仕様、責務境界、差分確認、完成判定、merge、本番反映判断を握ります。
 
 ## 最初に見る場所
 
@@ -24,10 +24,10 @@ AIの出力は完成品として扱わず、人間が仕様、責務境界、差
 |---|---|
 | [公開URL](https://ada-works.dev) | 実際の入口とProject Select |
 | [Projects](#projects) | 代表Featureと、それぞれが証明している設計要素 |
-| [AI Driven Development](#ai-driven-development) | ChatGPT / CodexApp / 人間の役割分担 |
+| [Development Discipline](#development-discipline) | 仕様、責務、テスト、レビューの進め方 |
 | [Architecture](#architecture) | ADR Pattern と各レイヤーの責務 |
 | [Testing](#testing) | Feature / Unit / React test で固定する仕様 |
-| [Documentation / Skills](#documentation--skills) | AI作業用docs、MD Router、作業ルール |
+| [Documentation](#documentation) | 作業用docs、文書ルーティング、作業ルール |
 
 代表Featureとして、[DanceShortsRadar](#danceshortsradar)、[Japan Quake Wave Map](#japan-quake-wave-map)、[API Discovery Hub](#api-discovery-hub) を見ると、外部API連携、保存・同期、ランキング、地図表示、Queue / Scheduler、責務分離、テスト固定の見え方を確認できます。
 
@@ -35,7 +35,7 @@ AIの出力は完成品として扱わず、人間が仕様、責務境界、差
 
 開発では IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階を分け、PRODUCT化ではUI契約・振る舞い・状態・導線を引き継ぎながら、Repository / Service / DTO / Responder / Test へ責務を分離します。
 
-詳細な開発フローは [Development Flow](docs/development-flow.md)、AI作業の役割境界は [Context Management](docs/context-management.md) を参照してください。
+詳細な開発フローは [Development Flow](docs/development-flow.md)、文脈管理と理解再起動性は [Context Management](docs/context-management.md) を参照してください。
 
 ## Projects
 
@@ -174,15 +174,15 @@ http://localhost:9001
 make app-clear
 ```
 
-## AI Driven Development
+## Development Discipline
 
-このプロジェクトでは、AIを開発の主体にせず、人間が目的・入力・出力・制約・責務境界・テスト観点・完成判定を決めます。
+このプロジェクトでは、目的・入力・出力・制約・責務境界・テスト観点・完成判定を先に明確にしてから変更します。
 
-- ChatGPT: 仕様整理、責務分離、指示用まとめ、テスト観点、PRレビュー観点
-- CodexApp: 渡された指示に従う対象コードの調査、実装・修正、差分確認、テスト追加・実行
-- 人間: 仕様確定、差分確認、完成判定、merge、本番反映判断
+- 仕様、責務境界、完成判定、merge、本番反映判断は人間が握る
+- 実装差分はテスト、Pull Request、CI、責務レビューを通して確認する
+- docs、型、コメント、テストを、後から目的と変更理由を回収するための保守資産として扱う
 
-AI出力は完成品扱いせず、テスト、Pull Request、CI、責務レビューを通して確認します。詳細な役割境界は [Context Management](docs/context-management.md) に従います。
+変更時の文脈管理と理解再起動性は [Context Management](docs/context-management.md) に従います。
 
 ## Architecture
 
@@ -228,7 +228,7 @@ Featureを別Laravelプロジェクトへ移植可能な単位として扱うた
 
 ## Testing
 
-テストは、AIや人間が壊してはいけない仕様と責務境界を固定する実行可能な仕様として扱います。
+テストは、開発者が壊してはいけない仕様と責務境界を固定する実行可能な仕様として扱います。
 
 主な対象:
 
@@ -275,14 +275,13 @@ Pull Request
 人間がmergeを判断
 ```
 
-## Documentation / Skills
+## Documentation
 
-READMEは外部向けの概要です。内部の設計・テスト・AI運用ルールは、用途別のMarkdownへ分離しています。
+READMEは外部向けの概要です。内部の設計・テスト・作業ルールは、用途別のMarkdownへ分離しています。
 
 - [AGENTS.md](AGENTS.md): 作業時に守る入口ルール
-- [AI Docs Index](docs/ai/index.md): AI作業用MDの索引
 - [Documentation Index](docs/index.md): 用途別の正本と参照先
-- [MD Router](docs/ai/workflows/md-router.md): 作業種別ごとの参照範囲と停止条件
+- [Workflow Docs](docs/ai/workflows/index.md): 作業種別ごとの参照範囲と停止条件
 - [Docker Command Registry](docs/operations/command-registry.md): Docker経由コマンドとGit境界
 - [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
 - [UI Development Flow](docs/ui-development-flow.md): MOCK / PROTOTYPE / PRODUCTのUI作成工程
@@ -298,4 +297,3 @@ READMEは外部向けの概要です。内部の設計・テスト・AI運用ル
 - [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
 - [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
 - [PR Summary Template](docs/templates/pr-summary.md): Pull Request本文のレビュー用まとめ
-- [No Alternative Implementation](skills/no-alternative-implementation/SKILL.md): 要件未達時の停止条件

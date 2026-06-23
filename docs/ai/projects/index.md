@@ -1,7 +1,7 @@
 # Project Docs
 
 - Status: active
-- Scope: project-specific AI docs index
+- Scope: project-specific docs index
 
 ## 役割
 
@@ -19,6 +19,6 @@
 
 ## 配置ルール
 
-- 新しいプロジェクト固有のAI向け索引や注意点は、この配下に追加する。
+- 新しいプロジェクト固有の作業索引や注意点は、この配下に追加する。
 - 既存feature docsの本文は、分類に迷う場合は移動しない。
 - 機能固有仕様の正本は、引き続き `../../features/` の該当MDと成功テストで確認する。

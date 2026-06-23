@@ -1,11 +1,13 @@
 # Workflow Docs
 
 - Status: active
-- Scope: AI workflow docs index
+- Scope: workflow docs index
 
 ## 役割
 
 このファイルは、`docs/ai/workflows/` 配下の作業フロー別ルールを示す小さな索引です。
+
+`docs/ai/workflows/` は既存配置名です。作業フローと停止条件のdocsとして扱い、配置名を `docs/workflows/` または `docs/process/` へ寄せるかは別PRで判断します。
 
 詳細本文は各ワークフローMD、または移動保留中の既存docsに置きます。
 

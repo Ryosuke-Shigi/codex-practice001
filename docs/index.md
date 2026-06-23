@@ -17,19 +17,16 @@
 ### 全体ルール・禁止事項
 
 - `AGENTS.md`
-- `docs/ai/index.md`
-- `docs/ai/workflows/md-router.md`
+- `docs/index.md`
+- `docs/context-management.md`
 - 共通方針docs
 
 ### コマンド実行・Git境界
 
 - `docs/operations/command-registry.md`
 
-ローカル構成では外側Docker repoと `src/` 内アプリrepoが別Git管理のため、作業対象に応じたGit境界の確認は `docs/operations/command-registry.md` を正本とします。
+ローカル構成では外側Docker repoと `src/` 内アプリrepoが別Git管理のため、作業対象に応じたGit境界の確認は `docs/operations/command-registry.md` を正本とします。ローカル専用メモはGit管理docs体系に含めません。
 
-Git作業時の補助ルールとして、作業対象repo直下に `.local-rules/git-operation-rules.local.md` が存在する場合は読みます。
-
-このファイルは開発環境ごとのローカル専用MDであり、共有docsの正本ではありません。存在しない場合は、通常のdocs参照ルールで続行します。
 
 ### PR確認・レビュー強度
 
@@ -52,11 +49,13 @@ feature docsは機能固有の意図・制約を記録し、現在の実装挙�
 
 - `README.md`
 
-### 作業経緯・理解回収
+### 理解再起動
 
-- Notion
-- GPT情報源
-- 理解再起動用まとめ
+- `docs/context-management.md`
+- `docs/architecture.md`
+- `docs/testing.md`
+- 該当する `docs/features/`
+- 現在のコードと成功しているテスト
 
 コードが共通方針に違反していても、コードが存在するという理由だけで正しい設計とは判断しません。
 
@@ -94,18 +93,19 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 
 | 文書 | 役割 |
 |---|---|
-| `AGENTS.md` | AI・人間が作業時に守る入口ルール |
-| `docs/ai/index.md` | AI作業用MDの索引 |
+| `AGENTS.md` | 作業時に守る入口ルール |
 | `docs/index.md` | docsの索引、正本の役割分担、用語 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとに読むdocs、読まないdocs、停止条件、作業後の保守ルール |
 
-## MD作業ルーター
+## 作業フロー・参照範囲ルーター
 
-MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
+作業フロー・参照範囲ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
 
 詳細な作業種別別ルーティング、PRレビュー強度との接続、停止条件、作業後の保守ルールは `docs/ai/workflows/md-router.md` を正本とします。
 
 作業前に宣言する項目は `docs/ai/workflows/md-router.md` を確認してください。
+
+`docs/ai/` と `docs/ai/workflows/` は既存配置名です。作業フロー・責務境界・停止条件のdocsとして扱い、将来的に `docs/workflows/` または `docs/process/` へ寄せるかは別PRで判断します。
 
 ## 作業内容に応じて確認する文書
 
@@ -166,9 +166,9 @@ MD作業ルーターは、作業開始時に参照範囲と編集禁止範囲を
 
 外部閲覧者向けの概要、技術構成、利用方法を置きます。内部の詳細ルールは置きすぎません。
 
-### Notion・理解再起動用まとめ
+### 理解再起動の配置
 
-作業経緯、理解回収、現在地、未完了事項を置きます。長期的な正本にはしません。
+後から目的、責務、入力、出力、禁止事項、変更時の注意を回収するための情報は、該当する共通docs、feature docs、コメント、型、テストへ分散して残します。作業者個人の一時メモや会話運用メモは、Git管理docs体系へ含めません。
 
 ## 文書メタデータ
 
@@ -184,23 +184,12 @@ Supersedes: 置き換えた旧資料
 
 `Canonical source` は全用途を1本へ集約する意味ではありません。機能固有文書では、意図・制約と現在挙動の正本を分けて記載します。
 
-一時的な理解再起動用まとめには、次も残します。
-
-```text
-Base branch:
-Base commit:
-Created at:
-Related PR:
-Invalid when:
-```
-
-長期保存するGPT情報源には、一時的なcommit SHAやブランチ名を入れません。
 
 ## 更新ルール
 
 - 共通ルール変更時は、正本となる共通docsだけを先に更新する
 - 機能仕様変更時は、コード・テストと該当する `docs/features/` を更新する
-- README、Notion、GPT情報源は正本変更後に追従させる
+- README、feature docs、操作ガイドは正本変更後に必要な範囲だけ追従させる
 - 古い資料を残す場合は `archived` または `superseded` を明記する
 - 同じ詳細ルールを複数文書へ全文複製しない
 - 他文書で同じ観点を確認する場合は、その文書の責務に必要な要約と正本への参照だけを置く

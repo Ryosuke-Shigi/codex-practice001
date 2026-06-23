@@ -32,7 +32,7 @@ PHPでは、次の箇所にコメント追加を検討します。
 - クラスの責務や、レイヤー上の配置理由が初見で分かりにくい箇所
 - 公開メソッドの目的、引数、返り値、例外がシグネチャだけでは読み取りにくい箇所
 - 業務判断、状態判断、DB境界、外部API境界を扱う箇所
-- Action / Service / Repository / Responder / DTO の責務境界を読み違えやすい箇所
+- Controller / Request / Action / Service / Repository / Responder / DTO の責務境界を読み違えやすい箇所
 - Job / Event / Listener / Artisan Command の処理順や再実行時の前提を残す必要がある箇所
 
 DTO / ListDTO には、データキャリアとしての責務を説明するコメントは置いてよいです。ただし、DBアクセス、業務判断、HTTPレスポンス生成、JSONレスポンス生成、View / Inertia / React 用の表示判断を正当化するコメントは書きません。
@@ -41,6 +41,8 @@ DTO / ListDTO には、データキャリアとしての責務を説明するコ
 
 次のクラスでは、責務がクラス名だけで明確でない場合にクラスPHPDocを付けます。
 
+- Controller
+- Request / FormRequest
 - Action
 - Service
 - Repository
@@ -83,6 +85,10 @@ Service PHPDoc = 業務判断、入力、出力、置かない責務
 Service内コメント = なぜその条件・計算・比較なのか
 Test = 実行可能な仕様固定
 ```
+
+ControllerのコメントやPHPDocには、HTTP入口として受けるRequest、呼び出すAction、返すResponderを中心に書きます。業務判断、DB条件、表示整形の詳細は書きません。
+
+Request / FormRequestのコメントやPHPDocには、入力形式、許可値、境界値、入力DTOへの接続を中心に書きます。業務上の可否判断はServiceへ置き、Requestコメントで正当化しません。
 
 Action の PHPDoc には、何のユースケースかを書きます。
 

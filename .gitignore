@@ -6,6 +6,12 @@
 /storage/*.key
 /storage/pail
 /vendor
+.local/
+.local-rules/
+*.local.md
+docs.local/
+.ai.local/
+.codex.local/
 .env
 .env.backup
 .env.production
