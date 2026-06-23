@@ -8,7 +8,7 @@
 
 このドキュメントは、このプロジェクトで採用しているADR Pattern / レイヤード構成の責務境界を明文化するためのものです。
 
-AIエージェントや人間が機能追加・修正を行う際に、Controller / Request / Action / Service / Repository / DTO / Responder / Componentなどの責務が混ざらないようにすることを目的とします。
+開発者が機能追加・修正を行う際に、Controller / Request / Action / Service / Repository / DTO / Responder / Componentなどの責務が混ざらないようにすることを目的とします。
 
 機能固有の実行条件、API制約、DB条件、テスト固定内容は `docs/features/` に置き、この文書には共通原則だけを置きます。
 
@@ -43,10 +43,25 @@ Command Action / Query ActionはActionの分類です。Artisan CommandはJobを
 ## 基本方針
 
 - 人間が仕様・責務・設計境界・レビュー観点を決める
-- AIは実装補助・調査・差分修正・レビュー補助として使う
+- 支援ツールは実装補助・調査・差分修正・レビュー補助として使う
 - レイヤーはクラス数を増やすためではなく、変更理由と責務を分けるために使う
 - 単純処理へ不要なService、Factory、Strategyを増やさない
 - 機能固有仕様は共通docsへ混ぜず `docs/features/` に分離する
+
+## 理解再起動性
+
+理解再起動性とは、一定期間後または別の開発者が途中参加した場合でも、コード、型、コメント、テスト、docsを読めば、目的、責務、入力、出力、禁止事項、変更時の注意点を回収できる状態です。
+
+短さだけを優先して判断理由を消さず、後から変更するときに必要な意図と制約を残します。ただし、コードを読めば分かる処理の逐語説明や、実装と矛盾した古いコメントは残しません。
+
+このプロジェクトでは、理解再起動性を次で支えます。
+
+- レイヤーごとの責務境界をこの文書で固定する
+- 機能固有の目的、入力、出力、禁止事項は `docs/features/` に置く
+- 主要な型、DTO、propsでデータ境界を明示する
+- PHPDoc、JSDoc、コメントには意図、制約、変更時の注意を書く
+- テストで仕様と責務境界を実行可能な形に固定する
+- 追加、変更、削除時にdocs、コメント、型、テストの更新要否を確認する
 
 ## 採用している責務
 
@@ -62,6 +77,7 @@ Command Action / Query ActionはActionの分類です。Artisan CommandはJobを
 - Event / Listener
 - Job
 - Artisan Command
+- Scheduler
 - Component
 
 すべての機能で全責務を必ず作るわけではありません。必要な責務だけを使います。
@@ -70,7 +86,7 @@ Command Action / Query ActionはActionの分類です。Artisan CommandはJobを
 
 ADR Pattern / レイヤードアーキテクチャでは、ディレクトリやファイルを先に作るのではなく、責務の置き場を先に決めます。
 
-責務配置が未確定のまま Controller / Service / Repository / DTO / Responder を作成すると、AIが名前だけで実装を進め、責務混在を起こしやすくなります。
+責務配置が未確定のまま Controller / Service / Repository / DTO / Responder を作成すると、名前だけで実装が進み、責務混在を起こしやすくなります。
 
 そのため PRODUCT実装では、以下を先に固定します。
 
@@ -304,6 +320,19 @@ Componentへ置かないもの:
 
 画面表示に必要な形は、可能な限りResponderで整えてから渡します。
 
+## Scheduler の責務
+
+Schedulerは定期実行の入口を担当します。
+
+Schedulerへ置いてよいもの:
+
+- 実行時刻や実行条件の登録
+- 対象Artisan CommandまたはJobの呼び出し
+- `withoutOverlapping()` などの実行境界
+- env / config gate
+
+Schedulerへ業務判断、DB直接操作、同期本体を置きません。実行される処理の本体はArtisan Command、Job、Action、Serviceへ分離します。
+
 ## Command Action / Query Action の分離
 
 状態を変更する処理はCommand Actionとして扱います。
@@ -421,9 +450,9 @@ ResponderはHTTP、Inertia、JSON、CSV、PDF、Download等の出力整形が必
 
 文言修正や小さな実装差分ごとにDecision Recordを作りません。
 
-## AI駆動開発における責務境界
+## 作業時の責務境界
 
-AIへ作業を依頼する場合も、次を守ります。
+支援ツールへ作業を依頼する場合も、次を守ります。
 
 - 仕様にない機能を追加しない
 - 変更対象を明確にする
@@ -444,7 +473,9 @@ AIへ作業を依頼する場合も、次を守ります。
 - DTOへ処理・レスポンス生成が入っていないか
 - Responderへ業務判断が入っていないか
 - Artisan Commandへ業務ロジックが入っていないか
+- Schedulerへ業務判断や同期本体が入っていないか
 - ComponentへLaravel側の業務ルールが入っていないか
+- 主要なPHPDoc、JSDoc、コメント、型が意図・制約・変更時の注意を回収できる状態か
 - 不要なFactory / Strategy / Eventを増やしていないか
 - 機能固有仕様を共通docsへ混ぜていないか
 - 必要なテストが追加・更新されているか

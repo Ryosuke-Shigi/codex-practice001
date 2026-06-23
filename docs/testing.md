@@ -8,7 +8,7 @@
 
 このドキュメントは、このプロジェクトにおける共通テスト方針を明文化するためのものです。
 
-テストは、既存仕様の破壊を検知し、AIエージェントへ毎回コード全体を説明する必要を減らすための実行可能な仕様として扱います。
+テストは、既存仕様の破壊を検知し、仕様と責務境界を固定する実行可能な仕様として扱います。後から別の開発者が参加しても、成功しているテストから入力、出力、境界、失敗条件を回収できる状態を目指します。
 
 機能固有のテスト固定内容は `docs/features/` に置き、この文書には複数機能へ共通する基準だけを置きます。
 
@@ -17,7 +17,7 @@
 ## 基本方針
 
 - テストはコードレビューの代替ではない
-- テスト数ではなく、守っている仕様・境界・失敗条件を評価する
+- テスト数ではなく、守っている仕様・責務境界・失敗条件を評価する
 - 重要な境界は実装前または実装と同時に固定する
 - 細かい仕様は、挙動が明確になった後に固定テストを追加してよい
 - テストを通すために責務境界を崩さない
@@ -45,7 +45,7 @@
 ## テストを追加する理由
 
 - `php artisan test` で既存仕様の破壊を検知できる
-- AIへ毎回コード全体を読ませる必要を減らせる
+- 毎回コード全体を読み直す必要を減らせる
 - 失敗したテストから修正範囲を絞れる
 - 「このテストを通す範囲で修正」と指示できる
 - 仕様説明・影響調査・手戻りのトークンを減らせる
@@ -54,8 +54,8 @@
 
 ## テストで守る対象
 
-- 入力形式とバリデーション
-- DTO / ListDTOの構造
+- Request / FormRequestの入力形式とバリデーション
+- DTO / ListDTOのデータ境界
 - Repositoryの取得・保存・通信条件
 - Serviceの業務判断
 - Actionのユースケース手順
@@ -64,7 +64,9 @@
 - Responderの出力形式
 - Inertia props
 - React Utilityの純粋処理
-- 複雑なComponentの表示・操作
+- 複雑なComponentの主操作
+- loading / error / empty / selected の状態
+- 追加・削除時に壊れやすい導線
 - DB状態の変化
 - 失敗・例外・空データ・重複・境界値
 
@@ -73,13 +75,14 @@
 基本の優先順位:
 
 1. Serviceの業務判断
-2. DTO / ListDTOのデータ境界
-3. RepositoryのDB・外部データソース境界
-4. Actionのユースケース手順
-5. Job / Artisan Command / Scheduler
-6. Responder / Inertia props
-7. React Utility
-8. 複雑なReact Component
+2. Request / FormRequestの入力バリデーション
+3. DTO / ListDTOのデータ境界
+4. RepositoryのDB・外部データソース境界
+5. Actionのユースケース手順
+6. Job / Artisan Command / Scheduler
+7. Responder / Inertia props
+8. React Utility
+9. 複雑なReact Componentと画面状態
 
 ただし、変更内容に直接関係する境界を最優先します。
 
@@ -439,7 +442,7 @@ cd /var/www/api-discovery-hub
 docker compose run --rm npm npm run typecheck
 ```
 
-docsのみ変更の場合は、原則として Laravel test や npm build を必須にしません。未実行の場合は理由を明記します。
+docsのみ変更の場合は、原則として Laravel test や npm build を必須にしません。docs確認コマンドが `docs/operations/command-registry.md` に定義されている場合はそれに従い、未実行の場合は理由を明記します。
 
 ## CI必須ゲート
 
@@ -454,7 +457,7 @@ docsのみ変更の場合は、原則として Laravel test や npm build を必
 
 `npm run typecheck` は削除しませんが、既存型エラーが残っている間はCI必須ゲートに戻しません。TypeScript / TSX変更時の手元確認コマンドとして扱います。
 
-## AIエージェントでの使い方
+## テスト結果の扱い
 
 - 失敗テスト名を特定する
 - 失敗原因に関係するファイルだけを読む
@@ -470,7 +473,7 @@ docsのみ変更の場合は、原則として Laravel test や npm build を必
 - 古いテスト
 - テスト環境の問題
 
-AIの判断だけで期待値を書き換えません。
+作業者の判断だけで期待値を書き換えません。
 
 ## テストとレビューの関係
 

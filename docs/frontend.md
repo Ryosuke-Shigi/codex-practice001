@@ -10,7 +10,7 @@
 
 バックエンドの ADR / レイヤード責務をフロントエンドで崩さず、モバイル・横置き・PCで破綻しない画面を作ることを目的とします。
 
-UIの見た目、操作、レスポンシブ確認、Common配置、Effects、ラフ画像の扱いは `docs/ui.md` を正本とします。
+UIの見た目、操作、レスポンシブ確認、Common配置、Effects、デザイン参照画像の扱いは `docs/ui.md` を正本とします。
 
 ## 基本方針
 
@@ -20,7 +20,7 @@ UIの見た目、操作、レスポンシブ確認、Common配置、Effects、�
 - Component、props、UI状態、表示責務を分離する
 - バックエンドの業務判断やDB操作をComponentへ持ち込まない
 - 見た目の演出より、視認性、操作性、情報の優先順位を優先する
-- AIに画面全体を丸投げせず、人間が画面構成、責務、成功条件を決める
+- 作業者が画面構成、責務、成功条件を先に決める
 
 ## モバイルファースト
 
@@ -53,13 +53,77 @@ Componentへ置かないもの:
 
 画面表示に必要なデータ整形は、可能な範囲でResponder側で行い、Componentは受け取ったpropsを表示できる状態にします。
 
-## Page と共通Component
+## フロントエンド責務境界
 
-Page Component は、ページ全体の構成と、そのページ固有のUI状態を担当します。
+フロントエンドでも、Page、Feature、Common、Hook、Type、Utility、Effectsの責務を分けます。見た目が似ていることと、同じ責務であることを混同しません。
 
-複数機能で実際に使う業務非依存の表示・操作は `Components/Common` へ分離します。
+### Page
 
-Commonへ入れる条件、入れてはいけない責務、共通UIの状態は `docs/ui.md` に従います。見た目が似ているだけで目的や操作が異なるものを、無理に1つへ統合しません。
+PageはInertia propsの入口、feature全体の組み立て、layout適用を担当します。
+
+Pageへ置くもの:
+
+- Inertia propsの受け取り
+- Feature Containerの配置
+- Layoutの適用
+- ページ単位のtitleやmeta
+- ページ全体で必要な最小のUI状態
+
+Pageへ置かないもの:
+
+- Feature固有表示の詳細
+- API responseの場当たり的な解釈
+- 業務判断
+- 複雑な状態遷移
+- Common Componentの内部実装
+
+### Feature Container
+
+Feature Containerはfeature固有のUI状態、操作フロー、子Componentの組み立て、API / Inertia action呼び出し入口を担当します。
+
+Feature Containerへ置くもの:
+
+- feature固有のselected / loading / error / empty状態
+- タブ、Modal、フィルタ、ページ内導線の制御
+- Feature Componentへ渡すpropsの組み立て
+- Inertia actionやAPI呼び出しの入口
+
+Feature Containerへ置かないもの:
+
+- Laravel側で確定すべき業務判断
+- DB取得条件の確定
+- Common Componentへ渡すべきでないfeature固有URLの隠蔽
+
+### Feature Component
+
+Feature Componentはfeature固有の表示、操作、propsで受け取ったデータ表示、親へのイベント通知を担当します。
+
+- feature固有の文言、カード、表、グラフ、Fieldを扱う
+- propsで受け取った表示データを描画する
+- 操作結果はイベントとして親へ返す
+- 業務状態遷移の可否は確定しない
+
+### Common Component
+
+Common Componentは業務非依存の見た目と汎用操作に限定します。固定データ、API通信、権限判断、状態遷移、feature固有URLを入れません。
+
+Commonへ入れる条件、入れてはいけない責務、共通UIの状態は `docs/ui.md` に従います。
+
+### Hook
+
+HookはUI状態、イベント処理、軽い表示補助ロジックをまとめます。業務判断を肥大化させません。API通信を持つHookは、責務名で何の通信入口か分かるようにします。
+
+### Type / Schema
+
+Type / Schemaはprops、表示データ、フォーム入力、API結果の形を明示します。`any`で境界を曖昧にしません。Laravel側DTOやResponderのpropsと対応する型は、名前と項目を揃えます。
+
+### Utility
+
+Utilityは純粋関数を置きます。format、sort、filter、表示変換などを扱い、React状態、Inertia、DOM、副作用へ依存させません。
+
+### Effects
+
+Effectsは背景、水面、波紋、パーティクル、光などの演出に限定し、操作UIや業務処理と分離します。Effectsはfeatureデータ、保存処理、権限判断へ依存しません。
 
 ## props の方針
 
@@ -116,9 +180,9 @@ Effectsの見た目、操作性、描画負荷、遅延読み込みの判断は 
 
 フロントエンドでは、Effectsを独立したComponentとして実装し、業務データや保存処理へ依存させず、既存画面のレイアウトと主要操作を変更しないことを守ります。
 
-## ラフ画像と実装仕様
+## デザイン参照画像と実装仕様
 
-ラフ画像の扱いは `docs/ui.md` を正本とします。
+デザイン参照画像の扱いは `docs/ui.md` を正本とします。
 
 フロントエンド実装では、画像内に偶然含まれたUIや文言を要件として解釈せず、指示にないprops、Component、レイアウト変更を追加しません。
 
@@ -182,6 +246,16 @@ const handleTouchStart = (event: TouchEvent) => {
 
 `this` の固定を目的としてアロー関数を選ぶ必要は、Reactの関数Componentでは原則ありません。宣言形式は、処理の責務と利用範囲で判断します。
 
+## フロントエンド禁止事項
+
+- Pageに表示、通信、変換、業務判断、状態管理をすべて詰め込まない
+- Common Componentにfeature固有文言、URL、状態遷移、API通信を入れない
+- Component内で権限判断や業務状態遷移を確定しない
+- propsの型を曖昧にして受け渡し契約を隠さない
+- APIレスポンス形状をComponent内で場当たり的に解釈しない
+- loading / error / empty / selected の扱いを各所に散らさない
+- UI削除時に関連docs、テスト、型、導線説明を放置しない
+
 ## アクセシビリティと操作性
 
 - ボタンとして操作する要素は、ボタンとして実装する
@@ -215,6 +289,6 @@ const handleTouchStart = (event: TouchEvent) => {
 - Feature ComponentとCommon Componentの責務が分かれているか
 - Common・Feature・Effectsが分離されているか
 - `docs/ui.md` の表示・操作条件を確認したか
-- ラフ画像に含まれる要素を勝手に実装していないか
+- デザイン参照画像に含まれる要素を勝手に実装していないか
 - バックエンドバリデーションを省略していないか
 - 既存操作と表示を壊していないか

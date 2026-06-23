@@ -8,7 +8,7 @@
 
 このドキュメントは、MOCK / PROTOTYPE / PRODUCT の各段階でUIをどのように作り、どの内容を次段階へ引き継ぐかを定めます。
 
-MOCKを見た目の参考資料として扱わず、PRODUCTへ引き継ぐUI契約として扱うことで、AIやCodexAppが画面構造、Field構成、導線、スクロール範囲を勝手に作り直すことを防ぎます。
+MOCKを見た目の参考資料として扱わず、PRODUCTへ引き継ぐUI契約として扱うことで、画面構造、Field構成、導線、スクロール範囲を勝手に作り直すことを防ぎます。
 
 開発段階全体の完成条件は `docs/development-flow.md`、MOCK / PROTOTYPE の配置とProductとの物理的分離は `docs/prototype-policy.md`、UI部品とCommon Componentの責務は `docs/ui.md` を正本とします。
 
@@ -318,7 +318,7 @@ MOCK / PROTOTYPE のコードをそのままPRODUCTへ貼り付けません。
 
 PRODUCTでは、MOCK / PROTOTYPE のUI契約、振る舞い、状態、導線を参照し、PRODUCTの責務に合わせて再実装します。
 
-共通Component化は、CodexAppやAIの自己判断だけで確定しません。次のいずれかを満たす場合に、人間がレビューできる形で提案します。
+共通Component化は、作業者の自己判断だけで確定しません。次のいずれかを満たす場合に、人間がレビューできる形で提案します。
 
 - 人間が明示的に共通Component化を許可している
 - PR本文に理由、共有する画面、props設計、本データ接続点、影響範囲、代替案を書いている
