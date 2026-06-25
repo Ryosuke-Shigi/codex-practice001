@@ -84,3 +84,14 @@ Schedule::job(new CleanupDanceShortVideoSnapshotsJob)
     ->dailyAt('04:30')
     ->name('dance-short-snapshot-cleanup')
     ->withoutOverlapping();
+
+/*
+ * DailyServerHealthReport の定期通知入口です。
+ *
+ * Scheduler は毎朝6時に通常 command を呼ぶだけに留めます。手動確認用の --sync は使わず、
+ * 通常実行では Notification の Queue 経由でメール送信します。
+ */
+Schedule::command('health:send-daily-server-report')
+    ->dailyAt('06:00')
+    ->name('daily-server-health-report')
+    ->withoutOverlapping();
