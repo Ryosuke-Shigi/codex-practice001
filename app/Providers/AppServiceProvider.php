@@ -49,6 +49,10 @@ use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use App\Repositories\Earthquake\JmaEarthquakeDetailXmlRepository;
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
+use App\Repositories\Operations\ServerHealth\DiskUsageRepository;
+use App\Repositories\Operations\ServerHealth\DiskUsageRepositoryInterface;
+use App\Repositories\Operations\ServerHealth\MySqlUsageRepository;
+use App\Repositories\Operations\ServerHealth\MySqlUsageRepositoryInterface;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -113,6 +117,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EarthquakeDetailXmlRepositoryInterface::class, JmaEarthquakeDetailXmlRepository::class);
         $this->app->bind(EarthquakeMapPinRepositoryInterface::class, EarthquakeMapPinRepository::class);
         $this->app->bind(EarthquakeMapPinSyncRunRepositoryInterface::class, EarthquakeMapPinSyncRunRepository::class);
+
+        /*
+         * Operations / ServerHealth 側の日次容量レポート依存です。
+         * OS / MySQL からの取得境界は Repository に閉じ、通知手順や判定は後続 Service / Action で扱います。
+         */
+        $this->app->bind(DiskUsageRepositoryInterface::class, DiskUsageRepository::class);
+        $this->app->bind(MySqlUsageRepositoryInterface::class, MySqlUsageRepository::class);
     }
 
     /**
