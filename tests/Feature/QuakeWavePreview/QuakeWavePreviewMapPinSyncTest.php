@@ -8,6 +8,7 @@ use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
+use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Models\EarthquakeFeedEntry;
 use App\Models\EarthquakeMapPin;
@@ -280,7 +281,7 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
 
     public function test_map_pin_build_service_dispatches_error_log_when_detail_xml_parse_fails(): void
     {
-        Event::fake([ApplicationErrorOccurred::class]);
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
         $sourceEntry = $this->createFeedEntry('urn:jma:earthquake:invalid-detail');
         $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, new class implements EarthquakeDetailXmlRepositoryInterface
         {
@@ -318,7 +319,7 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
 
     public function test_map_pin_build_service_skips_non_mappable_detail_xml_without_error_log(): void
     {
-        Event::fake([ApplicationErrorOccurred::class]);
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
         $this->createFeedEntry('urn:jma:earthquake:not-mappable-detail');
         $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, new class($this->earthquakeReportXmlWithoutCoordinate()) implements EarthquakeDetailXmlRepositoryInterface
         {

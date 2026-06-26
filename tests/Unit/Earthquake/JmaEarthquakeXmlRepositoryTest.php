@@ -56,42 +56,40 @@ class JmaEarthquakeXmlRepositoryTest extends TestCase
         );
     }
 
-    public function test_detail_xml_fetch_failure_message_includes_reason_without_response_body(): void
+    public function test_detail_xml_fetch_failure_result_includes_reason_without_response_body(): void
     {
         $url = 'https://www.data.jma.go.jp/developer/xml/data/missing.xml';
         Http::fake([
             $url => Http::response('not found body should not be logged', 404),
         ]);
 
-        app(JmaEarthquakeDetailXmlRepository::class)->fetch($url);
+        $result = app(JmaEarthquakeDetailXmlRepository::class)->fetch($url);
 
-        Event::assertDispatched(
+        $this->assertFalse($result['success']);
+        $this->assertSame(404, $result['status_code']);
+        $this->assertStringContainsString('理由：XMLファイルが見つかりません。', (string) $result['error_message']);
+        $this->assertStringNotContainsString('not found body should not be logged', (string) $result['error_message']);
+        Event::assertNotDispatched(
             ApplicationIntegrationLogged::class,
-            fn (ApplicationIntegrationLogged $event): bool => $event->action === '個別XML取得'
-                && $event->status === 'failed'
-                && $event->responseStatus === 404
-                && str_contains((string) $event->message, '理由：XMLファイルが見つかりません。')
-                && ! str_contains((string) $event->message, 'not found body should not be logged'),
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === '個別XML取得',
         );
     }
 
-    public function test_detail_xml_fetch_dispatches_success_integration_log(): void
+    public function test_detail_xml_fetch_returns_success_transport_without_dispatching_integration_log(): void
     {
         $url = 'https://www.data.jma.go.jp/developer/xml/data/20260511083000_0.xml';
         Http::fake([
             $url => Http::response('<Report />', 200),
         ]);
 
-        app(JmaEarthquakeDetailXmlRepository::class)->fetch($url);
+        $result = app(JmaEarthquakeDetailXmlRepository::class)->fetch($url);
 
-        Event::assertDispatched(
+        $this->assertTrue($result['success']);
+        $this->assertSame(200, $result['status_code']);
+        $this->assertSame('<Report />', $result['body']);
+        Event::assertNotDispatched(
             ApplicationIntegrationLogged::class,
-            fn (ApplicationIntegrationLogged $event): bool => $event->serviceName === '気象庁XML'
-                && $event->action === '個別XML取得'
-                && $event->status === 'success'
-                && $event->targetId === 'document'
-                && $event->url === $url
-                && $event->responseStatus === 200,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === '個別XML取得',
         );
     }
 

@@ -9,6 +9,7 @@ use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchItemDTO;
 use App\DTO\DanceShortsRadar\Sync\YouTubeVideoSearchResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Events\ApplicationLog\ApplicationIntegrationLogged;
+use App\Services\ApplicationLog\ApplicationLogSummaryCollector;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -108,6 +109,11 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
         $failedTargetVideoIdCount = 0;
         $lastException = null;
         $details = [];
+        /*
+         * videos.list は chunk ごとに複数回失敗し得るため、ERROR は分類別に集約します。
+         * API連携ログはこのメソッド末尾の処理単位サマリ1件に寄せます。
+         */
+        $errorSummaries = new ApplicationLogSummaryCollector;
 
         try {
             $apiKey = $this->apiKey();
@@ -147,6 +153,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
                         'id' => implode(',', $chunkedIds),
                     ],
                     dispatchIntegrationLog: false,
+                    errorLogCollector: $errorSummaries,
                 );
                 $successfulChunkCount++;
             } catch (RuntimeException $exception) {
@@ -179,6 +186,8 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
             responseStatus: null,
         );
 
+        $errorSummaries->flushErrorLogs();
+
         if ($successfulChunkCount === 0 && $lastException instanceof RuntimeException) {
             throw $lastException;
         }
@@ -207,6 +216,7 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
         string $path,
         array $query,
         bool $dispatchIntegrationLog = true,
+        ?ApplicationLogSummaryCollector $errorLogCollector = null,
     ): array {
         $endpoint = $this->endpoint($path);
 
@@ -225,7 +235,8 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
                     responseStatus: null,
                 );
             }
-            $this->dispatchErrorLog(
+            $this->recordOrDispatchErrorLog(
+                collector: $errorLogCollector,
                 message: $message,
                 errorCode: 'dance-shorts.youtube.transport_failed',
                 exception: $exception,
@@ -251,10 +262,12 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
             }
 
             if ($this->shouldDispatchRequestError($response->status())) {
-                $this->dispatchErrorLog(
+                $this->recordOrDispatchErrorLog(
+                    collector: $errorLogCollector,
                     message: $message,
                     errorCode: 'dance-shorts.youtube.request_rejected',
                     endpoint: $endpoint,
+                    collectorMessage: $this->requestErrorSummaryMessage($message, $response->status()),
                 );
             }
 
@@ -273,7 +286,8 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
                     responseStatus: $response->status(),
                 );
             }
-            $this->dispatchErrorLog(
+            $this->recordOrDispatchErrorLog(
+                collector: $errorLogCollector,
                 message: $exception->getMessage(),
                 errorCode: 'dance-shorts.youtube.response_json_invalid',
                 exception: $exception,
@@ -356,6 +370,66 @@ class YouTubeVideoApiRepository implements YouTubeVideoApiRepositoryInterface, Y
          */
         return in_array($statusCode, [401, 403, 429], true)
             || ($statusCode >= 500 && $statusCode < 600);
+    }
+
+    /**
+     * 単発API呼び出しでは即時発火し、videos.list の chunk 処理では Collector へ集約します。
+     *
+     * collectorMessage には、同じ errorCode でも分けて見るべき HTTP 分類を含めます。
+     */
+    private function recordOrDispatchErrorLog(
+        ?ApplicationLogSummaryCollector $collector,
+        string $message,
+        string $errorCode,
+        ?Throwable $exception = null,
+        ?string $endpoint = null,
+        ?string $collectorMessage = null,
+    ): void {
+        if ($collector instanceof ApplicationLogSummaryCollector) {
+            $collector->recordError(
+                level: 'error',
+                message: $collectorMessage ?? $message,
+                errorCode: $errorCode,
+                exception: $exception,
+                url: $endpoint,
+                method: 'GET',
+            );
+
+            return;
+        }
+
+        $this->dispatchErrorLog(
+            message: $message,
+            errorCode: $errorCode,
+            exception: $exception,
+            endpoint: $endpoint,
+        );
+    }
+
+    /**
+     * ERROR集約キーにHTTP分類を残し、429 と 5xx を同じ要約へ混ぜないための短い文言です。
+     */
+    private function requestErrorSummaryMessage(string $message, int $statusCode): string
+    {
+        return sprintf(
+            '%s 分類: %s / HTTP: %d',
+            $message,
+            $this->requestErrorClassification($statusCode),
+            $statusCode,
+        );
+    }
+
+    private function requestErrorClassification(int $statusCode): string
+    {
+        if ($statusCode === 429) {
+            return '429';
+        }
+
+        if ($statusCode >= 500 && $statusCode < 600) {
+            return '5xx';
+        }
+
+        return (string) $statusCode;
     }
 
     private function dispatchIntegrationLog(
