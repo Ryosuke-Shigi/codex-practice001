@@ -42,7 +42,7 @@ map pin生成条件を判定
 - insert / update / skipを分ける
 - 同じentryを重複保存しない
 - 取得失敗・解析失敗を成功扱いしない
-- JMA XML feed取得は単発取得としてAPI連携ログを発火し、map pin生成run内の個別XML取得は成功・skipped・failed分類ごとにAPI連携ログを集約する
+- 気象庁XML feed取得は単発取得としてAPI連携ログを発火し、map pin生成run内の個別XML取得は成功・skipped・failed分類ごとにAPI連携ログを集約する
 - 取得先エラーのログは、本文全文ではなく「XMLファイルが見つからない」「取得先サーバー障害」などの短い理由を付ける
 
 Repositoryは取得・保存を担当し、差分や処理結果の意味づけはService / Action側へ置きます。
@@ -86,7 +86,7 @@ ERRORとして扱うもの:
 
 skippedとして扱うもの:
 
-- JMA電文だが地図ピン情報がない
+- 気象庁XML電文だが地図ピン情報がない
 - 座標がない
 - 最大震度がない
 - 震源・震度系ではない電文
@@ -147,7 +147,7 @@ Request validationで固定する主な内容:
 
 ### Feed / XML
 
-- JMA Atom feedの取得・抽出
+- 気象庁XML Atom feedの取得・抽出
 - 個別XMLの取得・解析
 - entry_idによる重複回避
 - insert / update / skip
@@ -187,6 +187,6 @@ Request validationで固定する主な内容:
 - 震度なし・座標なしを誤ってpin化していないか
 - feed成功とpin失敗を全成功として扱っていないか
 - 外部XML全文や個人情報をログへ残していないか
-- JMA XML取得ログにXML本文全文やsecret queryが混ざっていないか
+- 気象庁XML取得ログにXML本文全文やsecret queryが混ざっていないか
 - status APIのshapeを壊していないか
 - この文書と現在のコード・テストが一致しているか
