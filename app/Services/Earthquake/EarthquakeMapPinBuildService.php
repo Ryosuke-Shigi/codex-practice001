@@ -22,6 +22,24 @@ class EarthquakeMapPinBuildService
 {
     private const JMA_DETAIL_XML_URL_REJECTED_MESSAGE = '気象庁XML以外のURLは取得できません。';
 
+    private const TRANSPORT_OUTCOME_SUCCESS = 'success';
+
+    private const TRANSPORT_OUTCOME_SKIPPED = 'skipped';
+
+    private const TRANSPORT_OUTCOME_FAILED = 'failed';
+
+    private const ERROR_CODE_DETAIL_XML_RATE_LIMITED = 'earthquake.jma.detail_xml_rate_limited';
+
+    private const ERROR_CODE_DETAIL_XML_SERVER_ERROR = 'earthquake.jma.detail_xml_server_error';
+
+    private const ERROR_CODE_DETAIL_XML_CONNECTION_FAILED = 'earthquake.jma.detail_xml_connection_failed';
+
+    private const ERROR_CODE_DETAIL_XML_FETCH_FAILED = 'earthquake.jma.detail_xml_fetch_failed';
+
+    private const ERROR_CODE_DETAIL_XML_PARSE_FAILED = 'earthquake.jma.detail_xml_parse_failed';
+
+    private const FAILURE_SAMPLE_SOURCE_ENTRY_LIMIT = 5;
+
     public function __construct(
         private readonly EarthquakeFeedEntryRepositoryInterface $feedEntryRepository,
         private readonly EarthquakeDetailXmlRepositoryInterface $detailXmlRepository,
@@ -45,6 +63,7 @@ class EarthquakeMapPinBuildService
         $pins = [];
         $skippedCount = 0;
         $failedCount = 0;
+        $failureSummaries = [];
 
         foreach ($sourceEntries as $sourceEntry) {
             $xmlUrl = $sourceEntry['xmlUrl'] ?? null;
@@ -58,29 +77,53 @@ class EarthquakeMapPinBuildService
             try {
                 /*
                  * 個別XMLの取得は Repository へ任せます。
-                 * Service は transport result の成功/失敗を見て、解析へ進めるかだけを判断します。
+                 * Service は transport result を map pin 生成ユースケースの skipped / failed へ分類します。
                  */
                 $transport = $this->detailXmlRepository->fetch($xmlUrl);
+            } catch (Throwable $exception) {
+                $this->addFailureSummary(
+                    failureSummaries: $failureSummaries,
+                    message: '気象庁 個別XMLを取得できず、地図ピンに追加できませんでした。',
+                    errorCode: self::ERROR_CODE_DETAIL_XML_CONNECTION_FAILED,
+                    classification: 'connection_failed',
+                    statusCode: null,
+                    reason: $exception::class,
+                    sourceEntry: $sourceEntry,
+                    url: $xmlUrl,
+                    method: 'GET',
+                    exception: $exception,
+                );
+                $failedCount++;
 
-                if (! ($transport['success'] ?? false)) {
-                    $isRejectedUrl = ($transport['error_message'] ?? null) === self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE;
-                    $this->dispatchErrorLog(
-                        message: $isRejectedUrl
-                            ? '気象庁XML以外のURLのため、地図ピンに追加できませんでした。'
-                            : '気象庁 個別XMLを取得できず、地図ピンに追加できませんでした。',
-                        errorCode: $isRejectedUrl
-                            ? 'earthquake.jma.detail_xml_url_rejected'
-                            : 'earthquake.jma.detail_xml_fetch_failed',
-                        sourceEntry: $sourceEntry,
-                        url: $xmlUrl,
-                        method: $this->transportString($transport, 'method'),
-                    );
+                continue;
+            }
 
-                    $failedCount++;
+            $transportClassification = $this->classifyTransportResult($transport);
 
-                    continue;
-                }
+            if ($transportClassification['outcome'] === self::TRANSPORT_OUTCOME_SKIPPED) {
+                $skippedCount++;
 
+                continue;
+            }
+
+            if ($transportClassification['outcome'] === self::TRANSPORT_OUTCOME_FAILED) {
+                $this->addFailureSummary(
+                    failureSummaries: $failureSummaries,
+                    message: '気象庁 個別XMLを取得できず、地図ピンに追加できませんでした。',
+                    errorCode: (string) $transportClassification['errorCode'],
+                    classification: (string) $transportClassification['classification'],
+                    statusCode: $this->nullableInt($transportClassification['statusCode'] ?? null),
+                    reason: (string) $transportClassification['reason'],
+                    sourceEntry: $sourceEntry,
+                    url: $xmlUrl,
+                    method: $this->transportString($transport, 'method'),
+                );
+                $failedCount++;
+
+                continue;
+            }
+
+            try {
                 $pin = $this->detailXmlParseService->parse(
                     (string) ($transport['body'] ?? ''),
                     (int) $sourceEntry['id'],
@@ -102,17 +145,23 @@ class EarthquakeMapPinBuildService
             } catch (EarthquakeDetailXmlNotMappableException) {
                 $skippedCount++;
             } catch (Throwable $exception) {
-                $this->dispatchErrorLog(
+                $this->addFailureSummary(
+                    failureSummaries: $failureSummaries,
                     message: '気象庁 個別XMLを解析できず、地図ピンに追加できませんでした。',
-                    errorCode: 'earthquake.jma.detail_xml_parse_failed',
-                    exception: $exception,
+                    errorCode: self::ERROR_CODE_DETAIL_XML_PARSE_FAILED,
+                    classification: 'parse_failed',
+                    statusCode: null,
+                    reason: $exception::class.': '.$exception->getMessage(),
                     sourceEntry: $sourceEntry,
                     url: is_string($xmlUrl) ? $xmlUrl : null,
                     method: 'GET',
+                    exception: $exception,
                 );
                 $failedCount++;
             }
         }
+
+        $this->dispatchFailureSummaries($failureSummaries);
 
         $upsertResult = $this->mapPinRepository->upsertFromMapPins(new EarthquakeMapPinListDTO($pins));
 
@@ -136,19 +185,200 @@ class EarthquakeMapPinBuildService
     }
 
     /**
+     * @param  array<string, mixed>  $transport
+     * @return array<string, mixed>
+     */
+    private function classifyTransportResult(array $transport): array
+    {
+        $errorMessage = $this->transportString($transport, 'error_message');
+
+        if ($errorMessage === self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE) {
+            return ['outcome' => self::TRANSPORT_OUTCOME_SKIPPED];
+        }
+
+        $statusCode = $this->transportInt($transport, 'status_code');
+        $body = $this->transportString($transport, 'body');
+        $hasBody = $body !== null && trim($body) !== '';
+
+        if (($transport['success'] ?? false) === true && $hasBody && $statusCode !== null && $statusCode >= 200 && $statusCode < 300) {
+            return ['outcome' => self::TRANSPORT_OUTCOME_SUCCESS];
+        }
+
+        if ($statusCode === 404) {
+            return ['outcome' => self::TRANSPORT_OUTCOME_SKIPPED];
+        }
+
+        if ($statusCode !== null && $statusCode >= 200 && $statusCode < 300 && ! $hasBody) {
+            return ['outcome' => self::TRANSPORT_OUTCOME_SKIPPED];
+        }
+
+        if ($statusCode === 429) {
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_RATE_LIMITED,
+                classification: '429',
+                statusCode: $statusCode,
+                reason: $errorMessage,
+            );
+        }
+
+        if ($statusCode !== null && $statusCode >= 500) {
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_SERVER_ERROR,
+                classification: '5xx',
+                statusCode: $statusCode,
+                reason: $errorMessage,
+            );
+        }
+
+        if ($statusCode === null) {
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_CONNECTION_FAILED,
+                classification: 'connection_failed',
+                statusCode: null,
+                reason: $errorMessage,
+            );
+        }
+
+        return $this->failedTransportClassification(
+            errorCode: self::ERROR_CODE_DETAIL_XML_FETCH_FAILED,
+            classification: 'http_error',
+            statusCode: $statusCode,
+            reason: $errorMessage,
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function failedTransportClassification(
+        string $errorCode,
+        string $classification,
+        ?int $statusCode,
+        ?string $reason,
+    ): array {
+        return [
+            'outcome' => self::TRANSPORT_OUTCOME_FAILED,
+            'errorCode' => $errorCode,
+            'classification' => $classification,
+            'statusCode' => $statusCode,
+            'reason' => $this->failureReason($reason, $classification),
+        ];
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $failureSummaries
      * @param  array<string, mixed>  $sourceEntry
      */
+    private function addFailureSummary(
+        array &$failureSummaries,
+        string $message,
+        string $errorCode,
+        string $classification,
+        ?int $statusCode,
+        string $reason,
+        array $sourceEntry,
+        ?string $url,
+        ?string $method,
+        ?Throwable $exception = null,
+    ): void {
+        $normalizedReason = $this->failureReason($reason, $classification);
+        $key = $this->failureSummaryKey($errorCode, $statusCode, $normalizedReason);
+
+        if (! isset($failureSummaries[$key])) {
+            $failureSummaries[$key] = [
+                'message' => $message,
+                'errorCode' => $errorCode,
+                'classification' => $classification,
+                'statusCode' => $statusCode,
+                'reason' => $normalizedReason,
+                'count' => 0,
+                'sourceEntryIds' => [],
+                'url' => $url,
+                'method' => $method,
+                'exception' => $exception,
+            ];
+        }
+
+        $failureSummaries[$key]['count']++;
+
+        if (($failureSummaries[$key]['url'] ?? null) === null && $url !== null) {
+            $failureSummaries[$key]['url'] = $url;
+        }
+
+        if (($failureSummaries[$key]['method'] ?? null) === null && $method !== null) {
+            $failureSummaries[$key]['method'] = $method;
+        }
+
+        $sourceEntryId = $sourceEntry['id'] ?? null;
+
+        if (! is_int($sourceEntryId)) {
+            return;
+        }
+
+        if (count($failureSummaries[$key]['sourceEntryIds']) >= self::FAILURE_SAMPLE_SOURCE_ENTRY_LIMIT) {
+            return;
+        }
+
+        if (in_array($sourceEntryId, $failureSummaries[$key]['sourceEntryIds'], true)) {
+            return;
+        }
+
+        $failureSummaries[$key]['sourceEntryIds'][] = $sourceEntryId;
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $failureSummaries
+     */
+    private function dispatchFailureSummaries(array $failureSummaries): void
+    {
+        foreach ($failureSummaries as $summary) {
+            $this->dispatchErrorLog(
+                message: $this->failureSummaryMessage($summary),
+                errorCode: (string) $summary['errorCode'],
+                exception: $summary['exception'] instanceof Throwable ? $summary['exception'] : null,
+                url: is_string($summary['url'] ?? null) ? $summary['url'] : null,
+                method: is_string($summary['method'] ?? null) ? $summary['method'] : null,
+            );
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $summary
+     */
+    private function failureSummaryMessage(array $summary): string
+    {
+        $message = sprintf(
+            '%s 分類: %s / 件数: %d',
+            (string) $summary['message'],
+            (string) $summary['classification'],
+            (int) $summary['count'],
+        );
+        $sourceEntryIds = is_array($summary['sourceEntryIds'] ?? null) ? $summary['sourceEntryIds'] : [];
+
+        if (count($sourceEntryIds) === 1 && is_int($sourceEntryIds[0])) {
+            return sprintf('%s 対象フィードID: %d', $message, $sourceEntryIds[0]);
+        }
+
+        $sampleIds = array_values(array_filter(
+            $sourceEntryIds,
+            fn (mixed $sourceEntryId): bool => is_int($sourceEntryId),
+        ));
+
+        return $sampleIds === []
+            ? $message
+            : sprintf('%s 対象フィードID例: %s', $message, implode(', ', $sampleIds));
+    }
+
     private function dispatchErrorLog(
         string $message,
         string $errorCode,
-        array $sourceEntry,
         ?Throwable $exception = null,
         ?string $url = null,
         ?string $method = null,
     ): void {
         event(new ApplicationErrorOccurred(
             level: 'error',
-            message: $this->sourceEntryMessage($message, $sourceEntry),
+            message: $message,
             errorCode: $errorCode,
             exception: $exception,
             url: $url,
@@ -156,20 +386,20 @@ class EarthquakeMapPinBuildService
         ));
     }
 
-    /**
-     * @param  array<string, mixed>  $sourceEntry
-     */
-    private function sourceEntryMessage(string $message, array $sourceEntry): string
+    private function failureSummaryKey(string $errorCode, ?int $statusCode, string $reason): string
     {
-        /*
-         * XML本文や気象庁レスポンス全文はログへ入れません。
-         * 追跡に必要な最小情報として、どの保存済みフィードから地図ピン化できなかったかだけを残します。
-         */
-        $sourceEntryId = $sourceEntry['id'] ?? null;
+        return implode('|', [
+            $errorCode,
+            $statusCode === null ? 'none' : (string) $statusCode,
+            $reason,
+        ]);
+    }
 
-        return is_int($sourceEntryId)
-            ? sprintf('%s 対象フィードID: %d', $message, $sourceEntryId)
-            : $message;
+    private function failureReason(?string $reason, string $classification): string
+    {
+        $normalizedReason = is_string($reason) ? trim($reason) : '';
+
+        return $normalizedReason === '' ? $classification : $normalizedReason;
     }
 
     /**
@@ -178,5 +408,18 @@ class EarthquakeMapPinBuildService
     private function transportString(array $transport, string $key): ?string
     {
         return is_string($transport[$key] ?? null) ? $transport[$key] : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $transport
+     */
+    private function transportInt(array $transport, string $key): ?int
+    {
+        return is_int($transport[$key] ?? null) ? $transport[$key] : null;
+    }
+
+    private function nullableInt(mixed $value): ?int
+    {
+        return is_int($value) ? $value : null;
     }
 }
