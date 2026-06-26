@@ -254,6 +254,15 @@ docker compose exec php-fpm php artisan migrate:status
 docker compose exec php-fpm php artisan optimize:clear
 ```
 
+Japan Quake Wave Map の地震情報取得Command / Scheduler確認:
+
+```bash
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan list | grep -Ei 'earthquake|quake|jma'
+docker compose exec php-fpm php artisan schedule:list | grep -Ei 'earthquake|quake|jma|map'
+docker compose exec php-fpm php artisan earthquake:refresh-map
+```
+
 Composer scripts は `/src/composer.json` 上で存在を確認済みです。ただし、`format` / `format-check` の成否はその時点のPHPコード状態に依存するため、未実行の Composer コマンドを成功扱いしません。
 
 ## React / TypeScript変更時の確認
