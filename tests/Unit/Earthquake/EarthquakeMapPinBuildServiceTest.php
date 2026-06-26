@@ -167,7 +167,8 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
 
         Event::assertDispatched(
             ApplicationErrorOccurred::class,
-            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_fetch_failed'
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_server_error'
+                && str_contains($event->message, '分類: 5xx / 件数: 1')
                 && str_contains($event->message, '対象フィードID: 104')
                 && ! str_contains($event->message, 'upstream unavailable'),
         );
@@ -175,6 +176,319 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
             ApplicationErrorOccurred::class,
             fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_parse_failed',
         );
+    }
+
+    public function test_sync_skips_detail_xml_404_empty_body_and_rejected_url_without_error_log(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class]);
+
+        $entries = [
+            ['id' => 201, 'xmlUrl' => 'https://example.test/not-found.xml', 'title' => '404'],
+            ['id' => 202, 'xmlUrl' => 'https://example.test/empty.xml', 'title' => '空XML'],
+            ['id' => 203, 'xmlUrl' => 'https://evil.example.test/detail.xml', 'title' => 'JMA以外URL'],
+        ];
+        $service = new EarthquakeMapPinBuildService(
+            $this->feedEntryRepositoryReturning($entries),
+            $this->detailXmlRepositoryReturning([
+                'https://example.test/not-found.xml' => $this->transport(
+                    url: 'https://example.test/not-found.xml',
+                    success: false,
+                    statusCode: 404,
+                    body: null,
+                    errorMessage: '気象庁 個別XMLの取得先がエラーを返しました。理由：XMLファイルが見つかりません。',
+                ),
+                'https://example.test/empty.xml' => $this->transport(
+                    url: 'https://example.test/empty.xml',
+                    success: false,
+                    statusCode: 200,
+                    body: '',
+                    errorMessage: '気象庁 個別XMLの内容が空でした。',
+                ),
+                'https://evil.example.test/detail.xml' => $this->transport(
+                    url: 'https://evil.example.test/detail.xml',
+                    success: false,
+                    statusCode: null,
+                    body: null,
+                    errorMessage: '気象庁XML以外のURLは取得できません。',
+                ),
+            ]),
+            new EarthquakeDetailXmlParseService,
+            $this->emptyMapPinRepository(),
+        );
+
+        $result = $service->sync(88);
+
+        $this->assertSame(3, $result->totalCount);
+        $this->assertSame(3, $result->skippedCount);
+        $this->assertSame(0, $result->failedCount);
+        $this->assertSame(0, $result->insertedCount);
+        Event::assertNotDispatched(ApplicationErrorOccurred::class);
+    }
+
+    public function test_sync_aggregates_repeated_transport_failures_by_classification(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class]);
+
+        $entries = [
+            ['id' => 301, 'xmlUrl' => 'https://example.test/rate-limited-1.xml', 'title' => '429 1'],
+            ['id' => 302, 'xmlUrl' => 'https://example.test/rate-limited-2.xml', 'title' => '429 2'],
+            ['id' => 303, 'xmlUrl' => 'https://example.test/server-error.xml', 'title' => '5xx'],
+            ['id' => 304, 'xmlUrl' => 'https://example.test/connection-1.xml', 'title' => '接続失敗 1'],
+            ['id' => 305, 'xmlUrl' => 'https://example.test/connection-2.xml', 'title' => '接続失敗 2'],
+            ['id' => 306, 'xmlUrl' => 'https://example.test/other-http-error.xml', 'title' => 'その他HTTPエラー'],
+        ];
+        $service = new EarthquakeMapPinBuildService(
+            $this->feedEntryRepositoryReturning($entries),
+            $this->detailXmlRepositoryReturning([
+                'https://example.test/rate-limited-1.xml' => $this->transport(
+                    url: 'https://example.test/rate-limited-1.xml',
+                    success: false,
+                    statusCode: 429,
+                    body: null,
+                    errorMessage: 'rate limit detail should stay out of the summary message',
+                ),
+                'https://example.test/rate-limited-2.xml' => $this->transport(
+                    url: 'https://example.test/rate-limited-2.xml',
+                    success: false,
+                    statusCode: 429,
+                    body: null,
+                    errorMessage: 'rate limit detail should stay out of the summary message',
+                ),
+                'https://example.test/server-error.xml' => $this->transport(
+                    url: 'https://example.test/server-error.xml',
+                    success: false,
+                    statusCode: 503,
+                    body: null,
+                    errorMessage: 'server error detail should stay out of the summary message',
+                ),
+                'https://example.test/connection-1.xml' => $this->transport(
+                    url: 'https://example.test/connection-1.xml',
+                    success: false,
+                    statusCode: null,
+                    body: null,
+                    errorMessage: 'connection detail should stay out of the summary message',
+                ),
+                'https://example.test/connection-2.xml' => $this->transport(
+                    url: 'https://example.test/connection-2.xml',
+                    success: false,
+                    statusCode: null,
+                    body: null,
+                    errorMessage: 'connection detail should stay out of the summary message',
+                ),
+                'https://example.test/other-http-error.xml' => $this->transport(
+                    url: 'https://example.test/other-http-error.xml',
+                    success: false,
+                    statusCode: 403,
+                    body: null,
+                    errorMessage: 'other http detail should stay out of the summary message',
+                ),
+            ]),
+            new EarthquakeDetailXmlParseService,
+            $this->emptyMapPinRepository(),
+        );
+
+        $result = $service->sync(89);
+
+        $this->assertSame(6, $result->totalCount);
+        $this->assertSame(0, $result->skippedCount);
+        $this->assertSame(6, $result->failedCount);
+        Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 4);
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_rate_limited'
+                && $event->url === 'https://example.test/rate-limited-1.xml'
+                && str_contains($event->message, '分類: 429 / 件数: 2')
+                && str_contains($event->message, '対象フィードID例: 301, 302')
+                && ! str_contains($event->message, 'rate limit detail'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_server_error'
+                && str_contains($event->message, '分類: 5xx / 件数: 1')
+                && str_contains($event->message, '対象フィードID: 303')
+                && ! str_contains($event->message, 'server error detail'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_connection_failed'
+                && str_contains($event->message, '分類: connection_failed / 件数: 2')
+                && str_contains($event->message, '対象フィードID例: 304, 305')
+                && ! str_contains($event->message, 'connection detail'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_fetch_failed'
+                && str_contains($event->message, '分類: http_error / 件数: 1')
+                && str_contains($event->message, '対象フィードID: 306')
+                && ! str_contains($event->message, 'other http detail'),
+        );
+    }
+
+    public function test_sync_aggregates_repeated_parse_failures_by_classification(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class]);
+
+        $entries = [
+            ['id' => 401, 'xmlUrl' => 'https://example.test/invalid-1.xml', 'title' => '解析失敗 1'],
+            ['id' => 402, 'xmlUrl' => 'https://example.test/invalid-2.xml', 'title' => '解析失敗 2'],
+        ];
+        $service = new EarthquakeMapPinBuildService(
+            $this->feedEntryRepositoryReturning($entries),
+            $this->detailXmlRepositoryReturning([
+                'https://example.test/invalid-1.xml' => $this->transport(
+                    url: 'https://example.test/invalid-1.xml',
+                    success: true,
+                    statusCode: 200,
+                    body: 'not xml payload 1',
+                    errorMessage: null,
+                ),
+                'https://example.test/invalid-2.xml' => $this->transport(
+                    url: 'https://example.test/invalid-2.xml',
+                    success: true,
+                    statusCode: 200,
+                    body: 'not xml payload 2',
+                    errorMessage: null,
+                ),
+            ]),
+            new EarthquakeDetailXmlParseService,
+            $this->emptyMapPinRepository(),
+        );
+
+        $result = $service->sync(90);
+
+        $this->assertSame(2, $result->totalCount);
+        $this->assertSame(0, $result->skippedCount);
+        $this->assertSame(2, $result->failedCount);
+        Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 1);
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_parse_failed'
+                && $event->url === 'https://example.test/invalid-1.xml'
+                && str_contains($event->message, '分類: parse_failed / 件数: 2')
+                && str_contains($event->message, '対象フィードID例: 401, 402')
+                && ! str_contains($event->message, 'not xml payload'),
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $entries
+     */
+    private function feedEntryRepositoryReturning(array $entries): EarthquakeFeedEntryRepositoryInterface
+    {
+        return new class($entries) implements EarthquakeFeedEntryRepositoryInterface
+        {
+            /**
+             * @param  array<int, array<string, mixed>>  $entries
+             */
+            public function __construct(private readonly array $entries) {}
+
+            public function isStorageReady(): bool
+            {
+                return true;
+            }
+
+            public function upsertFromExtractedEntries($entries): array
+            {
+                return [
+                    'totalCount' => 0,
+                    'insertedCount' => 0,
+                    'updatedCount' => 0,
+                    'skippedCount' => 0,
+                    'failedCount' => 0,
+                ];
+            }
+
+            public function latest(int $limit = 20): array
+            {
+                return [];
+            }
+
+            public function entriesForMapPinBuild(int $limit = 100): array
+            {
+                return $this->entries;
+            }
+        };
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $transports
+     */
+    private function detailXmlRepositoryReturning(array $transports): EarthquakeDetailXmlRepositoryInterface
+    {
+        return new class($transports) implements EarthquakeDetailXmlRepositoryInterface
+        {
+            /**
+             * @param  array<string, array<string, mixed>>  $transports
+             */
+            public function __construct(private readonly array $transports) {}
+
+            public function fetch(string $url): array
+            {
+                return $this->transports[$url] ?? [
+                    'endpoint' => $url,
+                    'method' => 'GET',
+                    'request_headers' => [],
+                    'success' => false,
+                    'status_code' => 500,
+                    'fetched_at' => '2026-05-11T11:32:00+09:00',
+                    'response_time_ms' => 12.3,
+                    'body' => null,
+                    'error_message' => 'unexpected test URL',
+                ];
+            }
+        };
+    }
+
+    private function emptyMapPinRepository(): EarthquakeMapPinRepositoryInterface
+    {
+        return new class implements EarthquakeMapPinRepositoryInterface
+        {
+            public function isStorageReady(): bool
+            {
+                return true;
+            }
+
+            public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array
+            {
+                return [
+                    'totalCount' => $pins->count(),
+                    'insertedCount' => 0,
+                    'updatedCount' => 0,
+                    'skippedCount' => 0,
+                    'failedCount' => 0,
+                ];
+            }
+
+            public function latest(int $limit = 50): array
+            {
+                return [];
+            }
+
+            public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
+            {
+                return new EarthquakeMapPinListDTO([]);
+            }
+        };
+    }
+
+    private function transport(
+        string $url,
+        bool $success,
+        ?int $statusCode,
+        ?string $body,
+        ?string $errorMessage,
+    ): array {
+        return [
+            'endpoint' => $url,
+            'method' => 'GET',
+            'request_headers' => [],
+            'success' => $success,
+            'status_code' => $statusCode,
+            'fetched_at' => '2026-05-11T11:32:00+09:00',
+            'response_time_ms' => 12.3,
+            'body' => $body,
+            'error_message' => $errorMessage,
+        ];
     }
 
     private function earthquakeReportXml(
