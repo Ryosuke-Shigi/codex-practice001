@@ -42,7 +42,7 @@ map pin生成条件を判定
 - insert / update / skipを分ける
 - 同じentryを重複保存しない
 - 取得失敗・解析失敗を成功扱いしない
-- JMA XML feed取得と個別XML取得は、外部API呼び出し1回ごとにAPI連携ログを発火する
+- JMA XML feed取得は単発取得としてAPI連携ログを発火し、map pin生成run内の個別XML取得は成功・skipped・failed分類ごとにAPI連携ログを集約する
 - 取得先エラーのログは、本文全文ではなく「XMLファイルが見つからない」「取得先サーバー障害」などの短い理由を付ける
 
 Repositoryは取得・保存を担当し、差分や処理結果の意味づけはService / Action側へ置きます。

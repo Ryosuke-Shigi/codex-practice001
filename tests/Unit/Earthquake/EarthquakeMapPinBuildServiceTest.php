@@ -6,6 +6,7 @@ use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
+use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
@@ -18,7 +19,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
 {
     public function test_sync_builds_only_mappable_pins_and_counts_skipped_and_failed_entries(): void
     {
-        Event::fake([ApplicationErrorOccurred::class]);
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
 
         $feedEntryRepository = new class implements EarthquakeFeedEntryRepositoryInterface
         {
@@ -164,7 +165,20 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame('5-', $pin->maxIntensity);
         $this->assertSame('2026-05-11T11:27:00+09:00', $pin->occurredAt);
         $this->assertSame('2026-05-11T11:31:00+09:00', $pin->reportedAt);
-
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === '個別XML取得'
+                && $event->status === 'success'
+                && str_contains((string) $event->message, '件数: 4件')
+                && str_contains((string) $event->message, '代表URL: https://example.test/valid.xml'),
+        );
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === '個別XML取得'
+                && $event->status === 'failed'
+                && $event->responseStatus === 503
+                && str_contains((string) $event->message, '分類: 5xx'),
+        );
         Event::assertDispatched(
             ApplicationErrorOccurred::class,
             fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_server_error'
@@ -180,7 +194,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
 
     public function test_sync_skips_detail_xml_404_empty_body_and_rejected_url_without_error_log(): void
     {
-        Event::fake([ApplicationErrorOccurred::class]);
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
 
         $entries = [
             ['id' => 201, 'xmlUrl' => 'https://example.test/not-found.xml', 'title' => '404'],
@@ -223,11 +237,30 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(0, $result->failedCount);
         $this->assertSame(0, $result->insertedCount);
         Event::assertNotDispatched(ApplicationErrorOccurred::class);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 3);
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+                && $event->responseStatus === 404
+                && str_contains((string) $event->message, '分類: 404'),
+        );
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+                && $event->responseStatus === 200
+                && str_contains((string) $event->message, '分類: empty_body'),
+        );
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+                && $event->responseStatus === null
+                && str_contains((string) $event->message, '分類: url_rejected'),
+        );
     }
 
     public function test_sync_aggregates_repeated_transport_failures_by_classification(): void
     {
-        Event::fake([ApplicationErrorOccurred::class]);
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
 
         $entries = [
             ['id' => 301, 'xmlUrl' => 'https://example.test/rate-limited-1.xml', 'title' => '429 1'],
@@ -293,6 +326,15 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(0, $result->skippedCount);
         $this->assertSame(6, $result->failedCount);
         Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 4);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 4);
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'failed'
+                && $event->responseStatus === 429
+                && str_contains((string) $event->message, '分類: 429')
+                && str_contains((string) $event->message, '件数: 2件')
+                && str_contains((string) $event->message, '代表URL: https://example.test/rate-limited-1.xml'),
+        );
         Event::assertDispatched(
             ApplicationErrorOccurred::class,
             fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_rate_limited'
@@ -326,7 +368,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
 
     public function test_sync_aggregates_repeated_parse_failures_by_classification(): void
     {
-        Event::fake([ApplicationErrorOccurred::class]);
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
 
         $entries = [
             ['id' => 401, 'xmlUrl' => 'https://example.test/invalid-1.xml', 'title' => '解析失敗 1'],
@@ -360,6 +402,13 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(0, $result->skippedCount);
         $this->assertSame(2, $result->failedCount);
         Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 1);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'success'
+                && str_contains((string) $event->message, '件数: 2件')
+                && str_contains((string) $event->message, '代表URL: https://example.test/invalid-1.xml'),
+        );
         Event::assertDispatched(
             ApplicationErrorOccurred::class,
             fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'earthquake.jma.detail_xml_parse_failed'

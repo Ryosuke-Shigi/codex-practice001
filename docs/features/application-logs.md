@@ -77,9 +77,11 @@ ListenerはEventをDTOへ移し、Repository経由でDB登録する副作用だ�
 
 ## 接続済みの外部APIログ発火
 
-既存API連携へ接続済みのAPI連携ログは、原則として外部API呼び出し1回ごとに保存します。
+既存API連携へ接続済みのAPI連携ログは、単発の外部API呼び出しでは1件の結果ログとして保存します。Job / Action / Service の同一実行単位で同じ意味の成功、skipped、想定内404、同種失敗が繰り返される場合は、個別対象ごとに保存せず、分類・件数・少数の代表URLが分かる要約ログへ集約します。
 
-ただし YouTube Data API `videos.list` は最大50件単位のchunk呼び出しを内部で行うため、成功ログはchunkごとに保存せず、`fetchVideoDetails()` / `fetchVideoDetailsResult()` の処理単位で1件の要約ログに集約します。要約には対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を含め、動画ID一覧、request query全文、response body全文、API key、token は保存しません。
+YouTube Data API `videos.list` は最大50件単位のchunk呼び出しを内部で行うため、成功ログはchunkごとに保存せず、`fetchVideoDetails()` / `fetchVideoDetailsResult()` の処理単位で1件の要約ログに集約します。要約には対象動画ID数、API呼び出し回数、成功/失敗回数、取得詳細件数を含め、動画ID一覧、request query全文、response body全文、API key、token は保存しません。同じ `videos.list` 処理内でchunk失敗が複数回起きた場合、ERRORログも同種分類ごとの要約に集約します。
+
+JMA 個別XML取得は map pin 生成run内で多数発生するため、URLごとの成功・想定内404・空body・対象外URLを個別保存せず、成功 / skipped分類 / failed分類ごとのAPI連携ログに集約します。代表URLは少数に制限し、XML本文やURL一覧を大量にDB保存しません。
 
 - JMA XML feed取得
 - JMA 個別XML取得

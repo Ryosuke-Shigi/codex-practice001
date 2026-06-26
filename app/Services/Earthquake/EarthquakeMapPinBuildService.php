@@ -9,6 +9,7 @@ use App\Exceptions\Earthquake\EarthquakeDetailXmlNotMappableException;
 use App\Repositories\Earthquake\EarthquakeDetailXmlRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
+use App\Services\ApplicationLog\ApplicationLogSummaryCollector;
 use Carbon\CarbonImmutable;
 use Throwable;
 
@@ -64,6 +65,11 @@ class EarthquakeMapPinBuildService
         $skippedCount = 0;
         $failedCount = 0;
         $failureSummaries = [];
+        /*
+         * 個別XML取得は run 内で多数発生するため、Repository では発火せず、
+         * map pin 生成の文脈で成功 / skipped / failed 分類へまとめて最後に flush します。
+         */
+        $integrationSummaries = new ApplicationLogSummaryCollector;
 
         foreach ($sourceEntries as $sourceEntry) {
             $xmlUrl = $sourceEntry['xmlUrl'] ?? null;
@@ -81,6 +87,15 @@ class EarthquakeMapPinBuildService
                  */
                 $transport = $this->detailXmlRepository->fetch($xmlUrl);
             } catch (Throwable $exception) {
+                $this->recordDetailXmlIntegrationSummary(
+                    collector: $integrationSummaries,
+                    status: 'failed',
+                    classification: 'connection_failed',
+                    statusCode: null,
+                    url: $xmlUrl,
+                    method: 'GET',
+                );
+
                 $this->addFailureSummary(
                     failureSummaries: $failureSummaries,
                     message: '気象庁 個別XMLを取得できず、地図ピンに追加できませんでした。',
@@ -101,12 +116,29 @@ class EarthquakeMapPinBuildService
             $transportClassification = $this->classifyTransportResult($transport);
 
             if ($transportClassification['outcome'] === self::TRANSPORT_OUTCOME_SKIPPED) {
+                $this->recordDetailXmlIntegrationSummary(
+                    collector: $integrationSummaries,
+                    status: 'skipped',
+                    classification: (string) $transportClassification['classification'],
+                    statusCode: $this->nullableInt($transportClassification['statusCode'] ?? null),
+                    url: $xmlUrl,
+                    method: $this->transportString($transport, 'method'),
+                );
                 $skippedCount++;
 
                 continue;
             }
 
             if ($transportClassification['outcome'] === self::TRANSPORT_OUTCOME_FAILED) {
+                $this->recordDetailXmlIntegrationSummary(
+                    collector: $integrationSummaries,
+                    status: 'failed',
+                    classification: (string) $transportClassification['classification'],
+                    statusCode: $this->nullableInt($transportClassification['statusCode'] ?? null),
+                    url: $xmlUrl,
+                    method: $this->transportString($transport, 'method'),
+                );
+
                 $this->addFailureSummary(
                     failureSummaries: $failureSummaries,
                     message: '気象庁 個別XMLを取得できず、地図ピンに追加できませんでした。',
@@ -122,6 +154,15 @@ class EarthquakeMapPinBuildService
 
                 continue;
             }
+
+            $this->recordDetailXmlIntegrationSummary(
+                collector: $integrationSummaries,
+                status: 'success',
+                classification: 'success',
+                statusCode: $this->nullableInt($transportClassification['statusCode'] ?? null),
+                url: $xmlUrl,
+                method: $this->transportString($transport, 'method'),
+            );
 
             try {
                 $pin = $this->detailXmlParseService->parse(
@@ -161,6 +202,7 @@ class EarthquakeMapPinBuildService
             }
         }
 
+        $integrationSummaries->flushIntegrationLogs();
         $this->dispatchFailureSummaries($failureSummaries);
 
         $upsertResult = $this->mapPinRepository->upsertFromMapPins(new EarthquakeMapPinListDTO($pins));
@@ -193,7 +235,12 @@ class EarthquakeMapPinBuildService
         $errorMessage = $this->transportString($transport, 'error_message');
 
         if ($errorMessage === self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE) {
-            return ['outcome' => self::TRANSPORT_OUTCOME_SKIPPED];
+            return [
+                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
+                'classification' => 'url_rejected',
+                'statusCode' => null,
+                'reason' => self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE,
+            ];
         }
 
         $statusCode = $this->transportInt($transport, 'status_code');
@@ -201,15 +248,30 @@ class EarthquakeMapPinBuildService
         $hasBody = $body !== null && trim($body) !== '';
 
         if (($transport['success'] ?? false) === true && $hasBody && $statusCode !== null && $statusCode >= 200 && $statusCode < 300) {
-            return ['outcome' => self::TRANSPORT_OUTCOME_SUCCESS];
+            return [
+                'outcome' => self::TRANSPORT_OUTCOME_SUCCESS,
+                'classification' => 'success',
+                'statusCode' => $statusCode,
+                'reason' => 'success',
+            ];
         }
 
         if ($statusCode === 404) {
-            return ['outcome' => self::TRANSPORT_OUTCOME_SKIPPED];
+            return [
+                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
+                'classification' => '404',
+                'statusCode' => $statusCode,
+                'reason' => $this->failureReason($errorMessage, '404'),
+            ];
         }
 
         if ($statusCode !== null && $statusCode >= 200 && $statusCode < 300 && ! $hasBody) {
-            return ['outcome' => self::TRANSPORT_OUTCOME_SKIPPED];
+            return [
+                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
+                'classification' => 'empty_body',
+                'statusCode' => $statusCode,
+                'reason' => $this->failureReason($errorMessage, 'empty_body'),
+            ];
         }
 
         if ($statusCode === 429) {
@@ -263,6 +325,39 @@ class EarthquakeMapPinBuildService
             'statusCode' => $statusCode,
             'reason' => $this->failureReason($reason, $classification),
         ];
+    }
+
+    /**
+     * 個別XML取得の transport 結果を API 連携ログの要約候補として記録します。
+     *
+     * XML解析失敗は外部取得自体は成功しているため、ERROR側の解析失敗要約へ分けます。
+     */
+    private function recordDetailXmlIntegrationSummary(
+        ApplicationLogSummaryCollector $collector,
+        string $status,
+        string $classification,
+        ?int $statusCode,
+        ?string $url,
+        ?string $method,
+    ): void {
+        $message = match ($status) {
+            'success' => '気象庁 個別XML取得に成功しました。',
+            'skipped' => sprintf('気象庁 個別XML取得をskipしました。分類: %s', $classification),
+            default => sprintf('気象庁 個別XML取得に失敗しました。分類: %s', $classification),
+        };
+
+        $collector->recordIntegration(
+            integrationType: 'external_api',
+            serviceName: '気象庁XML',
+            action: '個別XML取得',
+            status: $status,
+            message: $message,
+            targetType: 'jma_xml_endpoint',
+            targetId: 'document',
+            url: $url,
+            method: $method,
+            responseStatus: $statusCode,
+        );
     }
 
     /**

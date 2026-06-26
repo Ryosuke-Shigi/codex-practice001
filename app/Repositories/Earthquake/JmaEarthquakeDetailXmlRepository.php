@@ -2,7 +2,6 @@
 
 namespace App\Repositories\Earthquake;
 
-use App\Events\ApplicationLog\ApplicationIntegrationLogged;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -51,12 +50,6 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
                 statusCode: null,
                 errorMessage: $message,
             );
-            $this->dispatchIntegrationLog(
-                status: 'failed',
-                message: $message,
-                endpoint: $url,
-                responseStatus: null,
-            );
 
             return $result;
         }
@@ -74,15 +67,6 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
             'body' => $response->body(),
             'error_message' => $success ? null : $this->errorMessage($response->status()),
         ];
-
-        $this->dispatchIntegrationLog(
-            status: $success ? 'success' : 'failed',
-            message: $success
-                ? '取得しました。'
-                : (string) $result['error_message'],
-            endpoint: $url,
-            responseStatus: $response->status(),
-        );
 
         return $result;
     }
@@ -139,25 +123,5 @@ class JmaEarthquakeDetailXmlRepository implements EarthquakeDetailXmlRepositoryI
             $statusCode >= 500 => '取得先のサーバー側で障害が発生しています。',
             default => '取得先が正常ではない応答を返しました。',
         };
-    }
-
-    private function dispatchIntegrationLog(
-        string $status,
-        string $message,
-        string $endpoint,
-        ?int $responseStatus,
-    ): void {
-        event(new ApplicationIntegrationLogged(
-            integrationType: 'external_api',
-            serviceName: '気象庁XML',
-            action: '個別XML取得',
-            status: $status,
-            message: $message,
-            targetType: 'jma_xml_endpoint',
-            targetId: 'document',
-            url: $endpoint,
-            method: 'GET',
-            responseStatus: $responseStatus,
-        ));
     }
 }

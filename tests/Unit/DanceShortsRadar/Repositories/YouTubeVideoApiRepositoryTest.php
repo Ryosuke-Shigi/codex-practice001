@@ -308,9 +308,102 @@ class YouTubeVideoApiRepositoryTest extends TestCase
         Event::assertDispatched(
             ApplicationErrorOccurred::class,
             fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected'
-                && $event->message === 'YouTube Data API videos.list の取得先がエラーを返しました。'
+                && str_contains($event->message, 'YouTube Data API videos.list の取得先がエラーを返しました。')
+                && str_contains($event->message, '分類: 5xx / HTTP: 503')
                 && ! str_contains($event->message, 'quota details')
                 && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+    }
+
+    public function test_fetch_video_details_aggregates_repeated_chunk_error_logs(): void
+    {
+        $this->configureYoutubeApi();
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => Http::response([
+                'error' => [
+                    'message' => 'quota details should not be exposed',
+                ],
+            ], 503),
+        ]);
+
+        $youtubeVideoIds = array_map(
+            fn (int $number): string => sprintf('detail-video-%03d', $number),
+            range(1, 101),
+        );
+
+        try {
+            $this->detailFetchResultRepository()->fetchVideoDetailsResult($youtubeVideoIds);
+            $this->fail('Expected all videos.list chunks to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('YouTube Data API videos.list の取得先がエラーを返しました。', $exception->getMessage());
+        }
+
+        Http::assertSentCount(3);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
+        Event::assertDispatched(
+            ApplicationIntegrationLogged::class,
+            fn (ApplicationIntegrationLogged $event): bool => $event->action === 'videos.list 取得'
+                && $event->status === 'failed'
+                && $event->message === '取得に失敗しました。対象動画ID: 101件 / API呼び出し: 3回 / 成功: 0回 / 失敗: 3回 / 取得詳細: 0件',
+        );
+        Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 1);
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected'
+                && str_contains($event->message, '分類: 5xx / HTTP: 503')
+                && str_contains($event->message, '件数: 3件')
+                && str_contains($event->message, '代表URL: https://www.googleapis.test/youtube/v3/videos')
+                && ! str_contains($event->message, 'quota details')
+                && ! str_contains((string) $event->url, 'test-youtube-api-key'),
+        );
+    }
+
+    public function test_fetch_video_details_keeps_different_chunk_error_classifications_separate(): void
+    {
+        $this->configureYoutubeApi();
+        $requestCount = 0;
+
+        Http::fake([
+            'https://www.googleapis.test/youtube/v3/videos*' => function () use (&$requestCount) {
+                $requestCount++;
+
+                return Http::response([
+                    'error' => [
+                        'message' => 'upstream details should not be exposed',
+                    ],
+                ], $requestCount === 1 ? 429 : 503);
+            },
+        ]);
+
+        $youtubeVideoIds = array_map(
+            fn (int $number): string => sprintf('detail-video-%03d', $number),
+            range(1, 101),
+        );
+
+        try {
+            $this->detailFetchResultRepository()->fetchVideoDetailsResult($youtubeVideoIds);
+            $this->fail('Expected all videos.list chunks to fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('YouTube Data API videos.list の取得先がエラーを返しました。', $exception->getMessage());
+        }
+
+        Http::assertSentCount(3);
+        Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
+        Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 2);
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected'
+                && str_contains($event->message, '分類: 429 / HTTP: 429')
+                && ! str_contains($event->message, '件数:')
+                && ! str_contains($event->message, 'upstream details'),
+        );
+        Event::assertDispatched(
+            ApplicationErrorOccurred::class,
+            fn (ApplicationErrorOccurred $event): bool => $event->errorCode === 'dance-shorts.youtube.request_rejected'
+                && str_contains($event->message, '分類: 5xx / HTTP: 503')
+                && str_contains($event->message, '件数: 2件')
+                && ! str_contains($event->message, 'upstream details'),
         );
     }
 
