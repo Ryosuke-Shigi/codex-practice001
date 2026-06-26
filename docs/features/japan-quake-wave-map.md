@@ -106,6 +106,16 @@ Jobでは同期処理を実行し、成功・失敗・部分失敗を区別し�
 
 JobへXML解析や業務判断本体を詰め込まず、Action / Serviceへ委譲します。
 
+## Artisan Command / Scheduler
+
+`earthquake:refresh-map` は Japan Quake Wave Map の統合更新を開始する Artisan Command です。
+
+Command は `StartEarthquakeMapRefreshAction` を呼び、feed entry 同期runと map pin 生成runのIDを表示します。XML取得、XML解析、DB保存、map pin生成本体は Command へ置かず、既存Action / Job / Service / Repositoryへ委譲します。
+
+Scheduler では `earthquake-map-refresh` として `earthquake:refresh-map` を15分ごとに登録します。
+
+Scheduler は15分ごとにCommandを呼ぶ入口だけを担当し、`EarthquakeFeedEntrySyncService` や `EarthquakeMapPinBuildService` を直接呼びません。
+
 ## status API
 
 status APIは、画面が必要とするJSON shapeへ整形します。
@@ -159,6 +169,8 @@ Request validationで固定する主な内容:
 - partial failure
 - feed completed / map pin failed等の状態管理
 - 再実行時の安全性
+- `earthquake:refresh-map` が既存の統合更新Actionを呼び、Queue経由で一括更新Jobを投入する
+- Scheduler の `earthquake-map-refresh` が15分ごとに `earthquake:refresh-map` を呼ぶ
 
 ### API / Request
 
