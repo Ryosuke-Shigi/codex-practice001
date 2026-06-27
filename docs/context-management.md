@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-13
+- Last reviewed: 2026-06-27
 
 ## このドキュメントの目的
 
@@ -246,6 +246,7 @@ feature docsへ残すもの:
 - 複数目的を混ぜていないか
 - 共通方針を重複記載していないか
 - 推測で前提を補っていないか
+- `docs/ai/workflows/work-result-feedback-loop.md` を参照し、今回の結果をどのdocs / 型 / コメント / テストへ戻すか確認したか
 - 理解再起動に必要な情報が、正しいdocs、型、コメント、テストへ反映されているか
 - Git管理docsと一時作業メモを分けているか
 - 古い情報にはStatusを付けたか

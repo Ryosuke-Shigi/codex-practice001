@@ -36,6 +36,11 @@ MDルーターは、docsを軽く扱うためのものではない。
 
 作業種別が決まった後、対応表に従って読むdocsを固定する。
 
+関連workflow docs。
+
+* `docs/ai/workflows/work-result-feedback-loop.md`: 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール
+* `docs/ai/workflows/md-router-cases.md`: MDルーターの実戦ケース集。正本ではなく補助として読む
+
 ## 作業開始宣言テンプレート
 
 作業開始時は、実装・修正・PR確認へ進む前に、以下を宣言する。
@@ -165,10 +170,12 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | --- | --- | --- | --- | --- |
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
+| docs運用補助追加 | docs/index.md / docs/context-management.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/logs/index.md / docs/templates/pr-summary.md / docs/operations/command-registry.md | docs/operations/pr-review-strength.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md | 原則コードは読まない | 無関係feature docs / アプリコード / Docker構成 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
 | 作業方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
 | Feature移植マニフェスト作成 | docs/feature-module-portability.md / 対象feature docs / docs/index.md / docs/architecture.md | 必要に応じて docs/testing.md / docs/frontend.md | 対象Feature配下 / routes/web.php / routes/console.php / config / providers / migrations / seeders / tests / frontend Pages・Components | 無関係Feature / 移植しない段階のコード |
+| Feature docs新規作成 | docs/templates/feature-doc-template.md / docs/index.md / docs/architecture.md / docs/testing.md | 対象featureに関係する既存docs / 必要に応じて docs/frontend.md / docs/ui.md | 対象Featureの入口と確認済みコード / 成功テスト | 無関係feature docs / 無関係コード全体 |
 | Feature移植先実装 | docs/feature-module-portability.md / 移植元feature docs / 移植先repoのAGENTS・INDEX・ROUTER | 移植先repoの architecture / testing docs | 移植元Featureの移植対象 / 移植先Laravel構成 / 移植先route・config・provider・migration・seeder・tests | 移植対象外Feature / 移植モード外のLab・MOCK・PROTOTYPE・IDEA BOARD |
 | PRODUCTのみ移植 | docs/feature-module-portability.md / 対象feature docs / docs/architecture.md / docs/testing.md | docs/frontend.md / docs/ui-development-flow.md | PRODUCT Controller / Request / Action / Service / Repository / DTO / Responder / Strategy / Factory / Job / Enum / Model / Migration / Seeder / Config / Product routes / Console・Scheduler / Product Page・Component / Product tests | IDEA BOARD / MOCK固定データ / MOCK専用Page・Component / PROTOTYPE仮通信 / PROTOTYPE検証Route・Controller / Lab配下の紹介ページ / モック用画像 / 一時的な調査ログ |
 | MOCK作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration |
@@ -511,6 +518,7 @@ MDルーターは一度作って終わりではない。
 * 読まなくてよいdocsを読んでいないか
 * 読むべきdocsを読み漏らしていないか
 * 新しく追加したdocsをMDルーターへ反映したか
+* `docs/ai/workflows/work-result-feedback-loop.md` で今回の結果の反映先を確認したか
 * 廃止・統合したdocsをMDルーターから外したか
 * 停止条件に追加すべき失敗があったか
 * PRレビュー強度との対応にズレがないか

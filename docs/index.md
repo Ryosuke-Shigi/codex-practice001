@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-12
+- Last reviewed: 2026-06-27
 
 ## このドキュメントの目的
 
@@ -113,6 +113,8 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 |---|---|
 | `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
+| `docs/ai/workflows/work-result-feedback-loop.md` | 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール |
+| `docs/ai/workflows/md-router-cases.md` | `docs/ai/workflows/md-router.md` の実戦ケース集 |
 | `docs/feature-module-portability.md` | Feature Module移植ルール。Feature全体移植 / PRODUCTのみ移植 / MOCKのみ移植 / PROTOTYPEのみ移植 / IDEA BOARDのみ移植、移植元repoは読むだけ、移植先repoだけに差分を出す原則、移植対象・差し替え対象・移植しない対象の固定、個別Feature移植マニフェストの追加方針 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
@@ -147,6 +149,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | 文書 | 用途 |
 |---|---|
 | `docs/templates/pr-summary.md` | Pull Requestのレビュー用まとめ |
+| `docs/templates/feature-doc-template.md` | 新規Feature docs作成時のテンプレート |
 
 ## 文書の配置基準
 
@@ -190,6 +193,7 @@ Supersedes: 置き換えた旧資料
 - 共通ルール変更時は、正本となる共通docsだけを先に更新する
 - 機能仕様変更時は、コード・テストと該当する `docs/features/` を更新する
 - README、feature docs、操作ガイドは正本変更後に必要な範囲だけ追従させる
+- 作業完了前に `docs/ai/workflows/work-result-feedback-loop.md` でdocs反映要否を確認する
 - 古い資料を残す場合は `archived` または `superseded` を明記する
 - 同じ詳細ルールを複数文書へ全文複製しない
 - 他文書で同じ観点を確認する場合は、その文書の責務に必要な要約と正本への参照だけを置く

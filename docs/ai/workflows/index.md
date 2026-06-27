@@ -13,12 +13,16 @@
 
 | Path | 役割 |
 |---|---|
-| [md-router.md](md-router.md) | 作業種別ごとの読むdocs、読まないdocs、停止条件 |
+| [md-router.md](md-router.md) | 作業種別ごとの読むdocs、読まないdocs、停止条件の正本 |
+| [md-router-cases.md](md-router-cases.md) | `md-router.md` を補助する実戦ケース集 |
+| [work-result-feedback-loop.md](work-result-feedback-loop.md) | 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール |
 | [../../development-flow.md](../../development-flow.md) | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | [../../ui-development-flow.md](../../ui-development-flow.md) | MOCK / PROTOTYPE / PRODUCT UI作成工程 |
 | [../../prototype-policy.md](../../prototype-policy.md) | MOCK / Prototypeの配置、削除、Productとの分離 |
 | [../../testing.md](../../testing.md) | テスト追加、仕様固定、CI確認 |
 | [../../operations/pr-review-strength.md](../../operations/pr-review-strength.md) | PRレビュー強度 |
 | [../../operations/command-registry.md](../../operations/command-registry.md) | コマンド実行、Git境界 |
+
+`md-router.md` はルーティングの正本です。`md-router-cases.md` は補助実例集として扱い、迷った場合は `md-router.md` を正とします。
 
 既存docsは意味変更リスクを避けるため、今回まとめて移動しません。
