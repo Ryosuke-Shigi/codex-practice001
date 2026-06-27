@@ -83,6 +83,17 @@ PR用まとめは実装後の事実整理です。作業前の長い条件文や
 - <成功・失敗・未実行>
 - 未実行の場合の理由: <reason>
 
+## Sensors確認
+
+詳細は `docs/operations/sensors.md` を参照し、PR本文には確認結果だけを書く。
+
+- 該当Sensors:
+  - `SENS-xxx`: <該当理由>
+- 未実行Sensors:
+  - `<Sensor ID>`: <未実行理由。未実行がなければ「なし」>
+- docs更新要否:
+  - <更新した / 不要。理由>
+
 ## CI / status check
 
 - 状態: <success / failure / pending / none>
