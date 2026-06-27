@@ -44,6 +44,7 @@
 | [../testing.md](../testing.md) | テスト追加、仕様固定、CI確認 |
 | [../operations/command-registry.md](../operations/command-registry.md) | Docker経由コマンド、root / `src` のGit境界 |
 | [../operations/pr-review-strength.md](../operations/pr-review-strength.md) | PRレビュー強度 |
+| [../operations/sensors.md](../operations/sensors.md) | PR前確認、AIレビュー、スクリプト、CI fail候補として育てる検出項目の台帳 |
 | [../templates/pr-summary.md](../templates/pr-summary.md) | PR本文テンプレート |
 
 ## テンプレート
