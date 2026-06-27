@@ -18,4 +18,5 @@
 ## 配置ルール
 
 - 作業の失敗改善ログや再発防止ログを恒久化する場合は、この配下に追加する。
+- 失敗改善ログや再発防止ログを追加するかどうかは、[../workflows/work-result-feedback-loop.md](../workflows/work-result-feedback-loop.md) も参照して判定する。
 - 一時メモ、チャット用メモ、作業前の長い条件文は恒久MDへ混ぜない。
