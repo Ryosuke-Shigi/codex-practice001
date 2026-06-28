@@ -1,96 +1,100 @@
 # Laravel Portfolio - codex-practice001
 
-Laravel 11 + Docker + Inertia + React + TypeScript で構築しているポートフォリオアプリです。
+Laravel 11 + Inertia + React + TypeScript + Docker で構築している、外部API連携・同期処理・分析UI・運用ログ・docs / test / PR運用まで含めたポートフォリオアプリです。
 
 公開URL: https://ada-works.dev
 
-## このポートフォリオで証明していること
+## このポートフォリオで伝えたいこと
 
-このリポジトリは、単にLaravelアプリを作るだけではなく、設計、テスト、Pull Request、CI、docs運用まで含めて、変更を安全に進める力を示すためのポートフォリオです。
+このリポジトリは、画面を並べるだけのサンプルではなく、変更に強いWebアプリをどう設計・検証・運用するかを示すための実装例です。
 
-- Laravel 11 / Inertia / React / TypeScript による実装力
-- ADR Pattern とレイヤードアーキテクチャによる責務分離
-- Feature / Unit Test による仕様固定
-- Pull Request / CI / review による変更管理
-- docs / tests / Pull Request による変更理由と責務境界の明文化
-- 理解再起動性を意識した設計・テスト・ドキュメント運用
-- [Feature Module移植ルール](docs/feature-module-portability.md) による別Laravelプロジェクトへの展開可能性
+- Laravel + Inertia + React + TypeScript によるフルスタック実装
+- Action - Domain - Responder を軸にした責務分離
+- Controller / Request / Action / Service / Repository / DTO / Responder / Component の境界設計
+- Event / Listener / Job / Scheduler / Queue による副作用と非同期処理の整理
+- Strategy / Factory による処理差分の切り替え
+- Feature / Unit / React test による仕様固定
+- Pull Request / CI / docs による変更管理
+- AI支援を使いながら、人間が仕様・責務境界・完成判定を握る開発プロセス
 
-支援ツールの出力は完成品として扱わず、人間が仕様、責務境界、差分確認、完成判定、merge、本番反映判断を握ります。
+レビュー漏れを減らすための検出観点も用意していますが、READMEでは詳細を複製せず、必要な人がdocs側で確認できる構成にしています。
 
-## 最初に見る場所
+## Highlights
 
-| 見る場所 | 何を見るか |
-|---|---|
-| [公開URL](https://ada-works.dev) | 実際の入口とProject Select |
-| [Projects](#projects) | 代表Featureと、それぞれが証明している設計要素 |
-| [Development Discipline](#development-discipline) | 仕様、責務、テスト、レビューの進め方 |
-| [Architecture](#architecture) | ADR Pattern と各レイヤーの責務 |
-| [Testing](#testing) | Feature / Unit / React test で固定する仕様 |
-| [Documentation](#documentation) | 作業用docs、文書ルーティング、作業ルール |
+- **外部APIと保存データの両立**: YouTube Data API、APIs.guru、気象庁XMLを扱い、取得・保存・表示責務を分離しています。
+- **同期と分析の分離**: Scheduler / Queue / Job でデータを集め、表示側は保存済みsnapshotやread modelを参照します。
+- **ログと運用の見える化**: API連携ログとエラーログを保存し、公開ポートフォリオ上で確認できるようにしています。
+- **段階的な開発**: IDEA BOARD / MOCK / PRODUCT を分け、構想やUI確認と本実装を混ぜないようにしています。
+- **外部向けdocs導線**: READMEは概要に絞り、詳細な設計・テスト・機能仕様はdocsへ分離しています。
 
-代表Featureとして、[DanceShortsRadar](#danceshortsradar)、[Japan Quake Wave Map](#japan-quake-wave-map)、[API Discovery Hub](#api-discovery-hub) を見ると、外部API連携、保存・同期、ランキング、地図表示、Queue / Scheduler、責務分離、テスト固定の見え方を確認できます。
+## Main Projects
 
-## このリポジトリについて
+### DanceShorts
 
-開発では IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の段階を分け、PRODUCT化ではUI契約・振る舞い・状態・導線を引き継ぎながら、Repository / Service / DTO / Responder / Test へ責務を分離します。
+YouTube Shorts のダンス動画を保存・観測し、伸び方や地域別候補を確認するProjectです。
 
-詳細な開発フローは [Development Flow](docs/development-flow.md)、文脈管理と理解再起動性は [Context Management](docs/context-management.md) を参照してください。
+- **Radar**: 保存済みsnapshotから地域別ランキング候補や上昇候補を表示します。
+- **Analyzer**: 保存済み動画を検索し、選択したShortsのsnapshotを横比較します。
 
-## Projects
+見どころ:
 
-既存TOPのSTARTから `/projects` の Project Select に入り、各Projectの `/projects/{projectId}` Project Hub で Stage / Module を確認します。Project Select / Project Hub は静的TypeScriptデータで管理し、DB/APIへ接続しません。現時点ではPROTOTYPEは未作成のため表示していません。
-
-新しく作ったものを上に並べています。  
-モック段階・構想段階のものは、この一覧には含めていません。
-
-### DanceShortsRadar
-
-YouTube Shorts のダンス動画を対象に、地域・比較日数・並び順を切り替えながら、伸びている動画を確認する機能です。
-
-証明している設計要素:
-
-- YouTube Data API 連携、動画データ同期、snapshot 保存
-- ranking Query、comparisonDays / sort、selectedVideoId 基準の5枚 window
-- Strategy / Factory によるランキング表示制御
-- RISING の責務整理
-- Repository / Service / Action / Strategy / Responder の責務分離
-- Feature / Unit Test による仕様固定
-
-この機能では、動画データの取得・保存・比較・ランキング表示を分離し、表示条件やランキング条件を後から変更しやすい構成にしています。
-
-### Japan Quake Wave Map
-
-気象庁の地震火山情報 Atom feed と個別XMLを取得し、地震情報を保存・解析・地図表示する機能です。
-
-証明している設計要素:
-
-- 気象庁 Atom feed の取得
-- feed entry 保存、entry_id を基準にした insert / update / skip
-- 個別XMLから震源座標・最大震度・マグニチュード・深さを抽出
-- 緯度・経度・最大震度を持つデータのみ map pin 化
-- 震度なしデータ・座標なしデータを map pin 化しない制御
-- Job による同期処理
-- status API
-- Feature / Unit Test による仕様固定
+- YouTube Data API連携、動画保存、snapshot保存
+- Queue / Scheduler による通常同期、page2同期、snapshot専用同期
+- ranking read model と ECharts による表示
+- Strategy / Factory / Responder によるランキング条件と表示整形の分離
+- 保存済みデータを使う分析画面として、YouTube APIを追加で呼ばない設計
 
 ### API Discovery Hub
 
-APIs.guru の `list.json` を取得し、公開APIカタログを検索・保存・調査できる機能です。
+APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査メモ保存ができるProjectです。
 
-証明している設計要素:
+見どころ:
 
-- APIs.guru `list.json` の取得
-- `api_catalog_cache` への同期キャッシュ保存
-- insert / update / skip の差分同期、`payload_hash` による変更検知
-- API 一覧検索
-- provider / domain 絞り込み
-- API詳細表示
-- APIごとの調査メモ保存・更新・削除
-- Google / GitHub / Docs / Sample 検索リンクの表示時生成
-- Queue / Scheduler による同期処理
+- `list.json` の同期キャッシュ
+- insert / update / skip の差分同期
+- `payload_hash` による変更検知
+- provider / domain / keyword 検索
+- APIごとの調査メモCRUD
 - Repository / Service / DTO / Action / Responder の責務分離
-- Feature / Unit Test による仕様固定
+
+### Japan Quake Wave Map
+
+気象庁の地震火山情報Atom feedと個別XMLを取得し、保存済みの震源・震度・波紋を地図上で確認するProjectです。
+
+見どころ:
+
+- Atom feed取得、entry保存、個別XML解析
+- 震源座標、最大震度、マグニチュード、深さの抽出
+- 緯度・経度・最大震度を持つデータだけをmap pin化
+- 座標なし、震度なし、XML取得失敗、XML解析失敗の扱いを分離
+- 15分ごとの更新入口とstatus API
+
+### Project Logs / アプリログ
+
+アプリ内で保存したAPI連携ログとエラーログを確認するためのProjectです。
+
+見どころ:
+
+- API連携ログとエラーログを別テーブルで保存
+- Event / Listener / Repository でログ保存の副作用を分離
+- 成功ログを大量化させず、処理単位や分類ごとの要約ログへ集約
+- エラーログの詳細表示と対応済み管理
+
+### Operations / Notification
+
+運用確認のための通知・リアルタイム基盤も段階的に整えています。
+
+- Laravel Reverb / Broadcasting の設定を持つ、リアルタイム通知基盤の準備
+- Daily Server Health Report のメール通知
+- Scheduler、Command Action、Notification、Queue を分けた運用処理
+
+現時点のREADMEでは、個別Broadcast EventやReact通知UIが完成済みであるとは扱いません。
+
+### 工事発注管理 IDEA / MOCK
+
+案件、作業カード、見積、請求、領収の流れを、現場向けの入力体験として整理するProjectです。
+
+このProjectは **IDEA BOARD / MOCK段階** です。固定データでCSV投入、案件詳細、帳票プレビューなどのUIを確認する段階であり、PRODUCT完成済みの業務システムとしては扱っていません。
 
 ## Tech Stack
 
@@ -99,94 +103,38 @@ APIs.guru の `list.json` を取得し、公開APIカタログを検索・保存
 - PHP 8.3
 - Laravel 11
 - Inertia Laravel
-- MySQL 8.0
+- MySQL
 - Redis
-- Laravel Queue
-- Laravel Scheduler
+- Laravel Queue / Scheduler / Notification
+- Laravel Reverb
 - Flysystem AWS S3 Adapter
 
 ### Frontend
 
-- Inertia.js
 - React 19
 - TypeScript
+- Inertia.js
 - Vite
 - Tailwind CSS
-- motion
-- Vitest
 - ECharts
-- Mermaid
+- Vitest
+- motion
+- lucide-react
 
 ### Infrastructure / CI
 
 - Docker Compose
 - nginx
 - php-fpm
-- GitHub Actions
 - AWS Lightsail
 - Cloudflare
+- GitHub Actions
 
-## Local Development Tools
+ローカル開発では MinIO、Mailpit、Adminer なども使いますが、これらは開発確認用であり、本番公開対象ではありません。
 
-ローカル開発環境では、開発・確認用に以下のコンテナや補助ツールを含めています。
+## Architecture / Design Policy
 
-- nginx
-- php-fpm
-- php-cli
-- artisan
-- composer
-- npm container
-- MySQL
-- Redis
-- MinIO
-- Mailpit
-- Adminer
-- queue worker
-- scheduler
-
-用途:
-
-- MinIO: ローカル開発用の S3 互換ストレージ
-- Mailpit: メール送信確認
-- Adminer: MySQL確認
-- npm container: Vite / Vitest / frontend build
-- queue worker: Laravel Job 実行
-- scheduler: Laravel Scheduler 実行
-
-MinIO / Mailpit / Adminer はローカル開発用です。  
-本番環境では、Adminer / Mailpit / MySQL / Redis / MinIO を外部公開しません。
-
-## Local S3 / MinIO
-
-本番では AWS S3 を使い、ローカル開発では MinIO を S3 互換ストレージとして使います。
-
-Laravel 側の保存処理は `Storage::disk('s3')` に統一し、接続先の違いは環境変数ファイルと Docker Compose で切り替えます。READMEには認証値や本番接続情報を載せません。
-
-MinIO Console は以下で確認します。
-
-```text
-http://localhost:9001
-```
-
-設定変更後は、Laravel の設定キャッシュをクリアします。
-
-```bash
-make app-clear
-```
-
-## Development Discipline
-
-このプロジェクトでは、目的・入力・出力・制約・責務境界・テスト観点・完成判定を先に明確にしてから変更します。
-
-- 仕様、責務境界、完成判定、merge、本番反映判断は人間が握る
-- 実装差分はテスト、Pull Request、CI、責務レビューを通して確認する
-- docs、型、コメント、テストを、後から目的と変更理由を回収するための保守資産として扱う
-
-変更時の文脈管理と理解再起動性は [Context Management](docs/context-management.md) に従います。
-
-## Architecture
-
-Action - Domain - Responder のADR Patternと、Laravelのレイヤードアーキテクチャを基準にしています。
+このプロジェクトでは、Action - Domain - Responder をADR Patternとして扱います。
 
 ```text
 Controller / Request
@@ -200,100 +148,45 @@ Responder
 React / Inertia
 ```
 
-各責務を混ぜないことを重視し、必要なレイヤーだけを使います。
+設計で重視していること:
 
-| レイヤー | 責務 |
-|---|---|
-| Controller / Request | HTTP入口と入力形式の検証 |
-| Action | 1ユースケースの手順 |
-| Service | 業務判断・ドメインルール |
-| Repository | DBまたは外部データソースとの境界 |
-| DTO / ListDTO | レイヤー間のデータキャリア |
-| Strategy / Factory | 処理差分の切り替え、生成、選択 |
-| Responder | Inertia props、JSON等の出力整形 |
-| React / Inertia | 表示、ユーザー操作、UI状態 |
+- ControllerはHTTP入口、Requestは入力形式の検証に寄せる
+- Actionは1ユースケースの手順を扱う
+- Serviceは業務判断、RepositoryはDBや外部データソースとの境界を扱う
+- DTO / ListDTOはレイヤー間のデータキャリアとして扱う
+- ResponderはInertia propsやJSONなどの出力整形を担当する
+- React Componentは表示、操作、UI状態を扱い、業務判断を再構築しない
 
-Controllerへ業務判断、Repositoryへ表示判断、ServiceへHTTP都合、DTOへレスポンス生成を混ぜません。
+詳細は [Architecture](docs/architecture.md)、[Frontend](docs/frontend.md)、[UI](docs/ui.md) を参照してください。
 
-詳細は [Architecture](docs/architecture.md) を参照してください。
+## Testing / CI / Review
 
-## Feature Module Portability
+テストは、後から変更しても壊してはいけない仕様を固定する実行可能な仕様として扱います。
 
-Featureを別Laravelプロジェクトへ移植可能な単位として扱うため、[Feature Module移植ルール](docs/feature-module-portability.md) を分離しています。
+- Laravel Feature / Unit test
+- React utility / component test
+- Responder / Inertia props の確認
+- Job / Artisan Command / Scheduler の実行境界
+- CIでの Laravel Pint check、frontend build、Laravel tests、Vitest
 
-- 移植モードを `full` / `product-only` / `mock-only` / `prototype-only` / `idea-board-only` に分ける
-- `product-only` では Lab / MOCK / PROTOTYPE / IDEA BOARD をPRODUCT移植対象へ混ぜない
-- route、config、provider、migration、seeder、tests、docs、queue、schedulerの差し替え点を確認する
-- 「移植しやすい構成」と「そのままコピーで動く」は別として扱う
-
-## Testing
-
-テストは、開発者が壊してはいけない仕様と責務境界を固定する実行可能な仕様として扱います。
-
-主な対象:
-
-- Request validation
-- DTO / ListDTO
-- Serviceの業務判断
-- Repositoryの取得・保存・外部API境界
-- Action、Job、Artisan Command、Scheduler
-- Responder / Inertia props
-- React Utility / Component
-
-基本コマンド:
-
-```bash
-cd /var/www/api-discovery-hub
-docker compose exec php-fpm php artisan test
-docker compose run --rm npm npm run test:run
-docker compose run --rm npm npm run build
-```
-
-TypeScript / TSXを変更した場合は、必要に応じて手元確認として `docker compose run --rm npm npm run typecheck` を実行します。現時点ではCI必須ゲートではありません。
-
-詳細は [Testing](docs/testing.md) と [Docker経由コマンド台帳](docs/operations/command-registry.md) を参照してください。
-
-## CI/CD
-
-Pull Requestとmainへのpushで、Laravel Pint check、frontend build、Laravel tests、Vitestを実行します。TypeScript typecheckは現時点ではCI必須ゲートではありません。
-
-DeployはCI成功後にだけ実行され、build済みassetsをAWS Lightsailの公開環境へ反映します。CIが失敗した場合はDeployしません。
-
-## Git / Review Flow
-
-mainへ直接作業せず、目的別ブランチからPull Requestを作成します。
-
-```text
-目的・成功条件を固定
-    ↓
-実装・テスト・必要なdocs更新
-    ↓
-Pull Request
-    ↓
-差分・CI・責務・秘密情報を確認
-    ↓
-人間がmergeを判断
-```
+docs-onlyの変更ではアプリテストを必須にせず、`git diff --check` とMarkdown差分の確認を中心にしています。詳細は [Testing](docs/testing.md) と [PR Review Strength](docs/operations/pr-review-strength.md) を参照してください。
 
 ## Documentation
 
-READMEは外部向けの概要です。内部の設計・テスト・作業ルールは、用途別のMarkdownへ分離しています。
+READMEは外部閲覧者向けの概要です。内部の作業ルールや詳細仕様は、用途ごとのdocsへ分離しています。
 
-- [AGENTS.md](AGENTS.md): 作業時に守る入口ルール
-- [Documentation Index](docs/index.md): 用途別の正本と参照先
-- [Workflow Docs](docs/ai/workflows/index.md): 作業種別ごとの参照範囲と停止条件
-- [Docker Command Registry](docs/operations/command-registry.md): Docker経由コマンドとGit境界
-- [Development Flow](docs/development-flow.md): IDEA BOARDからPRODUCTまでの開発手順
-- [UI Development Flow](docs/ui-development-flow.md): MOCK / PROTOTYPE / PRODUCTのUI作成工程
+- [AGENTS.md](AGENTS.md): 作業時の入口
+- [Documentation Index](docs/index.md): docs全体の案内と用途別の正本
 - [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
-- [Architecture](docs/architecture.md): ADR Patternとレイヤード責務
-- [Testing](docs/testing.md): テスト方針と仕様固定
-- [Coding Standards](docs/coding-standards.md): PHP / TypeScript / JavaScript / React / CSSの実装作法
-- [Frontend](docs/frontend.md): React / Inertia / TypeScriptの実装責務
-- [UI](docs/ui.md): UI、Common、モバイル、Effects
-- [Security](docs/security.md): 秘密情報、本番接続、破壊的操作
-- [Context Management](docs/context-management.md): 文脈読込と理解再起動
-- [Feature Module Portability](docs/feature-module-portability.md): Feature移植モードとPRODUCT移植対象
-- [docs/commenting.md](docs/commenting.md): 通常コメント・PHPDoc・JSDocの運用方針
-- [Prototype Policy](docs/prototype-policy.md): MOCK / Prototypeの分離とProduct化
-- [PR Summary Template](docs/templates/pr-summary.md): Pull Request本文のレビュー用まとめ
+- [Architecture](docs/architecture.md): ADR Patternとレイヤー責務
+- [Testing](docs/testing.md): テスト方針
+- [Development Flow](docs/development-flow.md): IDEA BOARD / MOCK / PROTOTYPE / PRODUCT
+- [Feature Module Portability](docs/feature-module-portability.md): 別Laravelプロジェクトへの移植観点
+
+詳細なAI運用、docs運用、PR運用、検出観点はREADMEへ複製せず、docs側を正本として扱います。
+
+## Local Development / Notes
+
+ローカル環境はDocker Composeを前提にしています。Laravelアプリ本体はこのリポジトリ、Docker / nginx / php-fpm / MySQL / Redis などの外側構成は別の管理領域として扱います。
+
+実行コマンドやDocker serviceの詳細は [Docker Command Registry](docs/operations/command-registry.md) を参照してください。READMEには認証値や本番接続情報を載せません。
