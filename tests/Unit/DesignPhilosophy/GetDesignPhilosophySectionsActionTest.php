@@ -20,6 +20,7 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
             'feedback-controls',
             'human-led-ai',
             'understanding-reboot',
+            'closing',
         ], array_map(
             fn (DesignPhilosophySectionDTO $section): string => $section->key,
             $sections,
