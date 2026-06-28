@@ -14,14 +14,11 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
         $sections = app(GetDesignPhilosophySectionsAction::class)->execute();
 
         $this->assertSame([
-            'hero',
-            'human-driven',
-            'agent-guide',
-            'spec-first',
-            'dto-boundary',
-            'layered-architecture',
-            'tdd-guardrail',
-            'review-flow',
+            'overview',
+            'responsibility-boundaries',
+            'staged-development',
+            'feedback-controls',
+            'human-led-ai',
             'understanding-reboot',
         ], array_map(
             fn (DesignPhilosophySectionDTO $section): string => $section->key,
