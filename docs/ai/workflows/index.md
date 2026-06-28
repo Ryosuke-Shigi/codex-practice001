@@ -21,8 +21,13 @@
 | [../../prototype-policy.md](../../prototype-policy.md) | MOCK / Prototypeの配置、削除、Productとの分離 |
 | [../../testing.md](../../testing.md) | テスト追加、仕様固定、CI確認 |
 | [../../operations/pr-review-strength.md](../../operations/pr-review-strength.md) | PRレビュー強度 |
+| [../../operations/sensors.md](../../operations/sensors.md) | PR前確認、AIレビュー、作業中・作業後のズレ検出、SENS-016を含むSensors台帳 |
 | [../../operations/command-registry.md](../../operations/command-registry.md) | コマンド実行、Git境界 |
 
 `md-router.md` はルーティングの正本です。`md-router-cases.md` は補助実例集として扱い、迷った場合は `md-router.md` を正とします。
+
+work-result-feedback-loop.md は作業後の戻し先判定、../../operations/sensors.md は作業中・作業後の漏れやズレの検出台帳として使い分けます。
+
+詳細なSensor定義は docs/operations/sensors.md を正本とし、この索引へ全文複製しません。
 
 既存docsは意味変更リスクを避けるため、今回まとめて移動しません。
