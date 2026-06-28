@@ -18,18 +18,19 @@ export default function DesignPhilosophyIndex({
     sections,
 }: DesignPhilosophyIndexProps) {
     return (
-        <PublicLayout className="bg-zinc-950/72">
+        <PublicLayout className="bg-zinc-950 text-white">
             <Head title="Design Philosophy" />
 
             {/*
                 sections は Laravel config から Action / DTO / Responder を通って渡されます。
                 このページでは取得や並び替えを行わず、受け取った順番のまま縦スクロールLPとして表示します。
             */}
-            <article className="min-w-0 overflow-x-hidden">
-                {sections.map((section) => (
+            <article className="min-w-0 overflow-x-hidden bg-zinc-950">
+                {sections.map((section, index) => (
                     <DesignPhilosophySectionTemplate
                         key={section.key}
                         section={section}
+                        index={index}
                     />
                 ))}
             </article>
