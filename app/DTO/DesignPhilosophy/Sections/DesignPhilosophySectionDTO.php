@@ -99,7 +99,6 @@ final readonly class DesignPhilosophySectionDTO
     }
 
     /**
-     * @param  mixed  $items
      * @return array<int, array{label: string, description: string}>
      */
     private static function normalizeItems(mixed $items): array
@@ -125,7 +124,6 @@ final readonly class DesignPhilosophySectionDTO
     }
 
     /**
-     * @param  mixed  $items
      * @return array<int, string>
      */
     private static function normalizeTextList(mixed $items): array
