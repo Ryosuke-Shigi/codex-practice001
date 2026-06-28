@@ -27,21 +27,37 @@ docs更新を目的化せず、次回の理解再起動に役立つ検証済み�
 - Feature仕様が変わったか
 - 責務境界の判断が増えたか
 - UI / Frontend判断が増えたか
+- コメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか
 - 新しいコマンドを使ったか
 - 失敗、誤読、再発防止、未確認事項があったか
 - 検出可能な漏れや再発しやすい確認漏れがあったか
 - テスト観点が増えたか
 - secrets / env / 本番接続 / 破壊的操作に触れたか
+- AGENTS.md、docs/index.md、MDルーター、operations docs、feature docs、Sensors、PR Summary のどこへ戻すべきか
+- ローカル環境固有で、Git管理docsへ混ぜてはいけない情報ではないか
 
 どれにも該当しない場合は、恒久docsへ戻す新事実がない可能性があります。その場合も、PR Summary には理由を短く残します。
+
+## 作業後のMD最適化ループ
+
+作業後は、PRレビュー、Sensors、PR Summary、docs更新要否の結果から、必要なMDだけを最小更新します。
+
+1. PR Summaryには、実行結果、未実行理由、docs更新要否、該当Sensorsを事実として残す
+2. 繰り返し漏れや検出可能なズレは、必要に応じて ../../operations/sensors.md へ戻す
+3. 読む場所や作業分岐がズレた場合は、必要な範囲だけ md-router.md または md-router-cases.md を更新する
+4. AGENTS.mdへ入れるのは、全作業で守らないと事故につながる短い入口ルールだけにする
+5. ローカル環境固有の情報は、Git管理docsやPR本文へ混ぜない
 
 ## 反映先の判定表
 
 | 今回増えた事実 | 主な反映先 |
 |---|---|
+| 全作業で必要な短い入口ルール | ../../../AGENTS.md |
+| docsの案内先や正本の役割分担 | ../../index.md |
 | Feature仕様変更 | `../../features/*` |
 | 共通責務境界 | `../../architecture.md` または `../rules/responsibility-boundaries.md` |
 | React / Inertia / TypeScript責務 | `../../frontend.md` / `../../ui.md` |
+| コメント、PHPDoc、JSDoc、型アノテーション、props契約説明の整合 | ../../commenting.md / 対象コード / ../../operations/sensors.md |
 | UI工程や MOCK / PROTOTYPE / PRODUCT 契約 | `../../ui-development-flow.md` / `../../prototype-policy.md` / 対象feature docs |
 | テスト観点 | `../../testing.md` または対象feature docs |
 | コマンド実行場所 | `../../operations/command-registry.md` |
@@ -50,6 +66,7 @@ docs更新を目的化せず、次回の理解再起動に役立つ検証済み�
 | 失敗改善・再発防止 | `../logs/*` |
 | 文脈読込・理解再起動方針 | `../../context-management.md` |
 | 作業種別ごとの参照先 | `md-router.md` |
+| 実装後の確認結果、未実行理由、docs更新要否 | ../../templates/pr-summary.md に従いPR本文へ記載 |
 
 複数に該当する場合でも、同じ詳細ルールを複数docsへ全文複製しません。各docsの責務に必要な要約と、正本への参照だけを置きます。
 作業中または作業後に検出可能な漏れが見つかった場合は、詳細ルールを重複させず、検出項目として `../../operations/sensors.md` へ戻すかを確認します。

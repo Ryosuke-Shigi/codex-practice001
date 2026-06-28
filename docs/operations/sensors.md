@@ -280,6 +280,21 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 将来の自動化候補: PR Summaryの未完了・対象外欄、docs更新要否欄、対象feature docs更新有無の照合
 - 備考: 会話ログや一時作業メモをGit管理docsへ戻す意味ではない。
 
+### SENS-016: Comment / Annotation Drift
+
+- ID: SENS-016
+- 名前: Comment / Annotation Drift
+- 種別: Manual / AI Review
+- 実行タイプ: Inferential
+- 実行タイミング: コード変更時 / PR前
+- 検出したい問題: コード変更に対して、コメント、PHPDoc、JSDoc、型アノテーション、props契約説明、責務説明が古くなっている状態
+- 対象: Controller / Request / Action / Service / Repository / DTO / Responder / Job / Command / Scheduler / React Page / Hook / Component / Type
+- 判定: コードの責務、入力、出力、状態遷移、例外条件、外部API境界、props契約が変わった場合、関連説明も更新されているか
+- 参照docs: docs/commenting.md / docs/architecture.md / docs/frontend.md / docs/templates/pr-summary.md
+- 現在のLevel: Level 1
+- 将来の自動化候補: changed files とコメント・PHPDoc・JSDoc・型定義の差分照合。ただし機械判定できる範囲に限定し、意味判断を無理にCI failへ押し込まない
+- 備考: 不要なコメント追加を求めるSensorではない。実装と説明の矛盾を防ぐSensorとして扱う。
+
 ## PR Summaryへ残す項目
 
 Sensorsに関係するPRでは、`docs/templates/pr-summary.md` に従い、少なくとも次を残します。
@@ -339,6 +354,7 @@ Level 2またはLevel 3としてCI fail候補にする前に、次を確認し�
 | `docs/operations/pr-review-strength.md` | PR差分の危険度に応じたレビュー強度 |
 | `docs/operations/command-registry.md` | 実行場所と確認コマンドの台帳 |
 | `docs/architecture.md` | ADR Pattern、レイヤー責務境界 |
+| docs/commenting.md | コメント、PHPDoc、JSDoc、型説明の書き方 |
 | `docs/testing.md` | テスト方針と実行コマンド |
 | `docs/frontend.md` | React / Inertia / TypeScript責務 |
 | `docs/ui.md` | UI、Common Component、操作性 |

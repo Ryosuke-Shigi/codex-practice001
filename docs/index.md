@@ -33,6 +33,22 @@
 - `docs/operations/pr-review-strength.md`
 - `docs/operations/sensors.md`
 
+### 作業後の反映先判定
+
+- docs/ai/workflows/work-result-feedback-loop.md
+- docs/templates/pr-summary.md
+- docs/operations/sensors.md
+
+作業結果を AGENTS.md、docs索引、MDルーター、feature docs、operations docs、Sensors、PR Summary のどこへ戻すかは docs/ai/workflows/work-result-feedback-loop.md で判定します。
+
+### コメント・アノテーション整合
+
+- docs/commenting.md
+- docs/operations/pr-review-strength.md
+- docs/operations/sensors.md
+
+ソースコード変更時は、関連するコメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか確認します。目的は不要なコメントを増やすことではなく、コードと説明のズレを残さないことです。
+
 ### 実装済みの現在挙動
 
 - 現在のコード
@@ -196,6 +212,8 @@ Supersedes: 置き換えた旧資料
 - 機能仕様変更時は、コード・テストと該当する `docs/features/` を更新する
 - README、feature docs、操作ガイドは正本変更後に必要な範囲だけ追従させる
 - 作業完了前に `docs/ai/workflows/work-result-feedback-loop.md` でdocs反映要否を確認する
+- AGENTS.mdを肥大化させず、入口、案内板、ルーター、operations docs、feature docs、PR Summary、Sensorsの役割へ分けて戻す
+- ローカル環境固有の情報はGit管理docsへ混ぜず、PR本文にも転記しない
 - 古い資料を残す場合は `archived` または `superseded` を明記する
 - 同じ詳細ルールを複数文書へ全文複製しない
 - 他文書で同じ観点を確認する場合は、その文書の責務に必要な要約と正本への参照だけを置く

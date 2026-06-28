@@ -15,6 +15,15 @@
 参照先一覧は「全部読むリスト」ではありません。
 作業種別、今回読むdocs、読まないdocs、編集禁止ファイル、停止条件を固定してから進みます。
 
+## 作業後の戻し先確認
+
+作業完了前に [docs/ai/workflows/work-result-feedback-loop.md](docs/ai/workflows/work-result-feedback-loop.md) で、今回の結果をどこへ戻すかを確認します。
+
+- AGENTS.md へ全ルールを集約しない
+- docs索引、MDルーター、operations docs、feature docs、PR Summary、Sensors のどこへ戻すべきかを分ける
+- ソースコードを変更した場合は、コメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか確認する
+- ローカル環境固有の情報は、Git管理docsやPR本文へ混ぜない
+
 ## root との関係
 
 外側workspaceの root は Docker / 環境repo、`src/` は Laravel / React / docs / tests / アプリrepoです。
