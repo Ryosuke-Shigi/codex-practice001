@@ -41,6 +41,10 @@ MDルーターは、docsを軽く扱うためのものではない。
 * `docs/ai/workflows/work-result-feedback-loop.md`: 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール
 * `docs/ai/workflows/md-router-cases.md`: MDルーターの実戦ケース集。正本ではなく補助として読む
 
+コード変更を含む作業では、関連するコメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか確認する。
+
+これはコメントを増やすための確認ではない。責務、入力、出力、DTO形、状態遷移、例外条件、外部API境界、props契約が変わったときに、既存の説明が古いまま残らないようにするための確認である。
+
 ## 作業開始宣言テンプレート
 
 作業開始時は、実装・修正・PR確認へ進む前に、以下を宣言する。
@@ -170,7 +174,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | --- | --- | --- | --- | --- |
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
-| docs運用補助追加 | docs/index.md / docs/context-management.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/logs/index.md / docs/templates/pr-summary.md / docs/operations/command-registry.md / docs/operations/sensors.md | docs/operations/pr-review-strength.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md | 原則コードは読まない | 無関係feature docs / アプリコード / Docker構成 |
+| docs運用最適化 / 補助追加 | docs/index.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md | 原則コードは読まない | 無関係feature docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
 | 作業方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
@@ -182,6 +186,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | PROTOTYPE作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
 | PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
 | PRODUCT修正 | docs/architecture.md / docs/testing.md | 対象feature docs / 対象PRの差分 | 変更対象レイヤーと直接依存先（変更対象レイヤーと影響する責務を先に宣言） | リポジトリ全体の無差別探索 |
+| コード変更後のコメント・アノテーション追従確認 | docs/commenting.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | 対象feature docs / 対象言語・レイヤーのdocs | 変更ファイルと関連するコメント / PHPDoc / JSDoc / 型 / props契約説明 | 無関係feature docs / 仕様変更につながる周辺修正 |
 | Service修正 | docs/architecture.md / docs/testing.md | 対象feature docs | Service / DTO / Action / Test | UI全体 |
 | Repository修正 | docs/architecture.md / docs/testing.md | 対象feature docsが存在する場合は読む | Repository / Model / Migration / Test | 無関係Component |
 | DTO修正 | docs/architecture.md / docs/testing.md | 対象feature docs | DTO / ListDTO / Action / Responder / Test | 無関係Repository全体 |
@@ -348,6 +353,8 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 PRODUCT新規実装では、作業開始宣言で Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test の責務配置を先に宣言し、固定してから実装します。
 
 PRODUCT修正では、変更対象レイヤーと影響する責務を先に宣言してから修正します。
+
+コード変更後は、変更した責務、入力、出力、DTO形、状態遷移、例外条件、外部API境界、props契約に対して、関連コメント、PHPDoc、JSDoc、型アノテーション、props契約説明が古くなっていないか確認します。
 
 責務配置を作れない場合は、推測で実装せず停止して報告します。
 
@@ -519,6 +526,9 @@ MDルーターは一度作って終わりではない。
 * 読むべきdocsを読み漏らしていないか
 * 新しく追加したdocsをMDルーターへ反映したか
 * `docs/ai/workflows/work-result-feedback-loop.md` で今回の結果の反映先を確認したか
+* PR Summaryに実行結果として残す内容と、docs更新要否を分けて確認したか
+* ソースコード変更時に、関連コメント、PHPDoc、JSDoc、型アノテーション、props契約説明の追従漏れがないか確認したか
+* ローカル環境固有の情報をGit管理docsやPR本文へ混ぜていないか
 * 廃止・統合したdocsをMDルーターから外したか
 * 停止条件に追加すべき失敗があったか
 * PRレビュー強度との対応にズレがないか
