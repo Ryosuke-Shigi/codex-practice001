@@ -1,31 +1,31 @@
 # Laravel Portfolio - codex-practice001
 
-Laravel 11 + Inertia + React + TypeScript + Docker で構築している、外部API連携・同期処理・分析UI・運用ログ・docs / test / PR運用まで含めたポートフォリオアプリです。
+Laravel 11 + Inertia + React + TypeScript + Docker で構築しているポートフォリオアプリです。外部API連携、同期処理、分析UI、運用ログ、docs / test / PR運用を題材にしています。
 
 公開URL: https://ada-works.dev
 
-## このポートフォリオで伝えたいこと
+## このポートフォリオについて
 
-このリポジトリは、画面を並べるだけのサンプルではなく、変更に強いWebアプリをどう設計・検証・運用するかを示すための実装例です。
+このリポジトリは、Laravelアプリケーションを題材に、設計・実装・検証・運用の流れをまとめた実装例です。機能ごとに、外部データの取得、保存、表示、非同期処理、docs / test / PRでの確認を分けています。
 
-- Laravel + Inertia + React + TypeScript によるフルスタック実装
+- Laravel / React を使った一連の実装
 - Action - Domain - Responder を軸にした責務分離
 - Controller / Request / Action / Service / Repository / DTO / Responder / Component の境界設計
 - Event / Listener / Job / Scheduler / Queue による副作用と非同期処理の整理
 - Strategy / Factory による処理差分の切り替え
 - Feature / Unit / React test による仕様固定
 - Pull Request / CI / docs による変更管理
-- AI支援を使いながら、人間が仕様・責務境界・完成判定を握る開発プロセス
+- AI支援は利用しつつ、人間が仕様・責務境界・完成判定を確認する開発プロセス
 
-レビュー漏れを減らすための検出観点も用意していますが、READMEでは詳細を複製せず、必要な人がdocs側で確認できる構成にしています。
+レビュー時に確認する観点もdocs側に整理しています。READMEでは詳細を複製せず、概要と参照先に留めます。
 
-## Highlights
+## 設計と実装の概要
 
-- **外部APIと保存データの両立**: YouTube Data API、APIs.guru、気象庁XMLを扱い、取得・保存・表示責務を分離しています。
-- **同期と分析の分離**: Scheduler / Queue / Job でデータを集め、表示側は保存済みsnapshotやread modelを参照します。
-- **ログと運用の見える化**: API連携ログとエラーログを保存し、公開ポートフォリオ上で確認できるようにしています。
+- **外部APIと保存データ**: YouTube Data API、APIs.guru、気象庁XMLを扱い、取得・保存・表示の責務を分けています。
+- **同期と表示の分離**: Scheduler / Queue / Job でデータを集め、表示側は保存済みsnapshotやread modelを参照します。
+- **ログと状態確認**: API連携ログとエラーログを保存し、公開ポートフォリオ上で状態を追えるようにしています。
 - **段階的な開発**: IDEA BOARD / MOCK / PRODUCT を分け、構想やUI確認と本実装を混ぜないようにしています。
-- **外部向けdocs導線**: READMEは概要に絞り、詳細な設計・テスト・機能仕様はdocsへ分離しています。
+- **docsへの導線**: READMEは概要に絞り、詳細な設計・テスト・機能仕様はdocsへ分離しています。
 
 ## Main Projects
 
@@ -36,7 +36,7 @@ YouTube Shorts のダンス動画を保存・観測し、伸び方や地域別�
 - **Radar**: 保存済みsnapshotから地域別ランキング候補や上昇候補を表示します。
 - **Analyzer**: 保存済み動画を検索し、選択したShortsのsnapshotを横比較します。
 
-見どころ:
+主な内容:
 
 - YouTube Data API連携、動画保存、snapshot保存
 - Queue / Scheduler による通常同期、page2同期、snapshot専用同期
@@ -48,7 +48,7 @@ YouTube Shorts のダンス動画を保存・観測し、伸び方や地域別�
 
 APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査メモ保存ができるProjectです。
 
-見どころ:
+主な内容:
 
 - `list.json` の同期キャッシュ
 - insert / update / skip の差分同期
@@ -61,7 +61,7 @@ APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査�
 
 気象庁の地震火山情報Atom feedと個別XMLを取得し、保存済みの震源・震度・波紋を地図上で確認するProjectです。
 
-見どころ:
+主な内容:
 
 - Atom feed取得、entry保存、個別XML解析
 - 震源座標、最大震度、マグニチュード、深さの抽出
@@ -73,7 +73,7 @@ APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査�
 
 アプリ内で保存したAPI連携ログとエラーログを確認するためのProjectです。
 
-見どころ:
+主な内容:
 
 - API連携ログとエラーログを別テーブルで保存
 - Event / Listener / Repository でログ保存の副作用を分離
@@ -83,6 +83,8 @@ APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査�
 ### Operations / Notification
 
 運用確認のための通知・リアルタイム基盤も段階的に整えています。
+
+主な内容:
 
 - Laravel Reverb / Broadcasting の設定を持つ、リアルタイム通知基盤の準備
 - Daily Server Health Report のメール通知
@@ -148,7 +150,7 @@ Responder
 React / Inertia
 ```
 
-設計で重視していること:
+主な整理:
 
 - ControllerはHTTP入口、Requestは入力形式の検証に寄せる
 - Actionは1ユースケースの手順を扱う
@@ -161,7 +163,7 @@ React / Inertia
 
 ## Testing / CI / Review
 
-テストは、後から変更しても壊してはいけない仕様を固定する実行可能な仕様として扱います。
+テストは、変更時に保つべき仕様を確認するための実行可能な資料として扱います。
 
 - Laravel Feature / Unit test
 - React utility / component test
