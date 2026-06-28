@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-06-28
 
 ## このドキュメントの目的
 
@@ -11,6 +11,90 @@
 開発者が機能追加・修正を行う際に、Controller / Request / Action / Service / Repository / DTO / Responder / Componentなどの責務が混ざらないようにすることを目的とします。
 
 機能固有の実行条件、API制約、DB条件、テスト固定内容は `docs/features/` に置き、この文書には共通原則だけを置きます。
+
+## 設計思想の全体像
+
+このプロジェクトの構成は、クラス数や文書数を増やすためのものではありません。
+
+変更理由、責務、確認手段を分けることで、後から変更するときに「どこを見ればよいか」「どこを変えてはいけないか」「何で完了と判断するか」を追える状態にするためのものです。
+
+この章は全体像を説明する入口です。レイヤーごとの詳細責務はこの文書の後続章、理解再起動の方針は `docs/context-management.md`、IDEA BOARD / MOCK / PROTOTYPE / PRODUCT の詳細は `docs/development-flow.md`、Sensorsの詳細は `docs/operations/sensors.md` を正本とします。
+
+### 責務を分ける理由
+
+```text
+Controller / Request
+        ↓
+Action
+        ↓
+Service / Repository / DTO / Strategy / Factory
+        ↓
+Responder
+        ↓
+React / Inertia
+```
+
+Controller / Request はHTTP入口と入力形式、Action はユースケース手順、Service は業務判断、Repository はデータ取得・保存境界、DTO はレイヤー間のデータ、Strategy / Factory は処理差分や生成・選択、Responder は出力整形、React / Inertia は画面表示を担当します。
+
+責務を分けると、変更理由と調査範囲を狭められます。入力形式が変わったのか、業務判断が変わったのか、データ取得条件が変わったのか、画面向けの整形が変わったのかを分けて確認できます。
+
+ただし、すべての機能で全レイヤーを必ず作るわけではありません。単純な処理へ不要なService、Factory、Strategyを増やさず、変更理由を分ける必要がある場所だけ責務を置きます。
+
+### 段階を分ける理由
+
+```text
+IDEA BOARD
+    ↓
+MOCK
+    ↓
+PROTOTYPE
+    ↓
+PRODUCT
+```
+
+IDEA BOARD は構想と未確定事項、MOCK は固定データによるUI確認、PROTOTYPE は画面間の接続や簡易的なデータの流れ、PRODUCT は仕様・責務・データ境界・テストを固定した本実装を扱います。
+
+段階を分ける目的は、構想、UI確認、接続検証、本実装を混ぜないことです。MOCKで作った固定データやPROTOTYPEの仮処理を、そのままPRODUCTの完成仕様として扱いません。各段階で確認できたことを取り出し、次の段階で必要な契約や判断へ変換します。
+
+### 確認ループを持つ理由
+
+```text
+実装 / docs変更
+        ↓
+test / build / PR / Sensors
+        ↓
+ズレ検出
+        ↓
+修正
+        ↓
+再確認
+```
+
+docs、test、build、PR、Sensorsは、設計を言いっぱなしにしないための確認手段です。
+
+docsは目的と責務を残し、testは仕様を実行可能な形に固定し、PRは差分と判断理由を人間が確認する場所になります。Sensorsは、空白崩れ、docs更新漏れ、責務境界の崩れ、secrets混入、理解再起動に必要な情報の戻し漏れなどを、作業中またはPR前に検出するための台帳です。
+
+すべてを機械判定するのではなく、機械的に見つけられるものと、人間やAIレビューで意味判断するものを分けます。
+
+### AI駆動開発で人間が判断を持つ理由
+
+```text
+人間:
+  仕様 / 責務境界 / 完成判定 / merge判断
+
+AI:
+  調査 / 実装補助 / 差分修正 / レビュー補助
+```
+
+AIは調査、実装補助、差分修正、レビュー補助に使います。ただし、仕様を決めること、責務境界を決めること、完成と判断すること、mergeすることは人間が持ちます。
+
+この分担により、速く作ることと、後から保守できる形に留めることを分けて扱います。AIが生成した差分も、責務境界、確認結果、未実行理由、影響範囲を人間が確認できる形で残します。
+
+### 理解再起動を重視する理由
+
+理解再起動とは、後から人間やAIが読み直したときに、目的、責務、入力、出力、禁止事項、変更時の注意を回収できる状態を作ることです。
+
+そのため、共通の責務境界は `docs/architecture.md`、文脈読込と戻し先の考え方は `docs/context-management.md`、機能固有の目的や制約は `docs/features/`、実行可能な仕様はtest、データ境界はDTOや型へ分けて残します。
 
 ## 用語
 
