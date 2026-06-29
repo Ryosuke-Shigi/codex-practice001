@@ -19,6 +19,7 @@ use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
 use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
 use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortRankingReadModelBuildLifecycleService;
 use App\Services\DanceShortsRadar\DanceShortSnapshotRetentionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -202,7 +203,7 @@ class SyncDanceShortVideosJobTest extends TestCase
         $this->assertCount(1, $job->middleware());
         $this->assertInstanceOf(WithoutOverlapping::class, $job->middleware()[0]);
         $this->assertSame(60, $job->middleware()[0]->releaseAfter);
-        $this->assertSame(900, $job->middleware()[0]->expiresAfter);
+        $this->assertSame(DanceShortRankingReadModelBuildLifecycleService::DEFAULT_LOCK_TTL_SECONDS, $job->middleware()[0]->expiresAfter);
         $this->assertTrue(method_exists($job, 'failed'));
     }
 

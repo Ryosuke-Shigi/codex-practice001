@@ -158,7 +158,7 @@ cd /var/www/api-discovery-hub
 docker compose exec php-fpm php artisan dance-shorts-radar:build-ranking-read-models
 ```
 
-local / production とも、migration 適用後にこの command を実行し、出力された `build_id` が active build として参照できる状態になってから `/dance-shorts-radar` を確認します。本番環境の deploy / migrate 実行経路そのものは、この台帳では未確認のため断定しません。
+local / production とも、migration 適用後にこの command を実行し、出力された `build_id` が active build として参照できる状態になってから `/dance-shorts-radar` を確認します。この command は専用 Cache lock と `building` 状態確認で多重実行を skipped とし、active 化後に保持対象外の read model rows を削除します。本番環境の deploy / migrate 実行経路そのものは、この台帳では未確認のため断定しません。
 
 npm は `npm` service で実行します。
 

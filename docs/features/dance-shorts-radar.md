@@ -147,7 +147,9 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 
 表示時のランキングは snapshot 履歴から再計算しません。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が固定 uniqueId の `BuildDanceShortRankingReadModelsJob` をdispatchします。Job は `BuildDanceShortRankingReadModelsAction` を呼び、read model build を一括生成します。
 
-read model 生成は `build_id` 単位で行います。新しい build の全patternが生成できた後に active build を切り替え、旧buildのrowsを削除します。生成途中で失敗した場合は旧active buildを維持し、表示は直前のread modelを読み続けます。
+read model 生成は `build_id` 単位で行います。Action 側の専用 Cache lock で手動 command / queue job の多重実行を防ぎ、lock 取得不可または若い `building` がある場合は新規 build を作らず skipped とします。古すぎる `building` は stale として `failed` に更新し、部分生成 rows を削除してから次の build を開始します。
+
+新しい build の全patternが生成でき、かつ rows が1件以上ある場合だけ active build を切り替えます。active 化後に保持対象外の rows を chunk 削除し、保持対象は active 1世代のみとします。生成途中で失敗した場合は該当 build を `failed` にして部分 rows を削除し、旧active buildを維持して、表示は直前のread modelを読み続けます。builds 履歴は容量本体ではないため、active / superseded / failed の状態記録として残します。
 
 初回導入や migration 直後は、表示前に read model を手動生成します。local / production とも、各環境の migration 適用後に `dance-shorts-radar:build-ranking-read-models` を実行し、出力された `build_id` が active build として参照できることを確認してからランキング画面を確認します。
 

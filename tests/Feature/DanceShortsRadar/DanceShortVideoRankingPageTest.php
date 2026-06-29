@@ -138,7 +138,6 @@ class DanceShortVideoRankingPageTest extends TestCase
          * 安全に返る必要があります。この画面表示確認では YouTube API を呼びません。
          */
         $this->seed(DanceShortRegionSeeder::class);
-        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar')

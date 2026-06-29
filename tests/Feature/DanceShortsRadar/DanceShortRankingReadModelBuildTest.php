@@ -3,20 +3,37 @@
 namespace Tests\Feature\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelBuildStatus;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
+use App\Factories\DanceShortsRadar\DanceShortRankingReadModelStrategyFactory;
 use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoSnapshot;
+use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepository;
 use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortSearchTargetRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortRankingReadModelBuildLifecycleService;
+use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Tests\TestCase;
 
 class DanceShortRankingReadModelBuildTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        CarbonImmutable::setTestNow();
+        Cache::flush();
+
+        parent::tearDown();
+    }
 
     public function test_build_generates_all_patterns_and_uses_internal_rising_sort_key(): void
     {
@@ -118,6 +135,21 @@ class DanceShortRankingReadModelBuildTest extends TestCase
             $secondResult->buildId,
             app(DanceShortRankingReadModelRepositoryInterface::class)->activeBuildId(),
         );
+        $this->assertGreaterThan(0, $secondResult->cleanupDeletedRowCount);
+        $this->assertSame(1, DB::table('dance_short_radar_ranking_read_model_builds')
+            ->where('status', RankingReadModelBuildStatus::ACTIVE)
+            ->count());
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'build_id' => $firstResult->buildId,
+            'status' => RankingReadModelBuildStatus::SUPERSEDED,
+        ]);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'build_id' => $secondResult->buildId,
+            'status' => RankingReadModelBuildStatus::ACTIVE,
+        ]);
+        $this->assertSame(1, DB::table('dance_short_radar_ranking_read_models')
+            ->distinct()
+            ->count('build_id'));
         $this->assertSame(0, DB::table('dance_short_radar_ranking_read_models')
             ->where('build_id', $firstResult->buildId)
             ->count());
@@ -143,7 +175,7 @@ class DanceShortRankingReadModelBuildTest extends TestCase
             buildId: $failedBuildId,
             calculatedAt: CarbonImmutable::parse('2026-06-01 13:00:00', 'Asia/Tokyo'),
         );
-        $repository->markBuildFailed($failedBuildId);
+        $repository->markBuildFailed($failedBuildId, app(DanceShortRankingReadModelBuildLifecycleService::class)->cleanupChunkSize());
 
         $this->assertSame($activeResult->buildId, $repository->activeBuildId());
         $this->assertGreaterThan(0, DB::table('dance_short_radar_ranking_read_models')
@@ -152,6 +184,141 @@ class DanceShortRankingReadModelBuildTest extends TestCase
         $this->assertSame(0, DB::table('dance_short_radar_ranking_read_models')
             ->where('build_id', $failedBuildId)
             ->count());
+    }
+
+    public function test_build_skips_without_creating_build_when_lock_is_unavailable(): void
+    {
+        $lifecycleService = app(DanceShortRankingReadModelBuildLifecycleService::class);
+        $lock = Cache::lock($lifecycleService->lockName(), $lifecycleService->lockTtlSeconds());
+
+        $this->assertTrue($lock->get());
+
+        try {
+            $result = app(BuildDanceShortRankingReadModelsAction::class)->execute();
+        } finally {
+            $lock->release();
+        }
+
+        $this->assertTrue($result->skipped);
+        $this->assertSame(DanceShortRankingReadModelBuildLifecycleService::SKIP_REASON_LOCK_UNAVAILABLE, $result->skipReason);
+        $this->assertSame(0, DB::table('dance_short_radar_ranking_read_model_builds')->count());
+    }
+
+    public function test_build_skips_when_recent_building_build_exists(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:10:00', 'Asia/Tokyo'));
+
+        $repository = app(DanceShortRankingReadModelRepositoryInterface::class);
+        $repository->beginBuild(
+            buildId: '00000000-0000-0000-0000-000000000101',
+            calculatedAt: CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'),
+        );
+
+        $result = app(BuildDanceShortRankingReadModelsAction::class)->execute();
+
+        $this->assertTrue($result->skipped);
+        $this->assertSame(DanceShortRankingReadModelBuildLifecycleService::SKIP_REASON_BUILDING_IN_PROGRESS, $result->skipReason);
+        $this->assertSame(1, DB::table('dance_short_radar_ranking_read_model_builds')->count());
+        $this->assertSame(1, DB::table('dance_short_radar_ranking_read_model_builds')
+            ->where('status', RankingReadModelBuildStatus::BUILDING)
+            ->count());
+    }
+
+    public function test_stale_building_build_is_marked_failed_before_new_build_starts(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-06-01 12:00:00', 'Asia/Tokyo'));
+
+        $jp = $this->region('JP', '日本', 10);
+        $this->rankingVideoWithDelta($jp, 'stale-cleanup-new-active-video', 300);
+
+        $staleBuildId = '00000000-0000-0000-0000-000000000202';
+        app(DanceShortRankingReadModelRepositoryInterface::class)->beginBuild(
+            buildId: $staleBuildId,
+            calculatedAt: CarbonImmutable::parse('2026-06-01 11:29:00', 'Asia/Tokyo'),
+        );
+
+        $result = app(BuildDanceShortRankingReadModelsAction::class)->execute();
+
+        $this->assertFalse($result->skipped);
+        $this->assertSame(1, $result->staleFailedBuildCount);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'build_id' => $staleBuildId,
+            'status' => RankingReadModelBuildStatus::FAILED,
+        ]);
+        $this->assertSame(0, DB::table('dance_short_radar_ranking_read_model_builds')
+            ->where('status', RankingReadModelBuildStatus::BUILDING)
+            ->count());
+        $this->assertSame($result->buildId, app(DanceShortRankingReadModelRepositoryInterface::class)->activeBuildId());
+    }
+
+    public function test_failed_build_removes_partial_rows_and_marks_build_failed(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $this->rankingVideoWithDelta($jp, 'stable-active-before-failure-video', 100);
+
+        $activeResult = app(BuildDanceShortRankingReadModelsAction::class)->execute();
+
+        $this->rankingVideoWithDelta($jp, 'partial-failure-video', 500);
+
+        $failingRepository = new class extends DanceShortRankingReadModelRepository
+        {
+            public ?string $begunBuildId = null;
+
+            public function beginBuild(string $buildId, CarbonInterface $calculatedAt): void
+            {
+                $this->begunBuildId = $buildId;
+
+                parent::beginBuild($buildId, $calculatedAt);
+            }
+
+            public function activateBuild(string $buildId): void
+            {
+                throw new RuntimeException('forced activation failure');
+            }
+        };
+
+        $this->expectException(RuntimeException::class);
+
+        try {
+            $this->buildActionWithRepository($failingRepository)->execute();
+        } finally {
+            $this->assertNotNull($failingRepository->begunBuildId);
+            $this->assertSame($activeResult->buildId, app(DanceShortRankingReadModelRepositoryInterface::class)->activeBuildId());
+            $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+                'build_id' => $failingRepository->begunBuildId,
+                'status' => RankingReadModelBuildStatus::FAILED,
+            ]);
+            $this->assertSame(0, DB::table('dance_short_radar_ranking_read_models')
+                ->where('build_id', $failingRepository->begunBuildId)
+                ->count());
+        }
+    }
+
+    public function test_zero_row_build_is_not_activated_and_is_marked_failed(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        try {
+            app(BuildDanceShortRankingReadModelsAction::class)->execute();
+        } finally {
+            $this->assertNull(app(DanceShortRankingReadModelRepositoryInterface::class)->activeBuildId());
+            $this->assertSame(1, DB::table('dance_short_radar_ranking_read_model_builds')
+                ->where('status', RankingReadModelBuildStatus::FAILED)
+                ->count());
+            $this->assertSame(0, DB::table('dance_short_radar_ranking_read_models')->count());
+        }
+    }
+
+    private function buildActionWithRepository(
+        DanceShortRankingReadModelRepositoryInterface $repository,
+    ): BuildDanceShortRankingReadModelsAction {
+        return new BuildDanceShortRankingReadModelsAction(
+            searchTargetRepository: app(DanceShortSearchTargetRepositoryInterface::class),
+            snapshotMetricService: app(DanceShortSnapshotMetricService::class),
+            strategyFactory: app(DanceShortRankingReadModelStrategyFactory::class),
+            readModelRepository: $repository,
+            lifecycleService: app(DanceShortRankingReadModelBuildLifecycleService::class),
+        );
     }
 
     private function region(string $code, string $name, int $sortOrder): DanceShortRegion

@@ -18,14 +18,38 @@ interface DanceShortRankingReadModelRepositoryInterface
     public function bulkInsertRows(array $rows): void;
 
     /**
-     * 生成済み build を active に切り替え、旧 build rows を削除します。
+     * 若い building build が残っているかを返します。
+     */
+    public function hasBuildingBuild(): bool;
+
+    /**
+     * stale building build を failed 化し、その build に紐づく rows を削除します。
+     *
+     * @return array{buildCount: int, deletedRowCount: int}
+     */
+    public function markStaleBuildingBuildsFailed(CarbonInterface $staleBefore, CarbonInterface $failedAt, int $chunkSize): array;
+
+    /**
+     * 指定 build に紐づく read model rows 件数を返します。
+     */
+    public function rowCountForBuild(string $buildId): int;
+
+    /**
+     * 生成済み build を active に切り替え、旧 active build を superseded にします。
      */
     public function activateBuild(string $buildId): void;
 
     /**
      * 失敗した build の部分 rows を削除します。旧 active build は変更しません。
      */
-    public function markBuildFailed(string $buildId): void;
+    public function markBuildFailed(string $buildId, int $chunkSize): int;
+
+    /**
+     * 保持対象外 build_id の read model rows を削除します。
+     *
+     * @param  array<int, string>  $retainedBuildIds
+     */
+    public function cleanupRowsExceptBuildIds(array $retainedBuildIds, int $chunkSize): int;
 
     /**
      * active build から表示window分と lookahead 1件を取得します。

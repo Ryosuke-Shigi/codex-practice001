@@ -3,6 +3,7 @@
 namespace App\Jobs\DanceShortsRadar;
 
 use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
+use App\Services\DanceShortsRadar\DanceShortRankingReadModelBuildLifecycleService;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -43,7 +44,7 @@ class BuildDanceShortRankingReadModelsJob implements ShouldBeUniqueUntilProcessi
         return [
             (new WithoutOverlapping(self::UNIQUE_ID))
                 ->releaseAfter(60)
-                ->expireAfter(900),
+                ->expireAfter(DanceShortRankingReadModelBuildLifecycleService::DEFAULT_LOCK_TTL_SECONDS),
         ];
     }
 
