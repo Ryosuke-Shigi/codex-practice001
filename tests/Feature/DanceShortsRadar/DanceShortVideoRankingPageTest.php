@@ -241,6 +241,53 @@ class DanceShortVideoRankingPageTest extends TestCase
             );
     }
 
+    public function test_summary_tab_reads_active_read_model_after_snapshot_rows_are_removed(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $us = $this->region('US', 'アメリカ', 20);
+        $kr = $this->region('KR', '韓国', 30);
+        $this->rankingVideoWithDelta($jp, 'jp-summary-read-model-display', 100);
+        $this->rankingVideoWithDelta($us, 'us-summary-read-model-display', 500);
+        $this->rankingVideoWithDelta($kr, 'kr-summary-read-model-display', 300);
+        $this->buildReadModels();
+
+        DanceShortVideoSnapshot::query()->delete();
+
+        $this
+            ->get('/dance-shorts-radar?region=ALL&comparisonDays=1&sort=view_count_delta')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('displaySelectField.selectedTab', 'ALL')
+                ->where('displayCardField.type', 'ranking')
+                ->where('displayCardField.visibleCards.0.youtube_video_id', 'us-summary-read-model-display')
+                ->where('displayCardField.visibleCards.0.region', 'US')
+                ->where('displayCardField.visibleCards.0.view_diff', 500)
+                ->where('displayCardField.visibleCards.1.youtube_video_id', 'kr-summary-read-model-display')
+                ->where('displayCardField.visibleCards.2.youtube_video_id', 'jp-summary-read-model-display')
+            );
+    }
+
+    public function test_rising_tab_reads_active_read_model_after_snapshot_rows_are_removed(): void
+    {
+        $us = $this->region('US', 'アメリカ', 20);
+        $this->rankingVideoWithDelta($us, 'us-rising-read-model-display', 500);
+        $this->buildReadModels();
+
+        DanceShortVideoSnapshot::query()->delete();
+
+        $this
+            ->get('/dance-shorts-radar?region=RISING&comparisonDays=1')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('displaySelectField.selectedTab', 'RISING')
+                ->where('displayCardField.type', 'rising')
+                ->where('displayCardField.visibleCards.0.youtube_video_id', 'us-rising-read-model-display')
+                ->where('displayCardField.visibleCards.0.source_region', 'US')
+                ->where('displayCardField.visibleCards.0.view_count_delta', 500)
+                ->where('displayCardField.visibleCards.0.japan_comparison_status', 'unobserved')
+            );
+    }
+
     public function test_display_card_window_api_returns_requested_five_card_window(): void
     {
         $jp = $this->region('JP', '日本', 10);

@@ -39,6 +39,16 @@ return [
         'stale_building_seconds' => 1800,
         'cleanup_chunk_size' => 5000,
         'disabled_patterns' => [],
+        /*
+         * summary / rising は通常ランキングの500件制限に巻き込まないため、
+         * max_rows = 0 を「生成時に row cap をかけない」値として扱います。
+         */
+        'summary' => [
+            'max_rows' => 0,
+        ],
+        'rising' => [
+            'max_rows' => 0,
+        ],
         'pattern_max_rows' => [
             'normal|JP|1|views_per_hour' => 500,
             'normal|JP|1|view_count_delta' => 500,

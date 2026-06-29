@@ -9,6 +9,10 @@ use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface
 use App\Services\DanceShortsRadar\DanceShortSnapshotMetricService;
 use Carbon\CarbonImmutable;
 
+/**
+ * 保存済み snapshot からランキング候補 DTO を作る compatibility Query Action です。
+ * 現在の displayCardField は DisplayCard Strategy から active read model を参照します。
+ */
 class GetDanceShortVideoRankingCandidatesAction
 {
     public function __construct(
@@ -131,11 +135,10 @@ class GetDanceShortVideoRankingCandidatesAction
     }
 
     /**
-     * displayCardField の window 取得用入口です。
+     * snapshot based compatibility query の通常ランキング window 取得用入口です。
      *
-     * 初期表示と先読み API の Strategy はこのメソッドを使い、DB 側で startRank から
-     * windowSize + 1 件だけ取得した row を DTO へ詰め替えます。既存 execute() は後方互換の
-     * 候補一覧 Query として残し、本画面の主表示はこの window 入口へ寄せます。
+     * 現在の初期表示と先読み API は active read model を読む DisplayCard Strategy を使います。
+     * この入口は snapshot 由来の候補 query と repository-level 検証のために残します。
      *
      * @param  array<int, string>  $regionCodes
      */
@@ -162,11 +165,10 @@ class GetDanceShortVideoRankingCandidatesAction
     }
 
     /**
-     * displayCardField の選択カード基準 window 用入口です。
+     * snapshot based compatibility query の通常ランキング全体順取得用入口です。
      *
-     * Strategy はこのメソッドでランキング全体順の DTO を受け取り、選択カード前後の最大5件を
-     * DanceShortDisplayCardWindowService に切り出させます。Action は DTO 化だけを担当し、
-     * どのカードを中央に置くかは判断しません。
+     * Action は snapshot row の DTO 化だけを担当し、選択カード前後の切り出しや表示 props 生成は
+     * 呼び出し側へ残します。
      *
      * @param  array<int, string>  $regionCodes
      */

@@ -26,8 +26,14 @@ class DanceShortBuildRankingReadModelPatternCommand extends Command
         BuildDanceShortRankingReadModelPatternAction $action,
     ): int {
         try {
+            $rankingType = strtolower((string) $this->option('type'));
+
+            if ($rankingType !== RankingReadModelPatternDefinitionDTO::TYPE_NORMAL) {
+                throw new \InvalidArgumentException('This command only supports normal patterns. Use the summary or rising command for other read models.');
+            }
+
             $patternKey = $patternService->keyFor(
-                rankingType: (string) $this->option('type'),
+                rankingType: $rankingType,
                 scope: (string) $this->option('scope'),
                 comparisonDays: (int) $this->option('comparison-days'),
                 sortKey: (string) $this->option('sort-key'),
@@ -53,7 +59,7 @@ class DanceShortBuildRankingReadModelPatternCommand extends Command
         $this->info('DanceShortsRadar ranking read model pattern built.');
         $this->line('pattern_build_id: '.$result->patternBuildId);
         $this->line('pattern_key: '.$result->patternKey);
-        $this->line('ranking_type: '.RankingReadModelPatternDefinitionDTO::TYPE_NORMAL);
+        $this->line('ranking_type: '.$result->rankingType);
         $this->line('scope: '.$result->scope);
         $this->line('comparison_days: '.$result->comparisonDays);
         $this->line('sort_key: '.$result->sortKey);

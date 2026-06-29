@@ -145,9 +145,13 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - まとめ表示（内部コード: ALL）
 - 地域別通常ランキング
 
-地域別の通常ランキング表示は read model から取得します。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が通常ランキング pattern ごとの `BuildDanceShortRankingReadModelPatternJob` をdispatchします。1 Job は1つの通常ランキング pattern だけを生成します。
+ランキング表示は RISING / ALL / 地域別のいずれも active read model から取得します。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が enabled pattern ごとの `BuildDanceShortRankingReadModelPatternJob` をdispatchします。1 Job は1つの read model pattern だけを生成します。
 
-通常ランキング pattern は `normal|{scope}|{comparison_days}|{sort_key}` です。`scope` は active region code を対象にし、`ALL` / `RISING` は通常ランキング read model の500件制限対象に含めません。各 pattern は snapshot query で `sort -> limit(config値) -> save` の順で生成し、最大件数は `config/dance_short.php` の `ranking_read_model.pattern_max_rows` で管理します。config未定義の pattern は全件生成へフォールバックせず、生成失敗として扱います。
+通常ランキング pattern は `normal|{scope}|{comparison_days}|{sort_key}` です。`scope` は active region code を対象にし、各 pattern は snapshot query で `sort -> limit(config値) -> save` の順で生成します。最大件数は `config/dance_short.php` の `ranking_read_model.pattern_max_rows` で管理し、config未定義の normal pattern は全件生成へフォールバックせず、生成失敗として扱います。
+
+まとめ pattern は `summary|ALL|{comparison_days}|{sort_key}` です。active region 全体を生成対象にし、表示時は active read model の `ALL` scope を参照します。`ranking_read_model.summary.max_rows = 0` は生成時に row cap をかけない値として扱い、通常ランキングの500件制限には巻き込みません。
+
+上昇候補 pattern は `rising|RISING|{comparison_days}|__rising` です。生成時は US / KR の source snapshot と JP snapshot をDB上で結合し、JP未観測またはJP側の伸びがsource側より小さい候補を read model row に保存します。表示時は active read model の `RISING` scope を参照します。`ranking_read_model.rising.max_rows = 0` は生成時に row cap をかけない値として扱い、通常ランキングの500件制限には巻き込みません。
 
 read model 生成は `pattern_build_id` 単位で行います。Action 側の pattern別 Cache lock で手動 command / queue job の多重実行を防ぎ、lock 取得不可または同じ pattern の若い `building` がある場合は新規 build を作らず skipped とします。古すぎる同一 pattern の `building` は stale として `failed` に更新し、部分生成 rows を削除してから次の build を開始します。
 
@@ -155,17 +159,18 @@ read model 生成は `pattern_build_id` 単位で行います。Action 側の pa
 
 pattern build schema への移行では、既存の create migration を直接書き換えず、新規 migration で本番既存DBの ReadModel 系2テーブルだけを作り直します。ReadModel は raw data / snapshots から再生成できる派生データのため、`dance_short_radar_ranking_read_model_builds` と `dance_short_radar_ranking_read_models` は破棄・再作成してよい対象です。`dance_short_videos`、`dance_short_video_snapshots`、`dance_short_regions` などの raw data / snapshots / sync 系テーブルは触りません。
 
-初回導入や migration 直後は、通常ランキング read model の生成Jobをdispatchします。local / production とも、各環境の migration 適用後に `dance-shorts-radar:dispatch-ranking-read-model-patterns` を実行します。旧command名の `dance-shorts-radar:build-ranking-read-models` も enabled pattern Job のdispatch入口ですが、本番デプロイ後の明示手順では `dance-shorts-radar:dispatch-ranking-read-model-patterns` を使います。1 patternだけ同期生成する場合は `dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour` を使います。
+初回導入や migration 直後は、ranking read model の生成Jobをdispatchします。local / production とも、各環境の migration 適用後に `dance-shorts-radar:dispatch-ranking-read-model-patterns` を実行します。この dispatch 入口は normal / summary / rising の enabled pattern をすべて対象にします。旧command名の `dance-shorts-radar:build-ranking-read-models` も enabled pattern Job のdispatch入口ですが、本番デプロイ後の明示手順では `dance-shorts-radar:dispatch-ranking-read-model-patterns` を使います。1つの normal pattern だけ同期生成する場合は `dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour` を使います。summary / rising を同期生成する場合は、それぞれ `dance-shorts-radar:build-summary-ranking-read-models`、`dance-shorts-radar:build-rising-ranking-read-models` を使います。
 
 生成対象:
 
-- 通常ランキング read model: active region code と許可された比較日数 x sort key の pattern を生成する
-- 各通常ランキング pattern の最大件数は config の初期値500件とする
-- active region が JP / US / KR の3件なら `3地域 x 5比較日数 x 4sort = 60 pattern` となり、ReadModel rows は最大 `60 x 500 = 30,000行` 規模に収まる
-- `ALL` / まとめ、`RISING` / 上昇候補、raw data / snapshots 全体を対象にすべき処理は500件制限対象外とする
-- まとめと上昇候補は ReadModel 500件を根拠にせず、raw data / snapshots を対象にする
+- normal read model: active region code と許可された比較日数 x sort key の pattern を生成する
+- summary read model: `ALL` scope と許可された比較日数 x sort key の pattern を生成する
+- rising read model: `RISING` scope と許可された比較日数 x `__rising` sort key の pattern を生成する
+- 各 normal pattern の最大件数は config の初期値500件とする
+- summary / rising の `max_rows = 0` は生成時に row cap をかけない値として扱う
+- active region が JP / US / KR の3件なら normal は `3地域 x 5比較日数 x 4sort = 60 pattern`、summary は `5比較日数 x 4sort = 20 pattern`、rising は `5比較日数 = 5 pattern` となる
 
-地域別の通常ランキング表示側 Repository は active pattern build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
+ランキング表示側 Repository は active pattern build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
 
 ### 上昇候補表示の責務境界
 
@@ -173,7 +178,7 @@ RISING は `dance_short_regions` の地域ではなく、上昇候補表示を�
 
 上昇候補は、US / KR などの source region 側で伸びていて、JP 側が未観測または source 側より伸びが小さい動画を継続観測候補として扱うための区分です。
 
-上昇候補表示は通常ランキング read model の500件制限を根拠にせず、source / JP / previous snapshot をDB上で結合した snapshot query の結果を参照します。
+上昇候補は通常ランキング read model の500件制限を根拠にしません。生成時は source / JP / previous snapshot をDB上で結合した snapshot query を入力にし、表示時は保存済みの active rising read model を参照します。
 
 Repositoryが扱うこと:
 
@@ -277,8 +282,10 @@ inactive、standard、1ページ設定は除外します。
 - `dance-short:sync-snapshots` のArtisan Commandはsnapshot専用Jobをdispatchするだけで、同期本体を直接実行しない
 - snapshot専用Jobは `RefreshDanceShortVideoSnapshotsAction` を呼ぶ
 - snapshot専用Jobは固定uniqueIdで同期全体の同時実行を防ぐ
-- `dance-shorts-radar:build-ranking-read-models` と `dance-shorts-radar:dispatch-ranking-read-model-patterns` のArtisan Commandは通常ランキングの enabled pattern Job をdispatchする
-- `dance-shorts-radar:build-ranking-read-model-pattern` のArtisan Commandは指定した通常ランキング pattern を同期生成し、CommandもJobも同じ Action 経路を通す
+- `dance-shorts-radar:build-ranking-read-models` と `dance-shorts-radar:dispatch-ranking-read-model-patterns` のArtisan Commandは normal / summary / rising の enabled pattern Job をdispatchする
+- `dance-shorts-radar:build-ranking-read-model-pattern` のArtisan Commandは指定した normal pattern を同期生成し、CommandもJobも同じ Action 経路を通す
+- `dance-shorts-radar:build-summary-ranking-read-models` は summary pattern を同期生成する
+- `dance-shorts-radar:build-rising-ranking-read-models` は rising pattern を同期生成する
 
 ### Scheduler
 
@@ -292,14 +299,16 @@ inactive、standard、1ページ設定は除外します。
 
 - Strategyごとの取得条件
 - comparisonDays / sort条件
-- video / snapshot / cleanup の元データ変更がある同期結果だけ read model refresh event を発火し、Listener が通常ランキング pattern build Job をdispatchする
+- video / snapshot / cleanup の元データ変更がある同期結果だけ read model refresh event を発火し、Listener が normal / summary / rising pattern build Job をdispatchする
 - pattern build Job は待機中の同一 pattern 重複を `ShouldBeUniqueUntilProcessing` でまとめ、`WithoutOverlapping` と Action lock で同一 pattern の同時生成を防ぐ
-- 通常ランキング read model は active region code の全comparisonDays / sortKey patternを生成する
-- 通常ランキング read model 生成成功時だけ同一patternの active build を切り替え、失敗時は同一patternの旧active buildを維持する
-- 地域別通常ランキング表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
+- normal read model は active region code の全comparisonDays / sortKey patternを生成する
+- summary read model は active region 全体の全comparisonDays / sortKey patternを生成する
+- rising read model は US / KR source の全comparisonDays patternを生成する
+- read model 生成成功時だけ同一patternの active build を切り替え、失敗時は同一patternの旧active buildを維持する
+- 地域別 / まとめ / 上昇候補表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
 - `selectedVideoId` を基準にした全体順位
 - 最大5件のdisplay-card-window
-- 上昇候補表示側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合した snapshot row を使う
+- 上昇候補生成側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合した snapshot row を使う
 - 上昇候補表示用 Repositoryは上昇候補の意味づけ、JP比較状態、表示文言、Inertia props生成を持たない
 - `DanceShortRisingCandidateService::japanComparisonStatusForCandidate()` がJP比較状態を定義する
 - Serviceは null metric を0へ潰さない

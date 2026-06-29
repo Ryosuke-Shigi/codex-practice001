@@ -6,7 +6,7 @@ use App\Actions\DanceShortsRadar\Commands\DispatchDanceShortRankingReadModelPatt
 use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 
 /**
- * ranking read model 再生成要求を通常ランキング pattern Job dispatch へつなぐ Listener です。
+ * ranking read model 再生成要求を enabled pattern Job dispatch へつなぐ Listener です。
  */
 final readonly class RequestDanceShortRankingReadModelRebuildListener
 {

@@ -207,8 +207,11 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
 
         $this->orderRankingRows($query, $sortKey);
 
+        if ($maxRows > 0) {
+            $query->limit($maxRows);
+        }
+
         return $query
-            ->limit(max(1, $maxRows))
             ->get()
             ->all();
     }
@@ -248,6 +251,30 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
 
         if ($query === null) {
             return [];
+        }
+
+        return $query
+            ->get()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $sourceRegionCodes
+     * @return array<int, object>
+     */
+    public function risingRowsForReadModelPattern(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+        int $maxRows,
+    ): array {
+        $query = $this->risingRowsQuery($sourceRegionCodes, $comparisonDays);
+
+        if ($query === null) {
+            return [];
+        }
+
+        if ($maxRows > 0) {
+            $query->limit($maxRows);
         }
 
         return $query

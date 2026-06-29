@@ -5,6 +5,7 @@ namespace Tests\Feature\DanceShortsRadar;
 use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelPatternAction;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelBuildStatus;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelPatternDefinitionDTO;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
 use App\Factories\DanceShortsRadar\DanceShortRankingReadModelStrategyFactory;
 use App\Jobs\DanceShortsRadar\BuildDanceShortRankingReadModelPatternJob;
 use App\Models\DanceShortRegion;
@@ -125,7 +126,7 @@ class DanceShortRankingReadModelBuildTest extends TestCase
         ]);
     }
 
-    public function test_dispatch_command_dispatches_enabled_region_patterns_only(): void
+    public function test_dispatch_command_dispatches_enabled_read_model_patterns(): void
     {
         Queue::fake();
         $this->region('JP', '日本', 10);
@@ -136,18 +137,23 @@ class DanceShortRankingReadModelBuildTest extends TestCase
             ->artisan('dance-shorts-radar:dispatch-ranking-read-model-patterns')
             ->expectsOutput('DanceShortsRadar ranking read model pattern jobs dispatched.')
             ->expectsOutput('normal_patterns: 60')
-            ->expectsOutput('dispatched_patterns: 60')
+            ->expectsOutput('summary_patterns: 20')
+            ->expectsOutput('rising_patterns: 5')
+            ->expectsOutput('dispatched_patterns: 85')
             ->assertExitCode(0);
 
-        Queue::assertPushed(BuildDanceShortRankingReadModelPatternJob::class, 60);
+        Queue::assertPushed(BuildDanceShortRankingReadModelPatternJob::class, 85);
         Queue::assertPushed(
             BuildDanceShortRankingReadModelPatternJob::class,
             fn (BuildDanceShortRankingReadModelPatternJob $job): bool => $job->patternKey === 'normal|JP|1|views_per_hour',
         );
-        Queue::assertNotPushed(
+        Queue::assertPushed(
             BuildDanceShortRankingReadModelPatternJob::class,
-            fn (BuildDanceShortRankingReadModelPatternJob $job): bool => str_contains($job->patternKey, '|ALL|')
-                || str_contains($job->patternKey, 'RISING'),
+            fn (BuildDanceShortRankingReadModelPatternJob $job): bool => $job->patternKey === 'summary|ALL|1|views_per_hour',
+        );
+        Queue::assertPushed(
+            BuildDanceShortRankingReadModelPatternJob::class,
+            fn (BuildDanceShortRankingReadModelPatternJob $job): bool => $job->patternKey === 'rising|RISING|1|__rising',
         );
     }
 
@@ -160,12 +166,143 @@ class DanceShortRankingReadModelBuildTest extends TestCase
             ->artisan('dance-shorts-radar:build-ranking-read-models')
             ->expectsOutput('DanceShortsRadar ranking read model pattern jobs dispatched.')
             ->expectsOutput('normal_patterns: 20')
-            ->expectsOutput('dispatched_patterns: 20')
+            ->expectsOutput('summary_patterns: 20')
+            ->expectsOutput('rising_patterns: 0')
+            ->expectsOutput('dispatched_patterns: 40')
             ->assertExitCode(0);
 
-        Queue::assertPushed(BuildDanceShortRankingReadModelPatternJob::class, 20);
+        Queue::assertPushed(BuildDanceShortRankingReadModelPatternJob::class, 40);
         $this->assertSame(0, DB::table('dance_short_radar_ranking_read_model_builds')->count());
         $this->assertSame(0, DB::table('dance_short_radar_ranking_read_models')->count());
+    }
+
+    public function test_summary_command_builds_summary_read_model_patterns(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+        $this->rankingVideoWithDelta($jp, 'jp-summary-command-video', 300);
+
+        $this
+            ->artisan('dance-shorts-radar:build-summary-ranking-read-models')
+            ->expectsOutput('DanceShortsRadar summary ranking read model patterns built.')
+            ->expectsOutput('summary_patterns: 20')
+            ->expectsOutput('built_patterns: 20')
+            ->expectsOutput('skipped_patterns: 0')
+            ->expectsOutput('inserted_rows: 20')
+            ->assertExitCode(0);
+
+        $patternBuildId = app(DanceShortRankingReadModelRepositoryInterface::class)
+            ->activePatternBuildId('ALL', 1, 'view_count_delta');
+
+        $this->assertNotNull($patternBuildId);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'pattern_build_id' => $patternBuildId,
+            'pattern_key' => 'summary|ALL|1|view_count_delta',
+            'ranking_type' => RankingReadModelPatternDefinitionDTO::TYPE_SUMMARY,
+            'scope' => 'ALL',
+            'max_rows' => 0,
+            'status' => RankingReadModelBuildStatus::ACTIVE,
+        ]);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_models', [
+            'pattern_build_id' => $patternBuildId,
+            'youtube_video_id' => 'jp-summary-command-video',
+            'view_count_delta' => 300,
+        ]);
+    }
+
+    public function test_rising_command_builds_rising_read_model_patterns(): void
+    {
+        $us = $this->region('US', 'アメリカ', 20);
+        $this->rankingVideoWithDelta($us, 'us-rising-command-video', 500);
+
+        $this
+            ->artisan('dance-shorts-radar:build-rising-ranking-read-models')
+            ->expectsOutput('DanceShortsRadar rising ranking read model patterns built.')
+            ->expectsOutput('rising_patterns: 5')
+            ->expectsOutput('built_patterns: 5')
+            ->expectsOutput('skipped_patterns: 0')
+            ->expectsOutput('inserted_rows: 5')
+            ->assertExitCode(0);
+
+        $patternBuildId = app(DanceShortRankingReadModelRepositoryInterface::class)
+            ->activePatternBuildId('RISING', 1, RankingReadModelSortKey::RISING);
+
+        $this->assertNotNull($patternBuildId);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'pattern_build_id' => $patternBuildId,
+            'pattern_key' => 'rising|RISING|1|__rising',
+            'ranking_type' => RankingReadModelPatternDefinitionDTO::TYPE_RISING,
+            'scope' => 'RISING',
+            'max_rows' => 0,
+            'status' => RankingReadModelBuildStatus::ACTIVE,
+        ]);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_models', [
+            'pattern_build_id' => $patternBuildId,
+            'youtube_video_id' => 'us-rising-command-video',
+            'source_region_code' => 'US',
+            'japan_comparison_status' => 'unobserved',
+        ]);
+    }
+
+    public function test_summary_pattern_build_is_not_limited_by_normal_max_rows(): void
+    {
+        $jp = $this->region('JP', '日本', 10);
+
+        foreach (range(1, 501) as $delta) {
+            $this->rankingVideoWithDelta(
+                region: $jp,
+                youtubeVideoId: sprintf('jp-summary-unlimited-%03d', $delta),
+                delta: $delta,
+            );
+        }
+
+        $result = app(BuildDanceShortRankingReadModelPatternAction::class)->execute('summary|ALL|1|view_count_delta');
+
+        $this->assertFalse($result->skipped);
+        $this->assertSame(0, $result->maxRows);
+        $this->assertSame(501, $result->insertedRowCount);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'pattern_build_id' => $result->patternBuildId,
+            'ranking_type' => RankingReadModelPatternDefinitionDTO::TYPE_SUMMARY,
+            'max_rows' => 0,
+            'inserted_count' => 501,
+        ]);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_models', [
+            'pattern_build_id' => $result->patternBuildId,
+            'rank' => 501,
+            'youtube_video_id' => 'jp-summary-unlimited-001',
+            'view_count_delta' => 1,
+        ]);
+    }
+
+    public function test_rising_pattern_build_is_not_limited_by_normal_max_rows(): void
+    {
+        $us = $this->region('US', 'アメリカ', 20);
+
+        foreach (range(1, 501) as $delta) {
+            $this->rankingVideoWithDelta(
+                region: $us,
+                youtubeVideoId: sprintf('us-rising-unlimited-%03d', $delta),
+                delta: $delta,
+            );
+        }
+
+        $result = app(BuildDanceShortRankingReadModelPatternAction::class)->execute('rising|RISING|1|__rising');
+
+        $this->assertFalse($result->skipped);
+        $this->assertSame(0, $result->maxRows);
+        $this->assertSame(501, $result->insertedRowCount);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_model_builds', [
+            'pattern_build_id' => $result->patternBuildId,
+            'ranking_type' => RankingReadModelPatternDefinitionDTO::TYPE_RISING,
+            'max_rows' => 0,
+            'inserted_count' => 501,
+        ]);
+        $this->assertDatabaseHas('dance_short_radar_ranking_read_models', [
+            'pattern_build_id' => $result->patternBuildId,
+            'rank' => 501,
+            'youtube_video_id' => 'us-rising-unlimited-001',
+            'source_region_code' => 'US',
+        ]);
     }
 
     public function test_pattern_command_builds_single_pattern(): void
