@@ -35,7 +35,7 @@ interface DanceShortVideoSnapshotRepositoryInterface
     public function latestRankingSnapshotsByRegionCode(string $regionCode): Collection;
 
     /**
-     * displayCardField の通常ランキング window 用 read model を取得します。
+     * displayCardField の通常ランキング window 用 snapshot row を取得します。
      *
      * 指定された region code 群に対し、startRank から windowSize 件の表示候補と
      * hasNext 判定用の1件を取得します。返却される row は current snapshot、previous snapshot、
@@ -53,7 +53,7 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * displayCardField の選択カード基準 window 用に、通常ランキング全体順の read model を取得します。
+     * displayCardField の選択カード基準 window 用に、通常ランキング全体順の snapshot row を取得します。
      *
      * Repository は指定された region code 群と sortKey に従って DB 上の並び順を確定するだけです。
      * 選択中カードの順位探索や最大5件 window の切り出しは Service / Strategy 側へ残します。
@@ -68,9 +68,22 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * displayCardField の上昇候補 window 用 read model を取得します。
+     * read model pattern 生成用に、通常ランキングを sort 後に最大件数で取得します。
      *
-     * US / KR などの source region に対し、RISING タブで必要な source / JP / previous snapshot を
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsForReadModelPattern(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $maxRows,
+    ): array;
+
+    /**
+     * displayCardField の上昇候補 window 用 snapshot row を取得します。
+     *
+     * US / KR などの source region に対し、上昇候補表示で必要な source / JP / previous snapshot を
      * DB 上で結合し、window 取得できる候補行へ prefilter します。JP 比較状態の意味づけや
      * 表示 DTO 化は Repository では行いません。
      *
@@ -85,9 +98,9 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * displayCardField の選択カード基準 window 用に、上昇候補全体順の read model を取得します。
+     * displayCardField の選択カード基準 window 用に、上昇候補全体順の snapshot row を取得します。
      *
-     * Repository は RISING タブ用の read model query / prefilter と既存の並び順だけを扱い、
+     * Repository は上昇候補表示用の snapshot query / prefilter と既存の並び順だけを扱い、
      * 選択カード前後の切り出し、DTO 化、表示 props 生成は行いません。
      *
      * @param  array<int, string>  $sourceRegionCodes

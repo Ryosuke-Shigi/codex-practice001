@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\DanceShortsRadar;
 
-use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
+use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelPatternAction;
 use App\Actions\DanceShortsRadar\Queries\GetDanceShortVideoRankingPageAction;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardFieldDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardListDTO;
@@ -23,6 +23,7 @@ use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use App\Services\DanceShortsRadar\DanceShortRankingReadModelPatternService;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DanceShortRegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -138,7 +139,6 @@ class DanceShortVideoRankingPageTest extends TestCase
          * 安全に返る必要があります。この画面表示確認では YouTube API を呼びません。
          */
         $this->seed(DanceShortRegionSeeder::class);
-        $this->buildReadModels();
 
         $this
             ->get('/dance-shorts-radar')
@@ -757,7 +757,23 @@ class DanceShortVideoRankingPageTest extends TestCase
 
     private function buildReadModels(): void
     {
-        app(BuildDanceShortRankingReadModelsAction::class)->execute();
+        $patternService = app(DanceShortRankingReadModelPatternService::class);
+        $patternAction = app(BuildDanceShortRankingReadModelPatternAction::class);
+        $activeRegionCodes = DanceShortRegion::query()
+            ->where('is_active', true)
+            ->pluck('code')
+            ->map(fn (mixed $code): string => (string) $code)
+            ->all();
+
+        foreach ($patternService->enabledDefinitions($activeRegionCodes) as $definition) {
+            try {
+                $patternAction->execute($definition->patternKey);
+            } catch (RuntimeException $exception) {
+                if ($exception->getMessage() !== 'Ranking read model pattern build produced no rows.') {
+                    throw $exception;
+                }
+            }
+        }
     }
 }
 

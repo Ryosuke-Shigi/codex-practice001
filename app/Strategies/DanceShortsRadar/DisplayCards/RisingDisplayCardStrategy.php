@@ -7,71 +7,57 @@ use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardListDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardWindowConditionDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortDisplayCardWindowDTO;
 use App\DTO\DanceShortsRadar\Display\DanceShortRisingDisplayCardDTO;
-use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRankingPageInputDTO;
 use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateDTO;
-use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelSortKey;
-use App\Repositories\DanceShortsRadar\DanceShortRankingReadModelRepositoryInterface;
+use App\Repositories\DanceShortsRadar\DanceShortVideoSnapshotRepositoryInterface;
 use App\Services\DanceShortsRadar\DanceShortDisplayCardWindowService;
+use App\Services\DanceShortsRadar\DanceShortRisingCandidateService;
 use Carbon\CarbonImmutable;
 
 /**
- * RISING タブ用の表示カード Strategy です。
+ * 上昇候補表示用の表示カード Strategy です。
  *
- * 事前生成済みの read model row を表示カード用 DTO へ詰め替えます。
- * 生成時の SQL 条件と JP 比較状態は read model 側で確定済みとして受け取り、
- * window 切り出しは DanceShortDisplayCardWindowService に分けます。
+ * 上昇候補は read model の500件制限に巻き込まず、snapshot 由来の window を参照します。
+ * JP 比較状態の DTO 化と window 切り出しだけを Strategy 側で担当します。
  */
 final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardStrategyInterface
 {
     public function __construct(
-        private DanceShortRankingReadModelRepositoryInterface $readModelRepository,
+        private DanceShortVideoSnapshotRepositoryInterface $snapshotRepository,
         private DanceShortDisplayCardWindowService $displayCardWindowService,
+        private DanceShortRisingCandidateService $risingCandidateService,
     ) {}
 
     /**
-     * 上昇候補タブに表示するカード window を返します。
+     * 上昇候補の表示カード window を返します。
      */
     public function getWindow(
         DanceShortDisplayCardWindowConditionDTO $condition,
     ): DanceShortDisplayCardWindowDTO {
-        $scope = DanceShortVideoRankingPageInputDTO::RISING_TAB_CODE;
         $startRank = $condition->startRank;
         $selectedRank = null;
 
         if ($condition->selectedVideoId !== null) {
-            $selectedRank = $this->readModelRepository->activeRankForVideo(
-                scope: $scope,
+            $allCandidates = $this->risingCandidatesFromRows($this->snapshotRepository->risingRows(
+                sourceRegionCodes: $condition->activeRegionCodes,
                 comparisonDays: $condition->comparisonDays,
-                sortKey: RankingReadModelSortKey::RISING,
-                videoId: $condition->selectedVideoId,
-            );
-
-            if ($selectedRank !== null) {
-                $startRank = $this->displayCardWindowService->startRankAroundSelectedRank(
+            ), $condition->comparisonDays);
+            $selectedRank = $this->rankForVideo($allCandidates, $condition->selectedVideoId);
+            $startRank = $selectedRank === null
+                ? 1
+                : $this->displayCardWindowService->startRankAroundSelectedRank(
                     selectedRank: $selectedRank,
-                    totalItemCount: $this->readModelRepository->activeRowCount(
-                        scope: $scope,
-                        comparisonDays: $condition->comparisonDays,
-                        sortKey: RankingReadModelSortKey::RISING,
-                    ),
+                    totalItemCount: count($allCandidates),
                     windowSize: $condition->windowSize,
                 );
-            } else {
-                $startRank = 1;
-            }
         }
 
-        $rows = $this->readModelRepository->activeRowsWindow(
-            scope: $scope,
+        $rows = $this->snapshotRepository->risingRowsWindow(
+            sourceRegionCodes: $condition->activeRegionCodes,
             comparisonDays: $condition->comparisonDays,
-            sortKey: RankingReadModelSortKey::RISING,
             startRank: $startRank,
             windowSize: $condition->windowSize,
         );
-        $candidates = array_map(
-            fn (object $row): DanceShortVideoRisingCandidateDTO => $this->risingCandidateFromRow($row, $condition->comparisonDays),
-            $rows,
-        );
+        $candidates = $this->risingCandidatesFromRows($rows, $condition->comparisonDays);
         $window = $this->displayCardWindowService->buildWindowFromLookahead(
             lookaheadItems: $candidates,
             startRank: $startRank,
@@ -112,13 +98,52 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
         ));
     }
 
-    private function risingCandidateFromRow(object $row, int $comparisonDays): DanceShortVideoRisingCandidateDTO
+    /**
+     * @param  array<int, DanceShortVideoRisingCandidateDTO>  $candidates
+     */
+    private function rankForVideo(array $candidates, int $videoId): ?int
     {
-        /*
-         * Repository row は事前生成済みの RISING read model です。
-         * Strategy は表示カード用 DTO への詰め替えだけを担当し、レスポンス配列化は Responder に残します。
-         */
-        $sourceViewCountDelta = (int) $row->view_count_delta;
+        foreach ($candidates as $index => $candidate) {
+            if ($candidate->videoId === $videoId) {
+                return $index + 1;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<int, object>  $rows
+     * @return array<int, DanceShortVideoRisingCandidateDTO>
+     */
+    private function risingCandidatesFromRows(array $rows, int $comparisonDays): array
+    {
+        $candidates = [];
+
+        foreach ($rows as $row) {
+            $candidate = $this->risingCandidateFromRow($row, $comparisonDays);
+
+            if ($candidate !== null) {
+                $candidates[] = $candidate;
+            }
+        }
+
+        return $candidates;
+    }
+
+    private function risingCandidateFromRow(object $row, int $comparisonDays): ?DanceShortVideoRisingCandidateDTO
+    {
+        $sourceViewCountDelta = (int) $row->source_view_count_delta;
+        $japanViewCountDelta = $row->japan_view_count_delta === null ? null : (int) $row->japan_view_count_delta;
+        $japanComparisonStatus = $this->risingCandidateService->japanComparisonStatusForCandidate(
+            sourceViewCountDelta: $sourceViewCountDelta,
+            hasJapanCurrentSnapshot: $row->japan_current_snapshot_id !== null,
+            japanViewCountDelta: $japanViewCountDelta,
+        );
+
+        if ($japanComparisonStatus === null) {
+            return null;
+        }
 
         return new DanceShortVideoRisingCandidateDTO(
             videoId: (int) $row->video_id,
@@ -126,25 +151,25 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
             title: (string) $row->title,
             channelTitle: $row->channel_title === null ? null : (string) $row->channel_title,
             thumbnailUrl: $row->thumbnail_url === null ? null : (string) $row->thumbnail_url,
-            url: $row->youtube_url === null ? null : (string) $row->youtube_url,
+            url: $row->url === null ? null : (string) $row->url,
             publishedAt: $row->published_at === null ? null : $this->parseApplicationDate((string) $row->published_at),
             sourceRegionCode: (string) $row->source_region_code,
-            sourceRegionName: (string) $row->source_region_label,
-            sourceCurrentViewCount: (int) $row->current_view_count,
-            sourcePreviousViewCount: $row->previous_view_count === null ? null : (int) $row->previous_view_count,
+            sourceRegionName: (string) $row->source_region_name,
+            sourceCurrentViewCount: (int) $row->source_current_view_count,
+            sourcePreviousViewCount: $row->source_previous_view_count === null ? null : (int) $row->source_previous_view_count,
             sourceViewCountDelta: $sourceViewCountDelta,
-            sourceViewGrowthRate: $row->view_growth_rate === null ? null : (float) $row->view_growth_rate,
-            sourceViewsPerHour: $row->views_per_hour === null ? null : (float) $row->views_per_hour,
-            sourceCurrentCollectedAt: $this->parseApplicationDate((string) $row->current_collected_at),
-            sourcePreviousCollectedAt: $row->previous_collected_at === null ? null : $this->parseApplicationDate((string) $row->previous_collected_at),
+            sourceViewGrowthRate: $row->source_view_growth_rate === null ? null : (float) $row->source_view_growth_rate,
+            sourceViewsPerHour: $row->source_views_per_hour === null ? null : (float) $row->source_views_per_hour,
+            sourceCurrentCollectedAt: $this->parseApplicationDate((string) $row->source_current_collected_at),
+            sourcePreviousCollectedAt: $row->source_previous_collected_at === null ? null : $this->parseApplicationDate((string) $row->source_previous_collected_at),
             japanCurrentViewCount: $row->japan_current_view_count === null ? null : (int) $row->japan_current_view_count,
             japanPreviousViewCount: $row->japan_previous_view_count === null ? null : (int) $row->japan_previous_view_count,
-            japanViewCountDelta: $row->japan_view_count_delta === null ? null : (int) $row->japan_view_count_delta,
+            japanViewCountDelta: $japanViewCountDelta,
             japanViewGrowthRate: $row->japan_view_growth_rate === null ? null : (float) $row->japan_view_growth_rate,
             japanViewsPerHour: $row->japan_views_per_hour === null ? null : (float) $row->japan_views_per_hour,
             japanCurrentCollectedAt: $row->japan_current_collected_at === null ? null : $this->parseApplicationDate((string) $row->japan_current_collected_at),
             japanPreviousCollectedAt: $row->japan_previous_collected_at === null ? null : $this->parseApplicationDate((string) $row->japan_previous_collected_at),
-            japanComparisonStatus: (string) $row->japan_comparison_status,
+            japanComparisonStatus: $japanComparisonStatus,
             comparisonDays: $comparisonDays,
         );
     }

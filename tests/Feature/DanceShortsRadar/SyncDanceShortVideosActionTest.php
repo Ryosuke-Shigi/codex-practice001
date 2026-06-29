@@ -171,6 +171,7 @@ class SyncDanceShortVideosActionTest extends TestCase
         ]);
 
         $this->app->instance(YouTubeVideoApiRepositoryInterface::class, new FakeDanceShortYouTubeVideoApiRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(SyncDanceShortVideosAction::class)->execute();
 
@@ -197,6 +198,10 @@ class SyncDanceShortVideosActionTest extends TestCase
             'video_id' => $video->getKey(),
             'region_id' => $region->getKey(),
         ]);
+        Event::assertDispatched(
+            DanceShortRankingReadModelRefreshRequested::class,
+            fn (DanceShortRankingReadModelRefreshRequested $event): bool => $event->source === 'video_search_completed',
+        );
     }
 
     public function test_execute_updates_snapshot_in_same_jst_12_hour_period_instead_of_creating_another_row(): void

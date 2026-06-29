@@ -6,7 +6,7 @@ namespace App\DTO\DanceShortsRadar\Ranking;
  * 通常ランキング画面で選択できる地域を表す DTO です。
  *
  * region tab は DB の active region から作りますが、Responder / React へ Eloquent Model を渡さないため、
- * 画面に必要な code / name だけをここで固定します。ALL や RISING のようなモック専用タブ値は
+ * 画面に必要な code / name だけをここで固定します。ALL や RISING のような表示区分コードは
  * 本画面の保存済み snapshot ランキングには混ぜません。
  */
 final readonly class DanceShortVideoRankingRegionDTO

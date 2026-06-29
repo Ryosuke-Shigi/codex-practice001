@@ -184,6 +184,36 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     }
 
     /**
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsForReadModelPattern(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $maxRows,
+    ): array {
+        $safeRegionCodes = array_values(array_unique(array_filter(
+            $regionCodes,
+            fn (string $regionCode): bool => $regionCode !== '',
+        )));
+
+        if ($safeRegionCodes === []) {
+            return [];
+        }
+
+        $query = $this->rankingRowsQuery($comparisonDays)
+            ->whereIn('regions.code', $safeRegionCodes);
+
+        $this->orderRankingRows($query, $sortKey);
+
+        return $query
+            ->limit(max(1, $maxRows))
+            ->get()
+            ->all();
+    }
+
+    /**
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>
      */
@@ -231,7 +261,7 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     private function risingRowsQuery(array $sourceRegionCodes, int $comparisonDays): ?Builder
     {
         /*
-         * RISING タブの displayCardField は startRank から windowSize + 1 件だけを返す必要があるため、
+         * 上昇候補表示の displayCardField は startRank から windowSize + 1 件だけを返す必要があるため、
          * Repository で source / JP / previous snapshot を結合し、DB 上で候補行を prefilter します。
          *
          * JP は比較対象であり source region ではないため、入力に混ざっていても source から外します。

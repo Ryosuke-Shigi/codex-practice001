@@ -95,7 +95,7 @@ final readonly class DanceShortVideoRankingResponder
          * select field は操作部品専用の props です。
          *
          * React 側はここに入っている href を router.get() へ渡すだけで、URL query を組み直しません。
-         * showSortKeyOptions もここで確定し、上昇候補タブでは並び順 UI を出さないという表示制御を
+         * showSortKeyOptions もここで確定し、上昇候補表示では並び順 UI を出さないという表示制御を
          * card field 側へ漏らさないようにします。カード件数や説明文は header / card field に分けます。
          */
         return [
@@ -166,7 +166,7 @@ final readonly class DanceShortVideoRankingResponder
     private function regionTabProps(DanceShortVideoRankingPageDTO $page): array
     {
         /*
-         * RISING と ALL はどちらも表示専用タブです。
+         * RISING と ALL はどちらも地域 code ではなく、表示区分を識別する内部コードです。
          * RISING は上昇候補として確定済みの DTO、ALL は地域別 DTO をまとめた表示であり、
          * どちらも dance_short_regions へ追加しません。href は Query Action が識別できる tab 値だけを
          * query に置き、Repository へ RISING / ALL が渡らない境界は Action 側で保ちます。
@@ -375,7 +375,7 @@ final readonly class DanceShortVideoRankingResponder
     ): string {
         /*
          * 各操作ボタンは React 側で query を組み立てず、この href を router.get() に渡します。
-         * RISING / ALL も tab query に残すことで、リロード、戻る/進む、URL共有時に
+         * RISING / ALL の表示区分コードも URL query に残すことで、リロード、戻る/進む、URL共有時に
          * 同じ表示条件を Laravel 側の Request / Action / Responder から復元できます。
          */
         $query = array_filter([

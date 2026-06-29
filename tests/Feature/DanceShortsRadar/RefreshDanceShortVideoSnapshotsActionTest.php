@@ -189,6 +189,7 @@ class RefreshDanceShortVideoSnapshotsActionTest extends TestCase
 
         $youtubeRepository = new SnapshotRefreshFakeYouTubeVideoApiRepository;
         $this->app->instance(YouTubeVideoDetailFetchResultRepositoryInterface::class, $youtubeRepository);
+        Event::fake([DanceShortRankingReadModelRefreshRequested::class]);
 
         $result = app(RefreshDanceShortVideoSnapshotsAction::class)->execute();
 
