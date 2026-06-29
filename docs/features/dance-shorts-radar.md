@@ -153,12 +153,15 @@ read model 生成は `pattern_build_id` 単位で行います。Action 側の pa
 
 新しい pattern build が1件以上生成できたら同じ pattern だけ active を切り替えます。active 化後に同じ pattern の保持対象外 rows を chunk 削除し、保持対象は active 1世代のみとします。生成途中で失敗した場合や rows が0件の場合は該当 pattern build を `failed` にして部分 rows を削除し、同じ pattern の旧active buildを維持して、表示は直前のread modelを読み続けます。builds 履歴は容量本体ではないため、active / superseded / failed の状態記録として残します。
 
-初回導入や migration 直後は、通常ランキング read model の生成Jobをdispatchします。local / production とも、各環境の migration 適用後に `dance-shorts-radar:build-ranking-read-models` または `dance-shorts-radar:dispatch-ranking-read-model-patterns` を実行します。1 patternだけ同期生成する場合は `dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour` を使います。
+pattern build schema への移行では、既存の create migration を直接書き換えず、新規 migration で本番既存DBの ReadModel 系2テーブルだけを作り直します。ReadModel は raw data / snapshots から再生成できる派生データのため、`dance_short_radar_ranking_read_model_builds` と `dance_short_radar_ranking_read_models` は破棄・再作成してよい対象です。`dance_short_videos`、`dance_short_video_snapshots`、`dance_short_regions` などの raw data / snapshots / sync 系テーブルは触りません。
+
+初回導入や migration 直後は、通常ランキング read model の生成Jobをdispatchします。local / production とも、各環境の migration 適用後に `dance-shorts-radar:dispatch-ranking-read-model-patterns` を実行します。旧command名の `dance-shorts-radar:build-ranking-read-models` も enabled pattern Job のdispatch入口ですが、本番デプロイ後の明示手順では `dance-shorts-radar:dispatch-ranking-read-model-patterns` を使います。1 patternだけ同期生成する場合は `dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour` を使います。
 
 生成対象:
 
 - 通常ランキング read model: active region code と許可された比較日数 x sort key の pattern を生成する
 - 各通常ランキング pattern の最大件数は config の初期値500件とする
+- active region が JP / US / KR の3件なら `3地域 x 5比較日数 x 4sort = 60 pattern` となり、ReadModel rows は最大 `60 x 500 = 30,000行` 規模に収まる
 - `ALL` / まとめ、`RISING` / 上昇候補、raw data / snapshots 全体を対象にすべき処理は500件制限対象外とする
 - まとめと上昇候補は ReadModel 500件を根拠にせず、raw data / snapshots を対象にする
 

@@ -51,6 +51,57 @@ class DanceShortDatabaseTest extends TestCase
         $this->assertTrue(Schema::hasColumn('dance_short_video_regions', 'last_detected_at'));
     }
 
+    public function test_ranking_read_model_tables_use_pattern_build_schema(): void
+    {
+        $this->assertTrue(Schema::hasTable('dance_short_radar_ranking_read_model_builds'));
+        $this->assertTrue(Schema::hasTable('dance_short_radar_ranking_read_models'));
+
+        foreach ([
+            'pattern_build_id',
+            'pattern_key',
+            'ranking_type',
+            'scope',
+            'comparison_days',
+            'sort_key',
+            'max_rows',
+            'status',
+            'calculated_at',
+            'activated_at',
+            'inserted_count',
+            'error_message',
+        ] as $column) {
+            $this->assertTrue(Schema::hasColumn('dance_short_radar_ranking_read_model_builds', $column));
+        }
+
+        foreach ([
+            'pattern_build_id',
+            'pattern_key',
+            'ranking_type',
+            'scope',
+            'comparison_days',
+            'sort_key',
+            'rank',
+            'video_id',
+            'current_view_count',
+            'previous_view_count',
+            'view_count_delta',
+            'view_growth_rate',
+            'views_per_hour',
+            'japan_current_view_count',
+            'japan_previous_view_count',
+            'japan_view_count_delta',
+            'japan_view_growth_rate',
+            'japan_views_per_hour',
+            'japan_comparison_status',
+            'calculated_at',
+        ] as $column) {
+            $this->assertTrue(Schema::hasColumn('dance_short_radar_ranking_read_models', $column));
+        }
+
+        $this->assertFalse(Schema::hasColumn('dance_short_radar_ranking_read_model_builds', 'build_id'));
+        $this->assertFalse(Schema::hasColumn('dance_short_radar_ranking_read_models', 'build_id'));
+    }
+
     public function test_region_and_keyword_seeders_create_minimum_observation_data(): void
     {
         $this->seed(DanceShortRegionSeeder::class);

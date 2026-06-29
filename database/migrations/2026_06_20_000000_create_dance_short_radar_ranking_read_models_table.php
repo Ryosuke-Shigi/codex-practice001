@@ -7,46 +7,32 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * DanceShortsRadar の表示用ランキング read model と pattern build 管理テーブルを作成します。
+     * DanceShortsRadar の表示用ランキング read model と build 管理テーブルを作成します。
      */
     public function up(): void
     {
         /*
-         * build table は ranking_type + scope + comparison_days + sort_key の pattern 単位で active を管理します。
-         * 1 pattern の失敗や再生成が他 pattern の表示用 read model に影響しないよう、active 切替も pattern 単位にします。
+         * build table は active read model の安全な切替点です。
+         * rows table だけで active 判定すると、途中生成中の rows を表示側が読めてしまいます。
          */
         Schema::create('dance_short_radar_ranking_read_model_builds', function (Blueprint $table) {
             $table->id();
 
-            $table->uuid('pattern_build_id');
-            $table->string('pattern_key', 128)->index();
-            $table->string('ranking_type', 32);
-            $table->string('scope', 32);
-            $table->unsignedSmallInteger('comparison_days');
-            $table->string('sort_key', 64);
-            $table->unsignedSmallInteger('max_rows');
+            $table->uuid('build_id')->unique();
             $table->string('status', 32)->index();
             $table->dateTime('calculated_at');
             $table->dateTime('activated_at')->nullable();
-            $table->unsignedInteger('inserted_count')->default(0);
-            $table->text('error_message')->nullable();
 
             $table->timestamps();
-
-            $table->unique('pattern_build_id', 'dance_short_radar_pattern_build_id_unique');
-            $table->index(['pattern_key', 'status', 'activated_at'], 'dance_short_radar_pattern_build_active_idx');
-            $table->index(['scope', 'comparison_days', 'sort_key', 'status'], 'dance_short_radar_pattern_build_display_idx');
         });
 
         /*
-         * 表示/API は active pattern build の read model を window 取得するだけにし、snapshot 履歴の再集計を行いません。
+         * 表示/API はこの read model を window 取得するだけにし、snapshot 履歴の再集計を行いません。
          */
         Schema::create('dance_short_radar_ranking_read_models', function (Blueprint $table) {
             $table->id();
 
-            $table->uuid('pattern_build_id');
-            $table->string('pattern_key', 128);
-            $table->string('ranking_type', 32);
+            $table->uuid('build_id');
             $table->string('scope', 32);
             $table->unsignedSmallInteger('comparison_days');
             $table->string('sort_key', 64);
@@ -89,11 +75,10 @@ return new class extends Migration
             $table->dateTime('calculated_at');
             $table->timestamps();
 
-            $table->index('pattern_build_id');
-            $table->index(['pattern_build_id', 'rank'], 'dance_short_radar_pattern_read_model_window_idx');
-            $table->index(['pattern_build_id', 'video_id'], 'dance_short_radar_pattern_read_model_video_idx');
-            $table->index(['pattern_key', 'rank'], 'dance_short_radar_pattern_read_model_key_rank_idx');
-            $table->unique(['pattern_build_id', 'rank'], 'dance_short_radar_pattern_read_model_rank_unique');
+            $table->index('build_id');
+            $table->index(['build_id', 'scope', 'comparison_days', 'sort_key', 'rank'], 'dance_short_radar_read_model_window_idx');
+            $table->index(['build_id', 'scope', 'comparison_days', 'sort_key', 'video_id'], 'dance_short_radar_read_model_video_idx');
+            $table->unique(['build_id', 'scope', 'comparison_days', 'sort_key', 'rank'], 'dance_short_radar_read_model_rank_unique');
         });
     }
 
