@@ -139,11 +139,11 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 
 ランキング表示はStrategy / Factoryで取得差分を選択します。
 
-主な区分:
+主な表示区分:
 
-- `RISING`
-- `ALL`
-- 地域別ランキング
+- 上昇候補表示（内部コード: RISING）
+- まとめ表示（内部コード: ALL）
+- 地域別通常ランキング
 
 地域別の通常ランキング表示は read model から取得します。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が通常ランキング pattern ごとの `BuildDanceShortRankingReadModelPatternJob` をdispatchします。1 Job は1つの通常ランキング pattern だけを生成します。
 
@@ -164,9 +164,9 @@ read model 生成は `pattern_build_id` 単位で行います。Action 側の pa
 
 地域別の通常ランキング表示側 Repository は active pattern build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
 
-### RISING / 上昇候補の責務境界
+### 上昇候補表示の責務境界
 
-RISING は `dance_short_regions` の地域ではなく、表示専用タブです。
+RISING は `dance_short_regions` の地域ではなく、上昇候補表示を識別する内部コードです。
 
 上昇候補は、US / KR などの source region 側で伸びていて、JP 側が未観測または source 側より伸びが小さい動画を継続観測候補として扱うための区分です。
 
@@ -179,7 +179,7 @@ Repositoryが扱うこと:
 - source側の増加量が正である候補行への prefilter
 - JP側が未観測、またはJP側の増加量がsource側より小さい候補行への prefilter
 - 同じYouTube動画が複数source regionに出た場合の代表行選択
-- RISING固有の固定順で表示候補 row を取得するための候補取得
+- 上昇候補表示固有の固定順で表示候補 row を取得するための候補取得
 
 Repositoryが扱わないこと:
 
@@ -296,8 +296,8 @@ inactive、standard、1ページ設定は除外します。
 - 地域別通常ランキング表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
 - `selectedVideoId` を基準にした全体順位
 - 最大5件のdisplay-card-window
-- RISING 表示側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合した snapshot row を使う
-- RISING Repositoryは上昇候補の意味づけ、JP比較状態、表示文言、Inertia props生成を持たない
+- 上昇候補表示側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合した snapshot row を使う
+- 上昇候補表示用 Repositoryは上昇候補の意味づけ、JP比較状態、表示文言、Inertia props生成を持たない
 - `DanceShortRisingCandidateService::japanComparisonStatusForCandidate()` がJP比較状態を定義する
 - Serviceは null metric を0へ潰さない
 - StrategyはRepository rowをDTOへ詰め替え、JP比較状態はServiceの定義を使う
@@ -316,11 +316,11 @@ inactive、standard、1ページ設定は除外します。
 - Repositoryへ保存判断・表示判断・tracking statusの意味判断が入っていないか
 - 表示Action/APIがsnapshot履歴からランキングを再計算していないか
 - read model 生成失敗時に旧active buildを消していないか
-- RISING 生成側 Repository / Strategyへ上昇候補の意味定義、JP比較状態、表示文言、Inertia props生成が入っていないか
-- RISING Serviceが上昇候補の意味、JP比較状態、null metricの扱いを持っているか
-- RISING StrategyがDTO詰め替えとwindow取得委譲に留まり、JP比較状態の意味定義を持っていないか
-- RISING Responderがprops変換と表示ラベル生成に留まり、候補判定やmetric再計算をしていないか
-- RISING DTOがデータキャリアに留まり、DB取得、候補判定、props生成、表示文言生成を持っていないか
+- 上昇候補表示用 Repository / Strategyへ上昇候補の意味定義、JP比較状態、表示文言、Inertia props生成が入っていないか
+- 上昇候補表示用 Serviceが上昇候補の意味、JP比較状態、null metricの扱いを持っているか
+- 上昇候補表示用 StrategyがDTO詰め替えとwindow取得委譲に留まり、JP比較状態の意味定義を持っていないか
+- 上昇候補表示用 Responderがprops変換と表示ラベル生成に留まり、候補判定やmetric再計算をしていないか
+- 上昇候補表示用 DTOがデータキャリアに留まり、DB取得、候補判定、props生成、表示文言生成を持っていないか
 - 共通保存処理を重複実装していないか
 - Schedulerの実行時刻が競合しないか
 - snapshot・ranking・window表示の既存テストを壊していないか

@@ -10,8 +10,8 @@ use App\DTO\DanceShortsRadar\Ranking\DanceShortVideoRisingCandidateListDTO;
  * DanceShortsRadar の上昇候補の意味と JP 比較状態を定義する Service です。
  *
  * buildRisingCandidates() は、通常ランキング DTO 配列から上昇候補 DTO を組み立てる既存経路の正本です。
- * RISING タブの displayCardField では Repository が window 取得のために SQL 上で source / JP /
- * previous snapshot を結合し、read model 行を prefilter しますが、JP 未観測や JP 側の伸びが小さい
+ * 上昇候補表示の displayCardField では Repository が window 取得のために SQL 上で source / JP /
+ * previous snapshot を結合し、snapshot row を prefilter しますが、JP 未観測や JP 側の伸びが小さい
  * という状態値の定義、null metric を 0 に潰さない扱いはこの Service に集約します。
  *
  * この Service は既に計算済みの RankingItemDTO または read model の metric を受け取り、

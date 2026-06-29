@@ -83,7 +83,7 @@ interface DanceShortVideoSnapshotRepositoryInterface
     /**
      * displayCardField の上昇候補 window 用 snapshot row を取得します。
      *
-     * US / KR などの source region に対し、RISING タブで必要な source / JP / previous snapshot を
+     * US / KR などの source region に対し、上昇候補表示で必要な source / JP / previous snapshot を
      * DB 上で結合し、window 取得できる候補行へ prefilter します。JP 比較状態の意味づけや
      * 表示 DTO 化は Repository では行いません。
      *
@@ -100,7 +100,7 @@ interface DanceShortVideoSnapshotRepositoryInterface
     /**
      * displayCardField の選択カード基準 window 用に、上昇候補全体順の snapshot row を取得します。
      *
-     * Repository は RISING タブ用の snapshot query / prefilter と既存の並び順だけを扱い、
+     * Repository は上昇候補表示用の snapshot query / prefilter と既存の並び順だけを扱い、
      * 選択カード前後の切り出し、DTO 化、表示 props 生成は行いません。
      *
      * @param  array<int, string>  $sourceRegionCodes

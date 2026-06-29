@@ -14,7 +14,7 @@ use App\Services\DanceShortsRadar\DanceShortRisingCandidateService;
 use Carbon\CarbonImmutable;
 
 /**
- * RISING タブ用の表示カード Strategy です。
+ * 上昇候補表示用の表示カード Strategy です。
  *
  * 上昇候補は read model の500件制限に巻き込まず、snapshot 由来の window を参照します。
  * JP 比較状態の DTO 化と window 切り出しだけを Strategy 側で担当します。
@@ -28,7 +28,7 @@ final readonly class RisingDisplayCardStrategy implements DanceShortDisplayCardS
     ) {}
 
     /**
-     * 上昇候補タブに表示するカード window を返します。
+     * 上昇候補の表示カード window を返します。
      */
     public function getWindow(
         DanceShortDisplayCardWindowConditionDTO $condition,

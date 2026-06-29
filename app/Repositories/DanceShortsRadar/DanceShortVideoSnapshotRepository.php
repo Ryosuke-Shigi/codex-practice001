@@ -261,7 +261,7 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     private function risingRowsQuery(array $sourceRegionCodes, int $comparisonDays): ?Builder
     {
         /*
-         * RISING タブの displayCardField は startRank から windowSize + 1 件だけを返す必要があるため、
+         * 上昇候補表示の displayCardField は startRank から windowSize + 1 件だけを返す必要があるため、
          * Repository で source / JP / previous snapshot を結合し、DB 上で候補行を prefilter します。
          *
          * JP は比較対象であり source region ではないため、入力に混ざっていても source から外します。
