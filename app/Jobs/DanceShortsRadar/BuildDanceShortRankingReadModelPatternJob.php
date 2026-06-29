@@ -11,7 +11,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 /**
- * DanceShortsRadar 通常ランキング read model の1 pattern 生成を Queue で実行する Job です。
+ * DanceShortsRadar ranking read model の1 pattern 生成を Queue で実行する Job です。
  */
 class BuildDanceShortRankingReadModelPatternJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {

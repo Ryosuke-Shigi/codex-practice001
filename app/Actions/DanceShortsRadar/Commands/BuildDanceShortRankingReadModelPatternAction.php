@@ -123,7 +123,7 @@ class BuildDanceShortRankingReadModelPatternAction
 
         try {
             $rows = $this->strategyFactory
-                ->make($definition->scope)
+                ->make($definition)
                 ->build(new RankingReadModelBuildInputDTO(
                     patternBuildId: $patternBuildId,
                     patternKey: $definition->patternKey,

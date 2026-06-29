@@ -32,15 +32,18 @@ class RequestDanceShortRankingReadModelRebuildListenerTest extends TestCase
             ),
         );
 
-        Queue::assertPushed(BuildDanceShortRankingReadModelPatternJob::class, 20);
+        Queue::assertPushed(BuildDanceShortRankingReadModelPatternJob::class, 40);
         Queue::assertPushed(
             BuildDanceShortRankingReadModelPatternJob::class,
             fn (BuildDanceShortRankingReadModelPatternJob $job): bool => $job->patternKey === 'normal|JP|1|views_per_hour',
         );
+        Queue::assertPushed(
+            BuildDanceShortRankingReadModelPatternJob::class,
+            fn (BuildDanceShortRankingReadModelPatternJob $job): bool => $job->patternKey === 'summary|ALL|1|views_per_hour',
+        );
         Queue::assertNotPushed(
             BuildDanceShortRankingReadModelPatternJob::class,
-            fn (BuildDanceShortRankingReadModelPatternJob $job): bool => str_contains($job->patternKey, '|ALL|')
-                || str_contains($job->patternKey, 'RISING'),
+            fn (BuildDanceShortRankingReadModelPatternJob $job): bool => str_contains($job->patternKey, 'RISING'),
         );
     }
 }

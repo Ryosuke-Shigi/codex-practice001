@@ -151,7 +151,7 @@ docker compose exec php-fpm php artisan route:list
 docker compose exec php-fpm php artisan migrate:status
 ```
 
-DanceShortsRadar の通常ランキング read model 初期生成Jobをdispatchする場合:
+DanceShortsRadar の ranking read model 初期生成Jobをdispatchする場合:
 
 ```bash
 cd /var/www/api-discovery-hub
@@ -160,14 +160,22 @@ docker compose exec php-fpm php artisan dance-shorts-radar:dispatch-ranking-read
 docker compose exec php-fpm php artisan dance-shorts-radar:build-ranking-read-models
 ```
 
-1つの通常ランキング pattern だけ同期生成する場合:
+1つの normal pattern だけ同期生成する場合:
 
 ```bash
 cd /var/www/api-discovery-hub
 docker compose exec php-fpm php artisan dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour
 ```
 
-local / production とも、migration 適用後は通常ランキング pattern build Job をdispatchし、必要に応じて対象 pattern の `pattern_build_id` が active として参照できることを確認してから `/dance-shorts-radar` を確認します。pattern build schema への移行では、既存 create migration を直接書き換えず、新規 migration で `dance_short_radar_ranking_read_model_builds` と `dance_short_radar_ranking_read_models` だけを作り直します。ReadModel は派生データのため、deploy後は空になり、raw data / snapshots から `dance-shorts-radar:dispatch-ranking-read-model-patterns` で再生成します。raw data / snapshots / sync 系テーブルは drop / truncate / delete しません。各 pattern は `sort -> limit(config値) -> save` で生成し、config未定義時に全件生成へフォールバックしません。active region が JP / US / KR の3件なら通常ランキング pattern は最大60件、ReadModel rows は最大30,000行規模です。まとめ・上昇候補・raw data / snapshots 全体を対象にすべき処理は通常ランキング read model の500件制限対象外です。
+summary / rising の read model を同期生成する場合:
+
+```bash
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan dance-shorts-radar:build-summary-ranking-read-models
+docker compose exec php-fpm php artisan dance-shorts-radar:build-rising-ranking-read-models
+```
+
+local / production とも、migration 適用後は normal / summary / rising pattern build Job をdispatchし、必要に応じて対象 pattern の `pattern_build_id` が active として参照できることを確認してから `/dance-shorts-radar` を確認します。pattern build schema への移行では、既存 create migration を直接書き換えず、新規 migration で `dance_short_radar_ranking_read_model_builds` と `dance_short_radar_ranking_read_models` だけを作り直します。ReadModel は派生データのため、deploy後は空になり、raw data / snapshots から `dance-shorts-radar:dispatch-ranking-read-model-patterns` で再生成します。raw data / snapshots / sync 系テーブルは drop / truncate / delete しません。normal pattern は `sort -> limit(config値) -> save` で生成し、config未定義時に全件生成へフォールバックしません。summary / rising は `max_rows = 0` を row cap なしとして扱います。active region が JP / US / KR の3件なら normal は60 pattern、summary は20 pattern、rising は5 patternです。
 
 本番デプロイ後の想定コマンド:
 
@@ -185,7 +193,7 @@ docker compose exec php-fpm php artisan dance-shorts-radar:dispatch-ranking-read
 - `php artisan migrate:status` で新規 migration が実行済みになっていること
 - `dance_short_radar_ranking_read_model_builds` が pattern build schema になっていること
 - `dance_short_radar_ranking_read_models` が pattern row schema になっていること
-- 通常ランキング pattern build が dispatch されること
+- normal / summary / rising pattern build が dispatch されること
 - raw data / snapshots が保持されていること
 
 npm は `npm` service で実行します。

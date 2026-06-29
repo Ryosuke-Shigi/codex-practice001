@@ -35,11 +35,11 @@ interface DanceShortVideoSnapshotRepositoryInterface
     public function latestRankingSnapshotsByRegionCode(string $regionCode): Collection;
 
     /**
-     * displayCardField の通常ランキング window 用 snapshot row を取得します。
+     * snapshot based compatibility query 用に、通常ランキング window row を取得します。
      *
-     * 指定された region code 群に対し、startRank から windowSize 件の表示候補と
-     * hasNext 判定用の1件を取得します。返却される row は current snapshot、previous snapshot、
-     * snapshot 比較 metric を持ちますが、DTO 化や Inertia props 化は Repository では行いません。
+     * 現在の displayCardField は active read model を参照します。この method は snapshot 由来の
+     * 候補 query と repository-level 検証のために残し、指定 region code 群に対する startRank から
+     * windowSize 件の候補と hasNext 判定用の1件だけを DB 側で取得します。
      *
      * @param  array<int, string>  $regionCodes
      * @return array<int, object>
@@ -53,10 +53,10 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * displayCardField の選択カード基準 window 用に、通常ランキング全体順の snapshot row を取得します。
+     * snapshot based compatibility query 用に、通常ランキング全体順の row を取得します。
      *
      * Repository は指定された region code 群と sortKey に従って DB 上の並び順を確定するだけです。
-     * 選択中カードの順位探索や最大5件 window の切り出しは Service / Strategy 側へ残します。
+     * 選択中カードの順位探索や最大5件 window の切り出しは Action / Service 側へ残します。
      *
      * @param  array<int, string>  $regionCodes
      * @return array<int, object>
@@ -68,7 +68,9 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * read model pattern 生成用に、通常ランキングを sort 後に最大件数で取得します。
+     * read model pattern 生成用に、通常ランキング row を sort 後に取得します。
+     *
+     * maxRows が 0 の場合は、まとめ用など通常500件制限を使わない pattern として全件取得します。
      *
      * @param  array<int, string>  $regionCodes
      * @return array<int, object>
@@ -81,11 +83,25 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * displayCardField の上昇候補 window 用 snapshot row を取得します。
+     * read model pattern 生成用に、上昇候補 row を取得します。
      *
-     * US / KR などの source region に対し、上昇候補表示で必要な source / JP / previous snapshot を
-     * DB 上で結合し、window 取得できる候補行へ prefilter します。JP 比較状態の意味づけや
-     * 表示 DTO 化は Repository では行いません。
+     * maxRows が 0 の場合は、通常ランキングの500件制限を使わず全件取得します。
+     *
+     * @param  array<int, string>  $sourceRegionCodes
+     * @return array<int, object>
+     */
+    public function risingRowsForReadModelPattern(
+        array $sourceRegionCodes,
+        int $comparisonDays,
+        int $maxRows,
+    ): array;
+
+    /**
+     * snapshot based compatibility query 用に、上昇候補 window row を取得します。
+     *
+     * 現在の上昇候補 displayCardField は active read model を参照します。この method は source / JP /
+     * previous snapshot を DB 上で結合する snapshot 由来の候補 query と repository-level 検証のために残します。
+     * JP 比較状態の意味づけや表示 DTO 化は Repository では行いません。
      *
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>
@@ -98,10 +114,10 @@ interface DanceShortVideoSnapshotRepositoryInterface
     ): array;
 
     /**
-     * displayCardField の選択カード基準 window 用に、上昇候補全体順の snapshot row を取得します。
+     * snapshot based compatibility query 用に、上昇候補全体順の row を取得します。
      *
      * Repository は上昇候補表示用の snapshot query / prefilter と既存の並び順だけを扱い、
-     * 選択カード前後の切り出し、DTO 化、表示 props 生成は行いません。
+     * 選択カード前後の切り出し、DTO 化、表示 props 生成は Action / Service 側へ残します。
      *
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>

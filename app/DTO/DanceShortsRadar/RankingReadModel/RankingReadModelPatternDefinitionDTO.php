@@ -9,6 +9,10 @@ final readonly class RankingReadModelPatternDefinitionDTO
 {
     public const TYPE_NORMAL = 'normal';
 
+    public const TYPE_SUMMARY = 'summary';
+
+    public const TYPE_RISING = 'rising';
+
     public function __construct(
         public string $patternKey,
         public string $rankingType,

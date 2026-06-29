@@ -15,6 +15,8 @@ final readonly class RankingReadModelPatternDispatchResultDTO
     public function __construct(
         public int $dispatchedPatternCount,
         public int $normalPatternCount,
+        public int $summaryPatternCount,
+        public int $risingPatternCount,
         public array $patternKeys,
         public CarbonInterface $dispatchedAt,
     ) {}
