@@ -184,6 +184,36 @@ class DanceShortVideoSnapshotRepository implements DanceShortVideoSnapshotReposi
     }
 
     /**
+     * @param  array<int, string>  $regionCodes
+     * @return array<int, object>
+     */
+    public function rankingRowsForReadModelPattern(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $maxRows,
+    ): array {
+        $safeRegionCodes = array_values(array_unique(array_filter(
+            $regionCodes,
+            fn (string $regionCode): bool => $regionCode !== '',
+        )));
+
+        if ($safeRegionCodes === []) {
+            return [];
+        }
+
+        $query = $this->rankingRowsQuery($comparisonDays)
+            ->whereIn('regions.code', $safeRegionCodes);
+
+        $this->orderRankingRows($query, $sortKey);
+
+        return $query
+            ->limit(max(1, $maxRows))
+            ->get()
+            ->all();
+    }
+
+    /**
      * @param  array<int, string>  $sourceRegionCodes
      * @return array<int, object>
      */

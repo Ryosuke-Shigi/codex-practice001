@@ -145,22 +145,24 @@ snapshot専用同期は、保存済み動画の継続観測だけを担当しま
 - `ALL`
 - 地域別ランキング
 
-表示時のランキングは snapshot 履歴から再計算しません。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が固定 uniqueId の `BuildDanceShortRankingReadModelsJob` をdispatchします。Job は `BuildDanceShortRankingReadModelsAction` を呼び、read model build を一括生成します。
+地域別の通常ランキング表示は read model から取得します。通常同期、page2同期、snapshot専用同期で video / snapshot / cleanup の元データ変更があった時だけ `DanceShortRankingReadModelRefreshRequested` を発火し、Listener が通常ランキング pattern ごとの `BuildDanceShortRankingReadModelPatternJob` をdispatchします。1 Job は1つの通常ランキング pattern だけを生成します。
 
-read model 生成は `build_id` 単位で行います。Action 側の専用 Cache lock で手動 command / queue job の多重実行を防ぎ、lock 取得不可または若い `building` がある場合は新規 build を作らず skipped とします。古すぎる `building` は stale として `failed` に更新し、部分生成 rows を削除してから次の build を開始します。
+通常ランキング pattern は `normal|{scope}|{comparison_days}|{sort_key}` です。`scope` は active region code を対象にし、`ALL` / `RISING` は通常ランキング read model の500件制限対象に含めません。各 pattern は snapshot query で `sort -> limit(config値) -> save` の順で生成し、最大件数は `config/dance_short.php` の `ranking_read_model.pattern_max_rows` で管理します。config未定義の pattern は全件生成へフォールバックせず、生成失敗として扱います。
 
-新しい build の全patternが生成でき、かつ rows が1件以上ある場合だけ active build を切り替えます。active 化後に保持対象外の rows を chunk 削除し、保持対象は active 1世代のみとします。生成途中で失敗した場合は該当 build を `failed` にして部分 rows を削除し、旧active buildを維持して、表示は直前のread modelを読み続けます。builds 履歴は容量本体ではないため、active / superseded / failed の状態記録として残します。
+read model 生成は `pattern_build_id` 単位で行います。Action 側の pattern別 Cache lock で手動 command / queue job の多重実行を防ぎ、lock 取得不可または同じ pattern の若い `building` がある場合は新規 build を作らず skipped とします。古すぎる同一 pattern の `building` は stale として `failed` に更新し、部分生成 rows を削除してから次の build を開始します。
 
-初回導入や migration 直後は、表示前に read model を手動生成します。local / production とも、各環境の migration 適用後に `dance-shorts-radar:build-ranking-read-models` を実行し、出力された `build_id` が active build として参照できることを確認してからランキング画面を確認します。
+新しい pattern build が1件以上生成できたら同じ pattern だけ active を切り替えます。active 化後に同じ pattern の保持対象外 rows を chunk 削除し、保持対象は active 1世代のみとします。生成途中で失敗した場合や rows が0件の場合は該当 pattern build を `failed` にして部分 rows を削除し、同じ pattern の旧active buildを維持して、表示は直前のread modelを読み続けます。builds 履歴は容量本体ではないため、active / superseded / failed の状態記録として残します。
+
+初回導入や migration 直後は、通常ランキング read model の生成Jobをdispatchします。local / production とも、各環境の migration 適用後に `dance-shorts-radar:build-ranking-read-models` または `dance-shorts-radar:dispatch-ranking-read-model-patterns` を実行します。1 patternだけ同期生成する場合は `dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour` を使います。
 
 生成対象:
 
-- 通常ランキング: `ALL` と active region 全件を対象に、許可された比較日数 x sort key 全patternを生成する
-- `RISING`: 許可された比較日数ごとに生成し、保存内部の `sort_key` は `__rising` に固定する
+- 通常ランキング read model: active region code と許可された比較日数 x sort key の pattern を生成する
+- 各通常ランキング pattern の最大件数は config の初期値500件とする
+- `ALL` / まとめ、`RISING` / 上昇候補、raw data / snapshots 全体を対象にすべき処理は500件制限対象外とする
+- まとめと上昇候補は ReadModel 500件を根拠にせず、raw data / snapshots を対象にする
 
-`__rising` は read model 保存専用の内部キーです。React props、URL query、sort options には出さず、RISING UI は引き続き `showSortKeyOptions=false`、sort label は `上昇候補順` とします。
-
-表示側 Repository は active build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
+地域別の通常ランキング表示側 Repository は active pattern build の read model row から window / selected video rank / total count を取得するだけです。window切り出しや選択カード前後の調整はStrategyと `DanceShortDisplayCardWindowService` が担当します。
 
 ### RISING / 上昇候補の責務境界
 
@@ -168,7 +170,7 @@ RISING は `dance_short_regions` の地域ではなく、表示専用タブで�
 
 上昇候補は、US / KR などの source region 側で伸びていて、JP 側が未観測または source 側より伸びが小さい動画を継続観測候補として扱うための区分です。
 
-read model 生成側の Repository / Strategy は RISING タブ用の source / JP / previous snapshot をDB上で結合し、read model row へ prefilter します。
+上昇候補表示は通常ランキング read model の500件制限を根拠にせず、source / JP / previous snapshot をDB上で結合した snapshot query の結果を参照します。
 
 Repositoryが扱うこと:
 
@@ -177,7 +179,7 @@ Repositoryが扱うこと:
 - source側の増加量が正である候補行への prefilter
 - JP側が未観測、またはJP側の増加量がsource側より小さい候補行への prefilter
 - 同じYouTube動画が複数source regionに出た場合の代表行選択
-- RISING固有の固定順で read model row を生成するための候補取得
+- RISING固有の固定順で表示候補 row を取得するための候補取得
 
 Repositoryが扱わないこと:
 
@@ -272,7 +274,8 @@ inactive、standard、1ページ設定は除外します。
 - `dance-short:sync-snapshots` のArtisan Commandはsnapshot専用Jobをdispatchするだけで、同期本体を直接実行しない
 - snapshot専用Jobは `RefreshDanceShortVideoSnapshotsAction` を呼ぶ
 - snapshot専用Jobは固定uniqueIdで同期全体の同時実行を防ぐ
-- `dance-shorts-radar:build-ranking-read-models` のArtisan Commandは `BuildDanceShortRankingReadModelsAction` を同期実行し、`build_id` / normal pattern count / RISING pattern count / inserted rows を出力する
+- `dance-shorts-radar:build-ranking-read-models` と `dance-shorts-radar:dispatch-ranking-read-model-patterns` のArtisan Commandは通常ランキングの enabled pattern Job をdispatchする
+- `dance-shorts-radar:build-ranking-read-model-pattern` のArtisan Commandは指定した通常ランキング pattern を同期生成し、CommandもJobも同じ Action 経路を通す
 
 ### Scheduler
 
@@ -286,15 +289,14 @@ inactive、standard、1ページ設定は除外します。
 
 - Strategyごとの取得条件
 - comparisonDays / sort条件
-- video / snapshot / cleanup の元データ変更がある同期結果だけ read model refresh event を発火し、Listener が ranking read model build Job をdispatchする
-- build Job は待機中の重複を `ShouldBeUniqueUntilProcessing` でまとめ、処理開始後の再要求は次回buildとして残し、`WithoutOverlapping` で同時生成を防ぐ
-- read model は `ALL` + active region の全comparisonDays / sortKey pattern と、`RISING` のcomparisonDays patternを生成する
-- read model 生成成功時だけ active build を切り替え、失敗時は旧active buildを維持する
-- 表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
-- RISING read model の `sort_key` は保存内部で `__rising` とし、props / JSON / URL / sort options へ漏らさない
+- video / snapshot / cleanup の元データ変更がある同期結果だけ read model refresh event を発火し、Listener が通常ランキング pattern build Job をdispatchする
+- pattern build Job は待機中の同一 pattern 重複を `ShouldBeUniqueUntilProcessing` でまとめ、`WithoutOverlapping` と Action lock で同一 pattern の同時生成を防ぐ
+- 通常ランキング read model は active region code の全comparisonDays / sortKey patternを生成する
+- 通常ランキング read model 生成成功時だけ同一patternの active build を切り替え、失敗時は同一patternの旧active buildを維持する
+- 地域別通常ランキング表示は active read model から取得し、snapshot履歴削除後も直前のranking cardを返せる
 - `selectedVideoId` を基準にした全体順位
 - 最大5件のdisplay-card-window
-- RISING 生成側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合し、read model row へ prefilterする
+- RISING 表示側 Repository / Strategy はsource / JP / previous snapshot をDB上で結合した snapshot row を使う
 - RISING Repositoryは上昇候補の意味づけ、JP比較状態、表示文言、Inertia props生成を持たない
 - `DanceShortRisingCandidateService::japanComparisonStatusForCandidate()` がJP比較状態を定義する
 - Serviceは null metric を0へ潰さない

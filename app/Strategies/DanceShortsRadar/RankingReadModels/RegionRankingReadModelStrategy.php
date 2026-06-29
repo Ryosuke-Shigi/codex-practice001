@@ -32,10 +32,11 @@ class RegionRankingReadModelStrategy implements DanceShortRankingReadModelStrate
      */
     protected function rowsForRegionCodes(RankingReadModelBuildInputDTO $input, array $regionCodes): array
     {
-        $rows = $this->snapshotRepository->rankingRowsByRegionCodes(
+        $rows = $this->snapshotRepository->rankingRowsForReadModelPattern(
             regionCodes: $regionCodes,
             comparisonDays: $input->comparisonDays,
             sortKey: (string) $input->sortKey,
+            maxRows: $input->maxRows,
         );
         $readModelRows = [];
 

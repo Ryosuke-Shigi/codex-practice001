@@ -2,17 +2,17 @@
 
 namespace Tests\Unit\DanceShortsRadar\Jobs;
 
-use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
+use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelPatternAction;
 use App\Actions\DanceShortsRadar\Commands\CleanupDanceShortVideoSnapshotsAction;
 use App\Actions\DanceShortsRadar\Commands\PersistDanceShortVideoDetailsAction;
 use App\Actions\DanceShortsRadar\Commands\RefreshDanceShortVideoSnapshotsAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortPage2VideosAction;
 use App\Actions\DanceShortsRadar\Commands\SyncDanceShortVideosAction;
-use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelBuildResultDTO;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelPatternBuildResultDTO;
 use App\DTO\DanceShortsRadar\Sync\DanceShortVideoSyncResultDTO;
 use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
 use App\Factories\DanceShortsRadar\DanceShortSearchConditionDTOFactory;
-use App\Jobs\DanceShortsRadar\BuildDanceShortRankingReadModelsJob;
+use App\Jobs\DanceShortsRadar\BuildDanceShortRankingReadModelPatternJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortPage2VideosJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideosJob;
 use App\Jobs\DanceShortsRadar\SyncDanceShortVideoSnapshotsJob;
@@ -102,29 +102,37 @@ class SyncDanceShortVideosJobTest extends TestCase
 
     public function test_ranking_read_model_build_handle_calls_build_action(): void
     {
-        $action = new class extends BuildDanceShortRankingReadModelsAction
+        $action = new class extends BuildDanceShortRankingReadModelPatternAction
         {
             public bool $called = false;
 
+            public ?string $patternKey = null;
+
             public function __construct() {}
 
-            public function execute(): RankingReadModelBuildResultDTO
+            public function execute(string $patternKey): RankingReadModelPatternBuildResultDTO
             {
                 $this->called = true;
+                $this->patternKey = $patternKey;
 
-                return new RankingReadModelBuildResultDTO(
-                    buildId: 'ranking-build-test',
-                    normalPatternCount: 0,
-                    risingPatternCount: 0,
+                return new RankingReadModelPatternBuildResultDTO(
+                    patternBuildId: 'ranking-pattern-build-test',
+                    patternKey: $patternKey,
+                    rankingType: 'normal',
+                    scope: 'JP',
+                    comparisonDays: 1,
+                    sortKey: 'views_per_hour',
+                    maxRows: 500,
                     insertedRowCount: 0,
                     calculatedAt: CarbonImmutable::parse('2026-05-31 12:00:00', 'Asia/Tokyo'),
                 );
             }
         };
 
-        (new BuildDanceShortRankingReadModelsJob)->handle($action);
+        (new BuildDanceShortRankingReadModelPatternJob('normal|JP|1|views_per_hour'))->handle($action);
 
         $this->assertTrue($action->called);
+        $this->assertSame('normal|JP|1|views_per_hour', $action->patternKey);
     }
 
     public function test_action_returns_initial_sync_result_dto(): void
@@ -192,14 +200,14 @@ class SyncDanceShortVideosJobTest extends TestCase
 
     public function test_ranking_read_model_build_job_releases_unique_lock_until_processing_and_serializes_running_builds(): void
     {
-        $job = new BuildDanceShortRankingReadModelsJob;
+        $job = new BuildDanceShortRankingReadModelPatternJob('normal|JP|1|views_per_hour');
 
         $this->assertInstanceOf(ShouldBeUniqueUntilProcessing::class, $job);
         $this->assertSame(1, $job->tries);
         $this->assertSame(600, $job->timeout);
         $this->assertTrue($job->failOnTimeout);
         $this->assertSame(1800, $job->uniqueFor);
-        $this->assertSame('dance-short-ranking-read-model-build', $job->uniqueId());
+        $this->assertSame('dance-short-ranking-read-model-pattern-build:normal|JP|1|views_per_hour', $job->uniqueId());
         $this->assertCount(1, $job->middleware());
         $this->assertInstanceOf(WithoutOverlapping::class, $job->middleware()[0]);
         $this->assertSame(60, $job->middleware()[0]->releaseAfter);

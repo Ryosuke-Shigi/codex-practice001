@@ -32,8 +32,8 @@ class DanceShortRisingCandidateService
     /**
      * 上昇候補 DTO で使う JP 側の比較状態を返します。
      *
-     * Repository の RISING read model は DB 上で候補行を prefilter しますが、状態値の意味は
-     * DTO 配列経路と同じこの Service で決めます。source delta が算出できない、または増加していない場合や、
+     * Repository の snapshot query は DB 上で候補行を prefilter しますが、状態値の意味は
+     * この Service で決めます。source delta が算出できない、または増加していない場合や、
      * JP 側に current はあるが比較 delta を算出できない場合は候補状態を返しません。
      */
     public function japanComparisonStatusForCandidate(

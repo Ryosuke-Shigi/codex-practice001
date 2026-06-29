@@ -10,7 +10,9 @@ use Carbon\CarbonInterface;
 final readonly class RankingReadModelRowDTO
 {
     public function __construct(
-        public string $buildId,
+        public string $patternBuildId,
+        public string $patternKey,
+        public string $rankingType,
         public string $scope,
         public int $comparisonDays,
         public string $sortKey,
@@ -56,7 +58,9 @@ final readonly class RankingReadModelRowDTO
         $now = $this->calculatedAt->toDateTimeString();
 
         return [
-            'build_id' => $this->buildId,
+            'pattern_build_id' => $this->patternBuildId,
+            'pattern_key' => $this->patternKey,
+            'ranking_type' => $this->rankingType,
             'scope' => $this->scope,
             'comparison_days' => $this->comparisonDays,
             'sort_key' => $this->sortKey,

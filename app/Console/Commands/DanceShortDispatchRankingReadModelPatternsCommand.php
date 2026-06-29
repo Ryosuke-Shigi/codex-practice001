@@ -6,11 +6,11 @@ use App\Actions\DanceShortsRadar\Commands\DispatchDanceShortRankingReadModelPatt
 use Illuminate\Console\Command;
 
 /**
- * DanceShortsRadar の通常ランキング read model 全 enabled pattern Job を dispatch する互換入口です。
+ * DanceShortsRadar の通常ランキング read model 全 enabled pattern Job を dispatch する Artisan Command です。
  */
-class DanceShortBuildRankingReadModelsCommand extends Command
+class DanceShortDispatchRankingReadModelPatternsCommand extends Command
 {
-    protected $signature = 'dance-shorts-radar:build-ranking-read-models';
+    protected $signature = 'dance-shorts-radar:dispatch-ranking-read-model-patterns';
 
     protected $description = 'Dispatch DanceShortsRadar normal ranking read model pattern build jobs.';
 

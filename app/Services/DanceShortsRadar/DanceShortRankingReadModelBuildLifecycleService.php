@@ -7,11 +7,11 @@ use Carbon\CarbonInterface;
 use Throwable;
 
 /**
- * Ranking read model build の排他、stale 判定、保持世代を判断する Service です。
+ * Ranking read model pattern build の排他、stale 判定、保持世代を判断する Service です。
  */
 class DanceShortRankingReadModelBuildLifecycleService
 {
-    public const LOCK_NAME = 'dance-shorts-radar:ranking-read-model-build';
+    public const LOCK_NAME_PREFIX = 'dance-shorts-radar:ranking-read-model-pattern-build:';
 
     public const SKIP_REASON_LOCK_UNAVAILABLE = 'lock_unavailable';
 
@@ -25,15 +25,15 @@ class DanceShortRankingReadModelBuildLifecycleService
 
     private const JOB_TIMEOUT_SECONDS = 600;
 
-    public function lockName(): string
+    public function lockNameForPattern(string $patternKey): string
     {
-        return self::LOCK_NAME;
+        return self::LOCK_NAME_PREFIX.$patternKey;
     }
 
     public function lockTtlSeconds(): int
     {
         /*
-         * Queue Job の timeout は 600 秒です。手動 command と queue の両入口を同じ Action へ集約するため、
+         * Queue Job の timeout は 600 秒です。手動 command と queue の両入口を同じ pattern Action へ集約するため、
          * lock は timeout より十分長い 1800 秒を初期値にし、設定値が短すぎる場合も timeout 未満へ落としません。
          */
         return max(
@@ -66,9 +66,9 @@ class DanceShortRankingReadModelBuildLifecycleService
     /**
      * @return array<int, string>
      */
-    public function retainedBuildIdsAfterActivation(string $activeBuildId): array
+    public function retainedPatternBuildIdsAfterActivation(string $activePatternBuildId): array
     {
-        return [$activeBuildId];
+        return [$activePatternBuildId];
     }
 
     public function cleanupChunkSize(): int
@@ -80,11 +80,6 @@ class DanceShortRankingReadModelBuildLifecycleService
                 self::DEFAULT_CLEANUP_CHUNK_SIZE,
             ),
         );
-    }
-
-    public function hasActivatableRows(int $rowCount): bool
-    {
-        return $rowCount > 0;
     }
 
     private function configuredPositiveInt(string $key, int $default): int

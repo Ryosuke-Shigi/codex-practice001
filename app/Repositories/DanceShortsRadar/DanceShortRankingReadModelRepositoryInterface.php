@@ -2,15 +2,20 @@
 
 namespace App\Repositories\DanceShortsRadar;
 
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelPatternDefinitionDTO;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelRowDTO;
 use Carbon\CarbonInterface;
 
 interface DanceShortRankingReadModelRepositoryInterface
 {
     /**
-     * 新しい read model build の生成開始を記録します。
+     * 新しい read model pattern build の生成開始を記録します。
      */
-    public function beginBuild(string $buildId, CarbonInterface $calculatedAt): void;
+    public function beginPatternBuild(
+        RankingReadModelPatternDefinitionDTO $definition,
+        string $patternBuildId,
+        CarbonInterface $calculatedAt,
+    ): void;
 
     /**
      * @param  array<int, RankingReadModelRowDTO>  $rows
@@ -18,41 +23,46 @@ interface DanceShortRankingReadModelRepositoryInterface
     public function bulkInsertRows(array $rows): void;
 
     /**
-     * 若い building build が残っているかを返します。
+     * 指定 pattern の若い building build が残っているかを返します。
      */
-    public function hasBuildingBuild(): bool;
+    public function hasBuildingBuildForPattern(string $patternKey): bool;
 
     /**
-     * stale building build を failed 化し、その build に紐づく rows を削除します。
+     * 指定 pattern の stale building build を failed 化し、その build に紐づく rows を削除します。
      *
      * @return array{buildCount: int, deletedRowCount: int}
      */
-    public function markStaleBuildingBuildsFailed(CarbonInterface $staleBefore, CarbonInterface $failedAt, int $chunkSize): array;
+    public function markStaleBuildingBuildsFailedForPattern(
+        string $patternKey,
+        CarbonInterface $staleBefore,
+        CarbonInterface $failedAt,
+        int $chunkSize,
+    ): array;
 
     /**
-     * 指定 build に紐づく read model rows 件数を返します。
+     * 指定 pattern build に紐づく read model rows 件数を返します。
      */
-    public function rowCountForBuild(string $buildId): int;
+    public function rowCountForPatternBuild(string $patternBuildId): int;
 
     /**
-     * 生成済み build を active に切り替え、旧 active build を superseded にします。
+     * 生成済み pattern build を active に切り替え、同じ pattern の旧 active build だけを superseded にします。
      */
-    public function activateBuild(string $buildId): void;
+    public function activatePatternBuild(string $patternBuildId, string $patternKey, int $insertedCount): void;
 
     /**
-     * 失敗した build の部分 rows を削除します。旧 active build は変更しません。
+     * 失敗した pattern build の部分 rows を削除します。同じ pattern の旧 active build は変更しません。
      */
-    public function markBuildFailed(string $buildId, int $chunkSize): int;
+    public function markPatternBuildFailed(string $patternBuildId, int $chunkSize, ?string $errorMessage = null): int;
 
     /**
-     * 保持対象外 build_id の read model rows を削除します。
+     * 指定 pattern の保持対象外 pattern_build_id の read model rows を削除します。
      *
-     * @param  array<int, string>  $retainedBuildIds
+     * @param  array<int, string>  $retainedPatternBuildIds
      */
-    public function cleanupRowsExceptBuildIds(array $retainedBuildIds, int $chunkSize): int;
+    public function cleanupRowsExceptPatternBuildIds(string $patternKey, array $retainedPatternBuildIds, int $chunkSize): int;
 
     /**
-     * active build から表示window分と lookahead 1件を取得します。
+     * active pattern build から表示window分と lookahead 1件を取得します。
      *
      * @return array<int, object>
      */
@@ -65,7 +75,7 @@ interface DanceShortRankingReadModelRepositoryInterface
     ): array;
 
     /**
-     * active build 上で選択動画の順位を返します。
+     * active pattern build 上で選択動画の順位を返します。
      */
     public function activeRankForVideo(
         string $scope,
@@ -75,7 +85,7 @@ interface DanceShortRankingReadModelRepositoryInterface
     ): ?int;
 
     /**
-     * active build 上の対象pattern総件数を返します。
+     * active pattern build 上の対象pattern総件数を返します。
      */
     public function activeRowCount(
         string $scope,
@@ -84,7 +94,7 @@ interface DanceShortRankingReadModelRepositoryInterface
     ): int;
 
     /**
-     * 現在表示に使われる build_id を返します。
+     * 現在表示に使われる pattern_build_id を返します。
      */
-    public function activeBuildId(): ?string;
+    public function activePatternBuildId(string $scope, int $comparisonDays, string $sortKey): ?string;
 }

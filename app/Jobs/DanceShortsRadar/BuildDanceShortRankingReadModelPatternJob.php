@@ -2,7 +2,7 @@
 
 namespace App\Jobs\DanceShortsRadar;
 
-use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelsAction;
+use App\Actions\DanceShortsRadar\Commands\BuildDanceShortRankingReadModelPatternAction;
 use App\Services\DanceShortsRadar\DanceShortRankingReadModelBuildLifecycleService;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,13 +11,11 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 /**
- * DanceShortsRadar ランキング read model の一括生成を Queue で実行する Job です。
+ * DanceShortsRadar 通常ランキング read model の1 pattern 生成を Queue で実行する Job です。
  */
-class BuildDanceShortRankingReadModelsJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
+class BuildDanceShortRankingReadModelPatternJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Queueable;
-
-    private const UNIQUE_ID = 'dance-short-ranking-read-model-build';
 
     public int $tries = 1;
 
@@ -27,9 +25,11 @@ class BuildDanceShortRankingReadModelsJob implements ShouldBeUniqueUntilProcessi
 
     public int $uniqueFor = 1800;
 
+    public function __construct(public string $patternKey) {}
+
     public function uniqueId(): string
     {
-        return self::UNIQUE_ID;
+        return 'dance-short-ranking-read-model-pattern-build:'.$this->patternKey;
     }
 
     /**
@@ -37,20 +37,16 @@ class BuildDanceShortRankingReadModelsJob implements ShouldBeUniqueUntilProcessi
      */
     public function middleware(): array
     {
-        /*
-         * UniqueUntilProcessing は待機中の重複だけをまとめ、処理開始後の更新要求は次回buildとして残します。
-         * そのうえで WithoutOverlapping が実行中buildの並走だけを防ぎます。
-         */
         return [
-            (new WithoutOverlapping(self::UNIQUE_ID))
+            (new WithoutOverlapping($this->uniqueId()))
                 ->releaseAfter(60)
                 ->expireAfter(DanceShortRankingReadModelBuildLifecycleService::DEFAULT_LOCK_TTL_SECONDS),
         ];
     }
 
-    public function handle(BuildDanceShortRankingReadModelsAction $action): void
+    public function handle(BuildDanceShortRankingReadModelPatternAction $action): void
     {
-        $action->execute();
+        $action->execute($this->patternKey);
     }
 
     public function failed(?Throwable $exception): void

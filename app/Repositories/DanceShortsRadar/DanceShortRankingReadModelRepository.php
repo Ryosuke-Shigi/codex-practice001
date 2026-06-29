@@ -3,6 +3,7 @@
 namespace App\Repositories\DanceShortsRadar;
 
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelBuildStatus;
+use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelPatternDefinitionDTO;
 use App\DTO\DanceShortsRadar\RankingReadModel\RankingReadModelRowDTO;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -16,13 +17,24 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
 
     private const ROW_TABLE = 'dance_short_radar_ranking_read_models';
 
-    public function beginBuild(string $buildId, CarbonInterface $calculatedAt): void
-    {
+    public function beginPatternBuild(
+        RankingReadModelPatternDefinitionDTO $definition,
+        string $patternBuildId,
+        CarbonInterface $calculatedAt,
+    ): void {
         DB::table(self::BUILD_TABLE)->insert([
-            'build_id' => $buildId,
+            'pattern_build_id' => $patternBuildId,
+            'pattern_key' => $definition->patternKey,
+            'ranking_type' => $definition->rankingType,
+            'scope' => $definition->scope,
+            'comparison_days' => $definition->comparisonDays,
+            'sort_key' => $definition->sortKey,
+            'max_rows' => $definition->maxRows,
             'status' => RankingReadModelBuildStatus::BUILDING,
             'calculated_at' => $calculatedAt->toDateTimeString(),
             'activated_at' => null,
+            'inserted_count' => 0,
+            'error_message' => null,
             'created_at' => $calculatedAt->toDateTimeString(),
             'updated_at' => $calculatedAt->toDateTimeString(),
         ]);
@@ -42,28 +54,31 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
         }
     }
 
-    public function hasBuildingBuild(): bool
+    public function hasBuildingBuildForPattern(string $patternKey): bool
     {
         return DB::table(self::BUILD_TABLE)
+            ->where('pattern_key', $patternKey)
             ->where('status', RankingReadModelBuildStatus::BUILDING)
             ->exists();
     }
 
-    public function markStaleBuildingBuildsFailed(
+    public function markStaleBuildingBuildsFailedForPattern(
+        string $patternKey,
         CarbonInterface $staleBefore,
         CarbonInterface $failedAt,
         int $chunkSize,
     ): array {
-        $buildIds = DB::table(self::BUILD_TABLE)
+        $patternBuildIds = DB::table(self::BUILD_TABLE)
+            ->where('pattern_key', $patternKey)
             ->where('status', RankingReadModelBuildStatus::BUILDING)
             ->where('updated_at', '<=', $staleBefore->toDateTimeString())
             ->orderBy('id')
-            ->pluck('build_id')
-            ->filter(fn (mixed $buildId): bool => is_string($buildId) && $buildId !== '')
+            ->pluck('pattern_build_id')
+            ->filter(fn (mixed $patternBuildId): bool => is_string($patternBuildId) && $patternBuildId !== '')
             ->values()
             ->all();
 
-        if ($buildIds === []) {
+        if ($patternBuildIds === []) {
             return [
                 'buildCount' => 0,
                 'deletedRowCount' => 0,
@@ -71,55 +86,54 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
         }
 
         $updatedBuildCount = DB::table(self::BUILD_TABLE)
-            ->whereIn('build_id', $buildIds)
+            ->whereIn('pattern_build_id', $patternBuildIds)
             ->where('status', RankingReadModelBuildStatus::BUILDING)
             ->update([
                 'status' => RankingReadModelBuildStatus::FAILED,
+                'error_message' => 'stale building pattern build',
                 'updated_at' => $failedAt->toDateTimeString(),
             ]);
 
         return [
             'buildCount' => $updatedBuildCount,
-            'deletedRowCount' => $this->deleteRowsForBuildIds($buildIds, $chunkSize),
+            'deletedRowCount' => $this->deleteRowsForPatternBuildIds($patternBuildIds, $chunkSize),
         ];
     }
 
-    public function rowCountForBuild(string $buildId): int
+    public function rowCountForPatternBuild(string $patternBuildId): int
     {
         return DB::table(self::ROW_TABLE)
-            ->where('build_id', $buildId)
+            ->where('pattern_build_id', $patternBuildId)
             ->count();
     }
 
-    public function activateBuild(string $buildId): void
+    public function activatePatternBuild(string $patternBuildId, string $patternKey, int $insertedCount): void
     {
         $now = CarbonImmutable::now((string) config('app.timezone', 'Asia/Tokyo'));
 
-        DB::transaction(function () use ($buildId, $now): void {
+        DB::transaction(function () use ($patternBuildId, $patternKey, $insertedCount, $now): void {
             /*
-             * 先に新buildを active へ更新できたことを確認します。
-             * 存在しない build_id や building 以外の状態では、旧 active build を触らずに失敗させます。
+             * 新しい pattern build が active へ更新できたことを確認してから、同じ pattern の旧 active だけを退役させます。
              */
             $activated = DB::table(self::BUILD_TABLE)
-                ->where('build_id', $buildId)
+                ->where('pattern_build_id', $patternBuildId)
+                ->where('pattern_key', $patternKey)
                 ->where('status', RankingReadModelBuildStatus::BUILDING)
                 ->update([
                     'status' => RankingReadModelBuildStatus::ACTIVE,
                     'activated_at' => $now->toDateTimeString(),
+                    'inserted_count' => $insertedCount,
                     'updated_at' => $now->toDateTimeString(),
                 ]);
 
             if ($activated !== 1) {
-                throw new RuntimeException('Ranking read model build is not activatable.');
+                throw new RuntimeException('Ranking read model pattern build is not activatable.');
             }
 
-            /*
-             * 新buildが active になった後だけ旧buildを退役させます。
-             * 表示側は常に active build を1つ読むため、切替途中の欠損windowを避けられます。
-             */
             DB::table(self::BUILD_TABLE)
+                ->where('pattern_key', $patternKey)
                 ->where('status', RankingReadModelBuildStatus::ACTIVE)
-                ->where('build_id', '!=', $buildId)
+                ->where('pattern_build_id', '!=', $patternBuildId)
                 ->update([
                     'status' => RankingReadModelBuildStatus::SUPERSEDED,
                     'updated_at' => $now->toDateTimeString(),
@@ -127,38 +141,39 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
         });
     }
 
-    public function markBuildFailed(string $buildId, int $chunkSize): int
+    public function markPatternBuildFailed(string $patternBuildId, int $chunkSize, ?string $errorMessage = null): int
     {
         $now = CarbonImmutable::now((string) config('app.timezone', 'Asia/Tokyo'));
-
-        $deletedRowCount = $this->deleteRowsForBuildIds([$buildId], $chunkSize);
+        $deletedRowCount = $this->deleteRowsForPatternBuildIds([$patternBuildId], $chunkSize);
 
         DB::table(self::BUILD_TABLE)
-            ->where('build_id', $buildId)
+            ->where('pattern_build_id', $patternBuildId)
             ->update([
                 'status' => RankingReadModelBuildStatus::FAILED,
+                'error_message' => $errorMessage === null ? null : mb_substr($errorMessage, 0, 1000),
                 'updated_at' => $now->toDateTimeString(),
             ]);
 
         return $deletedRowCount;
     }
 
-    public function cleanupRowsExceptBuildIds(array $retainedBuildIds, int $chunkSize): int
+    public function cleanupRowsExceptPatternBuildIds(string $patternKey, array $retainedPatternBuildIds, int $chunkSize): int
     {
-        $retainedBuildIds = array_values(array_filter(
-            array_unique($retainedBuildIds),
-            fn (string $buildId): bool => $buildId !== '',
+        $retainedPatternBuildIds = array_values(array_filter(
+            array_unique($retainedPatternBuildIds),
+            fn (string $patternBuildId): bool => $patternBuildId !== '',
         ));
 
-        if ($retainedBuildIds === []) {
-            throw new RuntimeException('Ranking read model cleanup requires retained build ids.');
+        if ($retainedPatternBuildIds === []) {
+            throw new RuntimeException('Ranking read model pattern cleanup requires retained pattern build ids.');
         }
 
         $deletedRowCount = 0;
 
         do {
             $rowIds = DB::table(self::ROW_TABLE)
-                ->whereNotIn('build_id', $retainedBuildIds)
+                ->where('pattern_key', $patternKey)
+                ->whereNotIn('pattern_build_id', $retainedPatternBuildIds)
                 ->orderBy('id')
                 ->limit(max(1, $chunkSize))
                 ->pluck('id')
@@ -227,14 +242,17 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
         return $query === null ? 0 : $query->count();
     }
 
-    public function activeBuildId(): ?string
+    public function activePatternBuildId(string $scope, int $comparisonDays, string $sortKey): ?string
     {
-        $buildId = DB::table(self::BUILD_TABLE)
+        $patternBuildId = DB::table(self::BUILD_TABLE)
             ->where('status', RankingReadModelBuildStatus::ACTIVE)
+            ->where('scope', $scope)
+            ->where('comparison_days', $comparisonDays)
+            ->where('sort_key', $sortKey)
             ->orderByDesc('activated_at')
-            ->value('build_id');
+            ->value('pattern_build_id');
 
-        return is_string($buildId) ? $buildId : null;
+        return is_string($patternBuildId) ? $patternBuildId : null;
     }
 
     private function activeRowsQuery(
@@ -242,32 +260,30 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
         int $comparisonDays,
         string $sortKey,
     ): ?Builder {
-        $buildId = $this->activeBuildId();
+        $patternBuildId = $this->activePatternBuildId($scope, $comparisonDays, $sortKey);
 
-        if ($buildId === null) {
+        if ($patternBuildId === null) {
             return null;
         }
 
-        $query = DB::table(self::ROW_TABLE)
-            ->where('build_id', $buildId)
+        return DB::table(self::ROW_TABLE)
+            ->where('pattern_build_id', $patternBuildId)
             ->where('scope', $scope)
             ->where('comparison_days', $comparisonDays)
             ->where('sort_key', $sortKey);
-
-        return $query;
     }
 
     /**
-     * @param  array<int, string>  $buildIds
+     * @param  array<int, string>  $patternBuildIds
      */
-    private function deleteRowsForBuildIds(array $buildIds, int $chunkSize): int
+    private function deleteRowsForPatternBuildIds(array $patternBuildIds, int $chunkSize): int
     {
-        $buildIds = array_values(array_filter(
-            array_unique($buildIds),
-            fn (string $buildId): bool => $buildId !== '',
+        $patternBuildIds = array_values(array_filter(
+            array_unique($patternBuildIds),
+            fn (string $patternBuildId): bool => $patternBuildId !== '',
         ));
 
-        if ($buildIds === []) {
+        if ($patternBuildIds === []) {
             return 0;
         }
 
@@ -275,7 +291,7 @@ class DanceShortRankingReadModelRepository implements DanceShortRankingReadModel
 
         do {
             $rowIds = DB::table(self::ROW_TABLE)
-                ->whereIn('build_id', $buildIds)
+                ->whereIn('pattern_build_id', $patternBuildIds)
                 ->orderBy('id')
                 ->limit(max(1, $chunkSize))
                 ->pluck('id')

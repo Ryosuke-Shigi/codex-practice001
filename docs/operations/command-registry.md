@@ -151,14 +151,23 @@ docker compose exec php-fpm php artisan route:list
 docker compose exec php-fpm php artisan migrate:status
 ```
 
-DanceShortsRadar のランキング read model 初期生成が必要な場合:
+DanceShortsRadar の通常ランキング read model 初期生成Jobをdispatchする場合:
 
 ```bash
 cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan dance-shorts-radar:dispatch-ranking-read-model-patterns
+# 旧command名を使う場合も、同期全件生成ではなく enabled pattern Job のdispatchになります。
 docker compose exec php-fpm php artisan dance-shorts-radar:build-ranking-read-models
 ```
 
-local / production とも、migration 適用後にこの command を実行し、出力された `build_id` が active build として参照できる状態になってから `/dance-shorts-radar` を確認します。この command は専用 Cache lock と `building` 状態確認で多重実行を skipped とし、active 化後に保持対象外の read model rows を削除します。本番環境の deploy / migrate 実行経路そのものは、この台帳では未確認のため断定しません。
+1つの通常ランキング pattern だけ同期生成する場合:
+
+```bash
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan dance-shorts-radar:build-ranking-read-model-pattern --type=normal --scope=JP --comparison-days=1 --sort-key=views_per_hour
+```
+
+local / production とも、migration 適用後は通常ランキング pattern build Job をdispatchし、必要に応じて対象 pattern の `pattern_build_id` が active として参照できることを確認してから `/dance-shorts-radar` を確認します。各 pattern は `sort -> limit(config値) -> save` で生成し、config未定義時に全件生成へフォールバックしません。まとめ・上昇候補・raw data / snapshots 全体を対象にすべき処理は通常ランキング read model の500件制限対象外です。本番環境の deploy / migrate 実行経路そのものは、この台帳では未確認のため断定しません。
 
 npm は `npm` service で実行します。
 

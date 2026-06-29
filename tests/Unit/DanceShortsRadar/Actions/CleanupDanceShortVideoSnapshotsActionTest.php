@@ -77,6 +77,15 @@ class FakeCleanupDanceShortVideoSnapshotRepository implements DanceShortVideoSna
         throw new RuntimeException('Cleanup action should not fetch ranking rows.');
     }
 
+    public function rankingRowsForReadModelPattern(
+        array $regionCodes,
+        int $comparisonDays,
+        string $sortKey,
+        int $maxRows,
+    ): array {
+        throw new RuntimeException('Cleanup action should not fetch ranking read model rows.');
+    }
+
     public function risingRowsWindow(
         array $sourceRegionCodes,
         int $comparisonDays,

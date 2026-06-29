@@ -2,16 +2,20 @@
 
 namespace App\Listeners\DanceShortsRadar;
 
+use App\Actions\DanceShortsRadar\Commands\DispatchDanceShortRankingReadModelPatternsAction;
 use App\Events\DanceShortsRadar\DanceShortRankingReadModelRefreshRequested;
-use App\Jobs\DanceShortsRadar\BuildDanceShortRankingReadModelsJob;
 
 /**
- * ranking read model 再生成要求を Queue Job へつなぐ Listener です。
+ * ranking read model 再生成要求を通常ランキング pattern Job dispatch へつなぐ Listener です。
  */
 final readonly class RequestDanceShortRankingReadModelRebuildListener
 {
+    public function __construct(
+        private DispatchDanceShortRankingReadModelPatternsAction $dispatchAction,
+    ) {}
+
     public function handle(DanceShortRankingReadModelRefreshRequested $event): void
     {
-        BuildDanceShortRankingReadModelsJob::dispatch();
+        $this->dispatchAction->execute();
     }
 }
