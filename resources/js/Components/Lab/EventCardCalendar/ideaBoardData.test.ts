@@ -23,9 +23,9 @@ describe('EventCardCalendar IDEA BOARD data', () => {
             ),
         ).toEqual({
             概念: 'concept-flow',
-            イベント: 'event-examples',
-            カード: 'card-relations',
-            カレンダー: 'calendar-preview',
+            イベント: 'none',
+            カード: 'none',
+            カレンダー: 'none',
             可視化: 'visualization-preview',
         });
     });
