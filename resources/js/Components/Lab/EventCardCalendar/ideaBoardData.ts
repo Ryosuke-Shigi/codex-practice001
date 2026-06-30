@@ -7,9 +7,7 @@ export type EventCardCalendarTabId =
 
 export type IdeaBoardVisualKind =
     | 'concept-flow'
-    | 'event-examples'
-    | 'card-relations'
-    | 'calendar-preview'
+    | 'none'
     | 'visualization-preview';
 
 export type IdeaBoardBlock = {
@@ -99,7 +97,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: 'イベント',
         summary:
             '予定、作業、訪問、施工、実施などのEventカードを、収支カードとは別の起点として扱います。',
-        visualKind: 'event-examples',
+        visualKind: 'none',
         topics: [
             {
                 id: 'event-card',
@@ -180,7 +178,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: 'カード',
         summary:
             'カードはEvent起因だけではありません。Eventから作るカードと、Eventなしで作る収支カードの両方を正式ルートとして扱います。',
-        visualKind: 'card-relations',
+        visualKind: 'none',
         topics: [
             {
                 id: 'finance-cards',
@@ -270,7 +268,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: 'カレンダー',
         summary:
             'Event実施日、請求日、入金予定日、出金日など、表示軸を切り替えて見る場所です。',
-        visualKind: 'calendar-preview',
+        visualKind: 'none',
         topics: [
             {
                 id: 'month-view',
