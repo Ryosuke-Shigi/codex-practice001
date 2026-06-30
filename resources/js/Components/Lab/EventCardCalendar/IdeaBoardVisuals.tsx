@@ -1,11 +1,6 @@
-import type { LucideIcon } from 'lucide-react';
 import {
     AlertTriangle,
-    ArrowRight,
     BarChart3,
-    CalendarDays,
-    ClipboardList,
-    CreditCard,
     PieChart,
 } from 'lucide-react';
 
@@ -15,70 +10,6 @@ type VisualPanelProps = {
     topicId: string;
     visualKind: IdeaBoardVisualKind;
 };
-
-type Tone = {
-    card: string;
-    badge: string;
-    icon: string;
-};
-
-const conceptFlowSteps: Array<{
-    title: string;
-    detail: string;
-    Icon: LucideIcon;
-    tone: Tone;
-}> = [
-    {
-        title: 'Event',
-        detail: '訪問 / 施工 / 納品',
-        Icon: CalendarDays,
-        tone: {
-            card: 'border-sky-200/24 bg-sky-300/10',
-            badge: 'bg-sky-200/16 text-sky-50',
-            icon: 'text-sky-100',
-        },
-    },
-    {
-        title: '追加UI',
-        detail: '条件と生成予定',
-        Icon: ClipboardList,
-        tone: {
-            card: 'border-emerald-200/24 bg-emerald-300/10',
-            badge: 'bg-emerald-200/16 text-emerald-50',
-            icon: 'text-emerald-100',
-        },
-    },
-    {
-        title: '収支カード',
-        detail: '請求 / 入金 / 出金',
-        Icon: CreditCard,
-        tone: {
-            card: 'border-amber-200/26 bg-amber-300/10',
-            badge: 'bg-amber-200/16 text-amber-50',
-            icon: 'text-amber-100',
-        },
-    },
-    {
-        title: 'カレンダー',
-        detail: '日付軸で見る',
-        Icon: CalendarDays,
-        tone: {
-            card: 'border-cyan-200/24 bg-cyan-300/10',
-            badge: 'bg-cyan-200/16 text-cyan-50',
-            icon: 'text-cyan-100',
-        },
-    },
-    {
-        title: '可視化',
-        detail: '集計と差分',
-        Icon: BarChart3,
-        tone: {
-            card: 'border-rose-200/24 bg-rose-300/10',
-            badge: 'bg-rose-200/16 text-rose-50',
-            icon: 'text-rose-100',
-        },
-    },
-];
 
 const dailyIncomeBars = [
     { label: '1日', value: '38%', amount: '8万' },
@@ -111,10 +42,6 @@ export function IdeaBoardVisualPanel({
     topicId,
     visualKind,
 }: VisualPanelProps) {
-    if (visualKind === 'concept-flow') {
-        return <ConceptFlowDiagram />;
-    }
-
     if (visualKind === 'none') {
         return null;
     }
@@ -122,66 +49,8 @@ export function IdeaBoardVisualPanel({
     return <VisualizationPreviewMock topicId={topicId} />;
 }
 
-function ConceptFlowDiagram() {
-    return (
-        <section className="rounded-lg border border-white/12 bg-white/6 p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                {conceptFlowSteps.map((step, index) => {
-                    const Icon = step.Icon;
-                    const isLast = index === conceptFlowSteps.length - 1;
-
-                    return (
-                        <div
-                            key={step.title}
-                            className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center"
-                        >
-                            <div
-                                className={classNames(
-                                    'min-w-0 flex-1 rounded-md border p-2.5',
-                                    step.tone.card,
-                                )}
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span
-                                        className={classNames(
-                                            'grid h-8 w-8 flex-none place-items-center rounded-md',
-                                            step.tone.badge,
-                                        )}
-                                    >
-                                        <Icon
-                                            className={classNames(
-                                                'h-4 w-4',
-                                                step.tone.icon,
-                                            )}
-                                            aria-hidden
-                                        />
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-white">
-                                            {step.title}
-                                        </p>
-                                        <p className="truncate text-xs text-slate-200/72">
-                                            {step.detail}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            {isLast ? null : (
-                                <ArrowRight
-                                    className="mx-auto h-4 w-4 flex-none rotate-90 text-slate-300/70 sm:rotate-0"
-                                    aria-hidden
-                                />
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </section>
-    );
-}
-
 function VisualizationPreviewMock({ topicId }: { topicId: string }) {
-    if (topicId === 'pie-chart') {
+    if (topicId === 'pie-chart' || topicId === 'event-related-analysis') {
         return <PieRatioMock />;
     }
 

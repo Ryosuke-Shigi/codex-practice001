@@ -5,6 +5,7 @@ import {
     CalendarClock,
     CalendarDays,
     CheckCircle2,
+    ClipboardList,
     CreditCard,
 } from 'lucide-react';
 import { useRef, useState, type RefObject } from 'react';
@@ -19,6 +20,7 @@ import {
 
 const tabIcons = {
     concept: BookOpenText,
+    flow: ClipboardList,
     events: CalendarClock,
     cards: CreditCard,
     calendar: CalendarDays,
