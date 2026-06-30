@@ -5,6 +5,13 @@ export type EventCardCalendarTabId =
     | 'calendar'
     | 'visualization';
 
+export type IdeaBoardVisualKind =
+    | 'concept-flow'
+    | 'event-examples'
+    | 'card-relations'
+    | 'calendar-preview'
+    | 'visualization-preview';
+
 export type IdeaBoardBlock = {
     title: string;
     items: string[];
@@ -27,6 +34,7 @@ export type IdeaBoardTab = {
     id: EventCardCalendarTabId;
     label: string;
     summary: string;
+    visualKind: IdeaBoardVisualKind;
     topics: IdeaBoardTopic[];
 };
 
@@ -36,6 +44,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: '概念',
         summary:
             'Eventを起点に、カード、収支、予定、通知、履歴、添付、可視化へ広げる構想を整理します。',
+        visualKind: 'concept-flow',
         topics: [
             {
                 id: 'what-to-build',
@@ -50,21 +59,6 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
                 callout: {
                     label: '中心名称',
                     detail: '日本語表示は「Eventカードカレンダー IDEA BOARD」を中心にします。',
-                },
-            },
-            {
-                id: 'not-building',
-                label: '作らないもの',
-                title: '今回作らない責務',
-                lead: 'この画面は概念整理の入口であり、本番機能や保存処理へ踏み込みません。',
-                points: [
-                    '会計ソフト、仕訳、税務申告、外部会計連携は作りません。',
-                    '最初から本番DB、Migration、通知実装、Reverb、Queue、Job、Schedulerへ進みません。',
-                    'DnD、実グラフ、実データ集計、PDF出力、外部サービス連携は今回の対象外です。',
-                ],
-                callout: {
-                    label: '副作用なし',
-                    detail: '固定データの画面表示だけに留め、業務判断や外部通信は追加しません。',
                 },
             },
             {
@@ -105,6 +99,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: 'イベント',
         summary:
             '予定、作業、訪問、施工、実施などのEventカードを、収支カードとは別の起点として扱います。',
+        visualKind: 'event-examples',
         topics: [
             {
                 id: 'event-card',
@@ -184,7 +179,8 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         id: 'cards',
         label: 'カード',
         summary:
-            'Eventカードと収支カードを分け、請求、入金、出金を混ぜずに扱う構想です。',
+            'カードはEvent起因だけではありません。Eventから作るカードと、Eventなしで作る収支カードの両方を正式ルートとして扱います。',
+        visualKind: 'card-relations',
         topics: [
             {
                 id: 'finance-cards',
@@ -196,6 +192,10 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
                     '収支カードはEventから生成でき、Eventなしでも単独作成できます。',
                     'お金の状態や日付は収支カード側に置き、Eventの日付と混同しません。',
                 ],
+                callout: {
+                    label: 'Eventなしも正式ルート',
+                    detail: '固定費、雑費、単発入金などはEventカードがなくても作成できます。',
+                },
             },
             {
                 id: 'invoice-card',
@@ -270,6 +270,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: 'カレンダー',
         summary:
             'Event実施日、請求日、入金予定日、出金日など、表示軸を切り替えて見る場所です。',
+        visualKind: 'calendar-preview',
         topics: [
             {
                 id: 'month-view',
@@ -333,6 +334,7 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
         label: '可視化',
         summary:
             'カードを読み取り、日別、月別、年別、構成比、未入金などの集計表示へつなげます。',
+        visualKind: 'visualization-preview',
         topics: [
             {
                 id: 'daily-summary',
