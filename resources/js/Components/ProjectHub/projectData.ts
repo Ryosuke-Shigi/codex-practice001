@@ -3,11 +3,13 @@ export type ProjectId =
     | 'dance-shorts'
     | 'japan-quake-wave-map'
     | 'construction-order'
+    | 'event-card-calendar'
     | 'logs';
 
 export type ProjectIconKey =
     | 'bar-chart'
     | 'building'
+    | 'calendar'
     | 'clipboard'
     | 'globe'
     | 'layout'
@@ -324,6 +326,34 @@ export const projects: Project[] = [
                 status: 'available',
                 iconKey: 'clipboard',
                 route: '/lab/construction-order-workflow-mock',
+            },
+        ],
+    },
+    {
+        id: 'event-card-calendar',
+        name: 'Eventカードカレンダー',
+        description:
+            'Eventカードを起点に、収支カード、カレンダー、履歴、添付、可視化へ広げる構想Projectです。',
+        iconKey: 'calendar',
+        theme: {
+            background: '#111716',
+            backgroundGlow: '#34d399',
+            sphere: '#f59e0b',
+            sphereShadow: 'rgba(245, 158, 11, 0.34)',
+            accent: '#38bdf8',
+            surface: 'rgba(20, 83, 45, 0.34)',
+            text: '#f8fafc',
+            muted: '#bbf7d0',
+        },
+        stages: [
+            {
+                kind: 'idea-board',
+                name: 'IDEA BOARD',
+                description:
+                    'Eventカード、収支カード、日付軸、生成ルート、可視化責務を固定データで整理する入口です。',
+                status: 'available',
+                iconKey: 'lightbulb',
+                route: '/lab/event-card-calendar-idea-board',
             },
         ],
     },
