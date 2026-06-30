@@ -318,11 +318,23 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
                 id: 'relations',
                 label: 'リレーション',
                 title: 'カード同士とEventを柔らかく関連付ける',
-                lead: 'カード同士やEventは固定FKだけで縛らず、リンク構造で関係を表せる構想にします。',
+                lead: 'Eventカードと請求・入金・出金カードは、各カードへ直接 event_id を持たせるのではなく、中間テーブルで関連付ける構想にします。',
                 points: [
                     '請求カード、入金カード、出金カードはそれぞれ別カードとして扱います。',
-                    'Eventは各カードへ任意で関連付けられる事象として扱います。',
+                    'Eventは各カードへ任意で関連付けられる事象として扱い、固定親にはしません。',
+                    '候補として event_card_links または calendar_card_links のようなリンクテーブルを想定します。',
+                    '1つのEventに複数カードを紐付けたり、1つのカードに複数Eventを関連付ける余地を残します。',
                     '今回はDB実装せず、IDEA BOARD上の概念説明に留めます。',
+                ],
+                blocks: [
+                    {
+                        title: '中間テーブル方針',
+                        items: [
+                            '各カードへ直接 event_id を持たせない',
+                            'Eventとカードは link table で関連付ける',
+                            'Eventは固定親ではなく背景・根拠・出来事として扱う',
+                        ],
+                    },
                 ],
             },
         ],

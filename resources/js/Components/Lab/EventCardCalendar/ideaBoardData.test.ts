@@ -71,6 +71,20 @@ describe('EventCardCalendar IDEA BOARD data', () => {
         expect(allText).not.toContain('すべてはEventから始まる');
     });
 
+    it('keeps Event-card links through an intermediate table instead of a fixed parent FK', () => {
+        const allText = collectBoardText();
+
+        expect(allText).toContain('中間テーブルで関連付ける構想');
+        expect(allText).toContain('各カードへ直接 event_id を持たせない');
+        expect(allText).toContain('event_card_links');
+        expect(allText).toContain('calendar_card_links');
+        expect(allText).toContain('1つのEventに複数カード');
+        expect(allText).toContain('1つのカードに複数Event');
+        expect(allText).toContain(
+            'Eventは固定親ではなく背景・根拠・出来事として扱う',
+        );
+    });
+
     it('keeps calendar and visualization responsibilities separate from cards', () => {
         const allText = collectBoardText();
 
