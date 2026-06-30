@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
     BarChart3,
     Building2,
+    CalendarDays,
     ClipboardList,
     Globe2,
     LayoutDashboard,
@@ -16,6 +17,7 @@ import type { ProjectIconKey } from './projectData';
 const projectIconMap: Record<ProjectIconKey, LucideIcon> = {
     'bar-chart': BarChart3,
     building: Building2,
+    calendar: CalendarDays,
     clipboard: ClipboardList,
     globe: Globe2,
     layout: LayoutDashboard,

@@ -9,6 +9,7 @@ describe('ProjectHub static project data', () => {
             'dance-shorts',
             'japan-quake-wave-map',
             'construction-order',
+            'event-card-calendar',
             'logs',
         ]);
     });
@@ -44,6 +45,7 @@ describe('ProjectHub static project data', () => {
 
         expect(routes).toContain('/lab/construction-order-workflow-idea-board');
         expect(routes).toContain('/lab/construction-order-workflow-mock');
+        expect(routes).toContain('/lab/event-card-calendar-idea-board');
         expect(routes).not.toContain('/lab');
         expect(routes).not.toContain('/lab/construction-order-new-mock');
         expect(routes).not.toContain('/lab/construction-order-workflow-pp');

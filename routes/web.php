@@ -122,6 +122,11 @@ Route::get('/lab/construction-order-workflow-idea-board', function () {
     return Inertia::render('Lab/ConstructionOrderWorkflowPP');
 })->name('lab.construction-order-workflow-idea-board');
 
+Route::get('/lab/event-card-calendar-idea-board', function () {
+    // EventカードカレンダーのIDEA BOARDです。DB保存、通知、実集計、実グラフは行いません。
+    return Inertia::render('Lab/EventCardCalendarIdeaBoard');
+})->name('lab.event-card-calendar-idea-board');
+
 /*
  * QuakeWave Preview の開発確認入口です。
  * index / mock / xml / map / sync status を分け、表示確認、XML確認、DB保存済みpin表示、
