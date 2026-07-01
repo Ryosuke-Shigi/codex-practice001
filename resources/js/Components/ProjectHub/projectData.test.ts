@@ -53,4 +53,31 @@ describe('ProjectHub static project data', () => {
         expect(routes).not.toContain('/lab/quake-wave-map-pp');
         expect(routes.some((route) => route.includes('category='))).toBe(false);
     });
+
+    it('keeps coding-only EventDeck wording out of Project Hub copy', () => {
+        const eventProject = projects.find(
+            (project) => project.id === 'event-card-calendar',
+        );
+
+        expect(eventProject).toBeDefined();
+
+        const projectText = [
+            eventProject?.name,
+            eventProject?.description,
+            ...(eventProject?.stages.flatMap((stage) => [
+                stage.name,
+                stage.description,
+                ...(stage.modules?.flatMap((module) => [
+                    module.name,
+                    module.description,
+                ]) ?? []),
+            ]) ?? []),
+        ]
+            .filter((text): text is string => text !== undefined)
+            .join('\n');
+
+        const eventDeckLabel = ['EventDeck', 'イベントデッキ'].join(' / ');
+
+        expect(projectText).not.toContain(eventDeckLabel);
+    });
 });
