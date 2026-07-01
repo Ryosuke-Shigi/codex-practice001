@@ -14,15 +14,16 @@ import { IdeaBoardVisualPanel } from './IdeaBoardVisuals';
 import {
     eventCardCalendarIdeaTabs,
     type EventCardCalendarTabId,
+    type IdeaBoardBlockTone,
     type IdeaBoardTab,
     type IdeaBoardTopic,
 } from './ideaBoardData';
 
 const tabIcons = {
     concept: BookOpenText,
-    flow: ClipboardList,
     events: CalendarClock,
     cards: CreditCard,
+    flow: ClipboardList,
     calendar: CalendarDays,
     visualization: BarChart3,
 } satisfies Record<EventCardCalendarTabId, LucideIcon>;
@@ -93,7 +94,7 @@ function TopTabBar({
     return (
         <nav
             className="flex flex-none gap-1.5 overflow-x-auto border-b border-white/10 px-2 py-1"
-            aria-label="Eventカードカレンダー IDEA BOARD 上位タブ"
+            aria-label="イベント・カードカレンダー IDEA BOARD 上位タブ"
         >
             {eventCardCalendarIdeaTabs.map((tab) => {
                 const Icon = tabIcons[tab.id];
@@ -223,26 +224,41 @@ function TopicContent({
                         </div>
                     </section>
 
-                    {activeTopic.blocks?.map((block) => (
-                        <section
-                            key={block.title}
-                            className="rounded-lg border border-cyan-200/18 bg-cyan-300/8 p-3"
-                        >
-                            <h4 className="text-base font-semibold text-cyan-50">
-                                {block.title}
-                            </h4>
-                            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                {block.items.map((item) => (
-                                    <div
-                                        key={item}
-                                        className="rounded-md border border-cyan-100/14 bg-slate-950/34 px-3 py-2 text-sm leading-6 text-slate-100/84"
-                                    >
-                                        {item}
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    ))}
+                    {activeTopic.blocks?.map((block) => {
+                        const toneClasses = getBlockToneClasses(block.tone);
+
+                        return (
+                            <section
+                                key={block.title}
+                                className={classNames(
+                                    'rounded-lg border p-3',
+                                    toneClasses.section,
+                                )}
+                            >
+                                <h4
+                                    className={classNames(
+                                        'text-base font-semibold',
+                                        toneClasses.title,
+                                    )}
+                                >
+                                    {block.title}
+                                </h4>
+                                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                    {block.items.map((item) => (
+                                        <div
+                                            key={item}
+                                            className={classNames(
+                                                'rounded-md border px-3 py-2 text-sm leading-6 text-slate-100/84',
+                                                toneClasses.item,
+                                            )}
+                                        >
+                                            {item}
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        );
+                    })}
                 </div>
             </div>
         </article>
@@ -283,6 +299,54 @@ function TopicCallout({
             </p>
         </aside>
     );
+}
+
+function getBlockToneClasses(tone: IdeaBoardBlockTone = 'neutral') {
+    if (tone === 'income') {
+        return {
+            section: 'border-emerald-200/18 bg-emerald-300/8',
+            title: 'text-emerald-50',
+            item: 'border-emerald-100/14 bg-emerald-950/22',
+        };
+    }
+
+    if (tone === 'expense') {
+        return {
+            section: 'border-rose-200/18 bg-rose-300/8',
+            title: 'text-rose-50',
+            item: 'border-rose-100/14 bg-rose-950/20',
+        };
+    }
+
+    if (tone === 'invoice') {
+        return {
+            section: 'border-amber-200/18 bg-amber-300/8',
+            title: 'text-amber-50',
+            item: 'border-amber-100/14 bg-amber-950/20',
+        };
+    }
+
+    if (tone === 'event') {
+        return {
+            section: 'border-sky-200/18 bg-sky-300/8',
+            title: 'text-sky-50',
+            item: 'border-sky-100/14 bg-sky-950/20',
+        };
+    }
+
+    if (tone === 'link') {
+        return {
+            section: 'border-violet-200/18 bg-violet-300/8',
+            title: 'text-violet-50',
+            item: 'border-violet-100/14 bg-violet-950/20',
+        };
+    }
+
+    return {
+        section: 'border-cyan-200/18 bg-cyan-300/8',
+        title: 'text-cyan-50',
+        item: 'border-cyan-100/14 bg-slate-950/34',
+    };
 }
 
 function classNames(

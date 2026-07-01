@@ -9,7 +9,7 @@ export default function EventCardCalendarIdeaBoard() {
             className="h-dvh overflow-hidden bg-slate-950/72 px-2 py-2 sm:px-3 lg:px-4"
             effectIntensity="subtle"
         >
-            <Head title="Eventカードカレンダー IDEA BOARD" />
+            <Head title="イベント・カードカレンダー IDEA BOARD" />
 
             <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-2 overflow-hidden">
                 <header className="flex flex-none items-center">

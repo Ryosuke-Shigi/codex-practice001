@@ -331,9 +331,9 @@ export const projects: Project[] = [
     },
     {
         id: 'event-card-calendar',
-        name: 'Eventカードカレンダー',
+        name: 'イベント・カードカレンダー',
         description:
-            'Eventカードを起点に、収支カード、カレンダー、履歴、添付、可視化へ広げる構想Projectです。',
+            'イベントを背景・生成元として扱い、入金・出金・請求カードをカレンダー、表、可視化へ広げる構想Projectです。',
         iconKey: 'calendar',
         theme: {
             background: '#111716',
@@ -350,7 +350,7 @@ export const projects: Project[] = [
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:
-                    'Eventカード、収支カード、日付軸、生成ルート、可視化責務を固定データで整理する入口です。',
+                    'イベントとカードの責務、日付軸、生成フロー、可視化責務を固定データで整理する入口です。',
                 status: 'available',
                 iconKey: 'lightbulb',
                 route: '/lab/event-card-calendar-idea-board',

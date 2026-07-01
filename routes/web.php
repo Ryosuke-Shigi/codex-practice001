@@ -123,7 +123,7 @@ Route::get('/lab/construction-order-workflow-idea-board', function () {
 })->name('lab.construction-order-workflow-idea-board');
 
 Route::get('/lab/event-card-calendar-idea-board', function () {
-    // EventカードカレンダーのIDEA BOARDです。DB保存、通知、実集計、実グラフは行いません。
+    // イベント・カードカレンダーのIDEA BOARDです。DB保存、通知、実集計、実グラフは行いません。
     return Inertia::render('Lab/EventCardCalendarIdeaBoard');
 })->name('lab.event-card-calendar-idea-board');
 
