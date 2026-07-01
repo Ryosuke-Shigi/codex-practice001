@@ -1,6 +1,65 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+    codingModeIds,
+    codingSections,
+    type CodingSectionMode,
+} from './codingIdeaBoardData';
 import { eventCardCalendarIdeaTabs } from './ideaBoardData';
+
+function collectCodingModeText(mode: CodingSectionMode): string[] {
+    return [
+        mode.title,
+        mode.lead,
+        ...mode.points,
+        ...(mode.rows?.flatMap((row) => [
+            row.label,
+            row.value,
+            row.detail ?? '',
+        ]) ?? []),
+        ...(mode.elements?.flatMap((element) => [
+            element.name,
+            element.detail,
+        ]) ?? []),
+        ...(mode.workflows?.flatMap((workflow) => [
+            workflow.title,
+            workflow.chart,
+            ...workflow.notes,
+        ]) ?? []),
+        ...(mode.examples?.flatMap((example) => [
+            example.label,
+            example.title,
+            example.meta,
+            example.amount ?? '',
+        ]) ?? []),
+        ...(mode.calendarDays?.flatMap((day) => [
+            day.date,
+            day.overflowLabel ?? '',
+            ...day.cards.flatMap((card) => [
+                card.type,
+                card.title,
+                card.amount,
+                card.role,
+                card.tone,
+            ]),
+        ]) ?? []),
+        ...(mode.codeLines ?? []),
+        ...(mode.callout ? [mode.callout.label, mode.callout.detail] : []),
+    ];
+}
+
+function collectCodingBoardText(): string {
+    return codingSections
+        .flatMap((section) => [
+            section.label,
+            section.title,
+            section.summary,
+            ...codingModeIds.flatMap((modeId) =>
+                collectCodingModeText(section.modes[modeId]),
+            ),
+        ])
+        .join('\n');
+}
 
 function collectBoardText(): string {
     return eventCardCalendarIdeaTabs
@@ -17,6 +76,7 @@ function collectBoardText(): string {
             ]),
         )
         .concat(
+            collectCodingBoardText(),
             eventCardCalendarIdeaTabs.map((tab) => tab.summary),
             eventCardCalendarIdeaTabs.flatMap((tab) =>
                 tab.topics.flatMap((topic) =>
@@ -35,6 +95,7 @@ describe('EventCardCalendar IDEA BOARD data', () => {
             '概念',
             'イベント',
             'カード',
+            'coding',
             'フロー',
             'カレンダー',
             '可視化',
@@ -53,10 +114,70 @@ describe('EventCardCalendar IDEA BOARD data', () => {
             概念: 'none',
             イベント: 'none',
             カード: 'none',
+            coding: 'none',
             フロー: 'none',
             カレンダー: 'none',
             可視化: 'visualization-preview',
         });
+    });
+
+    it('keeps coding sections and display modes explicit', () => {
+        const codingTab = eventCardCalendarIdeaTabs.find(
+            (tab) => tab.id === 'coding',
+        );
+
+        expect(codingTab?.topics.map((topic) => topic.label)).toEqual([
+            'コア',
+            '入金',
+            '出金',
+            '請求',
+            'カレンダー',
+        ]);
+        expect(codingSections.map((section) => section.label)).toEqual([
+            'コア',
+            '入金',
+            '出金',
+            '請求',
+            'カレンダー',
+        ]);
+        expect(
+            codingSections.every((section) =>
+                codingModeIds.every((modeId) => section.modes[modeId]),
+            ),
+        ).toBe(true);
+    });
+
+    it('documents CoreCard amount, key, and projection boundaries', () => {
+        const allText = collectBoardText();
+
+        expect(allText).toContain('CoreCardはDBモデル本体ではなく');
+        expect(allText).toContain('amount: string');
+        expect(allText).toContain('DB保存はdecimal、DTO / TypeScript / CoreCardではstring。');
+        expect(allText).toContain('float / double / JavaScript numberで金額計算しない。');
+        expect(allText).toContain('Detail → CoreCard');
+        expect(allText).toContain('CoreCardに日本語ラベルを直持ちしません。');
+        expect(allText).toContain('dateRoleKey');
+        expect(allText).toContain('stateKey');
+        expect(allText).toContain('stateTone');
+        expect(allText).not.toContain('amount: number');
+    });
+
+    it('documents each DetailCard conversion and the calendar example', () => {
+        const allText = collectBoardText();
+
+        expect(allText).toContain('IncomeCardDetail');
+        expect(allText).toContain('ExpenseCardDetail');
+        expect(allText).toContain('BillingCardDetail');
+        expect(allText).toContain('cardId = incomeId');
+        expect(allText).toContain('cardId = expenseId');
+        expect(allText).toContain('cardId = billingId');
+        expect(allText).toContain('請求カードと入金カードを混ぜません。');
+        expect(allText).toContain('2026年7月5日');
+        expect(allText).toContain('請求期限');
+        expect(allText).toContain('支払予定');
+        expect(allText).toContain('2026年7月10日');
+        expect(allText).toContain('2026年7月25日');
+        expect(allText).toContain('+2件');
     });
 
     it('keeps event and card responsibilities separate', () => {
