@@ -1,7 +1,10 @@
+import { codingSections } from './codingIdeaBoardData';
+
 export type EventCardCalendarTabId =
     | 'concept'
     | 'events'
     | 'cards'
+    | 'coding'
     | 'flow'
     | 'calendar'
     | 'visualization';
@@ -281,6 +284,24 @@ export const eventCardCalendarIdeaTabs: IdeaBoardTab[] = [
                 },
             },
         ],
+    },
+    {
+        id: 'coding',
+        label: 'coding',
+        summary:
+            'CoreCard、派生詳細カード、Detail → CoreCard変換、金額ルール、key/config方針、カレンダー表示例を整理します。',
+        visualKind: 'none',
+        topics: codingSections.map((section) => ({
+            id: section.id,
+            label: section.label,
+            title: section.title,
+            lead: section.summary,
+            points: [
+                `${section.label}セクションには概要 / 要素 / ワークフロー / 表示例の表示モードがあります。`,
+                '選択中セクションの選択中モードだけを表示し、表・Mermaid・カレンダー例を常時全部は並べません。',
+                'DB / Migration / API / 本番Service / Repositoryへ進まず、IDEA BOARD上の説明に留めます。',
+            ],
+        })),
     },
     {
         id: 'flow',
