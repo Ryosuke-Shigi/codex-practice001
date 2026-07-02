@@ -24,6 +24,14 @@
 - ソースコードを変更した場合は、コメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか確認する
 - ローカル環境固有の情報は、Git管理docsやPR本文へ混ぜない
 
+## AI作業ループ運用
+
+実装、PR確認、docs更新、作業指示の作成では、単発出力だけで完了扱いにしません。
+
+作業前に目的、変更対象、読むdocs、確認コマンド、停止条件、人間判断が必要な範囲を固定し、作業後は差分、確認結果、未実行理由、残課題を確認します。問題があれば修正して再確認します。
+
+詳細は [docs/ai/workflows/loop-engineering.md](docs/ai/workflows/loop-engineering.md) を参照します。
+
 ## root との関係
 
 外側workspaceの root は Docker / 環境repo、`src/` は Laravel / React / docs / tests / アプリrepoです。
