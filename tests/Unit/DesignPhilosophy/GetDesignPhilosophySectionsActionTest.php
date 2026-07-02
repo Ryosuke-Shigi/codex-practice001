@@ -19,6 +19,7 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
             'staged-development',
             'feedback-controls',
             'human-led-ai',
+            'verifiable-ai-loop',
             'understanding-reboot',
             'closing',
         ], array_map(
