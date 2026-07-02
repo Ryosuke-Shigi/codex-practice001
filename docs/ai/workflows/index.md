@@ -15,6 +15,7 @@
 |---|---|
 | [md-router.md](md-router.md) | 作業種別ごとの読むdocs、読まないdocs、停止条件の正本 |
 | [md-router-cases.md](md-router-cases.md) | `md-router.md` を補助する実戦ケース集 |
+| [loop-engineering.md](loop-engineering.md) | AI作業を単発出力で終わらせず、実行、確認、修正、再確認、記録、次回改善までを反復可能にするための作業フロー |
 | [work-result-feedback-loop.md](work-result-feedback-loop.md) | 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール |
 | [../../development-flow.md](../../development-flow.md) | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | [../../ui-development-flow.md](../../ui-development-flow.md) | MOCK / PROTOTYPE / PRODUCT UI作成工程 |
