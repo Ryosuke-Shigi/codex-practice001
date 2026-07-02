@@ -57,6 +57,20 @@
 | PRレビューのみ | 差分をレビューし、必要な指摘を出す | `md-router.md` / `../../operations/pr-review-strength.md` / `../../operations/command-registry.md` | レベル外の全量探索 | PR差分 / 直接依存先 / 対応Test | PR本文と差分が一致しない | PR差分とCI結果に応じる | レビュー強度、読んだ範囲、未確認事項 |
 | 本番反映後確認 | 反映後の画面、ログ、状態を確認する | `../../operations/command-registry.md` / `../../security.md` / 対象feature docs | 無関係featureコード | 確認docs / logs / status確認 | 本番接続情報や手順が未確認 | 人間が提示した確認経路のみ | 確認したURL/時刻/ログ、未確認範囲 |
 
+## Loop Engineering関連ケース
+
+Loop Engineeringは、実行、確認、修正、再確認、記録、次回改善までを反復可能にする仕組みとして扱います。人間が目的、境界、合格条件を設計し、AIがその内側で反復します。
+
+| ケース | 目的 | 読むMD | 読まないMD | 確認すること | 停止条件 | 記録先 |
+|---|---|---|---|---|---|---|
+| Loop Engineering運用を追加・修正する | 既存の実運用docsからLoop Engineeringへ自然に辿れるようにする | `md-router.md` / `md-router-cases.md` / `loop-engineering.md` / `work-result-feedback-loop.md` / `../../operations/pr-review-strength.md` / `../../operations/sensors.md` / `../../templates/pr-summary.md` | 無関係feature docs / アプリコード / Docker構成 / CI設定 / Sensors本文の詳細複製 | 必読化していないか、詳細を重複展開していないか、変更対象docsの責務に収まるか | Sensors本文やlogs本文の変更が必要になる、`loop-engineering.md` 本文を書き換えないと成立しない | PR本文 / `../../templates/pr-summary.md` / 必要な対象docs |
+| 指示作成ループを使う | 作業前に目的、対象、読むMD、読まないMD、停止条件、確認コマンドを固定する | `md-router.md` / `loop-engineering.md` / `../rules/agent-working-policy.md` / `../../templates/pr-summary.md` | 無関係feature docs / 作業対象外コード / ローカル環境固有情報 | 作業条件が実行前に固定されているか、人間判断が必要な範囲を残しているか | 作業種別、変更対象、停止条件を確定できない | 指示用まとめ / PR本文の確認範囲 / 次スレッド引き継ぎまとめ |
+| 実装ループを使う | 目的と責務境界に沿って差分を作り、確認後に必要なら修正して再確認する | `md-router.md` / `loop-engineering.md` / `../rules/responsibility-boundaries.md` / 対象feature docs / 対象テスト方針 | 無関係feature docs / レベル外の全量探索 / 目的外の代替実装 | 差分、責務混在、目的外変更、確認コマンド結果 | 責務配置を固定できない、対象外ファイル変更が必要になる | PR本文 / 対象feature docs / 必要なテストやコメント |
+| PR確認ループを使う | PR差分を単発の目視で終えず、レビュー強度に応じて確認、修正、再確認する | `md-router.md` / `loop-engineering.md` / `../../operations/pr-review-strength.md` / `../../operations/sensors.md` / `../../templates/pr-summary.md` | レベル外の全量探索 / 指示用まとめ全文 / 無関係feature docs | 差分、目的外変更、確認コマンド、未実行理由、docs更新要否、該当Sensors、停止条件 | PR本文と差分が一致しない、確認していないSENS IDを書きそうになる | PR本文 / レビューコメント / `../../templates/pr-summary.md` |
+| docs更新ループを使う | 実装差分や運用変更とdocsのズレを最小範囲で直す | `md-router.md` / `loop-engineering.md` / `work-result-feedback-loop.md` / `../../index.md` / 対象docs | 無関係feature docs / アプリコード / 正本でない一時メモ | 正本docsの責務、リンク、重複、docs更新要否 | 同じ詳細ルールを複数docsへ全文複製しそうになる | 対象docs / PR本文のdocs更新要否 |
+| 失敗再発防止ループを使う | 失敗、確認結果、レビュー観点をdocs / Sensors / logsへ還元するか判断する | `loop-engineering.md` / `work-result-feedback-loop.md` / `../../operations/sensors.md` / `../logs/index.md` / 必要に応じて `../rules/agent-working-policy.md` | Sensors本文の未確定追加 / logs本文の不要な増量 / 無関係feature docs | 一時メモ、PR本文、logs候補、Sensors候補、MD Router候補のどれか | 新Sensor IDやlogs本文追加が別PR判断なしに必要になる | PR本文 / logs候補 / Sensors昇格候補 / MD Router昇格候補 |
+| 理解再起動ループを使う | 次回作業者やAIが目的、変更済み内容、未完了、注意点を掴めるようにする | `loop-engineering.md` / `../../context-management.md` / `work-result-feedback-loop.md` / 対象feature docs | 会話ログ全文 / ローカル個人メモ / 無関係feature docs | 次回の現在地、未完了、注意点、読ませるdocs、読ませないdocs | context-management本文を大改修しないと成立しない、未確認事実を正本化しそうになる | 次スレッド引き継ぎまとめ / PR本文 / 必要なfeature docs |
+
 ## 注意
 
 - 各ケースは長くしすぎない

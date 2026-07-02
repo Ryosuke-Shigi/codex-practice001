@@ -40,10 +40,25 @@ MDルーターは、docsを軽く扱うためのものではない。
 
 * `docs/ai/workflows/work-result-feedback-loop.md`: 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール
 * `docs/ai/workflows/md-router-cases.md`: MDルーターの実戦ケース集。正本ではなく補助として読む
+* `docs/ai/workflows/loop-engineering.md`: 実行、確認、修正、再確認、記録、次回改善までを反復可能にする作業ループ。全作業で必読にせず、下記の参照条件に該当する場合に読む
 
 コード変更を含む作業では、関連するコメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか確認する。
 
 これはコメントを増やすための確認ではない。責務、入力、出力、DTO形、状態遷移、例外条件、外部API境界、props契約が変わったときに、既存の説明が古いまま残らないようにするための確認である。
+
+## Loop Engineeringを読む条件
+
+Loop Engineeringは、AIが読む開発文脈が育つように、実行、確認、修正、再確認、記録、次回改善までを接続するための補助docsである。
+
+全作業で必ず読むdocsにはしない。次に該当する場合だけ、読むMDへ `docs/ai/workflows/loop-engineering.md` を含める。
+
+* 指示用まとめ / PR用まとめ / スレッド引き継ぎまとめなど、作業ループを固定する場合
+* docs運用変更、MD Router変更、work-result-feedback-loop変更、pr-review-strength変更
+* Sensors / logs / 再発防止運用を変更する場合
+* 長い作業後に、確認・修正・再確認・記録の流れを整理する場合
+* 失敗、確認結果、レビュー観点をdocs / Sensors / logsへ還元するか判断する場合
+
+読む条件に該当しない作業では、既存の作業種別別ルーティングを優先し、無関係なdocsを増やしすぎない。
 
 ## 作業開始宣言テンプレート
 
@@ -174,7 +189,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | --- | --- | --- | --- | --- |
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
-| docs運用最適化 / 補助追加 | docs/index.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md | 原則コードは読まない | 無関係feature docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
+| docs運用最適化 / 補助追加 | docs/index.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/ai/workflows/loop-engineering.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md | 原則コードは読まない | 無関係feature docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
 | 作業方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
