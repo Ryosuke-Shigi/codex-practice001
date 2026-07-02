@@ -15,7 +15,7 @@ class DesignPhilosophyPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DesignPhilosophy/Index', false)
-                ->has('sections', 7)
+                ->has('sections', 8)
                 ->where('sections.0.key', 'overview')
                 ->where('sections.0.title', '設計思想')
                 ->where('sections.0.eyebrow', 'Design Philosophy')
@@ -33,10 +33,14 @@ class DesignPhilosophyPageTest extends TestCase
                 ->where('sections.4.leftLabel', '人間')
                 ->where('sections.4.rightLabel', 'AI')
                 ->has('sections.4.leftItems', 4)
-                ->where('sections.5.key', 'understanding-reboot')
-                ->where('sections.5.visualType', 'sources')
-                ->where('sections.6.key', 'closing')
-                ->where('sections.6.visualType', 'closing')
+                ->where('sections.5.key', 'verifiable-ai-loop')
+                ->where('sections.5.title', '検証可能なAI開発ループ')
+                ->where('sections.5.visualType', 'steps')
+                ->has('sections.5.items', 4)
+                ->where('sections.6.key', 'understanding-reboot')
+                ->where('sections.6.visualType', 'sources')
+                ->where('sections.7.key', 'closing')
+                ->where('sections.7.visualType', 'closing')
             );
     }
 
