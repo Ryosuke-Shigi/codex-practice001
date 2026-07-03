@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import type { MapRefreshAction } from '@/Components/JapanQuakeWaveMap/MapRefreshPanel';
 import type { QuakeDateRange } from '@/Components/JapanQuakeWaveMap/QuakeDateRangeFilter';
@@ -9,7 +10,10 @@ import type {
     EarthquakeSyncStatus,
     EarthquakeSyncStatusResponse,
 } from '@/Pages/QuakeWavePreview/types';
-import { pendingStatusFromSyncRunId } from '@/Pages/QuakeWavePreview/utils/quakeSyncStatus';
+import {
+    mapRefreshStatusLabel,
+    syncStatusOrPendingFromRunId,
+} from '@/Pages/QuakeWavePreview/utils/quakeSyncStatus';
 
 const MAP_REFRESH_POLL_INTERVAL_MS = 2500;
 const MAP_REFRESH_URL = '/quakewave-preview/map/refresh';
@@ -21,47 +25,85 @@ type UseQuakeMapRefreshArgs = {
     dateRange: QuakeDateRange;
 };
 
-/**
- * feed entry同期とmap pin生成の状態から、更新パネルへ出す短い文言を決めます。
- *
- * Panel側に2系統sync runの優先順位を持たせず、Hook側で画面状態としてまとめます。
- */
-export function refreshStatusLabel(
-    feedEntryStatus: EarthquakeSyncStatus | null,
-    mapPinStatus: EarthquakeSyncStatus | null,
-    isStarting: boolean,
-    pollingError: string | null,
-) {
-    /*
-     * 表示文言は MapRefreshPanel ではなく hook で決めます。
-     * Panel は受け取った文字列を表示するだけにして、XML取込とPIN生成のどちらを優先して
-     * 状態表示するかという画面状態の判断を表示部品へ混ぜないためです。
-     */
-    if (isStarting) {
-        return '地図データ更新Jobを投入しています';
-    }
+type UseMapRefreshSyncStatusPollingArgs = {
+    syncStatus: EarthquakeSyncStatus | null;
+    setSyncStatus: Dispatch<SetStateAction<EarthquakeSyncStatus | null>>;
+    statusUrl: string;
+    pollingErrorMessage: string;
+    setRefreshPollingError: Dispatch<SetStateAction<string | null>>;
+};
 
-    if (pollingError !== null) {
-        return pollingError;
-    }
+function useMapRefreshSyncStatusPolling({
+    syncStatus,
+    setSyncStatus,
+    statusUrl,
+    pollingErrorMessage,
+    setRefreshPollingError,
+}: UseMapRefreshSyncStatusPollingArgs) {
+    useEffect(() => {
+        if (syncStatus === null || !syncStatus.isRunning) {
+            return;
+        }
 
-    if (feedEntryStatus?.status === 'failed' || mapPinStatus?.status === 'failed') {
-        return '地図データ更新に失敗しました';
-    }
+        let isActive = true;
+        let timeoutId: number | undefined;
 
-    if (feedEntryStatus?.isRunning) {
-        return 'XML取込を実行中です';
-    }
+        const pollSyncStatus = async () => {
+            try {
+                const response = await axios.get<EarthquakeSyncStatusResponse>(
+                    statusUrl,
+                    {
+                        params: {
+                            syncRunId: syncStatus.syncRunId,
+                        },
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    },
+                );
 
-    if (mapPinStatus?.isRunning) {
-        return '地図ピン生成を実行中です';
-    }
+                if (!isActive) {
+                    return;
+                }
 
-    if (feedEntryStatus?.status === 'completed' && mapPinStatus?.status === 'completed') {
-        return '地図データ更新が完了しました';
-    }
+                const nextStatus = response.data.syncStatus;
 
-    return 'XML取込とPIN生成を1つのJobで開始できます';
+                if (nextStatus !== null) {
+                    setSyncStatus(nextStatus);
+                    setRefreshPollingError(null);
+
+                    if (!nextStatus.isRunning) {
+                        return;
+                    }
+                }
+            } catch {
+                if (isActive) {
+                    setRefreshPollingError(pollingErrorMessage);
+                }
+            }
+
+            if (isActive) {
+                timeoutId = window.setTimeout(pollSyncStatus, MAP_REFRESH_POLL_INTERVAL_MS);
+            }
+        };
+
+        timeoutId = window.setTimeout(pollSyncStatus, MAP_REFRESH_POLL_INTERVAL_MS);
+
+        return () => {
+            isActive = false;
+
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+        };
+    }, [
+        pollingErrorMessage,
+        setRefreshPollingError,
+        setSyncStatus,
+        statusUrl,
+        syncStatus?.syncRunId,
+        syncStatus?.isRunning,
+    ]);
 }
 
 /**
@@ -108,18 +150,14 @@ export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
                 },
             );
 
-            setFeedEntrySyncStatus(
-                response.data.feedEntrySyncStatus
-                ?? (response.data.feedEntrySyncRunId !== undefined
-                    ? pendingStatusFromSyncRunId(response.data.feedEntrySyncRunId)
-                    : null),
-            );
-            setMapPinSyncStatus(
-                response.data.mapPinSyncStatus
-                ?? (response.data.mapPinSyncRunId !== undefined
-                    ? pendingStatusFromSyncRunId(response.data.mapPinSyncRunId)
-                    : null),
-            );
+            setFeedEntrySyncStatus(syncStatusOrPendingFromRunId(
+                response.data.feedEntrySyncStatus,
+                response.data.feedEntrySyncRunId,
+            ));
+            setMapPinSyncStatus(syncStatusOrPendingFromRunId(
+                response.data.mapPinSyncStatus,
+                response.data.mapPinSyncRunId,
+            ));
         } catch (error) {
             if (axios.isAxiosError<EarthquakeMapRefreshResponse>(error)) {
                 setRefreshPollingError(
@@ -135,127 +173,20 @@ export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
         }
     }, [isRefreshing]);
 
-    useEffect(() => {
-        if (feedEntrySyncStatus === null || !feedEntrySyncStatus.isRunning) {
-            return;
-        }
-
-        /*
-         * XML取込 sync run の状態だけを追う polling です。
-         * setTimeout を再帰的に張る形にして、リクエスト完了前に次の polling が重ならないようにします。
-         * isActive は unmount や status 切替後に古いレスポンスが state を更新しないためのガードです。
-         */
-        let isActive = true;
-        let timeoutId: number | undefined;
-
-        const pollFeedEntrySyncStatus = async () => {
-            try {
-                const response = await axios.get<EarthquakeSyncStatusResponse>(
-                    FEED_ENTRY_SYNC_STATUS_URL,
-                    {
-                        params: {
-                            syncRunId: feedEntrySyncStatus.syncRunId,
-                        },
-                        headers: {
-                            Accept: 'application/json',
-                        },
-                    },
-                );
-
-                if (!isActive) {
-                    return;
-                }
-
-                if (response.data.syncStatus !== null) {
-                    setFeedEntrySyncStatus(response.data.syncStatus);
-                    setRefreshPollingError(null);
-
-                    if (!response.data.syncStatus.isRunning) {
-                        return;
-                    }
-                }
-            } catch {
-                if (isActive) {
-                    setRefreshPollingError('XML取込状態の取得に失敗しました');
-                }
-            }
-
-            if (isActive) {
-                timeoutId = window.setTimeout(pollFeedEntrySyncStatus, MAP_REFRESH_POLL_INTERVAL_MS);
-            }
-        };
-
-        timeoutId = window.setTimeout(pollFeedEntrySyncStatus, MAP_REFRESH_POLL_INTERVAL_MS);
-
-        return () => {
-            isActive = false;
-
-            if (timeoutId !== undefined) {
-                window.clearTimeout(timeoutId);
-            }
-        };
-    }, [feedEntrySyncStatus?.syncRunId, feedEntrySyncStatus?.isRunning]);
-
-    useEffect(() => {
-        if (mapPinSyncStatus === null || !mapPinSyncStatus.isRunning) {
-            return;
-        }
-
-        /*
-         * map pin sync run の polling です。
-         * feed entry の polling と分けておくことで、XML取込完了後もPIN生成だけが走っている状態を
-         * refreshStatusLabel で正しく表示できます。
-         */
-        let isActive = true;
-        let timeoutId: number | undefined;
-
-        const pollMapPinSyncStatus = async () => {
-            try {
-                const response = await axios.get<EarthquakeSyncStatusResponse>(
-                    MAP_PIN_SYNC_STATUS_URL,
-                    {
-                        params: {
-                            syncRunId: mapPinSyncStatus.syncRunId,
-                        },
-                        headers: {
-                            Accept: 'application/json',
-                        },
-                    },
-                );
-
-                if (!isActive) {
-                    return;
-                }
-
-                if (response.data.syncStatus !== null) {
-                    setMapPinSyncStatus(response.data.syncStatus);
-                    setRefreshPollingError(null);
-
-                    if (!response.data.syncStatus.isRunning) {
-                        return;
-                    }
-                }
-            } catch {
-                if (isActive) {
-                    setRefreshPollingError('PIN生成状態の取得に失敗しました');
-                }
-            }
-
-            if (isActive) {
-                timeoutId = window.setTimeout(pollMapPinSyncStatus, MAP_REFRESH_POLL_INTERVAL_MS);
-            }
-        };
-
-        timeoutId = window.setTimeout(pollMapPinSyncStatus, MAP_REFRESH_POLL_INTERVAL_MS);
-
-        return () => {
-            isActive = false;
-
-            if (timeoutId !== undefined) {
-                window.clearTimeout(timeoutId);
-            }
-        };
-    }, [mapPinSyncStatus?.syncRunId, mapPinSyncStatus?.isRunning]);
+    useMapRefreshSyncStatusPolling({
+        syncStatus: feedEntrySyncStatus,
+        setSyncStatus: setFeedEntrySyncStatus,
+        statusUrl: FEED_ENTRY_SYNC_STATUS_URL,
+        pollingErrorMessage: 'XML取込状態の取得に失敗しました',
+        setRefreshPollingError,
+    });
+    useMapRefreshSyncStatusPolling({
+        syncStatus: mapPinSyncStatus,
+        setSyncStatus: setMapPinSyncStatus,
+        statusUrl: MAP_PIN_SYNC_STATUS_URL,
+        pollingErrorMessage: 'PIN生成状態の取得に失敗しました',
+        setRefreshPollingError,
+    });
 
     useEffect(() => {
         if (
@@ -294,7 +225,7 @@ export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
     const refreshAction: MapRefreshAction = useMemo(() => ({
         buttonLabel: '地図データ更新',
         disabledLabel: '更新中',
-        statusLabel: refreshStatusLabel(
+        statusLabel: mapRefreshStatusLabel(
             feedEntrySyncStatus,
             mapPinSyncStatus,
             isStartingRefresh,
