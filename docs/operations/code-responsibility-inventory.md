@@ -92,7 +92,7 @@
 
 注意点:
 
-- `ApiPreviewController` と `ApisGuruPreviewController` は Action が `Inertia.Response` を返す構造に接続しています。Controller自体は薄いですが、Action / Responder境界の見直し候補です。
+- `ApiPreviewController` と `ApisGuruPreviewController` は Action が `Inertia\Response` を返す構造に接続しています。Controller自体は薄いですが、Action / Responder境界の見直し候補です。
 
 分類:
 
@@ -108,7 +108,7 @@
 
 注意点:
 
-- `app/Actions/ApiPreview/*Action.php` は `ApiPreviewResponder` を注入し、`Inertia.Response` を返します。コメント上はResponderへrenderを寄せていますが、Actionの戻り値がHTTPレスポンスになっているため、`docs/architecture.md` の「ActionはResultDTOへ集約し、HTTPレスポンス整形はResponderへ分ける」方針とは少し距離があります。
+- `app/Actions/ApiPreview/*Action.php` は `ApiPreviewResponder` を注入し、`Inertia\Response` を返します。コメント上はResponderへrenderを寄せていますが、Actionの戻り値がHTTPレスポンスになっているため、`docs/architecture.md` の「ActionはResultDTOへ集約し、HTTPレスポンス整形はResponderへ分ける」方針とは少し距離があります。
 
 分類:
 
@@ -281,7 +281,7 @@
 
 ### B: 責務境界が怪しいが、影響範囲確認が必要なもの
 
-- `app/Actions/ApiPreview/*Action.php`: Actionが `ApiPreviewResponder` を注入し、`Inertia.Response` を返しています。Actionはprops DTOまたはResultDTOを返し、ControllerがResponderを呼ぶ形へ寄せられるか別PRで確認します。
+- `app/Actions/ApiPreview/*Action.php`: Actionが `ApiPreviewResponder` を注入し、`Inertia\Response` を返しています。Actionはprops DTOまたはResultDTOを返し、ControllerがResponderを呼ぶ形へ寄せられるか別PRで確認します。
 - `resources/js/Pages/ApiCatalog/Index.tsx`: Pageが検索、同期開始、polling、Inertia reloadを扱っています。状態が増える場合はFeature Hook / Containerへ分ける候補です。
 - `resources/js/Pages/QuakeWavePreview/Index.tsx`: feed / map pin syncの開始とpollingをPageが持っています。`useQuakeMapRefresh` と同様のHook化余地があります。
 
