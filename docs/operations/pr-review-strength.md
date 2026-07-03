@@ -56,6 +56,10 @@ PRレビューでは、リポジトリ全体理解から入りません。差分
 - diff stat
 - `git diff --check`
 - docsリンクや表記崩れ
+- PRタイトルが日本語で目的を説明しているか
+- PR本文の主要見出しが `docs/templates/pr-summary.md` の日本語テンプレートに沿っているか
+- `Summary` / `Validation` / `Not Run` / `Sensors` などの英語見出しが残っていないか
+- 技術用語、ファイル名、コマンド名、CI名、Sensor IDまで無理に翻訳していないか
 - secrets混入なし
 - CI結果
 
