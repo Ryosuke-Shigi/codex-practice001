@@ -92,11 +92,11 @@
 
 注意点:
 
-- `ApiPreviewController` と `ApisGuruPreviewController` は Action が `Inertia\Response` を返す構造に接続しています。Controller自体は薄いですが、Action / Responder境界の見直し候補です。
+- `ApiPreviewController` と `ApisGuruPreviewController` は Action が返す preview 対象配列または `ApisGuruPreviewPageDTO` を `ApiPreviewResponder` へ渡す構造に整理済みです。Controller自体はHTTP入口とResponder接続に留めています。
 
 分類:
 
-- B: ApiPreview系 Action / Responder境界は別PRで影響範囲を確認します。
+- E: ApiPreview系 Action / Responder境界は整理済みです。route、propsキー、画面挙動は変更していません。
 
 ### Action
 
@@ -108,12 +108,11 @@
 
 注意点:
 
-- `app/Actions/ApiPreview/*Action.php` は `ApiPreviewResponder` を注入し、`Inertia\Response` を返します。コメント上はResponderへrenderを寄せていますが、Actionの戻り値がHTTPレスポンスになっているため、`docs/architecture.md` の「ActionはResultDTOへ集約し、HTTPレスポンス整形はResponderへ分ける」方針とは少し距離があります。
+- `app/Actions/ApiPreview/*Action.php` は `ApiPreviewResponder` を注入せず、preview対象配列またはAPIs.guru画面用 `ApisGuruPreviewPageDTO` を返します。実取得Actionは Repository → Factory → `ApiPreviewResultDTO` → `ApisGuruPreviewPageDTO` の手順に留め、Inertia props生成とResponse生成はController経由でResponderへ渡します。
 
 分類:
 
-- B: ApiPreview系 Action は `ApiPreviewResultDTO` / props DTO を返し、ControllerがResponderを呼ぶ構成にできるかを別PRで検討します。
-- E: 既存動作を変えないため、今回はAction戻り値を修正しません。
+- E: ApiPreview系 Action はHTTP Response生成を持たない構成へ整理済みです。既存props構造とrouteは変更していません。
 
 ### Service
 
@@ -170,11 +169,11 @@
 
 注意点:
 
-- ApiPreviewではResponderが存在する一方でActionから直接呼ばれています。Responder自体の責務より、呼び出し境界が別PR候補です。
+- ApiPreviewではControllerがAction結果をResponderへ渡し、ResponderがInertia Response生成を担当する構造に整理済みです。
 
 分類:
 
-- B: ApiPreviewのAction / Responder呼び出し境界。
+- E: ApiPreviewのAction / Responder呼び出し境界は整理済みです。
 
 ### Event / Listener
 
@@ -281,7 +280,6 @@
 
 ### B: 責務境界が怪しいが、影響範囲確認が必要なもの
 
-- `app/Actions/ApiPreview/*Action.php`: Actionが `ApiPreviewResponder` を注入し、`Inertia\Response` を返しています。Actionはprops DTOまたはResultDTOを返し、ControllerがResponderを呼ぶ形へ寄せられるか別PRで確認します。
 - `resources/js/Pages/ApiCatalog/Index.tsx`: Pageが検索、同期開始、polling、Inertia reloadを扱っています。状態が増える場合はFeature Hook / Containerへ分ける候補です。
 - `resources/js/Pages/QuakeWavePreview/Index.tsx`: feed / map pin syncの開始とpollingをPageが持っています。`useQuakeMapRefresh` と同様のHook化余地があります。
 
@@ -292,7 +290,7 @@
 
 ### D: docs / Sensors / PRテンプレート / レビュー観点へ反映するもの
 
-- この棚卸し結果を `docs/operations/code-responsibility-inventory.md` として追加しました。
+- この棚卸し結果を `docs/operations/code-responsibility-inventory.md` に反映しました。
 - `SENS-007`: レイヤー責務境界チェックをPR Summaryへ記載します。
 - `SENS-012`: React props / Responder契約チェックをPR Summaryへ記載します。
 - `SENS-016`: Comment / Annotation Drift をPR Summaryへ記載します。
@@ -302,7 +300,7 @@
 
 - Lab / MOCK / IDEA BOARD route closureと大型Component。
 - `public/build/` はbuild成果物として棚卸し対象外にし、今回触りません。
-- DTO / Type / Inertia props構造は変更しません。
+- ApiPreview の route、Inertia propsキー、React側props型は変更していません。
 - Migration / DB schema / route / API仕様 / Docker / queue / scheduler / 認証 / 認可は変更しません。
 
 ### F: 未確認のため断定できず、人間確認が必要なもの
@@ -311,16 +309,17 @@
 
 ## 今回すぐ直した箇所
 
-- docs追加:
-  - `docs/operations/code-responsibility-inventory.md`
-- docs索引:
-  - `docs/index.md` に棚卸しdocsへの導線を追加
+- docs更新:
+  - `docs/operations/code-responsibility-inventory.md` のApiPreview境界・確認コマンド記録を更新
 
-コード、コメント、PHPDoc、JSDoc、型アノテーション、DTO、Inertia props、route、Migration、DBスキーマは変更していません。
+- ApiPreview境界整理:
+  - `app/Actions/ApiPreview/*Action.php` からResponder依存とInertia Response戻り値を外し、ControllerがResponderを呼ぶ構成へ整理
+  - APIs.guru画面用に `ApisGuruPreviewPageDTO` を追加し、Actionは取得結果DTOと画面DTOの作成、ResponderはInertia props化を担当するよう整理
+
+route、Inertia propsキー、React Page / Component、Migration、DBスキーマは変更していません。
 
 ## 別PRへ分ける候補
 
-- ApiPreview Action / Responder境界の見直し
 - ApiCatalog / QuakeWavePreview のPage内polling責務をHook / Feature Containerへ寄せるかの検討
 - DanceShortsRadar Read Model / snapshot query境界の再点検
 - Operations / ServerHealthのfeature / operations docs追加要否判断
@@ -349,7 +348,7 @@
 該当Sensors:
 
 - `SENS-001`: docs変更のため `git diff --check` を確認する
-- `SENS-002`: docs更新要否。今回の成果物として責務棚卸しdocsを追加し、索引へ導線を追加した
+- `SENS-002`: docs更新要否。責務棚卸しdocsのApiPreview境界記録を更新した。`docs/index.md` には既に導線があるため追加更新なし
 - `SENS-006`: md-router参照漏れ。今回の作業種別は既存ルーターのdocs運用 / コメント・アノテーション追従確認に近いが、新しい恒久ルール追加ではないためMDルーター更新は不要
 - `SENS-007`: レイヤー責務境界。Controller / Request / Action / Service / Repository / DTO / Responder / Reactを棚卸しした
 - `SENS-012`: React props / Responder契約。props構造は変更せず、境界確認結果だけ記録した
@@ -363,5 +362,5 @@
 
 確認コマンド:
 
-- docsのみ変更のため、`docs/operations/command-registry.md` に従い `git diff --check` を実行する
-- Laravel test / npm build / typecheck は未実行でよい。理由は、コード、TypeScript、props、Migration、route、configの実装挙動を変更していないため
+- コード変更を含むため、ApiPreview feature test、format-check、`git diff --check`、必要なfrontend確認を実行する
+- Laravel test / npm build / typecheck はコード変更を含むため実行対象です。

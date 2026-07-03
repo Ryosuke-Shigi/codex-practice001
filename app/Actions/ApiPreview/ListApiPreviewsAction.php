@@ -2,28 +2,21 @@
 
 namespace App\Actions\ApiPreview;
 
-use App\Responders\ApiPreviewResponder;
-use Inertia\Response;
-
 /**
  * API Preview 一覧を返す Query Action です。
  *
- * 本体同期前の外部API確認入口を固定データとしてまとめ、表示整形は Responder に渡します。
+ * 本体同期前の外部API確認入口を固定データとしてまとめ、表示整形は Responder に任せます。
  * ここでは外部API通信、DB保存、本体カタログ同期は行いません。
  */
 class ListApiPreviewsAction
 {
-    public function __construct(
-        private readonly ApiPreviewResponder $responder,
-    ) {}
-
     /**
-     * preview 対象の一覧 props を Responder 経由で返します。
+     * preview 対象の一覧を返します。
      */
-    public function execute(): Response
+    public function execute(): array
     {
         // 一覧は固定の preview 対象だけを返し、ここでは外部 API 通信を行いません。
-        return $this->responder->index([
+        return [
             [
                 'id' => 'apis-guru',
                 'name' => 'APIs.guru list.json',
@@ -89,6 +82,6 @@ class ListApiPreviewsAction
                 'enabled' => false,
                 'open_in_new_window' => true,
             ],
-        ]);
+        ];
     }
 }
