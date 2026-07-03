@@ -108,3 +108,47 @@ export function mapPinSyncStatusMessage(
 
     return '地図ピン生成に失敗しました';
 }
+
+export function syncStatusOrPendingFromRunId(
+    status: EarthquakeSyncStatus | null,
+    syncRunId: number | undefined,
+) {
+    if (status !== null) {
+        return status;
+    }
+
+    return syncRunId !== undefined ? pendingStatusFromSyncRunId(syncRunId) : null;
+}
+
+export function mapRefreshStatusLabel(
+    feedEntryStatus: EarthquakeSyncStatus | null,
+    mapPinStatus: EarthquakeSyncStatus | null,
+    isStarting: boolean,
+    pollingError: string | null,
+) {
+    if (isStarting) {
+        return '地図データ更新Jobを投入しています';
+    }
+
+    if (pollingError !== null) {
+        return pollingError;
+    }
+
+    if (feedEntryStatus?.status === 'failed' || mapPinStatus?.status === 'failed') {
+        return '地図データ更新に失敗しました';
+    }
+
+    if (feedEntryStatus?.isRunning) {
+        return 'XML取込を実行中です';
+    }
+
+    if (mapPinStatus?.isRunning) {
+        return '地図ピン生成を実行中です';
+    }
+
+    if (feedEntryStatus?.status === 'completed' && mapPinStatus?.status === 'completed') {
+        return '地図データ更新が完了しました';
+    }
+
+    return 'XML取込とPIN生成を1つのJobで開始できます';
+}
