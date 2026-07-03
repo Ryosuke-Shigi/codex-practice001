@@ -1,4 +1,4 @@
-# Code Responsibility Inventory
+# コード責務棚卸し
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
