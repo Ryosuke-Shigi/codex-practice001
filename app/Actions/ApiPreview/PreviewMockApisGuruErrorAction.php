@@ -3,9 +3,8 @@
 namespace App\Actions\ApiPreview;
 
 use App\DTO\ApiPreview\ApiPreviewResultDTO;
+use App\DTO\ApiPreview\ApisGuruPreviewPageDTO;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
-use App\Responders\ApiPreviewResponder;
-use Inertia\Response;
 
 /**
  * APIs.guru 画面のエラーレイアウトを固定データで確認する Action です。
@@ -15,27 +14,21 @@ use Inertia\Response;
  */
 class PreviewMockApisGuruErrorAction
 {
-    public function __construct(
-        private readonly ApiPreviewResponder $responder,
-    ) {}
-
-    public function execute(): Response
+    public function execute(): ApisGuruPreviewPageDTO
     {
         /*
          * 成功 mock と同じ React Page を使います。
          * canFetch=false にしておくことで、この画面から実 API 通信が起きないことを明示します。
          */
-        return $this->responder->apisGuru([
-            'api' => [
-                'name' => 'APIs.guru list.json',
-                'endpoint' => ApisGuruPreviewRepository::LIST_URL,
-                'method' => 'GET',
-            ],
-            // エラー表示の確認専用なので、外部 API 通信も再取得ボタンも使いません。
-            'canFetch' => false,
-            'hasFetched' => true,
-            'result' => $this->mockErrorResult()->toArray(),
-        ]);
+        // エラー表示の確認専用なので、外部 API 通信も再取得ボタンも使いません。
+        return new ApisGuruPreviewPageDTO(
+            apiName: 'APIs.guru list.json',
+            endpoint: ApisGuruPreviewRepository::LIST_URL,
+            method: 'GET',
+            canFetch: false,
+            hasFetched: true,
+            result: $this->mockErrorResult(),
+        );
     }
 
     private function mockErrorResult(): ApiPreviewResultDTO

@@ -3,45 +3,38 @@
 namespace App\Actions\ApiPreview;
 
 use App\DTO\ApiPreview\ApiPreviewResultDTO;
+use App\DTO\ApiPreview\ApisGuruPreviewPageDTO;
 use App\Repositories\ApiPreview\ApisGuruPreviewRepository;
-use App\Responders\ApiPreviewResponder;
-use Inertia\Response;
 
 /**
  * APIs.guru 画面の成功レイアウトを固定データで確認する Action です。
  *
  * 外部 API 通信を行わず、Repository も呼びません。
- * 実 API の availability に左右されず、画面崩れや props 構造を確認するための入口です。
+ * 実 API の availability に左右されず、画面崩れや結果 DTO 構造を確認するための入口です。
  */
 class PreviewMockApisGuruListAction
 {
-    public function __construct(
-        private readonly ApiPreviewResponder $responder,
-    ) {}
-
-    public function execute(): Response
+    public function execute(): ApisGuruPreviewPageDTO
     {
         /*
          * 通常の APIs.guru 画面と同じ React Page に渡します。
          * canFetch=false にすることで、画面側は「固定データ表示」として扱います。
          */
-        return $this->responder->apisGuru([
-            'api' => [
-                'name' => 'APIs.guru list.json',
-                'endpoint' => ApisGuruPreviewRepository::LIST_URL,
-                'method' => 'GET',
-            ],
-            // mock ルートは固定データ専用なので、画面の取得ボタンは表示しません。
-            'canFetch' => false,
-            'hasFetched' => true,
-            'result' => $this->mockResult()->toArray(),
-        ]);
+        // mock ルートは固定データ専用なので、画面の取得ボタンは表示しません。
+        return new ApisGuruPreviewPageDTO(
+            apiName: 'APIs.guru list.json',
+            endpoint: ApisGuruPreviewRepository::LIST_URL,
+            method: 'GET',
+            canFetch: false,
+            hasFetched: true,
+            result: $this->mockResult(),
+        );
     }
 
     private function mockResult(): ApiPreviewResultDTO
     {
         /*
-         * Repository は呼ばず、レイアウト確認に必要な props だけを固定値で作ります。
+         * Repository は呼ばず、レイアウト確認に必要な結果 DTO だけを固定値で作ります。
          * DTO の形を通常取得と揃えることで、React Page の分岐を増やさずに済ませます。
          */
         return new ApiPreviewResultDTO(

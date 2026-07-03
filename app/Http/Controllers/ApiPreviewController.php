@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\ApiPreview\ListApiPreviewsAction;
+use App\Responders\ApiPreviewResponder;
 use Inertia\Response;
 
 /**
@@ -13,11 +14,11 @@ use Inertia\Response;
 class ApiPreviewController extends Controller
 {
     /**
-     * preview 対象一覧を Action へ委譲して返します。
+     * preview 対象一覧を Action から受け取り、Responder 経由で返します。
      */
-    public function __invoke(ListApiPreviewsAction $action): Response
+    public function __invoke(ListApiPreviewsAction $action, ApiPreviewResponder $responder): Response
     {
-        // 一覧画面の HTTP 入口です。表示データの組み立ては Action に任せます。
-        return $action->execute();
+        // 一覧画面の HTTP 入口です。Inertia Response 生成は Responder に任せます。
+        return $responder->index($action->execute());
     }
 }

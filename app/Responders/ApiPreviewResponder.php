@@ -2,14 +2,15 @@
 
 namespace App\Responders;
 
+use App\DTO\ApiPreview\ApisGuruPreviewPageDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * API Preview 画面用 Responder です。
  *
- * Responder は Inertia::render() のみを担当します。
- * 外部 API 通信、DTO 生成、レスポンス整形をここに入れないことで、返却先の責務を明確にします。
+ * Responder は Action 結果を Inertia Response へ変換する出口だけを担当します。
+ * 外部 API 通信や DTO 生成をここに入れないことで、返却先の責務を明確にします。
  */
 class ApiPreviewResponder
 {
@@ -27,11 +28,18 @@ class ApiPreviewResponder
 
     /**
      * APIs.guru の実取得・成功モック・エラーモックは同じ React Page を共有します。
-     *
-     * @param  array<string, mixed>  $props
      */
-    public function apisGuru(array $props): Response
+    public function apisGuru(ApisGuruPreviewPageDTO $preview): Response
     {
-        return Inertia::render('ApiPreview/ApisGuru', $props);
+        return Inertia::render('ApiPreview/ApisGuru', [
+            'api' => [
+                'name' => $preview->apiName,
+                'endpoint' => $preview->endpoint,
+                'method' => $preview->method,
+            ],
+            'canFetch' => $preview->canFetch,
+            'hasFetched' => $preview->hasFetched,
+            'result' => $preview->result?->toArray(),
+        ]);
     }
 }
