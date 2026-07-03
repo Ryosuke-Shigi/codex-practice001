@@ -32,6 +32,7 @@
 
 - `docs/operations/pr-review-strength.md`
 - `docs/operations/sensors.md`
+- `docs/operations/code-responsibility-inventory.md`
 
 ### 作業後の反映先判定
 
@@ -139,6 +140,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/operations/command-registry.md` | Docker経由コマンド、root / `/src` のGit境界、作業種別ごとの確認 |
 | `docs/operations/pr-review-strength.md` | PRの作業種別、影響範囲、危険度に応じたレビュー強度 |
 | `docs/operations/sensors.md` | PR前確認、AIレビュー、スクリプト、CI fail候補として育てる検出項目の台帳 |
+| `docs/operations/code-responsibility-inventory.md` | 全コード責務棚卸し、コメント / 型 / DTO / Inertia props境界の確認結果 |
 | `docs/coding-standards.md` | PHP / TypeScript / JavaScript / React / CSS の実装作法、型、命名、確認コマンド |
 | `docs/testing.md` | テスト追加、仕様固定、CI確認 |
 | `docs/frontend.md` | React / Inertia / TypeScript、props、Component責務 |
