@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { MapRefreshAction } from '@/Components/JapanQuakeWaveMap/MapRefreshPanel';
 import type { QuakeDateRange } from '@/Components/JapanQuakeWaveMap/QuakeDateRangeFilter';
+import type {
+    EarthquakeMapRefreshResponse,
+    EarthquakeSyncStatus,
+    EarthquakeSyncStatusResponse,
+} from '@/Pages/QuakeWavePreview/types';
+import { pendingStatusFromSyncRunId } from '@/Pages/QuakeWavePreview/utils/quakeSyncStatus';
 
 const MAP_REFRESH_POLL_INTERVAL_MS = 2500;
 const MAP_REFRESH_URL = '/quakewave-preview/map/refresh';
@@ -11,64 +17,9 @@ const MAP_PAGE_URL = '/quakewave-preview/map';
 const FEED_ENTRY_SYNC_STATUS_URL = '/quakewave-preview/feed-entries/sync/status';
 const MAP_PIN_SYNC_STATUS_URL = '/quakewave-preview/map-pins/sync/status';
 
-/*
- * 地図データ更新に必要な画面状態と通信手順をまとめる hook です。
- * backend の Queue / Job / Action / Service 構成は変えず、React からは既存の POST 先へ
- * 「更新開始」を依頼し、返ってきた syncRunId を使って2種類の status URL を polling します。
- * Page と JapanQuakeWaveMap には通信の詳細を持たせず、MapRefreshPanel が必要な props だけを返します。
- */
-type EarthquakeSyncStatusValue = 'pending' | 'running' | 'completed' | 'failed';
-
-export type EarthquakeSyncStatus = {
-    syncRunId: number;
-    status: EarthquakeSyncStatusValue;
-    isRunning: boolean;
-    totalCount: number;
-    insertedCount: number;
-    updatedCount: number;
-    skippedCount: number;
-    failedCount: number;
-    errorMessage: string | null;
-    startedAt: string | null;
-    finishedAt: string | null;
-};
-
-type EarthquakeSyncStatusResponse = {
-    syncStatus: EarthquakeSyncStatus | null;
-};
-
-type EarthquakeMapRefreshResponse = {
-    feedEntrySyncRunId?: number;
-    mapPinSyncRunId?: number;
-    feedEntrySyncStatus: EarthquakeSyncStatus | null;
-    mapPinSyncStatus: EarthquakeSyncStatus | null;
-    message?: string;
-};
-
 type UseQuakeMapRefreshArgs = {
     dateRange: QuakeDateRange;
 };
-
-export function pendingStatusFromSyncRunId(syncRunId: number): EarthquakeSyncStatus {
-    /*
-     * POST レスポンスに最新 status DTO が含まれない場合でも、すぐに polling を開始できるよう
-     * syncRunId から一時的な running 状態を作ります。これは画面表示用の仮状態であり、
-     * 実際の進捗・件数・エラーは次回以降の status API レスポンスで上書きされます。
-     */
-    return {
-        syncRunId,
-        status: 'pending',
-        isRunning: true,
-        totalCount: 0,
-        insertedCount: 0,
-        updatedCount: 0,
-        skippedCount: 0,
-        failedCount: 0,
-        errorMessage: null,
-        startedAt: null,
-        finishedAt: null,
-    };
-}
 
 /**
  * feed entry同期とmap pin生成の状態から、更新パネルへ出す短い文言を決めます。

@@ -509,13 +509,15 @@ XML;
 
     public function test_quakewave_frontend_contains_map_pin_sync_polling_ui(): void
     {
-        $source = file_get_contents(resource_path('js/Pages/QuakeWavePreview/Index.tsx'));
+        $pageSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/Index.tsx'));
+        $hookSource = file_get_contents(resource_path('js/Pages/QuakeWavePreview/hooks/useQuakeWavePreviewSync.ts'));
 
-        $this->assertIsString($source);
-        $this->assertStringContainsString('/quakewave-preview/map-pins/sync', $source);
-        $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $source);
-        $this->assertStringContainsString('EARTHQUAKE_MAP_PIN_SYNC_POLL_INTERVAL_MS = 2500', $source);
-        $this->assertStringContainsString('地図ピン生成', $source);
+        $this->assertIsString($pageSource);
+        $this->assertIsString($hookSource);
+        $this->assertStringContainsString('/quakewave-preview/map-pins/sync', $hookSource);
+        $this->assertStringContainsString('/quakewave-preview/map-pins/sync/status', $hookSource);
+        $this->assertStringContainsString('EARTHQUAKE_MAP_PIN_SYNC_POLL_INTERVAL_MS = 2500', $hookSource);
+        $this->assertStringContainsString('地図ピン生成', $pageSource);
     }
 
     private function createFeedEntry(string $entryId): EarthquakeFeedEntry
