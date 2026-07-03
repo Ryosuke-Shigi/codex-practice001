@@ -349,13 +349,15 @@ class ApiCatalogSyncTest extends TestCase
 
     public function test_api_catalog_frontend_disables_sync_button_while_sync_is_running(): void
     {
-        $source = file_get_contents(resource_path('js/Pages/ApiCatalog/Index.tsx'));
+        $pageSource = file_get_contents(resource_path('js/Pages/ApiCatalog/Index.tsx'));
+        $hookSource = file_get_contents(resource_path('js/Pages/ApiCatalog/hooks/useApiCatalogSync.ts'));
 
-        $this->assertIsString($source);
+        $this->assertIsString($pageSource);
+        $this->assertIsString($hookSource);
         $this->assertStringContainsString(
             'const isSyncButtonDisabled = isStartingSync || (syncStatus?.isRunning ?? false);',
-            $source,
+            $hookSource,
         );
-        $this->assertStringContainsString('disabled={isSyncButtonDisabled}', $source);
+        $this->assertStringContainsString('disabled={isSyncButtonDisabled}', $pageSource);
     }
 }

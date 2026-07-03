@@ -1,151 +1,35 @@
-import axios from 'axios';
 import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useEffect, useState } from 'react';
 
 import DirectionalNavigationButton from '@/Components/DirectionalNavigationButton';
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
-import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
+import ApiCatalogList from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
 import { createProviderDomainOptions } from '@/Components/ApiCatalog/apiCatalogDomain';
 import {
-    DEFAULT_API_CATALOG_SORT_KEY,
     type ApiCatalogSortKey,
     normalizeApiCatalogSortKey,
 } from '@/Components/ApiCatalog/apiCatalogSort';
 import useSwipeNavigation from '@/Hooks/useSwipeNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
-import type { ApiCatalogNoteItem } from '@/Components/ApiCatalog/ApiCatalogNotesPanel';
+
+import {
+    buildApiCatalogQueryParams,
+    buildOptimisticPagination,
+    isApiCatalogPagination,
+    toApiCatalogListItem,
+} from './apiCatalogIndexUtils';
+import { useApiCatalogSync } from './hooks/useApiCatalogSync';
+import type {
+    ApiCatalogIndexProps,
+    ApiCatalogPagination as ApiCatalogPaginationState,
+} from './types';
 
 /*
  * 本番 API 一覧の戻るボタンは、ブラウザ履歴や直前画面には依存しません。
  * 画面内ボタンは Project Hub の API Discovery Hub へ戻します。
  */
 const API_CATALOG_ENTRY_HREF = '/projects/api-discovery-hub';
-const API_CATALOG_SYNC_POLL_INTERVAL_MS = 2500;
-
-type ApiCatalogFilters = {
-    keyword: string | null;
-    providerKey: string | null;
-    domain: string | null;
-    sortKey: ApiCatalogSortKey;
-};
-
-type ApiCatalogItem = {
-    id: number;
-    apiKey: string;
-    title: string;
-    description: string;
-    providerKey: string;
-    serviceKey: string | null;
-    preferredVersion: string | null;
-    openapiVersion: string | null;
-    notes?: ApiCatalogNoteItem[];
-    isActive: boolean;
-};
-
-type ApiCatalogPagination = {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    perPage: number;
-    from: number | null;
-    to: number | null;
-};
-
-function isApiCatalogPagination(value: unknown): value is ApiCatalogPagination {
-    /*
-     * Inertia の onSuccess では page.props が unknown に近い境界になります。
-     * 画面状態へ反映する前に最低限の形を確認し、pagination 以外の partial reload が来ても壊れないようにします。
-     */
-    if (typeof value !== 'object' || value === null) {
-        return false;
-    }
-
-    const candidate = value as Partial<ApiCatalogPagination>;
-
-    return (
-        typeof candidate.currentPage === 'number' &&
-        typeof candidate.totalPages === 'number' &&
-        typeof candidate.totalItems === 'number' &&
-        typeof candidate.perPage === 'number' &&
-        (typeof candidate.from === 'number' || candidate.from === null) &&
-        (typeof candidate.to === 'number' || candidate.to === null)
-    );
-}
-
-function buildOptimisticPagination(
-    pagination: ApiCatalogPagination,
-    nextPage: number,
-): ApiCatalogPagination {
-    /*
-     * ページ移動ボタンや左右キーを押した瞬間にもページ表示を進めるための暫定値です。
-     * 最終的な値は Inertia レスポンスの pagination で必ず上書きします。
-     */
-    const totalItems = Math.max(0, Math.floor(pagination.totalItems));
-    const totalPages = Math.max(1, Math.floor(pagination.totalPages));
-    const currentPage = Math.min(Math.max(1, Math.floor(nextPage)), totalPages);
-
-    if (totalItems === 0) {
-        return {
-            ...pagination,
-            currentPage: 1,
-            totalPages,
-            from: null,
-            to: null,
-        };
-    }
-
-    const perPage = Math.max(1, Math.floor(pagination.perPage));
-    const from = (currentPage - 1) * perPage + 1;
-
-    return {
-        ...pagination,
-        currentPage,
-        totalPages,
-        perPage,
-        from,
-        to: Math.min(totalItems, from + perPage - 1),
-    };
-}
-
-type ApiCatalogSyncResult = {
-    totalCount: number;
-    insertedCount: number;
-    updatedCount: number;
-    skippedCount: number;
-    inactiveCount: number;
-    failedCount: number;
-};
-
-type ApiCatalogSyncStatus = {
-    id: number;
-    status: 'queued' | 'running' | 'completed' | 'failed';
-    isRunning: boolean;
-    isStale: boolean;
-    result: ApiCatalogSyncResult;
-    errorMessage: string | null;
-    startedAt: string | null;
-    finishedAt: string | null;
-    createdAt: string | null;
-    updatedAt: string | null;
-};
-
-type ApiCatalogSyncStatusResponse = {
-    syncStatus: ApiCatalogSyncStatus | null;
-};
-
-type IndexProps = {
-    /*
-     * Responder から受け取る props は将来の Inertia 部分更新単位に合わせています。
-     * providers/domains は候補リストなので、検索・ページ送りでは基本的に更新しない想定です。
-     */
-    filters: ApiCatalogFilters;
-    providers: string[];
-    domains: string[];
-    apiCatalogItems: ApiCatalogItem[];
-    pagination: ApiCatalogPagination;
-    syncStatus: ApiCatalogSyncStatus | null;
-};
 
 function shouldIgnorePaginationKey(target: EventTarget | null) {
     if (!(target instanceof HTMLElement)) {
@@ -156,41 +40,6 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
     return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
 }
 
-function buildQueryParams(
-    keyword: string,
-    providerKey: string,
-    domain: string,
-    sortKey: ApiCatalogSortKey,
-    page: number,
-) {
-    /*
-     * URL query は本番一覧の状態そのものです。
-     * keyword / provider_key / domain / sort / page を明示し、
-     * リロードしても同じ一覧状態を再現できます。
-     */
-    const params: Record<string, string | number> = {
-        page,
-    };
-
-    if (keyword.trim() !== '') {
-        params.keyword = keyword.trim();
-    }
-
-    if (providerKey !== '') {
-        params.provider_key = providerKey;
-    }
-
-    if (domain !== '') {
-        params.domain = domain;
-    }
-
-    if (sortKey !== DEFAULT_API_CATALOG_SORT_KEY) {
-        params.sort = sortKey;
-    }
-
-    return params;
-}
-
 function currentListUrl() {
     /*
      * 詳細から戻るときに検索条件とページ番号を復元するため、
@@ -199,83 +48,11 @@ function currentListUrl() {
     return `${window.location.pathname}${window.location.search}`;
 }
 
-function buildDetailHref(apiKey: string, returnUrl: string) {
-    /*
-     * 本番詳細の識別子は id ではなく APIs.guru の api_key です。
-     * ":" などを含む api_key でも壊れないよう path と return_url の両方を encode します。
-     */
-    return `/api-catalog/${encodeURIComponent(apiKey)}?return_url=${encodeURIComponent(returnUrl)}`;
-}
-
-function toApiCatalogListItem(item: ApiCatalogItem, returnUrl: string): ApiCatalogListItem {
-    return {
-        listKey: item.id,
-        apiKey: item.apiKey,
-        title: item.title,
-        description: item.description,
-        providerKey: item.providerKey,
-        serviceKey: item.serviceKey,
-        preferredVersion: item.preferredVersion,
-        openapiVersion: item.openapiVersion,
-        notes: item.notes ?? [],
-        detailHref: buildDetailHref(item.apiKey, returnUrl),
-    };
-}
-
-function apiCatalogSyncStatusMessage(
-    status: ApiCatalogSyncStatus | null,
-    isStarting: boolean,
-    pollingError: string | null,
-) {
-    if (isStarting) {
-        return 'APIカタログ同期を開始しています';
-    }
-
-    if (pollingError !== null) {
-        return pollingError;
-    }
-
-    if (status === null) {
-        return null;
-    }
-
-    /*
-     * stale は「完了」ではありません。
-     * worker が止まっている、または failed hook まで届かない落ち方をした可能性があるため、
-     * ボタンは戻しつつ、画面文言では運用確認が必要な状態として出します。
-     */
-    if (status.isStale) {
-        return '同期状態が一定時間更新されませんでした。Queue worker の状態を確認してください。';
-    }
-
-    if (status.status === 'queued') {
-        /*
-         * queued は同期本体がまだ始まっていない状態です。
-         * 「同期中」とだけ表示すると処理が進んでいるように見えるため、worker 待ちであることを明示します。
-         */
-        return 'APIカタログ同期を開始しました。Queue worker の処理開始を待っています。';
-    }
-
-    if (status.status === 'running') {
-        return '同期中です';
-    }
-
-    if (status.status === 'completed') {
-        return '同期が完了しました';
-    }
-
-    return '同期に失敗しました';
-}
-
-function shouldShowSyncResult(status: ApiCatalogSyncStatus | null) {
-    return status !== null && !status.isRunning;
-}
-
 /**
- * APIカタログ本番一覧の Page Component です。
+ * APIカタログ本番一覧のページコンポーネントです。
  *
  * Inertia props で受け取った一覧・検索候補・同期状態を表示し、検索、ページ送り、
- * 同期開始とpollingの画面状態だけを扱います。検索条件のDB適用や同期本体の実行はLaravel側へ委譲します。
+ * 同期開始の入口を扱います。検索条件のDB適用、同期本体、同期状態の定期取得はLaravel側と専用フックへ委譲します。
  */
 export default function Index({
     filters,
@@ -284,26 +61,35 @@ export default function Index({
     apiCatalogItems,
     pagination,
     syncStatus: initialSyncStatus,
-}: IndexProps) {
+}: ApiCatalogIndexProps) {
     const [keyword, setKeyword] = useState(filters.keyword ?? '');
     const [providerKey, setProviderKey] = useState(filters.providerKey ?? '');
     const [domain, setDomain] = useState(filters.domain ?? '');
     const [sortKey, setSortKey] = useState<ApiCatalogSortKey>(
         normalizeApiCatalogSortKey(filters.sortKey),
     );
-    const [syncStatus, setSyncStatus] = useState<ApiCatalogSyncStatus | null>(initialSyncStatus);
-    const [isStartingSync, setIsStartingSync] = useState(false);
-    const [syncPollingError, setSyncPollingError] = useState<string | null>(null);
-    const [visiblePagination, setVisiblePagination] = useState<ApiCatalogPagination>(pagination);
+    const [visiblePagination, setVisiblePagination] = useState<ApiCatalogPaginationState>(
+        pagination,
+    );
+    const {
+        syncStatus,
+        isSyncButtonDisabled,
+        syncMessage,
+        showSyncResult,
+        startPoolSync,
+    } = useApiCatalogSync({
+        initialSyncStatus,
+        getReturnUrl: currentListUrl,
+        onPaginationReloaded: setVisiblePagination,
+    });
 
     const canMovePrevious = visiblePagination.currentPage > 1;
     const canMoveNext = visiblePagination.currentPage < visiblePagination.totalPages;
     const hasActiveFilters = keyword.trim() !== '' || providerKey !== '' || domain !== '';
     const returnUrl = currentListUrl();
-    const domainFilterOptions = domains.length > 0 ? domains : createProviderDomainOptions(providers);
-    const isSyncButtonDisabled = isStartingSync || (syncStatus?.isRunning ?? false);
-    const syncMessage = apiCatalogSyncStatusMessage(syncStatus, isStartingSync, syncPollingError);
-    const showSyncResult = shouldShowSyncResult(syncStatus);
+    const domainFilterOptions = domains.length > 0
+        ? domains
+        : createProviderDomainOptions(providers);
 
     const visitList = useCallback(
         (
@@ -328,7 +114,13 @@ export default function Index({
 
             router.get(
                 '/api-catalog',
-                buildQueryParams(nextKeyword, nextProviderKey, nextDomain, nextSortKey, nextPage),
+                buildApiCatalogQueryParams(
+                    nextKeyword,
+                    nextProviderKey,
+                    nextDomain,
+                    nextSortKey,
+                    nextPage,
+                ),
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -423,125 +215,11 @@ export default function Index({
     ]);
 
     useSwipeNavigation({
-        // Left swipe means the finger moves left, so the list advances to the next page.
+        // 左スワイプでは次のページへ進みます。
         onSwipeLeft: moveToNextPage,
-        // Right swipe moves back to the previous page.
+        // 右スワイプでは前のページへ戻ります。
         onSwipeRight: moveToPreviousPage,
     });
-
-    const startPoolSync = async () => {
-        /*
-         * プール更新は本番一覧から開始します。
-         * 同期本体はLaravel側のJob/Queueへ渡し、Reactは同期状態IDをポーリングします。
-         *
-         * POST成功は「同期が終わった」ではなく「Job登録を受け付けた」という意味です。
-         * 完了扱いは状態取得APIが completed / failed を返したときだけに限定します。
-         */
-        if (isSyncButtonDisabled) {
-            return;
-        }
-
-        setIsStartingSync(true);
-        setSyncPollingError(null);
-
-        try {
-            const response = await axios.post<ApiCatalogSyncStatusResponse>(
-                '/api-catalog/sync',
-                {
-                    return_url: currentListUrl(),
-                },
-                {
-                    headers: {
-                        Accept: 'application/json',
-                    },
-                },
-            );
-
-            setSyncStatus(response.data.syncStatus);
-        } catch {
-            setSyncPollingError('APIカタログ同期の開始に失敗しました');
-        } finally {
-            setIsStartingSync(false);
-        }
-    };
-
-    useEffect(() => {
-        setSyncStatus(initialSyncStatus);
-    }, [
-        initialSyncStatus,
-        initialSyncStatus?.id,
-        initialSyncStatus?.status,
-        initialSyncStatus?.updatedAt,
-    ]);
-
-    useEffect(() => {
-        if (syncStatus === null || !syncStatus.isRunning) {
-            return;
-        }
-
-        let isActive = true;
-        let timeoutId: number | undefined;
-
-        const pollSyncStatus = async () => {
-            try {
-                const response = await axios.get<ApiCatalogSyncStatusResponse>(
-                    '/api-catalog/sync/status',
-                    {
-                        params: {
-                            sync_id: syncStatus.id,
-                        },
-                        headers: {
-                            Accept: 'application/json',
-                        },
-                    },
-                );
-
-                if (!isActive) {
-                    return;
-                }
-
-                const nextStatus = response.data.syncStatus;
-
-                if (nextStatus !== null) {
-                    setSyncStatus(nextStatus);
-                    setSyncPollingError(null);
-
-                    if (!nextStatus.isRunning) {
-                        router.reload({
-                            only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
-                            onSuccess: (page) => {
-                                const nextPagination = page.props.pagination;
-
-                                if (isApiCatalogPagination(nextPagination)) {
-                                    setVisiblePagination(nextPagination);
-                                }
-                            },
-                        });
-
-                        return;
-                    }
-                }
-            } catch {
-                if (isActive) {
-                    setSyncPollingError('同期状態の取得に失敗しました');
-                }
-            }
-
-            if (isActive) {
-                timeoutId = window.setTimeout(pollSyncStatus, API_CATALOG_SYNC_POLL_INTERVAL_MS);
-            }
-        };
-
-        timeoutId = window.setTimeout(pollSyncStatus, API_CATALOG_SYNC_POLL_INTERVAL_MS);
-
-        return () => {
-            isActive = false;
-
-            if (timeoutId !== undefined) {
-                window.clearTimeout(timeoutId);
-            }
-        };
-    }, [syncStatus?.id, syncStatus?.isRunning]);
 
     useEffect(() => {
         /*
