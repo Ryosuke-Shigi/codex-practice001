@@ -144,6 +144,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/feature-module-portability.md` | Feature Module移植ルール。Feature全体移植 / PRODUCTのみ移植 / MOCKのみ移植 / PROTOTYPEのみ移植 / IDEA BOARDのみ移植、移植元repoは読むだけ、移植先repoだけに差分を出す原則、移植対象・差し替え対象・移植しない対象の固定、個別Feature移植マニフェストの追加方針 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
+| `docs/templates/idea-board-and-mock-template-policy.md` | IDEA BOARD / MOCK の役割、共通画面構造、タブ、タブ内インデックス、スクロール方針 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
 | `docs/operations/command-registry.md` | Docker経由コマンド、root / `/src` のGit境界、作業種別ごとの確認 |
 | `docs/operations/pr-review-strength.md` | PRの作業種別、影響範囲、危険度に応じたレビュー強度 |
@@ -186,6 +187,9 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 |---|---|
 | `docs/templates/pr-summary.md` | Pull Requestのレビュー用まとめ |
 | `docs/templates/feature-doc-template.md` | 新規Feature docs作成時のテンプレート |
+| `docs/templates/idea-board-and-mock-template-policy.md` | IDEA BOARD / MOCK 作成時の共通ルール、画面構造、タブ、スクロール方針 |
+| `docs/templates/idea-board-template.md` | IDEA BOARD 作成時のテンプレート |
+| `docs/templates/mock-template.md` | MOCK 作成時のテンプレート |
 
 ## 文書の配置基準
 

@@ -52,6 +52,9 @@
 | Path | 役割 |
 |---|---|
 | [../templates/feature-doc-template.md](../templates/feature-doc-template.md) | 新規Feature docs作成時のテンプレート |
+| [../templates/idea-board-and-mock-template-policy.md](../templates/idea-board-and-mock-template-policy.md) | IDEA BOARD / MOCK 作成時の共通ルール、画面構造、タブ、スクロール方針 |
+| [../templates/idea-board-template.md](../templates/idea-board-template.md) | IDEA BOARD 作成時のテンプレート |
+| [../templates/mock-template.md](../templates/mock-template.md) | MOCK 作成時のテンプレート |
 
 ## プロジェクト固有ルール
 
