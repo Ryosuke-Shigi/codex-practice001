@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Commands;
 
+use App\DTO\Earthquake\Sync\EarthquakeMapRefreshStartResultDTO;
 use App\Jobs\Earthquake\RefreshEarthquakeMapDataJob;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
@@ -56,5 +57,20 @@ final readonly class StartEarthquakeMapRefreshAction
             'feedEntrySyncRunId' => $feedEntrySyncRunId,
             'mapPinSyncRunId' => $mapPinSyncRunId,
         ];
+    }
+
+    /**
+     * 統合更新を開始し、開始結果として必要な2つの初期 status もまとめて返します。
+     */
+    public function executeWithInitialStatus(): EarthquakeMapRefreshStartResultDTO
+    {
+        $syncRunIds = $this->execute();
+
+        return new EarthquakeMapRefreshStartResultDTO(
+            feedEntrySyncRunId: $syncRunIds['feedEntrySyncRunId'],
+            mapPinSyncRunId: $syncRunIds['mapPinSyncRunId'],
+            feedEntrySyncStatus: $this->feedEntrySyncRunRepository->findResult($syncRunIds['feedEntrySyncRunId']),
+            mapPinSyncStatus: $this->mapPinSyncRunRepository->findResult($syncRunIds['mapPinSyncRunId']),
+        );
     }
 }

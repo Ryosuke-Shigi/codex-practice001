@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Earthquake\Commands\StartEarthquakeFeedEntrySyncAction;
-use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use App\Responders\Earthquake\EarthquakeFeedEntrySyncStatusResponder;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
@@ -21,15 +20,14 @@ class QuakeWavePreviewFeedEntrySyncController extends Controller
      */
     public function __invoke(
         StartEarthquakeFeedEntrySyncAction $action,
-        EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,
         EarthquakeFeedEntrySyncStatusResponder $responder,
     ): JsonResponse {
         try {
             /*
              * Controller は POST の入口として Action を呼ぶだけに留めます。
-             * Action が返す syncRunId は「同期完了」ではなく「Queue へ投入した同期run」のIDです。
+             * Action が返す開始結果は「同期完了」ではなく「Queue へ投入した同期run」の初期状態です。
              */
-            $syncRunId = $action->execute();
+            $result = $action->executeWithInitialStatus();
         } catch (RuntimeException $exception) {
             /*
              * migration 未適用など、同期開始の前提が欠けている場合は JSON で短く返します。
@@ -38,9 +36,6 @@ class QuakeWavePreviewFeedEntrySyncController extends Controller
             return $responder->unavailable($exception->getMessage());
         }
 
-        return $responder->started(
-            $syncRunId,
-            $syncRunRepository->findResult($syncRunId),
-        );
+        return $responder->started($result);
     }
 }

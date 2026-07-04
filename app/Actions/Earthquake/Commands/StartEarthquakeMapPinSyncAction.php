@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Commands;
 
+use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncStartResultDTO;
 use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
@@ -53,5 +54,18 @@ final readonly class StartEarthquakeMapPinSyncAction
         SyncEarthquakeMapPinsJob::dispatch($syncRunId);
 
         return $syncRunId;
+    }
+
+    /**
+     * map pin 同期 run を開始し、開始結果として必要な初期 status もまとめて返します。
+     */
+    public function executeWithInitialStatus(): EarthquakeMapPinSyncStartResultDTO
+    {
+        $syncRunId = $this->execute();
+
+        return new EarthquakeMapPinSyncStartResultDTO(
+            syncRunId: $syncRunId,
+            syncStatus: $this->syncRunRepository->findResult($syncRunId),
+        );
     }
 }

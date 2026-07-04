@@ -3,6 +3,7 @@
 namespace App\Responders\Earthquake;
 
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
+use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncStartResultDTO;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,11 +16,11 @@ final readonly class EarthquakeFeedEntrySyncStatusResponder
     /**
      * 同期開始直後の syncRunId と初期 status を返します。
      */
-    public function started(int $syncRunId, ?EarthquakeFeedEntrySyncResultDTO $status): JsonResponse
+    public function started(EarthquakeFeedEntrySyncStartResultDTO $result): JsonResponse
     {
         return response()->json([
-            'syncRunId' => $syncRunId,
-            'syncStatus' => $status?->toArray(),
+            'syncRunId' => $result->syncRunId,
+            'syncStatus' => $result->syncStatus?->toArray(),
         ]);
     }
 

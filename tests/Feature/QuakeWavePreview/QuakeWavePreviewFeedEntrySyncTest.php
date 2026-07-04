@@ -43,6 +43,23 @@ class QuakeWavePreviewFeedEntrySyncTest extends TestCase
         );
     }
 
+    public function test_start_earthquake_feed_entry_sync_action_returns_initial_status_for_http_response(): void
+    {
+        Queue::fake();
+
+        $result = app(StartEarthquakeFeedEntrySyncAction::class)->executeWithInitialStatus();
+
+        $this->assertSame(1, $result->syncRunId);
+        $this->assertNotNull($result->syncStatus);
+        $this->assertSame($result->syncRunId, $result->syncStatus->syncRunId);
+        $this->assertSame(EarthquakeFeedEntrySyncResultDTO::STATUS_PENDING, $result->syncStatus->status);
+        $this->assertTrue($result->syncStatus->isRunning());
+        Queue::assertPushed(
+            SyncEarthquakeFeedEntriesJob::class,
+            fn (SyncEarthquakeFeedEntriesJob $job) => $job->syncRunId === $result->syncRunId,
+        );
+    }
+
     public function test_feed_entry_sync_start_route_returns_sync_run_id_for_polling(): void
     {
         Queue::fake();

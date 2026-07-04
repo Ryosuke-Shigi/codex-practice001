@@ -146,6 +146,30 @@ class QuakeWaveSyncStatusApiTest extends TestCase
             ]);
     }
 
+    public function test_status_apis_accept_legacy_sync_id_query_alias(): void
+    {
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+
+        $feedResponse = $this->getJson(route('quakewave-preview.feed-entries.sync.status', [
+            'sync_id' => $feedEntrySyncRunId,
+        ]));
+        $mapPinResponse = $this->getJson(route('quakewave-preview.map-pins.sync.status', [
+            'sync_id' => $mapPinSyncRunId,
+        ]));
+
+        $feedResponse
+            ->assertOk()
+            ->assertJsonPath('syncStatus.syncRunId', $feedEntrySyncRunId)
+            ->assertJsonPath('syncStatus.status', EarthquakeFeedEntrySyncResultDTO::STATUS_PENDING);
+        $mapPinResponse
+            ->assertOk()
+            ->assertJsonPath('syncStatus.syncRunId', $mapPinSyncRunId)
+            ->assertJsonPath('syncStatus.status', EarthquakeMapPinSyncResultDTO::STATUS_PENDING);
+    }
+
     public function test_status_apis_return_pending_status_with_running_flag_and_initial_counts(): void
     {
         $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
