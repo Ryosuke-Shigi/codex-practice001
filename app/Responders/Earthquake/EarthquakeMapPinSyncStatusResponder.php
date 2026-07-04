@@ -3,6 +3,7 @@
 namespace App\Responders\Earthquake;
 
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
+use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncStartResultDTO;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -15,11 +16,11 @@ final readonly class EarthquakeMapPinSyncStatusResponder
     /**
      * 同期開始直後の syncRunId と初期 status を返します。
      */
-    public function started(int $syncRunId, ?EarthquakeMapPinSyncResultDTO $status): JsonResponse
+    public function started(EarthquakeMapPinSyncStartResultDTO $result): JsonResponse
     {
         return response()->json([
-            'syncRunId' => $syncRunId,
-            'syncStatus' => $status?->toArray(),
+            'syncRunId' => $result->syncRunId,
+            'syncStatus' => $result->syncStatus?->toArray(),
         ]);
     }
 

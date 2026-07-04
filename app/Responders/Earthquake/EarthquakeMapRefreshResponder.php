@@ -2,8 +2,7 @@
 
 namespace App\Responders\Earthquake;
 
-use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
-use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
+use App\DTO\Earthquake\Sync\EarthquakeMapRefreshStartResultDTO;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -17,17 +16,13 @@ final readonly class EarthquakeMapRefreshResponder
     /**
      * feed entry / map pin の同期 run ID と初期 status を返します。
      */
-    public function started(
-        int $feedEntrySyncRunId,
-        int $mapPinSyncRunId,
-        ?EarthquakeFeedEntrySyncResultDTO $feedEntrySyncStatus,
-        ?EarthquakeMapPinSyncResultDTO $mapPinSyncStatus,
-    ): JsonResponse {
+    public function started(EarthquakeMapRefreshStartResultDTO $result): JsonResponse
+    {
         return response()->json([
-            'feedEntrySyncRunId' => $feedEntrySyncRunId,
-            'mapPinSyncRunId' => $mapPinSyncRunId,
-            'feedEntrySyncStatus' => $feedEntrySyncStatus?->toArray(),
-            'mapPinSyncStatus' => $mapPinSyncStatus?->toArray(),
+            'feedEntrySyncRunId' => $result->feedEntrySyncRunId,
+            'mapPinSyncRunId' => $result->mapPinSyncRunId,
+            'feedEntrySyncStatus' => $result->feedEntrySyncStatus?->toArray(),
+            'mapPinSyncStatus' => $result->mapPinSyncStatus?->toArray(),
         ]);
     }
 

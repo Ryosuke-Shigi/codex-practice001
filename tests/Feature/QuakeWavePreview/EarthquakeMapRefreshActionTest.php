@@ -52,6 +52,27 @@ class EarthquakeMapRefreshActionTest extends TestCase
         );
     }
 
+    public function test_start_map_refresh_action_returns_initial_statuses_for_http_response(): void
+    {
+        Queue::fake();
+
+        $result = app(StartEarthquakeMapRefreshAction::class)->executeWithInitialStatus();
+
+        $this->assertSame(1, $result->feedEntrySyncRunId);
+        $this->assertSame(1, $result->mapPinSyncRunId);
+        $this->assertNotNull($result->feedEntrySyncStatus);
+        $this->assertNotNull($result->mapPinSyncStatus);
+        $this->assertSame($result->feedEntrySyncRunId, $result->feedEntrySyncStatus->syncRunId);
+        $this->assertSame($result->mapPinSyncRunId, $result->mapPinSyncStatus->syncRunId);
+        $this->assertSame(EarthquakeFeedEntrySyncResultDTO::STATUS_PENDING, $result->feedEntrySyncStatus->status);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_PENDING, $result->mapPinSyncStatus->status);
+        Queue::assertPushed(
+            RefreshEarthquakeMapDataJob::class,
+            fn (RefreshEarthquakeMapDataJob $job): bool => $job->feedEntrySyncRunId === $result->feedEntrySyncRunId
+                && $job->mapPinSyncRunId === $result->mapPinSyncRunId,
+        );
+    }
+
     public function test_refresh_job_marks_both_runs_completed_when_feed_and_map_pin_steps_succeed(): void
     {
         /*

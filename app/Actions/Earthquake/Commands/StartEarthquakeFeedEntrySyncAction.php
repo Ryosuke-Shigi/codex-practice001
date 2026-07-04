@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Commands;
 
+use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncStartResultDTO;
 use App\Jobs\Earthquake\SyncEarthquakeFeedEntriesJob;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use RuntimeException;
@@ -52,5 +53,18 @@ final readonly class StartEarthquakeFeedEntrySyncAction
         SyncEarthquakeFeedEntriesJob::dispatch($syncRunId);
 
         return $syncRunId;
+    }
+
+    /**
+     * feed entry 同期 run を開始し、開始結果として必要な初期 status もまとめて返します。
+     */
+    public function executeWithInitialStatus(): EarthquakeFeedEntrySyncStartResultDTO
+    {
+        $syncRunId = $this->execute();
+
+        return new EarthquakeFeedEntrySyncStartResultDTO(
+            syncRunId: $syncRunId,
+            syncStatus: $this->syncRunRepository->findResult($syncRunId),
+        );
     }
 }
