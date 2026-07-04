@@ -250,6 +250,7 @@ const productResponsibilityCards: readonly IdeaBoardCard[] = [
     },
 ] as const;
 
+// IDEA BOARDの表示契約を固定する静的データ。DB、API、保存処理、状態判定はここへ持たせない。
 export const ideaBoardTabs: readonly IdeaBoardTab[] = [
     {
         id: 'top',

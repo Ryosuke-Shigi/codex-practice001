@@ -25,6 +25,7 @@ const tabIcons = {
     coding: Code2,
 } satisfies Record<IdeaBoardTabId, LucideIcon>;
 
+// 表示ComponentはタブのUI状態と描画だけを担当し、案件の業務判断は扱わない。
 export default function LumiLaboProjectIdeaBoardView() {
     const [activeTabId, setActiveTabId] =
         useState<IdeaBoardTabId>('top');
