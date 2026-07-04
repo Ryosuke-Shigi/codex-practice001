@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\QuakeWavePreview;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeFeedEntrySyncAction;
+use App\Actions\Earthquake\Commands\RunEarthquakeMapPinSyncAction;
+use App\Actions\Earthquake\Commands\RunEarthquakeMapRefreshAction;
 use App\Actions\Earthquake\Commands\StartEarthquakeMapRefreshAction;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
@@ -124,12 +127,12 @@ class EarthquakeMapRefreshActionTest extends TestCase
             }
         };
 
-        (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))->handle(
+        (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))->handle($this->runMapRefreshAction(
             $feedEntrySyncRunRepository,
             $mapPinSyncRunRepository,
             $feedEntrySyncService,
             $mapPinBuildService,
-        );
+        ));
 
         $feedStatus = $feedEntrySyncRunRepository->findResult($feedEntrySyncRunId);
         $mapStatus = $mapPinSyncRunRepository->findResult($mapPinSyncRunId);
@@ -198,12 +201,12 @@ class EarthquakeMapRefreshActionTest extends TestCase
         };
 
         try {
-            (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))->handle(
+            (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))->handle($this->runMapRefreshAction(
                 $feedEntrySyncRunRepository,
                 $mapPinSyncRunRepository,
                 $feedEntrySyncService,
                 $mapPinBuildService,
-            );
+            ));
 
             $this->fail('Feed entry sync failure should be rethrown.');
         } catch (RuntimeException $exception) {
@@ -298,12 +301,12 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $caughtException = null;
 
         try {
-            $job->handle(
+            $job->handle($this->runMapRefreshAction(
                 $feedEntrySyncRunRepository,
                 $mapPinSyncRunRepository,
                 $feedEntrySyncService,
                 $mapPinBuildService,
-            );
+            ));
 
             $this->fail('Map pin generation failure should be rethrown.');
         } catch (RuntimeException $exception) {
@@ -430,6 +433,22 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $this->assertSame(1, $mapStatus->updatedCount);
         $this->assertSame(0, $mapStatus->failedCount);
         $this->assertNull($mapStatus->errorMessage);
+    }
+
+    private function runMapRefreshAction(
+        EarthquakeFeedEntrySyncRunRepositoryInterface $feedEntrySyncRunRepository,
+        EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
+        EarthquakeFeedEntrySyncService $feedEntrySyncService,
+        EarthquakeMapPinBuildService $mapPinBuildService,
+    ): RunEarthquakeMapRefreshAction {
+        return new RunEarthquakeMapRefreshAction(
+            new RunEarthquakeFeedEntrySyncAction(
+                $feedEntrySyncRunRepository,
+                $feedEntrySyncService,
+            ),
+            new RunEarthquakeMapPinSyncAction($mapPinSyncRunRepository, $mapPinBuildService),
+            $mapPinSyncRunRepository,
+        );
     }
 
     private function atomFeed(): string

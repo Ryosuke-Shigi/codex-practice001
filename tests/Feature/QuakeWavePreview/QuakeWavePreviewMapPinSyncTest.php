@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\QuakeWavePreview;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeMapPinSyncAction;
 use App\Actions\Earthquake\Commands\StartEarthquakeMapPinSyncAction;
 use App\DTO\Earthquake\Map\EarthquakeMapPinDTO;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListDTO;
@@ -173,7 +174,9 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
             }
         };
 
-        (new SyncEarthquakeMapPinsJob($syncRunId))->handle($repository, $buildService);
+        (new SyncEarthquakeMapPinsJob($syncRunId))->handle(
+            new RunEarthquakeMapPinSyncAction($repository, $buildService),
+        );
 
         $status = $repository->findResult($syncRunId);
 
@@ -485,7 +488,9 @@ XML;
         $syncRunId = $syncRunRepository->createPending();
 
         try {
-            (new SyncEarthquakeMapPinsJob($syncRunId))->handle($syncRunRepository, $buildService);
+            (new SyncEarthquakeMapPinsJob($syncRunId))->handle(
+                new RunEarthquakeMapPinSyncAction($syncRunRepository, $buildService),
+            );
 
             $this->fail('Repository interruption should be rethrown by the map pin sync job.');
         } catch (RuntimeException $exception) {

@@ -2,12 +2,11 @@
 
 namespace App\Jobs\Earthquake;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeMapRefreshAction;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
-use App\Services\Earthquake\EarthquakeFeedEntrySyncService;
-use App\Services\Earthquake\EarthquakeMapPinBuildService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -15,8 +14,8 @@ use Throwable;
 /**
  * QuakeWave Map の統合更新を Queue 上で順番に実行する Job です。
  *
- * feed entry 同期を完了させてから map pin 生成へ進めます。
- * 個別XML解析や保存判断は Service / Repository 側へ残し、Job は実行順と状態run更新を担当します。
+ * 2つの syncRunId を実行用 Action へ渡します。
+ * feed entry 同期から map pin 生成へ進める手順は Action へ置き、Job は Queue 実行入口に留めます。
  */
 class RefreshEarthquakeMapDataJob implements ShouldQueue
 {
@@ -33,40 +32,13 @@ class RefreshEarthquakeMapDataJob implements ShouldQueue
         public readonly int $mapPinSyncRunId,
     ) {}
 
-    public function handle(
-        EarthquakeFeedEntrySyncRunRepositoryInterface $feedEntrySyncRunRepository,
-        EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
-        EarthquakeFeedEntrySyncService $feedEntrySyncService,
-        EarthquakeMapPinBuildService $mapPinBuildService,
-    ): void {
+    public function handle(RunEarthquakeMapRefreshAction $action): void
+    {
         /*
-         * 1ボタン更新でも、業務手順は既存Serviceに分けたまま順番だけをJobで束ねます。
-         * 先にAtom feed entryをDBへupsertし、その完了後に保存済みentryのxml_urlから
-         * map pinを生成します。XML解析やDB保存の詳細はここには書きません。
+         * Job payload は2つのsyncRunIdだけです。
+         * XML取得、解析、DB保存、状態run更新の手順は Action / Service / Repository へ委譲します。
          */
-        try {
-            $feedEntrySyncRunRepository->markRunning($this->feedEntrySyncRunId);
-            $feedResult = $feedEntrySyncService->sync($this->feedEntrySyncRunId);
-            $feedEntrySyncRunRepository->markCompleted($this->feedEntrySyncRunId, $feedResult);
-        } catch (Throwable $exception) {
-            $feedEntrySyncRunRepository->markFailed($this->feedEntrySyncRunId, $exception->getMessage());
-            $mapPinSyncRunRepository->markFailed(
-                $this->mapPinSyncRunId,
-                'Feed entry sync failed before map pin generation: '.$exception->getMessage(),
-            );
-
-            throw $exception;
-        }
-
-        try {
-            $mapPinSyncRunRepository->markRunning($this->mapPinSyncRunId);
-            $mapResult = $mapPinBuildService->sync($this->mapPinSyncRunId);
-            $mapPinSyncRunRepository->markCompleted($this->mapPinSyncRunId, $mapResult);
-        } catch (Throwable $exception) {
-            $mapPinSyncRunRepository->markFailed($this->mapPinSyncRunId, $exception->getMessage());
-
-            throw $exception;
-        }
+        $action->execute($this->feedEntrySyncRunId, $this->mapPinSyncRunId);
     }
 
     public function failed(?Throwable $exception): void
