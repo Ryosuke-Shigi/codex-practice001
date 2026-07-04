@@ -12,6 +12,8 @@ MOCK / Prototypeのディレクトリ、Route、削除、Productとの物理的�
 
 MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへ引き継ぐUI契約は `docs/ui-development-flow.md` を正本とします。
 
+IDEA BOARD / MOCK のMarkdownテンプレートと、タイトル / タブ / タブ内インデックス / 内容表示エリアの共通画面構造は `docs/templates/idea-board-and-mock-template-policy.md` を正本とします。
+
 実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` を正本とします。
 
 MDルーターの詳細は `docs/ai/workflows/md-router.md` を正本とします。
@@ -61,6 +63,8 @@ Project / Stage / Module の一覧は `resources/js/Components/ProjectHub/projec
 
 この段階では完成仕様や本番構成を断定しません。
 
+IDEA BOARD作成時は `docs/templates/idea-board-template.md` を参照し、文字、表、フローチャート中心で整理します。
+
 次へ進む条件:
 
 - 利用目的を説明できる
@@ -72,6 +76,8 @@ Project / Stage / Module の一覧は `resources/js/Components/ProjectHub/projec
 固定データでUI部品、レイアウト、状態表示、操作感を確認する段階です。
 
 MOCKでは、画面を1つずつ作り、画面単体のUI契約を固定します。
+
+MOCK作成時は `docs/templates/mock-template.md` を参照し、固定データでUI、状態表示、操作感を確認します。
 
 扱ってよいもの:
 
@@ -316,6 +322,9 @@ PR確認時のレビュー強度は `docs/operations/pr-review-strength.md` に�
 
 - MOCK / Prototypeの配置・削除: `docs/prototype-policy.md`
 - MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
+- IDEA BOARD / MOCK 共通作成ルール: `docs/templates/idea-board-and-mock-template-policy.md`
+- IDEA BOARDテンプレート: `docs/templates/idea-board-template.md`
+- MOCKテンプレート: `docs/templates/mock-template.md`
 - MDルーター: `docs/ai/workflows/md-router.md`
 - 責務境界: `docs/architecture.md`
 - 実装作法: `docs/coding-standards.md`
