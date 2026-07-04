@@ -5,6 +5,7 @@ namespace App\Services\Earthquake;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewListDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlFeedPreviewDTO;
+use App\DTO\Earthquake\Preview\EarthquakeXmlFeedPreviewResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use SimpleXMLElement;
@@ -37,10 +38,7 @@ class EarthquakeXmlPreviewService
         private readonly EarthquakeEntryExtractService $entryExtractService,
     ) {}
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function fetchHighFrequencyFeedPreview(): array
+    public function fetchHighFrequencyFeedPreview(): EarthquakeXmlFeedPreviewResultDTO
     {
         return $this->fetchParsedFeedPreview()['preview'];
     }
@@ -55,7 +53,7 @@ class EarthquakeXmlPreviewService
     }
 
     /**
-     * @return array{preview: array<string, mixed>, feed: EarthquakeXmlFeedPreviewDTO|null}
+     * @return array{preview: EarthquakeXmlFeedPreviewResultDTO, feed: EarthquakeXmlFeedPreviewDTO|null}
      */
     private function fetchParsedFeedPreview(): array
     {
@@ -91,16 +89,16 @@ class EarthquakeXmlPreviewService
         }
 
         return [
-            'preview' => [
-                'endpoint' => $transport['endpoint'],
-                'method' => $transport['method'],
-                'success' => true,
-                'statusCode' => $transport['status_code'],
-                'fetchedAt' => $transport['fetched_at'],
-                'responseTimeMs' => $transport['response_time_ms'],
-                'error' => null,
-                'feed' => $feed->toArray(),
-            ],
+            'preview' => new EarthquakeXmlFeedPreviewResultDTO(
+                endpoint: $this->transportString($transport, 'endpoint') ?? '',
+                method: $this->transportString($transport, 'method') ?? 'GET',
+                success: true,
+                statusCode: $this->transportInt($transport, 'status_code'),
+                fetchedAt: $this->transportString($transport, 'fetched_at') ?? '',
+                responseTimeMs: $this->transportFloat($transport, 'response_time_ms'),
+                error: null,
+                feed: $feed,
+            ),
             'feed' => $feed,
         ];
     }
@@ -127,11 +125,11 @@ class EarthquakeXmlPreviewService
             : $this->fetchEarthquakeReportPreview($latestEntry->xmlUrl);
 
         return [
-            'success' => $preview['success'],
-            'statusCode' => $preview['statusCode'],
-            'fetchedAt' => $preview['fetchedAt'],
-            'responseTimeMs' => $preview['responseTimeMs'],
-            'error' => $preview['error'],
+            'success' => $preview->success,
+            'statusCode' => $preview->statusCode,
+            'fetchedAt' => $preview->fetchedAt,
+            'responseTimeMs' => $preview->responseTimeMs,
+            'error' => $preview->error,
             'feedTitle' => $feed?->feedTitle,
             'feedUpdatedAt' => $feed?->feedUpdatedAt,
             'entryCount' => $extractedEntries?->count() ?? 0,
@@ -435,27 +433,26 @@ class EarthquakeXmlPreviewService
 
     /**
      * @param  array<string, mixed>  $transport
-     * @return array<string, mixed>
      */
-    private function failurePreview(array $transport, string $message): array
+    private function failurePreview(array $transport, string $message): EarthquakeXmlFeedPreviewResultDTO
     {
         /*
          * React 側は result.error の有無だけでエラー区画を出せるようにします。
          * status は HTTP response がない場合 null になり、message は safeErrorMessage() で短く丸めます。
          */
-        return [
-            'endpoint' => $transport['endpoint'],
-            'method' => $transport['method'],
-            'success' => false,
-            'statusCode' => $transport['status_code'],
-            'fetchedAt' => $transport['fetched_at'],
-            'responseTimeMs' => $transport['response_time_ms'],
-            'error' => [
-                'status' => $transport['status_code'],
+        return new EarthquakeXmlFeedPreviewResultDTO(
+            endpoint: $this->transportString($transport, 'endpoint') ?? '',
+            method: $this->transportString($transport, 'method') ?? 'GET',
+            success: false,
+            statusCode: $this->transportInt($transport, 'status_code'),
+            fetchedAt: $this->transportString($transport, 'fetched_at') ?? '',
+            responseTimeMs: $this->transportFloat($transport, 'response_time_ms'),
+            error: [
+                'status' => $this->transportInt($transport, 'status_code'),
                 'message' => $message,
             ],
-            'feed' => null,
-        ];
+            feed: null,
+        );
     }
 
     private function safeErrorMessage(mixed $message): string
@@ -496,5 +493,23 @@ class EarthquakeXmlPreviewService
     private function transportString(array $transport, string $key): ?string
     {
         return is_string($transport[$key] ?? null) ? $transport[$key] : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $transport
+     */
+    private function transportInt(array $transport, string $key): ?int
+    {
+        return is_int($transport[$key] ?? null) ? $transport[$key] : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $transport
+     */
+    private function transportFloat(array $transport, string $key): float
+    {
+        $value = $transport[$key] ?? null;
+
+        return is_int($value) || is_float($value) ? (float) $value : 0.0;
     }
 }

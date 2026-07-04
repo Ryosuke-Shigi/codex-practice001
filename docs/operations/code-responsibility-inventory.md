@@ -2,8 +2,8 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-03
-- Canonical source: this document for the 2026-07-03 responsibility inventory; current code, feature docs, migrations, configuration, and successful tests for implemented behavior
+- Last reviewed: 2026-07-04
+- Canonical source: this document for the 2026-07-03 responsibility inventory and 2026-07-04 QuakeWavePreview / JapanQuake additional inventory; current code, feature docs, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
 
@@ -342,6 +342,34 @@ route、Inertia propsキー、React Page / Component、Migration、DBスキー�
 - `any` や二段階型アサーションで契約の不明瞭さを隠していないか
 - コメント / PHPDoc / JSDoc が実装と矛盾していないか
 - `仮` がMOCK / PROTOTYPE / IDEA BOARDの意図説明ではなく、未確定仕様の正当化になっていないか
+
+## 2026-07-04 QuakeWavePreview / JapanQuake 追加棚卸し
+
+確認範囲:
+
+- `routes/web.php` の `/quakewave-preview`、map、mock、xml、feed entry sync、map pin sync、refresh、status API
+- `routes/console.php` の `earthquake-map-refresh` Scheduler入口
+- QuakeWavePreview / JapanQuake 周辺の Controller / Request / Action / Service / Repository / DTO / Responder / Job / Artisan Command / Feature Test / Unit Test
+
+確認結果:
+
+- Controller は HTTP入口に寄っており、今回 `QuakeWavePreviewXmlController` から Service 直呼びと Inertia props 直組みを外し、`GetQuakeWavePreviewXmlAction` / `QuakeWavePreviewXmlResponder` へ接続しました。
+- `GetQuakeWavePreviewIndexAction` は配列Resultではなく `QuakeWavePreviewIndexResultDTO` を返し、Responder が既存 Inertia props 形へ変換する境界に整理しました。
+- `EarthquakeXmlPreviewService` は XML取得結果を `EarthquakeXmlFeedPreviewResultDTO` として返し、`result` props の key は Responder 側で既存形のまま維持しています。
+- Feed / map pin sync 開始、status API、統合refresh、Job / Artisan Command / Scheduler は棚卸しのみで、Queue設定、Scheduler設定、外部API仕様、route、route name、JSON key、Inertia props keyは変更していません。
+- Repository は DB / 外部XML取得境界、Service はXML解析・抽出・同期結果分類、Responder はJSON / Inertia props整形に寄っています。今回の差分で DB / Migration / Model / Docker / nginx / queue / scheduler / `.env` / 本番環境は変更していません。
+
+追加テスト:
+
+- `EarthquakeXmlFeedPreviewResultDTOTest`: XML preview result の success / error shape を固定
+- `QuakeWavePreviewIndexResultDTOTest`: index ResultDTO から sync run 配列へ変換する境界を固定
+
+Sensors:
+
+- `SENS-007`: QuakeWavePreview / JapanQuake 周辺のレイヤー責務境界を確認
+- `SENS-008`: Job / Queue / Scheduler / External API は棚卸し対象のみ。実変更なし
+- `SENS-012`: Responder契約は既存 props / JSON key 維持を確認
+- `SENS-010`: secrets / .env / config 実値は変更なし
 
 ## PR Summaryに書けるSensors確認
 
