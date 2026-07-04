@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\QuakeWavePreview;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeFeedEntrySyncAction;
 use App\Actions\Earthquake\Commands\StartEarthquakeFeedEntrySyncAction;
 use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryDTO;
 use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
@@ -172,7 +173,9 @@ class QuakeWavePreviewFeedEntrySyncTest extends TestCase
             }
         };
 
-        (new SyncEarthquakeFeedEntriesJob($syncRunId))->handle($repository, $syncService);
+        (new SyncEarthquakeFeedEntriesJob($syncRunId))->handle(
+            new RunEarthquakeFeedEntrySyncAction($repository, $syncService),
+        );
 
         $status = $repository->findResult($syncRunId);
 

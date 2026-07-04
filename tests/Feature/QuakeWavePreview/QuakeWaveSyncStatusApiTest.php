@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\QuakeWavePreview;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeFeedEntrySyncAction;
+use App\Actions\Earthquake\Commands\RunEarthquakeMapPinSyncAction;
+use App\Actions\Earthquake\Commands\RunEarthquakeMapRefreshAction;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Jobs\Earthquake\RefreshEarthquakeMapDataJob;
@@ -51,23 +54,23 @@ class QuakeWaveSyncStatusApiTest extends TestCase
         $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
         $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
         $job = new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId);
+        $mapPinBuildService = new class extends EarthquakeMapPinBuildService
+        {
+            public function __construct() {}
+
+            public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
+            {
+                throw new RuntimeException('map pin generation failed');
+            }
+        };
         $caughtException = null;
 
         try {
-            $job->handle(
-                $feedEntrySyncRunRepository,
+            $job->handle(new RunEarthquakeMapRefreshAction(
+                new RunEarthquakeFeedEntrySyncAction($feedEntrySyncRunRepository, app(EarthquakeFeedEntrySyncService::class)),
+                new RunEarthquakeMapPinSyncAction($mapPinSyncRunRepository, $mapPinBuildService),
                 $mapPinSyncRunRepository,
-                app(EarthquakeFeedEntrySyncService::class),
-                new class extends EarthquakeMapPinBuildService
-                {
-                    public function __construct() {}
-
-                    public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
-                    {
-                        throw new RuntimeException('map pin generation failed');
-                    }
-                },
-            );
+            ));
 
             $this->fail('Map pin generation failure should be rethrown.');
         } catch (RuntimeException $exception) {

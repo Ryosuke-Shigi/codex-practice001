@@ -2,8 +2,8 @@
 
 namespace App\Jobs\Earthquake;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeFeedEntrySyncAction;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
-use App\Services\Earthquake\EarthquakeFeedEntrySyncService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -11,8 +11,8 @@ use Throwable;
 /**
  * Japan Quake Wave Map の Atom feed entry 同期を Queue で実行する Job です。
  *
- * HTTP 入口から受け取った syncRunId の状態を更新し、同期本体は Service へ委譲します。
- * Job へ XML 解析や entry upsert 条件を置かないことで、再実行時の境界を読みやすくします。
+ * HTTP 入口から受け取った syncRunId を実行用 Action へ渡します。
+ * Job へ XML 解析や entry upsert 条件、状態反映手順を置かないことで、再実行時の境界を読みやすくします。
  */
 class SyncEarthquakeFeedEntriesJob implements ShouldQueue
 {
@@ -29,31 +29,15 @@ class SyncEarthquakeFeedEntriesJob implements ShouldQueue
     ) {}
 
     /**
-     * feed entry 同期 run を running へ進め、Service の集計結果を完了状態へ反映します。
+     * feed entry 同期 run の実行を Command Action へ委譲します。
      */
-    public function handle(
-        EarthquakeFeedEntrySyncRunRepositoryInterface $syncRunRepository,
-        EarthquakeFeedEntrySyncService $syncService,
-    ): void {
+    public function handle(RunEarthquakeFeedEntrySyncAction $action): void
+    {
         /*
-         * Job は非同期実行の入口だけを担当します。
-         * XML解析やDB upsert詳細は Service / Repository へ委譲します。
-         *
-         * running への状態更新は Service 実行前に行います。
-         * これにより React polling は「Queue worker が拾ったか」と「同期本体が終わったか」を
-         * pending / running / completed / failed の段階として追えます。
+         * Job は Queue worker が拾った事実と payload を Action へ渡す入口に留めます。
+         * pending / running / completed / failed の状態遷移は Action 側で固定します。
          */
-        $syncRunRepository->markRunning($this->syncRunId);
-
-        try {
-            $result = $syncService->sync($this->syncRunId);
-        } catch (Throwable $exception) {
-            $syncRunRepository->markFailed($this->syncRunId, $exception->getMessage());
-
-            throw $exception;
-        }
-
-        $syncRunRepository->markCompleted($this->syncRunId, $result);
+        $action->execute($this->syncRunId);
     }
 
     /**

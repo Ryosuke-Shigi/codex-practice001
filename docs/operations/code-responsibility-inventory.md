@@ -371,6 +371,38 @@ Sensors:
 - `SENS-012`: Responder契約は既存 props / JSON key 維持を確認
 - `SENS-010`: secrets / .env / config 実値は変更なし
 
+## 2026-07-04 JapanQuake Service / Repository / DTO / Job / Command 追加棚卸し
+
+確認範囲:
+
+- `routes/console.php` の `earthquake:refresh-map` Scheduler / Artisan Command入口
+- `app/Actions/Earthquake/Commands`、`app/Jobs/Earthquake`、`app/Services/Earthquake`、`app/Repositories/Earthquake`、`app/DTO/Earthquake`
+- `tests/Feature/QuakeWavePreview`、`tests/Unit/Earthquake`
+- `docs/features/japan-quake-wave-map.md`、`docs/features/application-logs.md`
+
+確認結果:
+
+- Scheduler は15分ごとのCommand登録のみで、同期本体や業務判断は置いていません。Command名、実行頻度、queue / scheduler 設定は変更していません。
+- Artisan Command は `StartEarthquakeMapRefreshAction` の起動とコンソール出力に留め、外部XML取得、DB更新、sync run状態遷移は直接持たない境界のままです。
+- Job はQueue入口として run id を受け取り、実行本体は `RunEarthquakeFeedEntrySyncAction`、`RunEarthquakeMapPinSyncAction`、`RunEarthquakeMapRefreshAction` へ移しました。`failed()` は worker timeout / kill などActionまで届かない失敗のfallbackとして残し、統合refreshでは完了済みrunを failed で上書きしない条件を維持しています。
+- Command Action は queued run の状態遷移と feed -> map pin の実行順序を担当します。Service は同期処理の結果分類、XML解析、map pin build結果を担当し、HTTP Response / Inertia props / console出力へ寄せていません。
+- `EarthquakeFeedEntrySyncService` はfeed fetch結果の解釈、Atom entry抽出、upsert集計を担当します。`EarthquakeMapPinBuildService` はdetail XML取得結果の分類、skip / failure集計、ログ要約、map pin同期結果を担当します。`EarthquakeDetailXmlParseService` はdetail XMLからmap pin DTOへの変換と `isMappable` 判定を担当します。
+- Repository はJMA XML transportまたはDB永続化境界に留めています。map pin の `event_id` / `reported_at` 更新条件は現在のDB同一性・上書き条件としてRepository側にありますが、今後業務ポリシーとして肥大化する場合はServiceへ移す候補です。
+- `EarthquakeExtractedEntryListDTO` は items / count / toArray のデータ保持へ寄せ、latest entry選択は `EarthquakeEntryExtractService` へ移しました。同期ResultDTOの `fromModel()` はロード済みModelからのDTO復元であり、DB操作やレスポンス生成は行っていません。
+
+変更していないもの:
+
+- route、route name、API JSON key、Inertia / React props key、React画面構造
+- DB / Migration / Model、Docker / nginx / queue / scheduler config、`.env`、本番環境、外部API仕様
+
+Sensors:
+
+- `SENS-007`: Service / Repository / DTO / Job / Command のレイヤー責務境界を確認し、Job実行本体とDTO表示判断寄りロジックを整理
+- `SENS-008`: Job / Queue / Scheduler / External API を棚卸し。Jobの委譲先は整理したが、queue / scheduler runtime config と外部API仕様は変更なし
+- `SENS-011`: DB / Migration / rollback 変更なし
+- `SENS-012`: API JSON key / Inertia props key / React props契約は変更なし
+- `SENS-016`: DTOコメントを実装責務に合わせて更新
+
 ## PR Summaryに書けるSensors確認
 
 該当Sensors:

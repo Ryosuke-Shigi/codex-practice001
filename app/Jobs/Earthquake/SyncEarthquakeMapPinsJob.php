@@ -2,8 +2,8 @@
 
 namespace App\Jobs\Earthquake;
 
+use App\Actions\Earthquake\Commands\RunEarthquakeMapPinSyncAction;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
-use App\Services\Earthquake\EarthquakeMapPinBuildService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -11,8 +11,8 @@ use Throwable;
 /**
  * Japan Quake Wave Map の map pin 生成を Queue で実行する Job です。
  *
- * POST 入口で作成された syncRunId を受け取り、状態遷移と Service 呼び出しだけを担当します。
- * 個別XML取得、解析、pin生成可否、DB保存条件は Service / Repository に置きます。
+ * POST 入口で作成された syncRunId を実行用 Action へ渡します。
+ * 個別XML取得、解析、pin生成可否、DB保存条件、状態反映手順は Job に置きません。
  */
 class SyncEarthquakeMapPinsJob implements ShouldQueue
 {
@@ -29,31 +29,15 @@ class SyncEarthquakeMapPinsJob implements ShouldQueue
     ) {}
 
     /**
-     * map pin 同期 run を running へ進め、生成 Service の結果を完了状態として保存します。
+     * map pin 同期 run の実行を Command Action へ委譲します。
      */
-    public function handle(
-        EarthquakeMapPinSyncRunRepositoryInterface $syncRunRepository,
-        EarthquakeMapPinBuildService $buildService,
-    ): void {
+    public function handle(RunEarthquakeMapPinSyncAction $action): void
+    {
         /*
-         * Job は Queue worker が実行する入口だけを担当します。
-         * 個別XML取得、XML解析、DTO化、upsert の詳細は Service / Repository へ委譲します。
-         *
-         * pending -> running は worker がJobを拾った事実を表します。
-         * React polling はこの段階遷移を見ることで「POSTは成功したがworker待ち」なのか
-         * 「workerが処理中」なのかを区別できます。
+         * Job は Queue worker が拾った事実と payload を Action へ渡す入口に留めます。
+         * pending -> running 以降の状態遷移は Action 側で固定します。
          */
-        $syncRunRepository->markRunning($this->syncRunId);
-
-        try {
-            $result = $buildService->sync($this->syncRunId);
-        } catch (Throwable $exception) {
-            $syncRunRepository->markFailed($this->syncRunId, $exception->getMessage());
-
-            throw $exception;
-        }
-
-        $syncRunRepository->markCompleted($this->syncRunId, $result);
+        $action->execute($this->syncRunId);
     }
 
     /**

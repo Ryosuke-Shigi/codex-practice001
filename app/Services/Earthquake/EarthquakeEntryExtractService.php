@@ -42,11 +42,28 @@ class EarthquakeEntryExtractService
 
     public function extractLatest(EarthquakeXmlEntryPreviewListDTO $entries): ?EarthquakeExtractedEntryDTO
     {
+        return $this->latestFromExtractedEntries($this->extractAll($entries));
+    }
+
+    public function latestFromExtractedEntries(EarthquakeExtractedEntryListDTO $entries): ?EarthquakeExtractedEntryDTO
+    {
+        if ($entries->items === []) {
+            return null;
+        }
+
+        $items = $entries->items;
+
         /*
-         * 最新判定は ListDTO 側へ寄せています。
-         * Service は「抽出してから最新を取る」という手順だけを持ち、比較ルールを重複させません。
+         * updatedAt を優先し、なければ publishedAt で比較します。
+         * strtotime() できない entry は timestamp 0 として扱い、自然に後ろへ回します。
+         * 最新候補の選択は DTO ではなく、entry 抽出 Service のルールとして固定します。
          */
-        return $this->extractAll($entries)->latest();
+        usort(
+            $items,
+            fn (EarthquakeExtractedEntryDTO $left, EarthquakeExtractedEntryDTO $right): int => $this->entryTimestamp($right) <=> $this->entryTimestamp($left),
+        );
+
+        return $items[0];
     }
 
     private function isEarthquakeEntry(EarthquakeXmlEntryPreviewDTO $entry): bool
@@ -99,5 +116,16 @@ class EarthquakeEntryExtractService
     {
         // JMA の日本語 title/category をそのまま判定するため、mb_strpos() を使います。
         return mb_strpos($haystack, $needle) !== false;
+    }
+
+    private function entryTimestamp(EarthquakeExtractedEntryDTO $entry): int
+    {
+        /*
+         * updatedAt / publishedAt は JMA Atom 由来の文字列なので、Preview 段階では timestamp 化に留めます。
+         */
+        $value = $entry->updatedAt ?? $entry->publishedAt;
+        $timestamp = is_string($value) ? strtotime($value) : false;
+
+        return $timestamp === false ? 0 : $timestamp;
     }
 }

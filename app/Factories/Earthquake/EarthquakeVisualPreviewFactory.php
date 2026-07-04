@@ -35,10 +35,10 @@ class EarthquakeVisualPreviewFactory
         /*
          * 現段階では震度別デザインの確認が主目的です。
          * 抽出済み entry が渡された場合も、Factory は抽出ロジックを持たず、
-         * latest() の有無だけを見て「最新 entry 連動の余地」を残した DTO を作ります。
+         * entry の有無だけを見て「最新 entry 連動の余地」を残した DTO を作ります。
          */
-        $latest = $entries->latest();
-        $primaryLabel = $latest === null ? '震度7' : '最新地震entry';
+        $hasEntries = $entries->count() > 0;
+        $primaryLabel = $hasEntries ? '最新地震entry' : '震度7';
 
         /*
          * ここで返す値は「震度別デザイン確認用」の固定サンプルです。

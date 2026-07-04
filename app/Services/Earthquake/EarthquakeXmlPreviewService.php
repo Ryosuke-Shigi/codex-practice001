@@ -2,6 +2,7 @@
 
 namespace App\Services\Earthquake;
 
+use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlEntryPreviewListDTO;
 use App\DTO\Earthquake\Preview\EarthquakeXmlFeedPreviewDTO;
@@ -119,7 +120,9 @@ class EarthquakeXmlPreviewService
         $extractedEntries = $feed instanceof EarthquakeXmlFeedPreviewDTO
             ? $this->entryExtractService->extractAll($feed->entries)
             : null;
-        $latestEntry = $extractedEntries?->latest();
+        $latestEntry = $extractedEntries instanceof EarthquakeExtractedEntryListDTO
+            ? $this->entryExtractService->latestFromExtractedEntries($extractedEntries)
+            : null;
         $earthquakeReport = $latestEntry?->xmlUrl === null
             ? null
             : $this->fetchEarthquakeReportPreview($latestEntry->xmlUrl);
