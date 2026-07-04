@@ -360,7 +360,7 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
         sections: [
             {
                 title: 'タブ切り替えの構造',
-                lead: '画面は5タブを持ち、React Componentは表示中タブのUI状態だけを管理します。',
+                lead: '画面は5タブを持ち、React Componentは選んだタブのUI状態だけを管理します。',
                 cards: [
                     {
                         title: 'Page',
@@ -371,7 +371,7 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
                     {
                         title: 'Component',
                         badge: '表示',
-                        body: 'Componentはタブ切り替え、表示中タブの描画、カード/リスト表示だけを担当する。',
+                        body: 'Componentはタブ切り替え、選んだタブの描画、カード/リスト表示だけを担当する。',
                         tone: 'sky',
                     },
                     {
@@ -381,7 +381,7 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
                         tone: 'emerald',
                     },
                     {
-                        title: '表示中タブだけ描画',
+                        title: '選んだタブだけ描画',
                         badge: 'UI状態',
                         body: '全タブ内容を1枚に縦並びせず、選んだタブの内容だけを表示する。',
                         tone: 'amber',

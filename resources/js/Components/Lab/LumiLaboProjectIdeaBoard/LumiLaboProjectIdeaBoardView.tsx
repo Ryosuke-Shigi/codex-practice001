@@ -80,11 +80,6 @@ function TopTabBar({
                                 <Icon className="h-5 w-5 flex-none" aria-hidden />
                                 <span className="min-w-0 truncate">{tab.label}</span>
                             </span>
-                            {isActive ? (
-                                <span className="inline-flex min-h-7 flex-none items-center rounded-md border border-yellow-700 bg-white px-2 text-sm font-semibold text-yellow-950">
-                                    表示中
-                                </span>
-                            ) : null}
                         </button>
                     );
                 })}
@@ -203,7 +198,7 @@ function CompactItemList({ items }: { items: readonly string[] }) {
 
 function getTabButtonClasses(isActive: boolean): string {
     return classNames(
-        'flex min-h-11 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500',
+        'flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-left text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500',
         isActive
             ? 'border-yellow-700 bg-yellow-300 text-black shadow-md shadow-yellow-900/20 ring-2 ring-yellow-500'
             : 'border-neutral-200 bg-white text-neutral-800 hover:border-yellow-500 hover:bg-neutral-50',

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import LumiLaboProjectIdeaBoardView from './LumiLaboProjectIdeaBoardView';
 
 describe('LumiLaboProjectIdeaBoardView', () => {
-    it('初期表示はTOPで、必須タブと表示中状態を表示する', () => {
+    it('初期表示はTOPで、必須タブと選択状態の見た目を表示する', () => {
         const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
 
         expect(markup).toContain('LumiLabo 案件システム IDEA BOARD');
@@ -13,8 +13,8 @@ describe('LumiLaboProjectIdeaBoardView', () => {
         expect(markup).toContain('案件作成');
         expect(markup).toContain('案件一覧');
         expect(markup).toContain('Coding');
-        expect(markup).toContain('表示中');
         expect(markup).toContain('bg-yellow-300');
+        expect(markup).not.toContain('表示中');
         expect(markup).toContain('案件システムTOP構想');
         expect(markup).toContain('TOPで見せる入口');
         expect(markup).toContain('案件作成へ進む入口');
