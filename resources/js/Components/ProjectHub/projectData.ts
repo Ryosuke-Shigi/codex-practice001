@@ -2,6 +2,7 @@ export type ProjectId =
     | 'api-discovery-hub'
     | 'dance-shorts'
     | 'japan-quake-wave-map'
+    | 'lumilabo'
     | 'construction-order'
     | 'event-card-calendar'
     | 'logs';
@@ -287,6 +288,43 @@ export const projects: Project[] = [
                             '気象庁XMLから保存した震源・震度・波紋を地図で確認します。',
                         route: '/quakewave-preview/map',
                         iconKey: 'radar',
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'lumilabo',
+        name: 'LumiLabo',
+        description:
+            'LumiLaboは案件システムを最初のサブシステムとして育てる上位プロダクトです。',
+        iconKey: 'lightbulb',
+        theme: {
+            background: '#111827',
+            backgroundGlow: '#facc15',
+            sphere: '#facc15',
+            sphereShadow: 'rgba(250, 204, 21, 0.36)',
+            accent: '#ca8a04',
+            surface: 'rgba(17, 24, 39, 0.72)',
+            text: '#fffbea',
+            muted: '#fde68a',
+        },
+        stages: [
+            {
+                kind: 'idea-board',
+                name: 'IDEA BOARD',
+                description:
+                    '案件作成を中心に、案件一覧、案件詳細、工程へつなげる案件システム構想を整理します。',
+                status: 'available',
+                iconKey: 'lightbulb',
+                modules: [
+                    {
+                        id: 'project-system-idea-board',
+                        name: '案件システム',
+                        description:
+                            'TOP、案件、案件作成、案件一覧、Codingをタブで切り替えて確認します。',
+                        route: '/lab/lumilabo-project-idea-board',
+                        iconKey: 'clipboard',
                     },
                 ],
             },

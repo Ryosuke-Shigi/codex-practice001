@@ -57,6 +57,14 @@ class ProjectHubTest extends TestCase
             );
 
         $this
+            ->get('/projects/lumilabo')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Projects/Hub', false)
+                ->where('projectId', 'lumilabo')
+            );
+
+        $this
             ->get('/projects/construction-order')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -75,6 +83,13 @@ class ProjectHubTest extends TestCase
             );
 
         $this
+            ->get('/lab/lumilabo-project-idea-board')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Lab/LumiLaboProjectIdeaBoard', false)
+            );
+
+        $this
             ->get('/lab/construction-order-workflow-idea-board')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -87,6 +102,13 @@ class ProjectHubTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Lab/ConstructionOrderNewMock', false)
             );
+    }
+
+    public function test_old_lumilabo_project_create_idea_board_url_redirects_to_project_system_idea_board(): void
+    {
+        $this
+            ->get('/lab/lumilabo-project-create-idea-board')
+            ->assertRedirect('/lab/lumilabo-project-idea-board');
     }
 
     public function test_legacy_lab_entrypoint_and_compatibility_urls_are_removed(): void

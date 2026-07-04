@@ -46,6 +46,22 @@ describe('ProjectHubView', () => {
         expect(markup).not.toContain('construction-order-new-mock');
     });
 
+    it('renders LumiLabo project system idea board module', () => {
+        const markup = renderToStaticMarkup(
+            <ProjectHubView projectId="lumilabo" />,
+        );
+
+        expect(markup).toContain('LumiLabo');
+        expect(markup).toContain('上位プロダクト');
+        expect(markup).toContain('案件システム');
+        expect(markup).toContain('案件作成');
+        expect(markup).toContain('案件一覧');
+        expect(markup).toContain('Coding');
+        expect(markup).toContain('href="/lab/lumilabo-project-idea-board"');
+        expect(markup).not.toContain('MOCK');
+        expect(markup).not.toContain('PRODUCT');
+    });
+
     it('renders logs project with API and error tabs instead of stage cards', () => {
         const markup = renderToStaticMarkup(
             <ProjectHubView

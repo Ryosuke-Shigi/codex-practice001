@@ -133,7 +133,7 @@ Secondary Actionは、full widthのoutline、本文内リンク、またはメ�
 - pressed状態
 - loading状態
 - disabled状態
-- 選択中状態
+- アクティブ状態
 
 画面切り替え、タブ切り替え、詳細展開では、急に内容が入れ替わったように見えない動きを入れる。
 

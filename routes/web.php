@@ -219,3 +219,10 @@ Route::get('/api-preview/apis-guru/mock', [ApisGuruPreviewController::class, 'mo
     ->name('api-preview.apis-guru.mock');
 Route::get('/api-preview/apis-guru/mock-error', [ApisGuruPreviewController::class, 'mockError'])
     ->name('api-preview.apis-guru.mock-error');
+
+Route::get('/lab/lumilabo-project-idea-board', function () {
+    return Inertia::render('Lab/LumiLaboProjectIdeaBoard');
+})->name('lab.lumilabo-project-idea-board');
+
+Route::redirect('/lab/lumilabo-project-create-idea-board', '/lab/lumilabo-project-idea-board')
+    ->name('lab.lumilabo-project-create-idea-board.redirect');
