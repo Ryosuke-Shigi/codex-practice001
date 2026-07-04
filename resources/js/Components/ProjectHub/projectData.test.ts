@@ -8,6 +8,7 @@ describe('ProjectHub static project data', () => {
             'api-discovery-hub',
             'dance-shorts',
             'japan-quake-wave-map',
+            'lumilabo',
             'construction-order',
             'event-card-calendar',
             'logs',
@@ -35,6 +36,33 @@ describe('ProjectHub static project data', () => {
         ).toEqual(['product', 'mock', 'idea-board']);
     });
 
+    it('keeps LumiLabo as an upper project with a project system idea board', () => {
+        const lumiLabo = projects.find((project) => project.id === 'lumilabo');
+
+        expect(lumiLabo).toBeDefined();
+        expect(lumiLabo?.name).toBe('LumiLabo');
+        expect(lumiLabo?.description).toContain('上位プロダクト');
+        expect(lumiLabo?.description).toContain('案件システム');
+        expect(lumiLabo?.theme.background).toBe('#111827');
+        expect(lumiLabo?.theme.sphere).toBe('#facc15');
+        expect(lumiLabo?.theme.text).toBe('#fffbea');
+
+        const ideaBoardStage = lumiLabo?.stages.find(
+            (stage) => stage.kind === 'idea-board',
+        );
+
+        expect(ideaBoardStage?.description).toContain('案件システム');
+        expect(ideaBoardStage?.description).toContain('案件作成');
+        expect(ideaBoardStage?.description).toContain('案件一覧');
+        expect(ideaBoardStage?.modules?.map((module) => module.name)).toEqual([
+            '案件システム',
+        ]);
+        expect(ideaBoardStage?.modules?.[0].description).toContain('5タブ');
+        expect(ideaBoardStage?.modules?.[0].route).toBe(
+            '/lab/lumilabo-project-idea-board',
+        );
+    });
+
     it('keeps current Project Hub routes without legacy Lab selection URLs', () => {
         const routes = projects.flatMap((project) =>
             project.stages.flatMap((stage) => [
@@ -46,6 +74,7 @@ describe('ProjectHub static project data', () => {
         expect(routes).toContain('/lab/construction-order-workflow-idea-board');
         expect(routes).toContain('/lab/construction-order-workflow-mock');
         expect(routes).toContain('/lab/event-card-calendar-idea-board');
+        expect(routes).toContain('/lab/lumilabo-project-idea-board');
         expect(routes).not.toContain('/lab');
         expect(routes).not.toContain('/lab/construction-order-new-mock');
         expect(routes).not.toContain('/lab/construction-order-workflow-pp');
