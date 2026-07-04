@@ -51,11 +51,13 @@ describe('ProjectHub static project data', () => {
             (stage) => stage.kind === 'idea-board',
         );
 
+        expect(ideaBoardStage?.description).toContain('案件システム');
         expect(ideaBoardStage?.description).toContain('案件作成');
-        expect(ideaBoardStage?.description).toContain('登録項目');
+        expect(ideaBoardStage?.description).toContain('案件一覧');
         expect(ideaBoardStage?.modules?.map((module) => module.name)).toEqual([
             '案件システム',
         ]);
+        expect(ideaBoardStage?.modules?.[0].description).toContain('5タブ');
         expect(ideaBoardStage?.modules?.[0].route).toBe(
             '/lab/lumilabo-project-idea-board',
         );

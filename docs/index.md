@@ -176,9 +176,9 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 
 | 文書 | 対象 |
 |---|---|
-| [docs/lumilabo/index.md](lumilabo/index.md) | LumiLabo docs入口。UI方針と案件作成 IDEA BOARDへ辿る導線 |
+| [docs/lumilabo/index.md](lumilabo/index.md) | LumiLabo docs入口。UI方針と案件システム IDEA BOARDへ辿る導線 |
 | [docs/lumilabo/ui-design-guideline.md](lumilabo/ui-design-guideline.md) | LumiLaboの画面設計、表示方針、操作方針、レスポンシブ方針、日付別カードカレンダー、カードswitch方針 |
-| [docs/lumilabo/project-idea-board.md](lumilabo/project-idea-board.md) | LumiLabo 案件作成 IDEA BOARD の目的、必須タブ、登録セクション、実装対象と対象外 |
+| [docs/lumilabo/project-idea-board.md](lumilabo/project-idea-board.md) | LumiLabo 案件システム IDEA BOARD の目的、必須5タブ、案件概要、案件作成、案件一覧、実装対象と対象外 |
 
 ## テンプレート
 

@@ -1,8 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
 import {
     BookOpenText,
-    Home,
+    ClipboardList,
     Code2,
+    FileText,
     FolderKanban,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -17,15 +18,16 @@ import {
 } from './ideaBoardData';
 
 const tabIcons = {
-    overview: BookOpenText,
-    top: Home,
+    top: BookOpenText,
     project: FolderKanban,
+    projectCreate: ClipboardList,
+    projectList: FileText,
     coding: Code2,
 } satisfies Record<IdeaBoardTabId, LucideIcon>;
 
 export default function LumiLaboProjectIdeaBoardView() {
     const [activeTabId, setActiveTabId] =
-        useState<IdeaBoardTabId>('overview');
+        useState<IdeaBoardTabId>('top');
     const activeTab = getIdeaBoardTabById(activeTabId);
 
     return (
@@ -60,7 +62,7 @@ function TopTabBar({
             className="flex-none border-b border-neutral-200 bg-white px-2 py-2 sm:px-3"
             aria-label="LumiLabo 案件システム IDEA BOARD タブ"
         >
-            <div className="grid gap-1.5 sm:grid-cols-4">
+            <div className="grid gap-1.5 sm:grid-cols-5">
                 {ideaBoardTabs.map((tab) => {
                     const Icon = tabIcons[tab.id];
                     const isActive = activeTabId === tab.id;

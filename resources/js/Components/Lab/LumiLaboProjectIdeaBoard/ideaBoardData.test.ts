@@ -7,6 +7,7 @@ import {
     projectCreateInputCandidates,
     projectCreateNotInputItems,
     projectListFutureCards,
+    projectStatusConceptItems,
     requiredTabLabels,
 } from './ideaBoardData';
 
@@ -32,54 +33,78 @@ function collectTabText(tabId: Parameters<typeof getIdeaBoardTabById>[0]): strin
     ].join('\n');
 }
 
-describe('LumiLabo 案件作成 IDEA BOARD データ', () => {
-    it('上位タブを概要 / TOP / 案件 / Codingに戻し、案件作成と案件一覧を上位タブにしない', () => {
+describe('LumiLabo 案件システム IDEA BOARD データ', () => {
+    it('上位5タブをTOP / 案件 / 案件作成 / 案件一覧 / Codingで維持する', () => {
         expect(ideaBoardTabs.map((tab) => tab.label)).toEqual(requiredTabLabels);
-        expect(requiredTabLabels).toEqual(['概要', 'TOP', '案件', 'Coding']);
-        expect(ideaBoardTabs[0].id).toBe('overview');
-        expect(requiredTabLabels).not.toContain('案件作成');
-        expect(requiredTabLabels).not.toContain('案件一覧');
+        expect(requiredTabLabels).toEqual([
+            'TOP',
+            '案件',
+            '案件作成',
+            '案件一覧',
+            'Coding',
+        ]);
+        expect(ideaBoardTabs[0].id).toBe('top');
+        expect(requiredTabLabels).toContain('案件作成');
+        expect(requiredTabLabels).toContain('案件一覧');
+        expect(requiredTabLabels).not.toContain('概要');
         expect(requiredTabLabels).not.toContain('カレンダー');
     });
 
-    it('概要は案件作成MOCKへ進む前の整理であることを示す', () => {
-        const overviewText = collectTabText('overview');
-
-        expect(overviewText).toContain('案件作成MOCKへ進む前');
-        expect(overviewText).toContain('LumiLaboは上位プロダクト');
-        expect(overviewText).toContain('案件システム');
-        expect(overviewText).toContain('MOCK、PRODUCT、保存可能フォーム、DB、Backend、API通信、カレンダーへ進まない');
-        expect(overviewText).toContain('各カードが日付を持った後に検討する');
-    });
-
-    it('TOPは親導線を最低限に留め、案件作成入口を主にする', () => {
+    it('TOPは案件システムへ入った直後の入口と現在位置を示す', () => {
         const topText = collectTabText('top');
 
-        expect(topText).toContain('LumiLabo Hubから案件システムへ入る');
+        expect(topText).toContain('LumiLabo Hubから案件システムへ入った最初の画面');
         expect(topText).toContain('案件作成へ進む入口');
-        expect(topText).toContain('完成画面MOCKにはしない');
-        expect(topText).toContain('案件一覧、案件詳細、工程は後続');
-        expect(topText).not.toContain('導線 1');
-        expect(topText).not.toContain('導線 2');
+        expect(topText).toContain('案件一覧を見る入口');
+        expect(topText).toContain('現在位置');
+        expect(topText).toContain('TOPで作り込まないもの');
+        expect(topText).toContain('カレンダータブ、カレンダーMOCK、日付別カードカレンダーは作らない');
     });
 
-    it('案件タブは登録 / 一覧 / 詳細セクションを持ち、基本導線を持たない', () => {
+    it('案件タブは旧ルート説明ではなく案件システム概要を持つ', () => {
         const projectSections = getIdeaBoardTabById('project').sections.map(
             (section) => section.title,
         );
         const projectText = collectTabText('project');
 
-        expect(projectSections).toContain('登録');
-        expect(projectSections).toContain('一覧');
-        expect(projectSections).toContain('詳細');
-        expect(projectSections).not.toContain('基本導線');
-        expect(projectText).toContain('今回の主対象');
-        expect(projectText).not.toContain('導線 1');
-        expect(projectText).not.toContain('導線 2');
-        expect(projectText).not.toContain('projectRouteFlow');
+        expect(projectSections).toContain('案件とは何か');
+        expect(projectSections).toContain('案件システムで扱うこと');
+        expect(projectSections).toContain('1案件として扱う初期情報');
+        expect(projectSections).toContain('案件ステータス');
+        expect(projectSections).toContain('後続工程の起点');
+        expect(projectSections).not.toContain(['基', '本', '導', '線'].join(''));
+        expect(projectText).toContain('何を1案件として扱うか');
+        expect(projectText).toContain('LumiLaboは上位プロダクト');
+        expect(projectText).toContain('案件システムは最初のサブシステム');
+        expect(projectText).toContain('案件詳細は、案件基本情報と工程への入口');
+        expect(projectText).not.toContain(['導線', ' 1'].join(''));
+        expect(projectText).not.toContain(['導線', ' 2'].join(''));
+        expect(projectText).not.toContain(['project', 'Route', 'Flow'].join(''));
     });
 
-    it('登録セクションは入力対象と表示対象を固定範囲で整理する', () => {
+    it('案件タブの初期情報とステータス概念を固定する', () => {
+        const projectText = collectTabText('project');
+
+        expect(projectText).toContain('会社名');
+        expect(projectText).toContain('担当者名');
+        expect(projectText).toContain('住所');
+        expect(projectText).toContain('メモ');
+        expect(projectText).toContain('登録日表示');
+        expect(projectText).toContain('ステータス表示');
+        expect(projectText).toContain('created_at');
+        expect(projectText).toContain('案件名は初期項目へ勝手に追加しない');
+        expect(projectText).toContain('郵便番号、都道府県、市区町村へ勝手に分割しない');
+        expect(projectStatusConceptItems).toEqual([
+            '初期作成時は「進行中」候補として扱う。',
+            '完了は、必要な工程を通り切った状態として扱う。',
+            '終了は、キャンセル、失注、対象外など途中で閉じる状態として扱う。',
+            '今回はステータス変更UIや完了判定を作らない。',
+        ]);
+    });
+
+    it('案件作成タブは入力対象と表示対象を分ける', () => {
+        const createText = collectTabText('projectCreate');
+
         expect(projectCreateInputCandidates.map((item) => item.title)).toEqual([
             '会社名',
             '担当者名',
@@ -95,10 +120,12 @@ describe('LumiLabo 案件作成 IDEA BOARD データ', () => {
         expect(projectCreateDisplayCandidates[0].body).toContain('入力欄にしない');
         expect(projectCreateDisplayCandidates[1].body).toContain('進行中');
         expect(projectCreateDisplayCandidates[1].body).toContain('ステータス変更UIも作らない');
+        expect(createText).toContain('入力対象');
+        expect(createText).toContain('表示対象');
     });
 
-    it('登録セクションへ混ぜないものを明示する', () => {
-        expect(projectCreateNotInputItems).toContain('登録日');
+    it('案件作成タブへ混ぜないものを明示する', () => {
+        expect(projectCreateNotInputItems).toContain('登録日入力');
         expect(projectCreateNotInputItems).toContain('案件名');
         expect(projectCreateNotInputItems).toContain('郵便番号 / 都道府県 / 市区町村などへ分割した住所');
         expect(projectCreateNotInputItems).toContain('ステータス変更UI');
@@ -108,7 +135,9 @@ describe('LumiLabo 案件作成 IDEA BOARD データ', () => {
         expect(projectCreateNotInputItems).toContain('完了判定に関わる情報');
     });
 
-    it('一覧セクションは後続概念だけで、固定データ付き一覧MOCKにしない', () => {
+    it('案件一覧タブは1案件カードのモバイルファースト構想を持つ', () => {
+        const listText = collectTabText('projectList');
+
         expect(projectListFutureCards.map((item) => item.title)).toEqual([
             '会社名',
             '担当者名',
@@ -117,29 +146,20 @@ describe('LumiLabo 案件作成 IDEA BOARD データ', () => {
             '住所の短い表示候補',
             'メモの有無 / 短いメモ表示候補',
         ]);
-
-        const projectText = collectTabText('project');
-
-        expect(projectText).toContain('一覧は後続セクション');
-        expect(projectText).toContain('固定データMOCKも作りません');
-        expect(projectText).toContain('1案件 = 1カード');
-        expect(projectText).toContain('詳細へ進む操作はアイコンだけにしない');
+        expect(listText).toContain('1案件 = 1カード');
+        expect(listText).toContain('モバイルでは横長テーブルではなく、カード型リスト');
+        expect(listText).toContain('状態は色だけでなく文字で表示');
+        expect(listText).toContain('詳細へ進む操作はアイコンだけにしない');
+        expect(listText).toContain('固定データ付き一覧MOCKは作らない');
+        expect(listText).toContain('DB取得やAPI通信は作らない');
     });
 
-    it('詳細セクションは後続として見せるだけで、工程や判定を作り込まない', () => {
-        const projectText = collectTabText('project');
-
-        expect(projectText).toContain('詳細は後続セクション');
-        expect(projectText).toContain('案件詳細画面や工程デッキ / 工程カードは作りません');
-        expect(projectText).toContain('工程カードの状態変更、完了判定、スルー判定は今回扱わない');
-    });
-
-    it('CodingタブでIDEA BOARD段階の責務境界を確認できる', () => {
+    it('CodingタブでIDEA BOARD段階と将来PRODUCT化の責務境界を確認できる', () => {
         const codingText = collectTabText('coding');
 
-        expect(codingText).toContain('Page / Component / data');
-        expect(codingText).toContain('型付き静的データ');
-        expect(codingText).toContain('DB、Backend、API通信、保存処理、完了判定を持たせない');
+        expect(codingText).toContain('画面は5タブ');
+        expect(codingText).toContain('型付きの静的データ');
+        expect(codingText).toContain('保存処理、API通信、DB取得、権限判断は持たせない');
         expect(codingText).toContain('Controller');
         expect(codingText).toContain('Request');
         expect(codingText).toContain('Action');
