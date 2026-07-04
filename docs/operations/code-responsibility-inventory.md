@@ -403,6 +403,38 @@ Sensors:
 - `SENS-012`: API JSON key / Inertia props key / React props契約は変更なし
 - `SENS-016`: DTOコメントを実装責務に合わせて更新
 
+## 2026-07-04 DanceShortsAnalyzer Analyze 追加棚卸し
+
+確認範囲:
+
+- `app/Actions/DanceShortsAnalyzer/Queries/GetDanceShortsAnalyzerAnalyzePageAction.php`
+- `app/Services/DanceShortsAnalyzer/DanceShortsAnalyzerAnalyzePageService.php`
+- `app/Services/DanceShortsAnalyzer/DanceShortsAnalyzerSnapshotMetricService.php`
+- `app/DTO/DanceShortsAnalyzer/Analyze/*`
+- `app/Responders/DanceShortsAnalyzer/DanceShortsAnalyzerAnalyzeResponder.php`
+- `tests/Unit/DanceShortsAnalyzer/Services`、`tests/Feature/DanceShortsAnalyzer`
+
+確認結果:
+
+- `GetDanceShortsAnalyzerAnalyzePageAction` は InputDTO を受け、Repository から保存済み動画と snapshot を取得し、Analyze Page Service へ分析組み立てを委譲して ResultDTO を返す手順へ整理しました。
+- `DanceShortsAnalyzerAnalyzePageService` は Repository 取得済み DTO を入力に、latest snapshot 選択、selected videos への latest snapshot 付与、active video 解決、video analysis / comparison period analysis / region analysis 構築、active region 解決、snapshot 新旧判定を担当します。
+- `DanceShortsAnalyzerSnapshotMetricService` は snapshot 差分、1時間あたり、metric series、period filter の計算責務のまま維持しました。Analyze Page Service はこの metric Service を使いますが、DB 取得や Inertia props 整形は行いません。
+- Repository は DB 取得境界、DTO はデータキャリア、Responder は既存 Inertia props 整形のままです。route、Request入力仕様、Responder props key、React props / 画面構造、DB / Migration / Model、Docker / nginx / queue / scheduler、外部API仕様は変更していません。
+
+追加テスト:
+
+- `DanceShortsAnalyzerAnalyzePageServiceTest`: latest snapshot、active video、latest region、region analysis、comparison period anchor、empty result の period keys を固定しました。
+- 既存の DanceShortsAnalyzer Feature Test で Analyze / Search / Repository の表示契約と DB 取得境界を再確認しました。
+
+Sensors:
+
+- `SENS-007`: Query Action / Service / Repository / DTO / Responder のレイヤー責務境界を確認し、Action の分析組み立て責務を Service へ分離
+- `SENS-012`: Responder props / React props契約は変更なしとして既存 Feature Test で確認
+- `SENS-016`: Action / Service の責務説明を実装に合わせて更新
+- `SENS-011`: DB / Migration / Model 変更なし
+- `SENS-008`: Job / Queue / Scheduler / External API 変更なし
+- `SENS-010`: secrets / `.env` / config 実値変更なし
+
 ## PR Summaryに書けるSensors確認
 
 該当Sensors:
