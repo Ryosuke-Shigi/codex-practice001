@@ -55,7 +55,7 @@ describe('ProjectHubView', () => {
         expect(markup).toContain('上位プロダクト');
         expect(markup).toContain('案件システム');
         expect(markup).toContain('案件作成');
-        expect(markup).toContain('案件一覧');
+        expect(markup).toContain('登録・一覧・詳細');
         expect(markup).toContain('Coding');
         expect(markup).toContain('href="/lab/lumilabo-project-idea-board"');
         expect(markup).not.toContain('MOCK');

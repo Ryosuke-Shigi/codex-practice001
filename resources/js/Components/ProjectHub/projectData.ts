@@ -145,7 +145,7 @@ export const projects: Project[] = [
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:
-                    'Radar と Analyzer の仕様、データの流れ、説明の出し方を確認・相談する入口です。',
+                    'Radar と Analyner の仕様、データの流れ、説明の出し方を確認・相談する入口です。',
                 status: 'available',
                 iconKey: 'lightbulb',
                 modules: [
@@ -314,7 +314,7 @@ export const projects: Project[] = [
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:
-                    '案件作成を中心に、案件一覧、案件詳細、工程へつなげる案件システム構想を整理します。',
+                    '案件作成の次段階へ進む前に、登録項目、表示方針、後続の一覧・詳細へのつなぎ方を整理します。',
                 status: 'available',
                 iconKey: 'lightbulb',
                 modules: [
@@ -322,7 +322,7 @@ export const projects: Project[] = [
                         id: 'project-system-idea-board',
                         name: '案件システム',
                         description:
-                            'TOP、案件、案件作成、案件一覧、Codingをタブで切り替えて確認します。',
+                            '概要、TOP、案件、Codingをタブで切り替え、登録・一覧・詳細を案件タブ内で確認します。',
                         route: '/lab/lumilabo-project-idea-board',
                         iconKey: 'clipboard',
                     },

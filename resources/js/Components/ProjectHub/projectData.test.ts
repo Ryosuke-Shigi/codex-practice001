@@ -52,7 +52,7 @@ describe('ProjectHub static project data', () => {
         );
 
         expect(ideaBoardStage?.description).toContain('案件作成');
-        expect(ideaBoardStage?.description).toContain('案件一覧');
+        expect(ideaBoardStage?.description).toContain('登録項目');
         expect(ideaBoardStage?.modules?.map((module) => module.name)).toEqual([
             '案件システム',
         ]);
