@@ -47,24 +47,51 @@ export const requiredTabLabels = [
 
 export const projectRouteFlow = [
     'LumiLabo Hub',
-    '案件システム',
+    '案件システムTOP',
     '案件作成',
     '案件一覧',
     '案件詳細',
     '工程デッキ / 工程カード',
 ] as const;
 
+export const topEntryCards: readonly IdeaBoardCard[] = [
+    {
+        title: '案件作成へ進む入口',
+        badge: '主入口',
+        body: 'LumiLabo Hubから案件システムへ入った人が、最初の案件入力へ進むための入口として置く。',
+        tone: 'lemon',
+    },
+    {
+        title: '案件一覧を見る入口',
+        badge: '確認入口',
+        body: '作成済みの案件を確認し、会社名や担当者名から案件を探す入口として置く。',
+        tone: 'sky',
+    },
+    {
+        title: '現在位置',
+        badge: 'TOP',
+        body: 'ここがLumiLabo配下の案件システムTOPであり、案件作成と案件一覧の前段であることを示す。',
+        tone: 'emerald',
+    },
+    {
+        title: '後続の余白',
+        badge: '拡張先',
+        body: '案件詳細、工程、別サブシステムへ広げられる余白だけを見せ、画面自体は作り込まない。',
+        tone: 'slate',
+    },
+] as const;
+
 export const projectCreateInputCandidates: readonly IdeaBoardCard[] = [
     {
         title: '会社名',
         badge: '入力候補',
-        body: '案件を識別する主要表示項目として扱う。',
+        body: '案件を識別し、一覧や詳細で探すための主要項目として扱う。',
         tone: 'sky',
     },
     {
         title: '担当者名',
         badge: '入力候補',
-        body: '会社側の担当者を記録する項目として扱う。',
+        body: '会社側の窓口を記録し、誰と話している案件かを後続で確認できるようにする。',
         tone: 'sky',
     },
     {
@@ -108,77 +135,120 @@ export const projectCreateNotInputItems = [
 export const projectListFutureCards: readonly IdeaBoardCard[] = [
     {
         title: '会社名',
-        badge: '将来の表示候補',
+        badge: '表示候補',
         body: '案件作成で入力した会社名を、一覧で見つける手がかりにする。',
         tone: 'lemon',
     },
     {
         title: '担当者名',
-        badge: '将来の表示候補',
+        badge: '表示候補',
         body: '誰と話している案件かを一覧で確認できる候補として扱う。',
         tone: 'lemon',
     },
     {
         title: 'ステータス',
-        badge: '将来の表示候補',
+        badge: '表示候補',
         body: '「進行中」など、色だけではなく文字で状態を確認する候補として扱う。',
         tone: 'lemon',
     },
     {
         title: '登録日',
-        badge: '将来の表示候補',
+        badge: '表示候補',
         body: 'created_at 表示相当を一覧の確認情報として扱う候補にする。',
         tone: 'lemon',
     },
 ] as const;
 
-export const readMarkdownFiles = [
-    'AGENTS.md',
-    'docs/index.md',
-    'docs/ai/workflows/md-router.md',
-    'docs/ai/rules/agent-working-policy.md',
-    'docs/ai/rules/responsibility-boundaries.md',
-    'docs/lumilabo/ui-design-guideline.md',
-    'docs/ui-development-flow.md',
-    'docs/frontend.md',
-    'docs/ui.md',
+const productResponsibilityCards: readonly IdeaBoardCard[] = [
+    {
+        title: 'Controller / Request',
+        badge: '入口',
+        body: '将来PRODUCT化する場合、HTTP入口と入力形式の検証を担当する。',
+        tone: 'slate',
+    },
+    {
+        title: 'Action',
+        badge: '手順',
+        body: '案件作成や一覧取得など、1ユースケースの手順を担当する。',
+        tone: 'slate',
+    },
+    {
+        title: 'Service',
+        badge: '判断',
+        body: '完了判定や業務状態の判断はReactではなくService側へ置く。',
+        tone: 'slate',
+    },
+    {
+        title: 'Repository / DTO / Presenter',
+        badge: '境界',
+        body: 'DB取得、レイヤー間データ、Inertia表示用propsの整形を分ける。',
+        tone: 'slate',
+    },
 ] as const;
 
 export const ideaBoardTabs: readonly IdeaBoardTab[] = [
     {
         id: 'top',
         label: 'TOP',
-        kicker: 'LumiLabo 案件システム IDEA BOARD',
-        title: 'LumiLaboの最初の実作業を、案件システムとして整理する',
-        lead: 'LumiLaboは上位プロダクト / 上位ドメインです。案件作成を起点に、後続の案件一覧・案件詳細・工程へつなげる構想をIDEA BOARDとして確認します。',
+        kicker: '案件システムTOP構想',
+        title: 'LumiLabo Hubから案件システムへ入った最初の画面を考える',
+        lead: 'LumiLabo Hubから案件システムへ入り、案件作成と案件一覧へ進むためのTOP画面として整理します。',
         sections: [
             {
-                title: 'LumiLaboの位置づけ',
-                lead: '案件作成だけを切り出さず、案件システム全体の入口として整理します。',
-                items: [
-                    'LumiLaboは単なる案件管理機能ではなく、上位プロダクト / 上位ドメインとして扱う。',
-                    '最初に作るサブシステムを案件システムとして扱う。',
-                    '案件作成を入口にし、案件一覧以降への接続もIDEA BOARD内で確認する。',
-                ],
+                title: 'TOPで見せる入口',
+                lead: '案件システムへ入った直後に、次に進む場所と現在位置が分かる構成にします。',
+                cards: topEntryCards,
             },
             {
-                title: 'IDEA BOARDの扱い',
-                lead: '画面は構想整理に絞り、実装判断はCodingタブへ分けます。',
+                title: 'TOPからの流れ',
+                lead: 'TOPは案件作成だけに閉じず、案件一覧、案件詳細、工程へ進む前段として扱います。',
                 items: [
-                    'MOCK / PRODUCTではなく、案件システムの構想整理として見る。',
-                    'DB / Backend / カレンダーを画面へ混ぜない。',
-                    'カレンダーは各カードが定義された後に別で扱う。',
+                    'LumiLabo Hubから案件システムTOPへ入る。',
+                    '新しい案件は案件作成へ進む。',
+                    '作成済みの案件は案件一覧で確認する。',
+                    '案件詳細、工程、別サブシステムは後続で扱える余白として残す。',
                 ],
+                note: 'ここでは実画面MOCKを作らず、TOP画面の考え方だけをIDEA BOARDとして見せます。',
             },
         ],
     },
     {
         id: 'project',
         label: '案件',
-        kicker: '案件システムの位置づけ',
-        title: 'LumiLabo配下の最初のサブシステムとして案件を見る',
-        lead: '案件システムはLumiLabo配下の最初のサブシステムです。案件作成を入口にし、案件一覧以降は後続扱いとして整理します。',
+        kicker: '案件システム概要',
+        title: '案件をLumiLaboの業務工程へつなげる起点として見る',
+        lead: '案件タブは、案件作成の前に「案件とは何か」「案件システムで何を扱うか」を理解する場所です。',
         sections: [
+            {
+                title: '案件システムの目的',
+                lead: '案件を会社・担当者・住所・メモのまとまりとして登録し、後続の工程へつなげる考え方を整理します。',
+                cards: [
+                    {
+                        title: '案件を業務の起点にする',
+                        badge: '目的',
+                        body: '案件を作ることで、一覧確認、詳細確認、工程への接続が始まる。',
+                        tone: 'lemon',
+                    },
+                    {
+                        title: 'LumiLabo配下の最初のサブシステム',
+                        badge: '位置づけ',
+                        body: 'LumiLaboを単なる案件管理機能ではなく、上位プロダクトとして扱う。',
+                        tone: 'emerald',
+                    },
+                    {
+                        title: '案件詳細へつなげる',
+                        badge: '後続',
+                        body: '作成と一覧の後に、案件詳細で基本情報と工程の見通しを確認できる形へ育てる。',
+                        tone: 'sky',
+                    },
+                    {
+                        title: '工程デッキ / 工程カードへつなげる',
+                        badge: '後続',
+                        body: '工程は案件から派生する後続領域として扱い、案件タブ内では作り込まない。',
+                        tone: 'slate',
+                    },
+                ],
+            },
             {
                 title: '基本導線',
                 lead: projectRouteFlow.join(' → '),
@@ -186,126 +256,161 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
                     title: step,
                     badge: `導線 ${index + 1}`,
                     body:
-                        index <= 2
-                            ? 'IDEA BOARDで入口として確認する範囲。'
-                            : '後続PRで扱う接続先。',
-                    tone: index <= 2 ? 'lemon' : 'slate',
+                        index <= 3
+                            ? 'IDEA BOARDで関係を見る地点。'
+                            : '後続で扱う接続先。ここでは実装やMOCKへ進まない。',
+                    tone: index <= 3 ? 'lemon' : 'slate',
                 })),
-            },
-            {
-                title: '分ける考え方',
-                lead: '案件作成、案件一覧、案件詳細、工程は役割が違うため、同じ画面へ雑に詰め込まない。',
-                items: [
-                    '案件作成は最初の入力入口。',
-                    '案件一覧は作成後の確認先。',
-                    '案件詳細と工程デッキ / 工程カードは別工程で扱う。',
-                    'LumiLaboを案件管理機能そのものとして扱わない。',
-                ],
             },
         ],
     },
     {
         id: 'projectCreate',
         label: '案件作成',
-        kicker: '中心タブ',
-        title: '何を入力し、何を入力させないかを整理する',
-        lead: '案件作成を中心に、初期項目、表示候補、入力させない情報、後続への起点を確認します。保存可能フォームにはしません。',
+        kicker: '最初の入力入口',
+        title: '案件作成画面が何を受け取り、何を混ぜないかを考える',
+        lead: '案件作成はLumiLabo案件システムの最初の入力入口です。入力候補だけでなく、作成後に一覧へつながる流れまで整理します。',
         sections: [
             {
+                title: '案件作成画面の役割',
+                lead: '必要な最小情報を受け取り、作成後に案件一覧で確認できる状態へつなげる画面として扱います。',
+                cards: [
+                    {
+                        title: '最初の入力入口',
+                        badge: '入口',
+                        body: '案件システムで最初に入力する場所として、会社名、担当者名、住所、メモを扱う。',
+                        tone: 'lemon',
+                    },
+                    {
+                        title: '一覧へつながる',
+                        badge: '次の画面',
+                        body: '作成後は案件一覧で会社名、担当者名、ステータス、登録日を確認する流れにする。',
+                        tone: 'emerald',
+                    },
+                ],
+            },
+            {
                 title: '入力させる候補',
-                lead: '最初の案件作成で入力候補にする項目です。案件名はここへ追加しません。',
+                lead: '案件作成で扱う入力候補です。案件名はここへ追加しません。',
                 cards: projectCreateInputCandidates,
             },
             {
-                title: '表示する候補',
-                lead: 'ユーザー入力にしないが、作成後に確認したい表示候補です。',
+                title: '画面上の表示候補',
+                lead: 'ユーザー入力にしないが、案件作成画面や作成後の確認で見せたい候補です。',
                 cards: projectCreateDisplayCandidates,
             },
             {
-                title: '入力させないもの',
-                lead: '工程やカレンダー、完了判定に進む情報は、案件作成の入口へ混ぜません。',
+                title: '案件作成へ混ぜないもの',
+                lead: '工程、カレンダー、完了判定へ進む情報は、最初の案件作成入口へ混ぜません。',
                 items: projectCreateNotInputItems,
-                note: '入力フォーム風の見せ方をしても、保存可能フォームやMOCKとして扱いません。',
-            },
-            {
-                title: '後続へ渡す起点',
-                lead: '会社名、担当者名、住所、メモを起点に、将来の案件一覧や案件詳細へつなげる構想だけを整理します。',
-                items: [
-                    '案件一覧では会社名、担当者名、ステータス、登録日を確認する候補にする。',
-                    '案件詳細、工程デッキ、工程カードは別工程で扱う。',
-                    '完了判定や状態判断はReact Componentへ置かず、将来Service側で扱う。',
-                ],
+                note: '入力フォーム風に見せる場合でも、保存可能フォームや案件作成MOCKとして扱いません。',
             },
         ],
     },
     {
         id: 'projectList',
         label: '案件一覧',
-        kicker: '後続タブ',
-        title: '案件作成後の確認先として概念だけ整理する',
-        lead: '案件一覧は後続の確認先です。固定データMOCKにせず、案件作成後に何を確認したいかを概念として整理します。',
+        kicker: '作成後の確認先',
+        title: '作成した案件をどう確認し、詳細へ進むかを考える',
+        lead: '案件一覧タブは、案件作成後に作成した案件をどう確認するかを整理する場所です。固定データMOCKや本実装にはしません。',
         sections: [
             {
-                title: '将来表示する候補',
-                lead: '一覧画面そのものは作らず、将来の表示候補だけを確認します。',
-                cards: projectListFutureCards,
+                title: '一覧画面の役割',
+                lead: '作成した案件を探し、状態を見て、必要なら案件詳細へ進む入口として整理します。',
+                cards: [
+                    {
+                        title: '作成した案件を確認する',
+                        badge: '確認',
+                        body: '案件作成で生まれた案件を、一覧で見つけられる状態にする。',
+                        tone: 'lemon',
+                    },
+                    {
+                        title: '主要項目で探す',
+                        badge: '一覧',
+                        body: '会社名、担当者名、ステータス、登録日を表示候補として扱う。',
+                        tone: 'sky',
+                    },
+                    {
+                        title: '案件詳細への入口',
+                        badge: '後続',
+                        body: '一覧は案件詳細へ進む入口になる。ただし詳細画面への実遷移は作らない。',
+                        tone: 'emerald',
+                    },
+                    {
+                        title: '工程へ踏み込まない',
+                        badge: '境界',
+                        body: '工程詳細や工程デッキは一覧タブで扱わず、案件詳細以降の後続領域に分ける。',
+                        tone: 'slate',
+                    },
+                ],
             },
             {
-                title: '一覧タブで深掘りしないもの',
-                lead: '一覧の確認候補だけに絞り、詳細画面や工程の中身へ進めません。',
-                items: [
-                    '一覧画面そのものは作らず、確認したい項目だけを見る。',
-                    '固定データ付きの一覧MOCKにしない。',
-                    '詳細画面への遷移は扱わない。',
-                    '案件詳細や工程詳細へ踏み込まない。',
-                ],
+                title: '表示候補',
+                lead: '一覧画面そのものは作らず、将来確認したい項目だけを概念として見せます。',
+                cards: projectListFutureCards,
             },
         ],
     },
     {
         id: 'coding',
         label: 'Coding',
-        kicker: '実装境界',
-        title: '表示用IDEA BOARDだけを追加し、業務判断を持たせない',
-        lead: 'React Componentはタブ切り替えと表示だけを担当します。DB、Migration、Backend本実装、カレンダー、保存処理は持たせません。',
+        kicker: 'IDEA BOARDの組み方',
+        title: 'タブ構成、表示データ、将来の責務分離を分けて育てる',
+        lead: 'CodingタブはPR注意書きではなく、このIDEA BOARDをどう組み、PRODUCT化でどこへ責務を移すかを整理する場所です。',
         sections: [
             {
-                title: '読んだMD',
-                lead: '作業前に確認したMDです。PR本文にも読んだMDと反映内容を記載する前提にします。',
-                items: readMarkdownFiles,
-            },
-            {
-                title: '実装対象',
-                lead: 'ブラウザで確認できるタブ型IDEA BOARDと、既存導線への最小追加です。',
-                items: [
-                    'LumiLabo 案件システム IDEA BOARD画面。',
-                    'TOP / 案件 / 案件作成 / 案件一覧 / Coding の必須タブ。',
-                    '表示中タブだけを表示する構成。',
-                    'docs/index.md からLumiLabo docsへ辿れる導線。',
-                    'Project HubからIDEA BOARDへ入る最小導線。',
+                title: 'タブ切り替えの構造',
+                lead: '画面は5タブを持ち、React Componentは表示中タブのUI状態だけを管理します。',
+                cards: [
+                    {
+                        title: 'Page',
+                        badge: '入口',
+                        body: 'Inertia PageはLayout、Head、Project Hubへ戻る導線、IDEA BOARD本体の配置だけを担当する。',
+                        tone: 'lemon',
+                    },
+                    {
+                        title: 'Component',
+                        badge: '表示',
+                        body: 'Componentはタブ切り替え、表示中タブの描画、カード/リスト表示だけを担当する。',
+                        tone: 'sky',
+                    },
+                    {
+                        title: 'data',
+                        badge: '構造',
+                        body: '各タブの文言、カード、導線は型付きの静的データとして分ける。',
+                        tone: 'emerald',
+                    },
+                    {
+                        title: '表示中タブだけ描画',
+                        badge: 'UI状態',
+                        body: '全タブ内容を1枚に縦並びせず、選んだタブの内容だけを表示する。',
+                        tone: 'amber',
+                    },
                 ],
             },
             {
-                title: '対象外',
-                lead: 'IDEA BOARDを越えて、MOCK / PRODUCT / Backend / Calendarへ踏み込ませません。',
+                title: '表示データの持ち方',
+                lead: 'IDEA BOARD段階ではDBやAPIへ接続せず、画面で確認する構想だけを静的に持ちます。',
                 items: [
-                    '保存可能な入力フォーム。',
-                    'DB / Migration / Model。',
-                    'Controller / Request / Action / Service / Repository / DTO。',
-                    'Event / Listener / Job / Scheduler。',
-                    'API通信 / Docker変更 / npm install / shadcn/ui / Storybook。',
-                    'カレンダー / 案件詳細 / 工程詳細 / 工程デッキ / 工程カード実装。',
+                    'RouteはInertia Pageを返すだけにする。',
+                    'タブ、カード、導線、表示候補はTypeScriptの型で固定する。',
+                    '保存処理、API通信、DB取得、権限判断は持たせない。',
+                    'カレンダーは各カードが日付を持った後に別で扱う。',
                 ],
             },
             {
-                title: '責務境界',
-                lead: '将来PRODUCT化する場合の責務分離だけを明記し、この画面の実装には持ち込みません。',
+                title: '将来PRODUCT化する場合の責務',
+                lead: '本実装へ進む場合は、Reactへ業務判断を置かず、Backend側の責務へ分けます。',
+                cards: productResponsibilityCards,
+            },
+            {
+                title: 'Reactへ置かない判断',
+                lead: '完了判定や業務状態の最終判断は、表示の都合でComponentへ押し込みません。',
                 items: [
-                    'IDEA BOARDは設計・構想整理のための表示であり、業務ロジックを持たせない。',
-                    'React Componentに完了判定や業務判断を入れない。',
-                    '将来PRODUCT化する場合は Controller / Request / Action / Service / Repository / DTO / Presenter の責務分離を前提にする。',
+                    '完了判定や状態判断は将来Service側で扱う。',
                     'DTOは判断本体ではなく、確定済み値の受け渡し境界として扱う。',
-                    '状態判断や完了判定は将来Service側で扱う。',
+                    'PresenterはInertia propsや表示用配列を整える責務に分ける。',
+                    'Componentは受け取った表示用propsとUI状態を描画する。',
                 ],
             },
         ],

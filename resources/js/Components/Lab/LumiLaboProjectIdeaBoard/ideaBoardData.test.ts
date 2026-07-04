@@ -8,8 +8,8 @@ import {
     projectCreateNotInputItems,
     projectListFutureCards,
     projectRouteFlow,
-    readMarkdownFiles,
     requiredTabLabels,
+    topEntryCards,
 } from './ideaBoardData';
 
 describe('LumiLabo 案件システム IDEA BOARD データ', () => {
@@ -19,10 +19,20 @@ describe('LumiLabo 案件システム IDEA BOARD データ', () => {
         expect(requiredTabLabels).not.toContain('カレンダー');
     });
 
+    it('TOPはTOP画面の入口構想を持つ', () => {
+        expect(topEntryCards.map((item) => item.title)).toEqual([
+            '案件作成へ進む入口',
+            '案件一覧を見る入口',
+            '現在位置',
+            '後続の余白',
+        ]);
+        expect(getIdeaBoardTabById('top').lead).toContain('TOP画面');
+    });
+
     it('案件システムの導線をLumiLabo配下から後続まで保持する', () => {
         expect(projectRouteFlow).toEqual([
             'LumiLabo Hub',
-            '案件システム',
+            '案件システムTOP',
             '案件作成',
             '案件一覧',
             '案件詳細',
@@ -55,20 +65,23 @@ describe('LumiLabo 案件システム IDEA BOARD データ', () => {
         expect(projectCreateNotInputItems).toContain('完了判定に関わる情報');
     });
 
-    it('案件一覧は後続の概念整理だけに留める', () => {
+    it('案件一覧は作成後の確認先と詳細入口の構想に留める', () => {
         expect(projectListFutureCards.map((item) => item.title)).toEqual([
             '会社名',
             '担当者名',
             'ステータス',
             '登録日',
         ]);
-        expect(getIdeaBoardTabById('projectList').lead).toContain('後続の確認先');
+        expect(getIdeaBoardTabById('projectList').lead).toContain('作成した案件をどう確認するか');
+        expect(getIdeaBoardTabById('projectList').lead).toContain('固定データMOCK');
     });
 
-    it('Codingタブで読んだMDと責務境界を確認できる', () => {
-        expect(readMarkdownFiles).toContain('AGENTS.md');
-        expect(readMarkdownFiles).toContain('docs/index.md');
-        expect(readMarkdownFiles).toContain('docs/lumilabo/ui-design-guideline.md');
-        expect(getIdeaBoardTabById('coding').sections.map((section) => section.title)).toContain('責務境界');
+    it('Codingタブでタブ構造と将来PRODUCT化の責務境界を確認できる', () => {
+        const codingSections = getIdeaBoardTabById('coding').sections.map((section) => section.title);
+
+        expect(codingSections).toContain('タブ切り替えの構造');
+        expect(codingSections).toContain('表示データの持ち方');
+        expect(codingSections).toContain('将来PRODUCT化する場合の責務');
+        expect(codingSections).toContain('Reactへ置かない判断');
     });
 });

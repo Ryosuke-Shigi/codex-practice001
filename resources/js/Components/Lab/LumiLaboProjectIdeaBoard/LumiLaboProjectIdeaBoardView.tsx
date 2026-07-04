@@ -31,21 +31,19 @@ export default function LumiLaboProjectIdeaBoardView() {
     const activeTab = getIdeaBoardTabById(activeTabId);
 
     return (
-        <article className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-yellow-300 bg-white text-black shadow-xl shadow-yellow-900/10">
-            <header className="flex-none border-b border-yellow-200 bg-yellow-50 px-3 py-3 sm:px-4">
+        <article className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-neutral-300 bg-white text-black shadow-xl shadow-neutral-900/10">
+            <header className="flex-none border-b border-neutral-200 bg-white px-3 py-3 sm:px-4">
                 <div className="min-w-0">
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold text-yellow-800">IDEA BOARD</p>
-                        <h1 className="mt-1 text-2xl font-semibold leading-tight text-black sm:text-3xl">
-                            LumiLabo 案件システム IDEA BOARD
-                        </h1>
-                    </div>
+                    <p className="text-sm font-semibold text-yellow-800">IDEA BOARD</p>
+                    <h1 className="mt-1 text-2xl font-semibold leading-tight text-black sm:text-3xl">
+                        LumiLabo 案件システム IDEA BOARD
+                    </h1>
                 </div>
             </header>
 
             <TopTabBar activeTabId={activeTab.id} onSelectTab={setActiveTabId} />
 
-            <div className="min-h-0 flex-1 overflow-hidden bg-yellow-50/55 p-2 sm:p-3">
+            <div className="min-h-0 flex-1 overflow-hidden bg-neutral-50 p-2 sm:p-3">
                 <TabPanel tab={activeTab} />
             </div>
         </article>
@@ -61,7 +59,7 @@ function TopTabBar({
 }) {
     return (
         <nav
-            className="flex-none border-b border-yellow-200 bg-white px-2 py-2 sm:px-3"
+            className="flex-none border-b border-neutral-200 bg-white px-2 py-2 sm:px-3"
             aria-label="LumiLabo 案件システム IDEA BOARD タブ"
         >
             <div className="grid gap-1.5 sm:grid-cols-5">
@@ -82,6 +80,11 @@ function TopTabBar({
                                 <Icon className="h-5 w-5 flex-none" aria-hidden />
                                 <span className="min-w-0 truncate">{tab.label}</span>
                             </span>
+                            {isActive ? (
+                                <span className="inline-flex min-h-7 flex-none items-center rounded-md border border-yellow-700 bg-white px-2 text-sm font-semibold text-yellow-950">
+                                    表示中
+                                </span>
+                            ) : null}
                         </button>
                     );
                 })}
@@ -94,9 +97,9 @@ function TabPanel({ tab }: { tab: IdeaBoardTab }) {
     return (
         <section
             role="tabpanel"
-            className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-yellow-200 bg-white text-black"
+            className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white text-black"
         >
-            <div className="flex-none border-b border-yellow-200 bg-white px-3 py-3 sm:px-4">
+            <div className="flex-none border-b border-neutral-200 bg-white px-3 py-3 sm:px-4">
                 <div className="grid gap-1 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,1fr)] lg:items-end">
                     <div className="min-w-0">
                         <p className="text-sm font-semibold text-yellow-800">{tab.kicker}</p>
@@ -136,7 +139,7 @@ function TabPanel({ tab }: { tab: IdeaBoardTab }) {
                                 ) : null}
 
                                 {section.note ? (
-                                    <p className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold leading-6 text-amber-950">
+                                    <p className="mt-2 rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-semibold leading-6 text-amber-950">
                                         {section.note}
                                     </p>
                                 ) : null}
@@ -203,7 +206,7 @@ function getTabButtonClasses(isActive: boolean): string {
         'flex min-h-11 w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-left text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500',
         isActive
             ? 'border-yellow-700 bg-yellow-300 text-black shadow-md shadow-yellow-900/20 ring-2 ring-yellow-500'
-            : 'border-neutral-200 bg-white text-neutral-800 hover:border-yellow-400 hover:bg-yellow-50',
+            : 'border-neutral-200 bg-white text-neutral-800 hover:border-yellow-500 hover:bg-neutral-50',
     );
 }
 
@@ -213,27 +216,27 @@ function getToneClasses(tone: IdeaBoardTone): {
 } {
     const classes = {
         amber: {
-            panel: 'bg-amber-50',
+            panel: 'bg-white',
             badge: 'border-amber-300 bg-white text-amber-950',
         },
         emerald: {
-            panel: 'bg-emerald-50',
+            panel: 'bg-white',
             badge: 'border-emerald-300 bg-white text-emerald-950',
         },
         lemon: {
-            panel: 'bg-yellow-50',
+            panel: 'bg-white',
             badge: 'border-yellow-300 bg-white text-yellow-950',
         },
         rose: {
-            panel: 'bg-rose-50',
+            panel: 'bg-white',
             badge: 'border-rose-300 bg-white text-rose-950',
         },
         sky: {
-            panel: 'bg-sky-50',
+            panel: 'bg-white',
             badge: 'border-sky-300 bg-white text-sky-950',
         },
         slate: {
-            panel: 'bg-neutral-50',
+            panel: 'bg-white',
             badge: 'border-neutral-300 bg-white text-neutral-900',
         },
     } satisfies Record<IdeaBoardTone, { panel: string; badge: string }>;
