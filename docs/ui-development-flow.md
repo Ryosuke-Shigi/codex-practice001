@@ -12,6 +12,8 @@ MOCKを見た目の参考資料として扱わず、PRODUCTへ引き継ぐUI契�
 
 開発段階全体の完成条件は `docs/development-flow.md`、MOCK / PROTOTYPE の配置とProductとの物理的分離は `docs/prototype-policy.md`、UI部品とCommon Componentの責務は `docs/ui.md` を正本とします。
 
+IDEA BOARD / MOCK のMarkdownテンプレートと共通画面構造は `docs/templates/idea-board-and-mock-template-policy.md` を正本とします。
+
 ## 基本方針
 
 MOCK / PROTOTYPE / PRODUCT は、次の役割で分けます。
@@ -79,6 +81,8 @@ IDEA BOARDでは、作りたい機能、利用場面、画面候補、確認し�
 
 この段階では、UI契約を固定しません。
 
+IDEA BOARD作成時は `docs/templates/idea-board-template.md` を参照し、UI作り込みではなく構想、目的、導線、責務、未確定事項を整理します。
+
 扱うもの:
 
 - 目的
@@ -98,6 +102,8 @@ IDEA BOARDでは、作りたい機能、利用場面、画面候補、確認し�
 ## MOCK作成標準
 
 MOCKは、画面構成・導線・状態表示・操作感を確認するために作成する。
+
+MOCK作成時は `docs/templates/mock-template.md` を参照し、タイトル、タブ、タブ内インデックス、内容表示エリアの構造でUI確認を整理します。
 
 原則として、1画面ずつ作成する。
 複数の画面状態や業務領域を確認する場合は、タブで切り替えて確認できる構成にする。
