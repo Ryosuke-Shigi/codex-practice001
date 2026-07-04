@@ -203,8 +203,11 @@ PR確認では、最初に以下を判定してからレビューに入ります
 5. 必要な確認コマンド
 6. 読むdocs
 7. 読まないdocs
+8. branch運用とcommit粒度
 
 読む範囲を先に決めることで、必要な確認を固定し、不要な探索を避けます。
+
+branch運用とcommit粒度の正本は `docs/ai/rules/agent-working-policy.md` とします。PRレビュー強度ルールでは、PR本文と差分から、main直作業、branch不明、意味の薄いcommit、無関係な変更の混在がないかを確認します。
 
 ## PR確認ループ
 
@@ -218,6 +221,7 @@ PR確認は単発の目視で終わらせず、`docs/ai/workflows/loop-engineeri
 - 未実行理由
 - docs更新要否
 - 該当Sensors
+- branch運用とcommit粒度
 - 停止条件
 
 問題があれば、必要な範囲で修正し、同じ観点で再確認します。レビュー強度のLevel定義は変更せず、確認、修正、再確認、記録の流れだけを固定します。

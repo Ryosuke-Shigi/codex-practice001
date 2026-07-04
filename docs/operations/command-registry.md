@@ -137,6 +137,29 @@ git status --short
 
 人間が別の作業場所を明示した場合は、元workspaceと指定された作業場所の `pwd` / `git remote -v` / `git branch --show-current` / `git status --short` を区別し、どちらで作業したかを完了報告に明記します。
 
+## PR前Git確認
+
+PR作成前、commit前、push前は、作業対象repoで次を確認します。
+
+```bash
+git status
+git branch --show-current
+git diff --stat
+git diff --check
+git log --oneline -5
+```
+
+確認すること:
+
+- 作業branchが確認でき、`main` 直接作業ではない
+- 対象repo、対象階層、対象branchが作業指示と一致している
+- 差分が今回の作業範囲に収まっている
+- `git diff --check` で空白・改行崩れがない
+- commitする場合は、commitがレビュー可能、巻き戻し可能、原因特定可能な単位になっている
+- PR本文へ、実行した確認結果、未実行理由、docs更新要否、該当Sensors、branch運用、commit粒度を必要に応じて残せる
+
+main直作業、branch不明、対象repo不明、目的外差分、secrets混入が見つかった場合は、PR作成へ進まず停止します。
+
 ## Docker経由コマンド原則
 
 このプロジェクトでは、artisan / npm は原則としてホストOSで直接実行しません。

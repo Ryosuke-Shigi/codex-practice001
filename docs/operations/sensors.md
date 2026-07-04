@@ -295,6 +295,19 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 将来の自動化候補: changed files とコメント・PHPDoc・JSDoc・型定義の差分照合。ただし機械判定できる範囲に限定し、意味判断を無理にCI failへ押し込まない
 - 備考: 不要なコメント追加を求めるSensorではない。実装と説明の矛盾を防ぐSensorとして扱う。
 
+### SENS-017: branch / commit granularity チェック
+
+- ID: SENS-017
+- 名前: branch / commit granularity チェック
+- 種別: Manual / AI Review
+- 実行タイプ: Inferential
+- 実行タイミング: 作業開始時 / commit前 / PR前
+- 検出したい問題: main直作業、branch不明、branch省略のGitHub書き込み、最後に全変更を詰めた1commit、意味の薄いwip commit量産、無関係な変更を混ぜたcommit
+- 参照docs: `docs/ai/rules/agent-working-policy.md` / `docs/operations/command-registry.md` / `docs/templates/pr-summary.md`
+- 現在のLevel: Level 1
+- 将来の自動化候補: branch protection、PR commit一覧とchanged filesの照合、commit messageの最低限チェック
+- 備考: 細かいcommitを増やすためのSensorではない。レビュー可能、巻き戻し可能、原因特定可能な単位になっているかを確認する。
+
 ## PR Summaryへ残す項目
 
 Sensorsに関係するPRでは、`docs/templates/pr-summary.md` に従い、少なくとも次を残します。
@@ -307,6 +320,7 @@ Sensorsに関係するPRでは、`docs/templates/pr-summary.md` に従い、少�
 - README / docs更新要否
 - レビュー強度
 - 該当したSensor、または該当なしの理由
+- branch運用とcommit粒度の確認結果
 - CI fail化していない場合は、その理由
 
 ## CI fail化する前の条件
