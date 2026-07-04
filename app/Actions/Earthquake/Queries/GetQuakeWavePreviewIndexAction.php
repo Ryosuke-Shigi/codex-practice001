@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Queries;
 
+use App\DTO\Earthquake\Preview\QuakeWavePreviewIndexResultDTO;
 use App\Factories\Earthquake\EarthquakeVisualPreviewFactory;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
@@ -18,17 +19,7 @@ final readonly class GetQuakeWavePreviewIndexAction
         private EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
     ) {}
 
-    /**
-     * @return array{
-     *     mocks: array<int, array<string, string>>,
-     *     visualPreview: array<string, mixed>,
-     *     savedFeedEntries: array<int, array<string, mixed>>,
-     *     feedEntrySyncRuns: array<int, mixed>,
-     *     savedMapPins: array<int, array<string, mixed>>,
-     *     mapPinSyncRuns: array<int, mixed>
-     * }
-     */
-    public function execute(): array
+    public function execute(): QuakeWavePreviewIndexResultDTO
     {
         /*
          * QuakeWave Preview の開発入口に必要な読み取り手順をここに集めます。
@@ -36,14 +27,14 @@ final readonly class GetQuakeWavePreviewIndexAction
          * 固定カード、表示確認用 preview DTO、保存済み feed / map pin、sync run 履歴の取得は
          * Query Action の責務としてまとめます。ここでは DB 更新や Job 起動は行いません。
          */
-        return [
-            'mocks' => $this->mocks(),
-            'visualPreview' => $this->visualPreviewFactory->makeDefault()->toArray(),
-            'savedFeedEntries' => $this->feedEntryRepository->latest(20),
-            'feedEntrySyncRuns' => $this->syncRunRepository->latest(10),
-            'savedMapPins' => $this->mapPinRepository->latest(20),
-            'mapPinSyncRuns' => $this->mapPinSyncRunRepository->latest(10),
-        ];
+        return new QuakeWavePreviewIndexResultDTO(
+            mocks: $this->mocks(),
+            visualPreview: $this->visualPreviewFactory->makeDefault(),
+            savedFeedEntries: $this->feedEntryRepository->latest(20),
+            feedEntrySyncRuns: $this->syncRunRepository->latest(10),
+            savedMapPins: $this->mapPinRepository->latest(20),
+            mapPinSyncRuns: $this->mapPinSyncRunRepository->latest(10),
+        );
     }
 
     /**
