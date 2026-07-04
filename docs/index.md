@@ -172,6 +172,12 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 
 新しい機能固有文書を追加した場合は、この一覧も更新します。
 
+### LumiLabo 文書
+
+| 文書 | 対象 |
+|---|---|
+| [docs/lumilabo/ui-design-guideline.md](lumilabo/ui-design-guideline.md) | LumiLaboの画面設計、表示方針、操作方針、レスポンシブ方針、日付別カードカレンダー、カードswitch方針 |
+
 ## テンプレート
 
 | 文書 | 用途 |
