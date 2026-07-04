@@ -145,7 +145,7 @@ export const projects: Project[] = [
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:
-                    'Radar と Analyner の仕様、データの流れ、説明の出し方を確認・相談する入口です。',
+                    'Radar と Analyzer の仕様、データの流れ、説明の出し方を確認・相談する入口です。',
                 status: 'available',
                 iconKey: 'lightbulb',
                 modules: [
