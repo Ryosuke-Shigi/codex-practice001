@@ -102,6 +102,7 @@ Loop Engineeringは、AIが読む開発文脈が育つように、実行、確�
 * working tree確認
 * 差分確認
 * commit前確認
+* commit粒度確認
 * push前確認
 * PR前確認
 * PR確認
@@ -542,6 +543,7 @@ MDルーターは一度作って終わりではない。
 * 新しく追加したdocsをMDルーターへ反映したか
 * `docs/ai/workflows/work-result-feedback-loop.md` で今回の結果の反映先を確認したか
 * PR Summaryに実行結果として残す内容と、docs更新要否を分けて確認したか
+* branch運用とcommit粒度をPR前に確認したか
 * ソースコード変更時に、関連コメント、PHPDoc、JSDoc、型アノテーション、props契約説明の追従漏れがないか確認したか
 * ローカル環境固有の情報をGit管理docsやPR本文へ混ぜていないか
 * 廃止・統合したdocsをMDルーターから外したか

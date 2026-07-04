@@ -27,6 +27,14 @@
 
 ローカル構成では外側Docker repoと `src/` 内アプリrepoが別Git管理のため、作業対象に応じたGit境界の確認は `docs/operations/command-registry.md` を正本とします。ローカル専用メモはGit管理docs体系に含めません。
 
+### Git / PR作業方針
+
+- `docs/ai/rules/agent-working-policy.md`
+- `docs/operations/command-registry.md`
+- `docs/templates/pr-summary.md`
+
+作業ブランチ、main直作業禁止、commit粒度の判断基準は `docs/ai/rules/agent-working-policy.md` を正本とします。PR前のGit確認コマンドは `docs/operations/command-registry.md`、PR本文に残す実装後の事実整理は `docs/templates/pr-summary.md` に従います。
+
 
 ### PR確認・レビュー強度
 

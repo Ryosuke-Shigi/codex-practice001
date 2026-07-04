@@ -64,6 +64,61 @@ Git境界が不明な場合は、remote変更、clone、restoreへ進まず停�
 - commit前に差分内容・確認コマンド・テスト結果を提示する
 - Pull Request のタイトル・本文・レビューコメントは日本語で書く
 - commit message は既存履歴に合わせる。ただし特別な理由がなければ日本語で目的が分かる文にする
+
+### 作業ブランチ補足
+
+- 対象repo、対象階層、対象branchを確認できない場合は、編集、commit、push、PR作成へ進まず停止する
+- `main` にいる場合は、そのまま編集せず、目的別の作業ブランチを作成してから作業する
+- 既に同目的の作業ブランチが存在する場合は、現在branch、既存差分、未コミット差分を確認してから続行する
+- mainへの直接commit / pushは禁止する
+- ユーザーが明示した場合を除き、force push、履歴修正、main直接書き込みをしない
+- GitHubコネクタ、GitHub CLI、APIなどでbranchへ書き込む場合も、branchを省略しない
+
+### コミット粒度
+
+- コミットは、レビュー可能、巻き戻し可能、原因特定可能な単位にする
+- 1PR内でも、作業の意味が分かれる場合は複数commitに分ける
+- ただし、細かければよいわけではない
+- `wip`、`fix`、`調整`、`いろいろ修正`、`まとめて修正` だけのような意味の薄いcommitを量産しない
+- 1つのcommitには1つの目的だけを含め、無関係な変更を混ぜない
+- docs、型、DTO、Action、Service、Repository、Responder、UI、Hook、Component、Test、確認修正は、意味が分かれるなら分ける
+- 同じ目的で不可分な小修正は1commitにまとめてよい
+- commit message は既存履歴に合わせる。ただし特別な理由がなければ日本語で目的が分かる文にする
+
+コミット粒度の例:
+
+- docs導線追加: 1commit
+- PR運用ルール追加: 1commit
+- DTO / Type追加: 1commit
+- Request / Validation追加: 1commit
+- Actionのユースケース手順追加: 1commit
+- Serviceの業務判断追加: 1commit
+- Repositoryの取得・保存境界追加: 1commit
+- Responder / Presenterのprops整形追加: 1commit
+- React Page / Hook / Component分離: 意味が分かれる場合は分割
+- テスト追加・修正: 1commit
+- PR前レビューで見つかった表記やリンク修正: 1commit
+
+避ける例:
+
+- mainで直接作業する
+- 全変更を最後に1commitへ詰める
+- docs、Backend、Frontend、DB、Dockerを無関係に1commitへ混ぜる
+- `wip`、`fix`、`調整` だけのcommitを量産する
+- レビュー指摘の修正に無関係な変更を混ぜる
+- 指示外のリファクタリングを同じcommitに混ぜる
+- `.env`、token、cookie、session、個人情報、secretsを混ぜる
+
+### PR前整理
+
+- `git status` で差分を確認する
+- `git diff --stat` で変更範囲を確認する
+- `git diff --check` で空白・改行崩れを確認する
+- commitする場合は、commitが意味のある単位になっているか確認する
+- PR本文には、作業目的、変更内容、確認結果、未実行チェックと理由、docs更新要否、該当Sensors、branch運用、commit粒度を必要に応じて書く
+- PR本文へ作業前の長い条件文や指示用まとめ全文を貼らず、実装後の事実だけを書く
+
+### PR本文・確認
 - CIログ、コマンド名、エラー文、固有名詞は原文のまま残してよい
 - 実装後は差分、必要なテスト、CI、秘密情報、docs更新を確認する
 - 実装後は `../../operations/command-registry.md` に従い、`git diff --check` と必要なテストを実行する
