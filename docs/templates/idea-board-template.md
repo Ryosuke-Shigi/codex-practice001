@@ -13,6 +13,8 @@ IDEA BOARD は説明用の段階です。画面の見た目より、概念、流
 
 完成仕様、本番構成、DB構造、本番API、本番業務判断を断定しません。
 
+IDEA BOARDは資料であり、MOCK画面の通常導線ではありません。MOCKからIDEA BOARDへのリンクや戻り導線を設計しません。
+
 共通の画面構造と禁止事項は [idea-board-and-mock-template-policy.md](idea-board-and-mock-template-policy.md) を正本とします。
 
 ## 使い方
@@ -20,6 +22,7 @@ IDEA BOARD は説明用の段階です。画面の見た目より、概念、流
 - 新しいIDEA BOARD docsを作る時に、必要な見出しをコピーして使う。
 - 不明な項目は推測で埋めず、未確定事項へ置く。
 - UIを作り込みすぎず、文字、簡単な表、Mermaidなどのフローチャートで整理する。
+- IDEA BOARDを読むことと、IDEA BOARDへ画面リンクすることを混同しない。
 - MOCK、PROTOTYPE、PRODUCT、DB、API、本番業務ロジックへ進まない。
 
 ## テンプレート
@@ -95,7 +98,7 @@ IDEA BOARD画面は次の順序を基本にする。
 | 一覧 | 確認入口を整理する | 表示対象 / 絞り込み候補 / 状態表示 |
 | 詳細 | 1件の詳細を整理する | 表示情報 / 関連情報 / 操作候補 |
 | フロー | 概念の流れを整理する | 簡易フロー / Mermaid |
-| Coding | 将来の実装候補を整理する | Page候補 / Component候補 / Backend化時の注意 |
+| 責務境界 | 作るもの / 作らないものを整理する | 責務候補 / 対象外 / PRODUCT化前の確認 |
 
 ## タブ内インデックス
 
@@ -128,15 +131,16 @@ IDEA BOARD画面は次の順序を基本にする。
 - 操作候補
 - 次工程
 
-### Codingタブ
+### 責務境界タブ
 
-- Page候補
-- Component候補
-- DTO候補
-- Backend化時の注意
-- PRODUCT化時に作り直す責務
+- 作るもの
+- 作らないもの
+- 未確定の責務
+- PRODUCT化前に再確認すること
 
 ## 想定する画面導線
+
+この導線は、MOCKやPRODUCTで検討する画面候補の整理です。IDEA BOARD自体へ画面リンクする意味ではありません。
 
 ```text
 <入口>
@@ -181,6 +185,8 @@ flowchart TD
 
 ## 今は作らないもの
 
+- MOCKからIDEA BOARDへ戻す導線
+- 実画面の通常リンクとしてのIDEA BOARD導線
 - React Component
 - 共通UI Component
 - Page実装
@@ -214,13 +220,16 @@ flowchart TD
 - <確認したい操作>
 - <状態表示として見せるもの>
 - <まだMOCKに入れないもの>
+- <IDEA BOARDから持ち込まない資料リンク / Codingメモ>
 
-## Coding観点
+## PRODUCT化前に再確認すること
 
-- Page候補:
+ここでは候補を整理するだけに留め、未確認の実装名やDB構造を確定仕様として断定しない。
+
+- 画面候補:
 - Component候補:
 - 固定データ候補:
-- Backend化時の注意:
+- Backend化時に未確認のこと:
 - PRODUCT化時に作り直す責務:
 
 ## 責務境界メモ
@@ -241,6 +250,8 @@ PRODUCT化時に必要になりそうな候補として、Controller / Request /
 - スマートフォン縦表示でも、まとまった本文、表、フローチャートを確認できる高さを残しているか。
 - `overflow-y-auto`、親要素の高さ設計、`flex-1`、`min-h-0` の確認観点があるか。
 - 選択中の内容だけを表示する方針があるか。
+- IDEA BOARDをMOCK画面の通常導線へ混ぜない方針があるか。
+- Codingメモを主目的にした内容になっていないか。
 - MOCKへ進むために決めることが明記されているか。
 - DB / Migration / API / PRODUCT実装 / 共通Component化へ進んでいないか。
 - secretsや個人情報が混入していないか。
