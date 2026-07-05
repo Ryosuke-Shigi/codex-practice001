@@ -314,7 +314,7 @@ export const projects: Project[] = [
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:
-                    '案件システムのIDEA BOARDとして、案件概要、案件作成、案件一覧、Codingの方向性を整理します。',
+                    'LumiLaboと案件システムの考え方を、お客様向けの機能説明資料として整理します。',
                 status: 'available',
                 iconKey: 'lightbulb',
                 modules: [
@@ -322,7 +322,7 @@ export const projects: Project[] = [
                         id: 'project-system-idea-board',
                         name: '案件システム',
                         description:
-                            'TOP、案件、案件作成、案件一覧、Codingを5タブで切り替え、案件概要と作成・一覧構想を確認します。',
+                            '概要、フロー、機能説明、画面候補、図解、グラフ、codeで、案件システムの目的と将来候補を確認します。',
                         route: '/lab/lumilabo-project-idea-board',
                         iconKey: 'clipboard',
                     },
