@@ -37,4 +37,12 @@ describe('LumiLaboProjectIdeaBoardView', () => {
         expect(markup).not.toContain('<input');
         expect(markup).not.toContain('<textarea');
     });
+
+    it('モバイルでタブを横スクロールにし、本文側のスクロール領域を残す', () => {
+        const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
+
+        expect(markup).toContain('overflow-x-auto');
+        expect(markup).toContain('min-w-28 flex-none');
+        expect(markup).toContain('min-h-0 flex-1 overflow-y-auto');
+    });
 });

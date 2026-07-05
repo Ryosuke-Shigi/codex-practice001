@@ -33,10 +33,10 @@ export default function LumiLaboProjectIdeaBoardView() {
 
     return (
         <article className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-neutral-300 bg-white text-black shadow-xl shadow-neutral-900/10">
-            <header className="flex-none border-b border-neutral-200 bg-white px-3 py-3 sm:px-4">
+            <header className="flex-none border-b border-neutral-200 bg-white px-3 py-2 [@media(max-height:480px)]:py-1 sm:px-4 sm:py-3">
                 <div className="min-w-0">
-                    <p className="text-sm font-semibold text-yellow-800">IDEA BOARD</p>
-                    <h1 className="mt-1 text-2xl font-semibold leading-tight text-black sm:text-3xl">
+                    <p className="text-sm font-semibold text-yellow-800 [@media(max-height:480px)]:sr-only">IDEA BOARD</p>
+                    <h1 className="mt-1 text-xl font-semibold leading-tight text-black [@media(max-height:480px)]:text-lg sm:text-3xl">
                         LumiLabo 案件システム IDEA BOARD
                     </h1>
                 </div>
@@ -60,10 +60,10 @@ function TopTabBar({
 }) {
     return (
         <nav
-            className="flex-none border-b border-neutral-200 bg-white px-2 py-2 sm:px-3"
+            className="flex-none overflow-hidden border-b border-neutral-200 bg-white px-2 py-1.5 [@media(max-height:480px)]:py-1 sm:px-3 sm:py-2"
             aria-label="LumiLabo 案件システム IDEA BOARD タブ"
         >
-            <div className="grid gap-1.5 sm:grid-cols-5">
+            <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 sm:grid sm:grid-cols-5 sm:gap-1.5 sm:overflow-visible sm:pb-0">
                 {ideaBoardTabs.map((tab) => {
                     const Icon = tabIcons[tab.id];
                     const isActive = activeTabId === tab.id;
@@ -77,9 +77,9 @@ function TopTabBar({
                             className={getTabButtonClasses(isActive)}
                             onClick={() => onSelectTab(tab.id)}
                         >
-                            <span className="flex min-w-0 items-center gap-2">
+                            <span className="flex min-w-0 items-center justify-center gap-2 whitespace-nowrap">
                                 <Icon className="h-5 w-5 flex-none" aria-hidden />
-                                <span className="min-w-0 truncate">{tab.label}</span>
+                                <span>{tab.label}</span>
                             </span>
                         </button>
                     );
@@ -95,21 +95,19 @@ function TabPanel({ tab }: { tab: IdeaBoardTab }) {
             role="tabpanel"
             className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-neutral-200 bg-white text-black"
         >
-            <div className="flex-none border-b border-neutral-200 bg-white px-3 py-3 sm:px-4">
-                <div className="grid gap-1 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,1fr)] lg:items-end">
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold text-yellow-800">{tab.kicker}</p>
-                        <h2 className="mt-1 text-xl font-semibold leading-tight text-black sm:text-2xl">
-                            {tab.title}
-                        </h2>
-                    </div>
-                    <p className="text-base leading-7 text-neutral-800 lg:text-right">
-                        {tab.lead}
-                    </p>
+            <div className="flex-none border-b border-neutral-200 bg-white px-3 py-2 [@media(max-height:480px)]:py-1 sm:px-4 sm:py-3">
+                <div className="min-w-0">
+                    <p className="text-sm font-semibold text-yellow-800">{tab.kicker}</p>
+                    <h2 className="mt-1 text-lg font-semibold leading-tight text-black sm:text-2xl">
+                        {tab.title}
+                    </h2>
                 </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-3">
+                <p className="mb-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm leading-6 text-neutral-800 sm:text-base sm:leading-7">
+                    {tab.lead}
+                </p>
                 <div className="grid gap-2 lg:grid-cols-2">
                     {tab.sections.map((section) => (
                         <section
@@ -199,7 +197,7 @@ function CompactItemList({ items }: { items: readonly string[] }) {
 
 function getTabButtonClasses(isActive: boolean): string {
     return classNames(
-        'flex min-h-11 w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-left text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500',
+        'flex min-h-11 min-w-28 flex-none items-center justify-center gap-2 rounded-md border px-3 py-2 text-left text-base font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 [@media(max-height:480px)]:min-h-10 sm:w-full sm:min-w-0',
         isActive
             ? 'border-yellow-700 bg-yellow-300 text-black shadow-md shadow-yellow-900/20 ring-2 ring-yellow-500'
             : 'border-neutral-200 bg-white text-neutral-800 hover:border-yellow-500 hover:bg-neutral-50',
