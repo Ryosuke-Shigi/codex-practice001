@@ -4,30 +4,36 @@ import { describe, expect, it } from 'vitest';
 import LumiLaboProjectIdeaBoardView from './LumiLaboProjectIdeaBoardView';
 
 describe('LumiLaboProjectIdeaBoardView', () => {
-    it('初期表示はTOPで、必須5タブと選択状態の見た目を表示する', () => {
+    it('初期表示は概要で、上位7タブと薄いファイルタグを表示する', () => {
         const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
 
         expect(markup).toContain('LumiLabo 案件システム IDEA BOARD');
-        expect(markup).toContain('TOP');
-        expect(markup).toContain('案件');
-        expect(markup).toContain('案件作成');
-        expect(markup).toContain('案件一覧');
-        expect(markup).toContain('Coding');
-        expect(markup).not.toContain('概要');
-        expect(markup).not.toContain(['表示', '中'].join(''));
+        expect(markup).toContain('概要');
+        expect(markup).toContain('フロー');
+        expect(markup).toContain('機能説明');
+        expect(markup).toContain('画面候補');
+        expect(markup).toContain('図解');
+        expect(markup).toContain('グラフ');
+        expect(markup).toContain('code');
+        expect(markup).toContain('位置づけ');
+        expect(markup).toContain('価値');
+        expect(markup).toContain('範囲');
+        expect(markup).toContain('rounded-t-md');
+        expect(markup).toContain('border-b-0');
         expect(markup).toContain('bg-yellow-300');
-        expect(markup).toContain('案件システムTOP構想');
-        expect(markup).toContain('LumiLabo Hubから案件システムへ入った最初の画面を考える');
+        expect(markup).toContain('LumiLaboと案件システムの親子関係');
+        expect(markup).not.toContain('Coding');
     });
 
     it('非選択タブの本文を同じ画面へ縦並び表示しない', () => {
         const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
 
-        expect(markup).not.toContain('案件とは何か、何を1案件として扱うかを整理する');
-        expect(markup).not.toContain('入力対象');
-        expect(markup).not.toContain('登録日表示');
-        expect(markup).not.toContain('1件の案件カードで見せる候補');
-        expect(markup).not.toContain('将来PRODUCT化する場合の責務境界');
+        expect(markup).not.toContain('概念フローチャート');
+        expect(markup).not.toContain('1案件として扱う初期情報');
+        expect(markup).not.toContain('画面候補一覧');
+        expect(markup).not.toContain('プロダクト構造図');
+        expect(markup).not.toContain('情報量の広がり');
+        expect(markup).not.toContain('補助メモ');
     });
 
     it('保存可能フォームや入力欄として描画しない', () => {
@@ -38,11 +44,12 @@ describe('LumiLaboProjectIdeaBoardView', () => {
         expect(markup).not.toContain('<textarea');
     });
 
-    it('モバイルでタブを横スクロールにし、本文側のスクロール領域を残す', () => {
+    it('モバイルでタブとファイルタグを横スクロールにし、本文側のスクロール領域を残す', () => {
         const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
 
         expect(markup).toContain('overflow-x-auto');
-        expect(markup).toContain('min-w-28 flex-none');
+        expect(markup).toContain('min-w-32 flex-none');
+        expect(markup).toContain('min-w-24 flex-none');
         expect(markup).toContain('min-h-0 flex-1 overflow-y-auto');
     });
 });
