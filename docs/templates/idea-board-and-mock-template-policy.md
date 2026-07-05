@@ -196,6 +196,8 @@ TOPタブで見るもの:
 
 - IDEA BOARD / MOCK は、React Component、Page実装、Backend実装を作るための仕様書ではありません。
 - IDEA BOARD / MOCK のテンプレート整備は、Markdown、判断基準、見せ方を整える作業です。
+- MOCKの主本文は画面確認を中心にし、PRODUCT化、props、Component候補を前面に出しません。
+- UI契約 という言葉を使う場合も、お客様向け本文の主見出しにはせず、必要な場合だけ内部向け作業注意で扱います。
 - MOCKの固定データを、本番DTOやRepositoryの代替として扱いません。
 - 未確認の仕様、実装名、DB構造、本番API、本番業務判断を確定扱いしません。
 - secrets / `.env` / APIキー / token / cookie / session / 個人情報を含めません。
@@ -212,6 +214,7 @@ TOPタブで見るもの:
 - MOCKは画面を1つずつ作る方針になっているか。
 - MOCKで、上位タブと薄いファイルタグの役割が分かれているか。
 - MOCKで、必要な図、グラフ、絵を画面要素として入れてよい方針があるか。
+- MOCKの主本文が、PRODUCT化・props・Component候補ではなく画面確認を中心にしているか。
 - MOCKが資料リンク集、設計メモ集、Codingメモ集になっていないか。
 - 内部向け作業注意が、お客様向け本文の中心から外れているか。
 - PR #130 の目的である IDEA BOARD / MOCK 境界整理を維持しているか。
