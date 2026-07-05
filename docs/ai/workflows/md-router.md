@@ -2,9 +2,9 @@
 
 ## 目的
 
-MDルーターは、このプロジェクトのdocs運用において、作業開始時に読むdocsを固定するためのルールである。
+MDルーターは、このプロジェクトのdocs運用において、作業開始時に読む入口、読む順番、読むdocs、読まないdocsを固定するためのGuideである。
 
-作業者が全docsを読む前提にせず、作業種別ごとに読むdocsを絞る。
+全docsを読ませる一覧ではない。作業者が全docsを読む前提にせず、作業種別ごとに必要なdocsと見出しを絞る。
 
 目的は以下。
 
@@ -12,6 +12,7 @@ MDルーターは、このプロジェクトのdocs運用において、作業�
 * 無関係docsの読み込みを防ぐ
 * 古いdocsと現在コードの矛盾を検知しやすくする
 * 作業種別ごとに必要な文脈だけを読む
+* 長文docsは全文精読を前提にせず、対象見出し単位で読む
 * PRレビュー強度と読む範囲を接続する
 * docsが形骸化している場合に停止条件を発動する
 * 作業後にMDルーター自体を追加・削除・修正できる状態にする
@@ -19,6 +20,8 @@ MDルーターは、このプロジェクトのdocs運用において、作業�
 MDルーターは、docsを軽く扱うためのものではない。
 
 必要なdocsを、必要な順番で、必要な範囲だけ読むための入口である。
+
+コスト削減のために必要情報を削らない。固定するのは最大ファイル数や最大行数などの数値上限ではなく、作業種別、正本docs、対象見出し、読まない範囲である。
 
 ## 基本原則
 
@@ -31,10 +34,14 @@ MDルーターは、docsを軽く扱うためのものではない。
 全作業で最初に確認するもの。
 
 * AGENTS.md
-* docs/index.md
-* docs/ai/workflows/md-router.md
+* docs/index.md の必要箇所
+* docs/ai/workflows/md-router.md の基本原則、読む順番、対象作業種別、関連停止条件
 
 作業種別が決まった後、対応表に従って読むdocsを固定する。
+
+docs/index.md は索引であり、毎回全文理解を前提にしない。MDルーターも、毎回全文精読する読み物ではなく、作業開始時に参照範囲を固定するための入口として扱う。
+
+「念のため全文確認」「関係しそうなdocsをまとめて確認」「repo全体探索から開始」「無関係feature docsを広く確認」は行わない。不明点が作業継続に必要な場合は、無関係docsやrepo全体探索で補完せず停止条件として報告する。
 
 関連workflow docs。
 
@@ -85,14 +92,16 @@ Loop Engineeringは、AIが読む開発文脈が育つように、実行、確�
 原則として以下の順番で読む。
 
 1. AGENTS.md
-2. docs/index.md
-3. docs/ai/workflows/md-router.md
+2. docs/index.md の必要箇所
+3. docs/ai/workflows/md-router.md の基本原則、読む順番、対象作業種別、関連停止条件
 4. 作業種別ごとの共通docs
 5. 対象feature docs
 6. 対象Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test
 7. 依存が判明した場合のみ追加ファイル
 
 最初からリポジトリ全体を探索しない。
+
+長文docsは、対象作業に関係する見出し単位で読む。見出し単位で読んでも判断できない場合だけ、理由を明示して追加範囲を読む。
 
 ## Git作業 / ローカルGit状態確認
 
@@ -119,7 +128,9 @@ Git作業を含む場合は、通常の共通docs確認に加えて以下の順�
 5. 対象repoの remote / branch / status / diff を確認する
 6. commit / push / PR の前後で差分と作業対象repoを再確認する
 
-ローカル環境固有の再発防止メモや確認メモは、共有docsの正本ではない。表docsから具体的な中身やファイル名を案内しない。
+ローカル環境固有の再発防止メモや確認メモは、共有docsの正本ではない。Git操作、ブランチ操作、PR作成、main直作業回避、ローカル固有の地雷確認が絡む場合だけ、Git管理外の .local/ や .local-rules/ などを補助ハーネスとして確認する。
+
+この補助ハーネスは正本docsではない。中身をGit管理docs、PR本文、レビューコメントへ転記せず、Git管理docsへ混ぜない。Git管理docsとローカル補助ハーネスが矛盾する場合は、勝手に統合せず停止して報告する。
 
 ## 外側環境repoと内側アプリrepoの境界
 
@@ -190,7 +201,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | --- | --- | --- | --- | --- |
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
-| docs運用最適化 / 補助追加 | docs/index.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/ai/workflows/loop-engineering.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md | 原則コードは読まない | 無関係feature docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
+| docs運用最適化 / 補助追加 | docs/index.md / docs/context-management.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/ai/workflows/loop-engineering.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md / LumiLaboに関係する場合だけ docs/lumilabo/index.md | 原則コードは読まない | 無関係feature docs / 無関係Lab docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
 | 作業方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
@@ -199,6 +210,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Feature移植先実装 | docs/feature-module-portability.md / 移植元feature docs / 移植先repoのAGENTS・INDEX・ROUTER | 移植先repoの architecture / testing docs | 移植元Featureの移植対象 / 移植先Laravel構成 / 移植先route・config・provider・migration・seeder・tests | 移植対象外Feature / 移植モード外のLab・MOCK・PROTOTYPE・IDEA BOARD |
 | PRODUCTのみ移植 | docs/feature-module-portability.md / 対象feature docs / docs/architecture.md / docs/testing.md | docs/frontend.md / docs/ui-development-flow.md | PRODUCT Controller / Request / Action / Service / Repository / DTO / Responder / Strategy / Factory / Job / Enum / Model / Migration / Seeder / Config / Product routes / Console・Scheduler / Product Page・Component / Product tests | IDEA BOARD / MOCK固定データ / MOCK専用Page・Component / PROTOTYPE仮通信 / PROTOTYPE検証Route・Controller / Lab配下の紹介ページ / モック用画像 / 一時的な調査ログ |
 | IDEA BOARD作成・修正 | docs/development-flow.md / docs/ui-development-flow.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/idea-board-template.md | 対象feature docs / 対象Lab docs | 原則コードは読まない。既存IDEA BOARD画面を修正する場合のみ対象Page / Component | Repository / Service / Migration / API / PRODUCT実装 |
+| LumiLabo IDEA BOARD / UI方針確認 | docs/lumilabo/index.md / docs/development-flow.md / docs/ui-development-flow.md | docs/lumilabo/ui-design-guideline.md の対象見出し / docs/lumilabo/project-idea-board.md の対象タブ・対象外・確認観点 | 既存IDEA BOARD画面を修正する場合のみ対象Page / Component | LumiLabo以外のfeature docs / 無関係Lab docs / Repository / Service / Migration / API / PRODUCT実装 |
 | MOCK作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/ui-development-flow.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/mock-template.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration / PRODUCT実装 / 共通Component化判断 |
 | PROTOTYPE作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
 | PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
@@ -221,6 +233,16 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | PRレビュー | docs/ai/workflows/md-router.md / PRレビュー強度ルールdocsがrepo内に存在する場合は読む / コマンド台帳が存在する場合は読む | PR種別に応じたdocs | changed files / 直接依存先 / 対応Test | レベル外の全量探索 |
 | コメント / PHPDoc / JSDoc整備 | docs/architecture.md / 対象言語docsが存在する場合は読む | 対象feature docs | 対象ファイルのみ | 仕様変更につながる周辺修正 |
 | 失敗改善ログ作成 | docs/context-management.md / docs/development-flow.md | 対象PR / 対象docs | 必要な差分のみ | 無関係コード全体 |
+
+## LumiLabo作業の読込最適化
+
+LumiLabo作業では、最初に docs/lumilabo/index.md を入口にする。LumiLabo全体UI方針の正本は docs/lumilabo/ui-design-guideline.md だが、毎回全文読込を前提にしない。
+
+案件作成を扱う場合は、docs/lumilabo/ui-design-guideline.md の「モバイルファースト方針」「ボタン / 操作方針」「画面別ルールの案件作成」「禁止事項」と、フォーム方針に関係する記述を優先する。docs/lumilabo/project-idea-board.md は「案件作成」「作らないもの」「確認観点」を優先する。
+
+案件一覧を扱う場合は、docs/lumilabo/ui-design-guideline.md の「表 / グラフ / カレンダー方針」「画面別ルールの案件一覧」「禁止事項」と、カード型リストやモバイル表示に関係する記述を優先する。docs/lumilabo/project-idea-board.md は「案件一覧」「作らないもの」「確認観点」を優先する。
+
+docs/lumilabo/project-idea-board.md は、現在の作業段階に関係するタブ、対象外、確認観点を優先して読む。LumiLabo以外のfeature docsやLab docsは読まない。LumiLabo作業でも、Git操作やPR作成が絡む場合だけ、Git管理外のローカル補助ハーネスを関係箇所に限って確認する。
 
 ## Feature移植系作業の詳細
 
