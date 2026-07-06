@@ -154,6 +154,8 @@ MOCKでは、カード、フォーム、一覧、詳細、状態表示、図、�
 
 ## LumiLabo MOCK の画面構成例
 
+この見出しはLumiLabo固有の例です。汎用ルールは上の「IDEA BOARD と MOCK の違い」「MOCK で見せるもの」「上位タブと薄いファイルタグ」を正本とします。
+
 LumiLabo MOCK では、LumiLaboを上位プロダクト / 上位ドメイン、案件をLumiLabo配下のサブシステムとして扱います。
 
 現在のLumiLabo MOCKは、最初から画面を増やしすぎず、次の初期導線を固定条件として扱います。
