@@ -311,6 +311,15 @@ export const projects: Project[] = [
         },
         stages: [
             {
+                kind: 'mock',
+                name: 'MOCK',
+                description:
+                    'LumiLaboの開始UIを固定表示で確認します。',
+                status: 'available',
+                iconKey: 'layout',
+                route: '/lab/lumilabo-project-mock',
+            },
+            {
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:

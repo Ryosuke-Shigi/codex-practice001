@@ -224,5 +224,10 @@ Route::get('/lab/lumilabo-project-idea-board', function () {
     return Inertia::render('Lab/LumiLaboProjectIdeaBoard');
 })->name('lab.lumilabo-project-idea-board');
 
+Route::get('/lab/lumilabo-project-mock', function () {
+    // LumiLabo start-flow display-only MOCK. No DB, API, or backend layer work.
+    return Inertia::render('Lab/LumiLaboProjectMock');
+})->name('lab.lumilabo-project-mock');
+
 Route::redirect('/lab/lumilabo-project-create-idea-board', '/lab/lumilabo-project-idea-board')
     ->name('lab.lumilabo-project-create-idea-board.redirect');
