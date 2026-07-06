@@ -90,6 +90,13 @@ class ProjectHubTest extends TestCase
             );
 
         $this
+            ->get('/lab/lumilabo-project-mock')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Lab/LumiLaboProjectMock', false)
+            );
+
+        $this
             ->get('/lab/construction-order-workflow-idea-board')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page

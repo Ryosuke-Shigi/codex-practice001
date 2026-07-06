@@ -36,7 +36,7 @@ describe('ProjectHub static project data', () => {
         ).toEqual(['product', 'mock', 'idea-board']);
     });
 
-    it('keeps LumiLabo as an upper project with a project system idea board', () => {
+    it('keeps LumiLabo as an upper project with mock and idea board entries', () => {
         const lumiLabo = projects.find((project) => project.id === 'lumilabo');
 
         expect(lumiLabo).toBeDefined();
@@ -46,6 +46,13 @@ describe('ProjectHub static project data', () => {
         expect(lumiLabo?.theme.background).toBe('#111827');
         expect(lumiLabo?.theme.sphere).toBe('#facc15');
         expect(lumiLabo?.theme.text).toBe('#fffbea');
+
+        const mockStage = lumiLabo?.stages.find(
+            (stage) => stage.kind === 'mock',
+        );
+
+        expect(mockStage?.description).toContain('開始UI');
+        expect(mockStage?.route).toBe('/lab/lumilabo-project-mock');
 
         const ideaBoardStage = lumiLabo?.stages.find(
             (stage) => stage.kind === 'idea-board',
@@ -80,6 +87,7 @@ describe('ProjectHub static project data', () => {
         expect(routes).toContain('/lab/construction-order-workflow-mock');
         expect(routes).toContain('/lab/event-card-calendar-idea-board');
         expect(routes).toContain('/lab/lumilabo-project-idea-board');
+        expect(routes).toContain('/lab/lumilabo-project-mock');
         expect(routes).not.toContain('/lab');
         expect(routes).not.toContain('/lab/construction-order-new-mock');
         expect(routes).not.toContain('/lab/construction-order-workflow-pp');

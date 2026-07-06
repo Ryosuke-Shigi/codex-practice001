@@ -210,7 +210,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Feature移植先実装 | docs/feature-module-portability.md / 移植元feature docs / 移植先repoのAGENTS・INDEX・ROUTER | 移植先repoの architecture / testing docs | 移植元Featureの移植対象 / 移植先Laravel構成 / 移植先route・config・provider・migration・seeder・tests | 移植対象外Feature / 移植モード外のLab・MOCK・PROTOTYPE・IDEA BOARD |
 | PRODUCTのみ移植 | docs/feature-module-portability.md / 対象feature docs / docs/architecture.md / docs/testing.md | docs/frontend.md / docs/ui-development-flow.md | PRODUCT Controller / Request / Action / Service / Repository / DTO / Responder / Strategy / Factory / Job / Enum / Model / Migration / Seeder / Config / Product routes / Console・Scheduler / Product Page・Component / Product tests | IDEA BOARD / MOCK固定データ / MOCK専用Page・Component / PROTOTYPE仮通信 / PROTOTYPE検証Route・Controller / Lab配下の紹介ページ / モック用画像 / 一時的な調査ログ |
 | IDEA BOARD作成・修正 | docs/development-flow.md / docs/ui-development-flow.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/idea-board-template.md | 対象feature docs / 対象Lab docs | 原則コードは読まない。既存IDEA BOARD画面を修正する場合のみ対象Page / Component | Repository / Service / Migration / API / PRODUCT実装 |
-| LumiLabo IDEA BOARD / UI方針確認 | docs/lumilabo/index.md / docs/development-flow.md / docs/ui-development-flow.md | docs/lumilabo/ui-design-guideline.md の対象見出し / docs/lumilabo/project-idea-board.md の対象タブ・対象外・確認観点 | 既存IDEA BOARD画面を修正する場合のみ対象Page / Component | LumiLabo以外のfeature docs / 無関係Lab docs / Repository / Service / Migration / API / PRODUCT実装 |
+| LumiLabo IDEA BOARD / MOCK / UI方針確認 | docs/lumilabo/index.md / docs/development-flow.md / docs/ui-development-flow.md | docs/lumilabo/ui-design-guideline.md の対象見出し / docs/lumilabo/project-idea-board.md の対象タブ・対象外・確認観点 / MOCKを扱う場合は docs/lumilabo/project-mock.md | 既存IDEA BOARD / MOCK画面を修正する場合のみ対象Page / Component | LumiLabo以外のfeature docs / 無関係Lab docs / Repository / Service / Migration / API / PRODUCT実装 |
 | MOCK作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/ui-development-flow.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/mock-template.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration / PRODUCT実装 / 共通Component化判断 |
 | PROTOTYPE作成・修正 | docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
 | PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
@@ -241,6 +241,8 @@ LumiLabo作業では、最初に docs/lumilabo/index.md を入口にする。Lum
 案件作成を扱う場合は、docs/lumilabo/ui-design-guideline.md の「モバイルファースト方針」「ボタン / 操作方針」「画面別ルールの案件作成」「禁止事項」と、フォーム方針に関係する記述を優先する。docs/lumilabo/project-idea-board.md は「案件作成」「作らないもの」「確認観点」を優先する。
 
 案件一覧を扱う場合は、docs/lumilabo/ui-design-guideline.md の「表 / グラフ / カレンダー方針」「画面別ルールの案件一覧」「禁止事項」と、カード型リストやモバイル表示に関係する記述を優先する。docs/lumilabo/project-idea-board.md は「案件一覧」「作らないもの」「確認観点」を優先する。
+
+LumiLabo MOCKを扱う場合は、docs/lumilabo/project-mock.md の「現在の導線」「画面構成」「作らないもの」「確認観点」を優先して読む。
 
 docs/lumilabo/project-idea-board.md は、現在の作業段階に関係するタブ、対象外、確認観点を優先して読む。LumiLabo以外のfeature docsやLab docsは読まない。LumiLabo作業でも、Git操作やPR作成が絡む場合だけ、Git管理外のローカル補助ハーネスを関係箇所に限って確認する。
 
