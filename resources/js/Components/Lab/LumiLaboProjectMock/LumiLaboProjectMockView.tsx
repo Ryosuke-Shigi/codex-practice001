@@ -78,16 +78,22 @@ export default function LumiLaboProjectMockView() {
                     />
                 ) : null}
 
-                {activeScreen === 'project' ? (
-                    activeProjectTabId === 'register' ? (
-                        <ProjectRegisterPanel />
-                    ) : (
-                        <ProjectEntryPanel
-                            activeProjectTabId={activeProjectTabId}
-                            onBack={() => setActiveScreen('select')}
-                            onSelectProjectTab={setActiveProjectTabId}
-                        />
-                    )
+                {activeScreen === 'project' && activeProjectTabId === 'top' ? (
+                    <ProjectEntryPanel
+                        activeProjectTabId={activeProjectTabId}
+                        onBack={() => setActiveScreen('select')}
+                        onSelectProjectTab={setActiveProjectTabId}
+                    />
+                ) : null}
+
+                {activeScreen === 'project' && activeProjectTabId === 'register' ? (
+                    <ProjectRegisterPanel
+                        onBack={() => setActiveScreen('select')}
+                    />
+                ) : null}
+
+                {activeScreen === 'project' && activeProjectTabId === 'list' ? (
+                    <ProjectListPanel onBack={() => setActiveScreen('select')} />
                 ) : null}
             </main>
         </article>
@@ -202,7 +208,7 @@ function ProjectEntryPanel({
                     {lumiLaboProjectItem.label}
                 </h1>
                 <div className="grid w-full gap-2 [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-2 [@media(orientation:landscape)_and_(max-height:480px)]:gap-1.5">
-                    {lumiLaboProjectTabs.map((tab) => {
+                    {lumiLaboProjectTabs.filter((tab) => tab.id !== 'top').map((tab) => {
                         const Icon = projectTabIcons[tab.id];
                         const isActive = activeProjectTabId === tab.id;
 
@@ -233,7 +239,42 @@ function ProjectEntryPanel({
     );
 }
 
-function ProjectRegisterPanel() {
+function ProjectListPanel({ onBack }: { onBack: () => void }) {
+    return (
+        <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
+            <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                <header className="grid gap-1">
+                    <p className="text-sm font-black text-yellow-800">
+                        {lumiLaboProjectItem.label}
+                    </p>
+                    <h1 className="text-2xl font-black leading-tight text-black sm:text-3xl">
+                        案件一覧
+                    </h1>
+                </header>
+
+                <div className="flex min-h-36 items-center justify-center rounded-md border border-neutral-300 bg-white px-5 py-6 text-black">
+                    <div className="grid justify-items-center gap-2">
+                        <List className="h-8 w-8" aria-hidden />
+                        <p className="text-lg font-black">案件一覧</p>
+                    </div>
+                </div>
+
+                <div className="mt-auto grid gap-2 pt-1 sm:max-w-sm">
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        onClick={onBack}
+                    >
+                        <ArrowLeft className="h-5 w-5" aria-hidden />
+                        <span>{lumiLaboProjectBackLabel}</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function ProjectRegisterPanel({ onBack }: { onBack: () => void }) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
             <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
@@ -259,6 +300,14 @@ function ProjectRegisterPanel() {
                     >
                         <FilePlus2 className="h-5 w-5" aria-hidden />
                         <span>{lumiLaboProjectRegisterPanel.primaryActionLabel}</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        onClick={onBack}
+                    >
+                        <ArrowLeft className="h-5 w-5" aria-hidden />
+                        <span>{lumiLaboProjectBackLabel}</span>
                     </button>
                 </div>
             </div>

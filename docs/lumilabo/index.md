@@ -33,8 +33,9 @@ LumiLaboは上位プロダクト / 上位ドメインとして扱う。
 - 画面: `/lab/lumilabo-project-mock`
 - 初期導線: TOP → Start → 選択 → 案件 → 案件TOP。選択からTOPへ戻る導線も持つ
 - 全体タブ: TOP / 選択
-- 案件TOP導線: 一覧 / 登録 / 戻る
+- 案件内タブ: TOP / 登録 / 一覧
+- 案件TOP通常ボタン: 登録 / 一覧 / 戻る
 - TOP: LumiLaboアイコン、LumiLaboタイトル、Startボタンだけを見せる
 - 選択: Primaryの案件ボタン / 案件カードと、SecondaryのTOPへ戻るボタンを見せる
-- 案件TOP: 案件タイトル、一覧 / 登録 の選択、選択画面へ戻るボタンを見せる
+- 案件TOP: 案件タイトル、登録 / 一覧 の通常ボタン、選択画面へ戻るボタンを見せる
 - 対象外: IDEA BOARDへの通常リンク / 案件詳細 / 工程デッキ / 工程カード / DB / Backend本実装 / API通信

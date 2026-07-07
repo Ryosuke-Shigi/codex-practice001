@@ -12,8 +12,9 @@ export const lumiLaboGlobalTabs = [
 ] as const satisfies readonly LumiLaboMockTab<LumiLaboMockGlobalTabId>[];
 
 export const lumiLaboProjectTabs = [
-    { id: 'list', label: '一覧' },
+    { id: 'top', label: 'TOP' },
     { id: 'register', label: '登録' },
+    { id: 'list', label: '一覧' },
 ] as const satisfies readonly LumiLaboMockTab<LumiLaboMockProjectTabId>[];
 
 export const lumiLaboProjectItem = {

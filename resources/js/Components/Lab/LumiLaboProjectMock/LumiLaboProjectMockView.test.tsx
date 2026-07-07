@@ -84,17 +84,17 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('完了');
     });
 
-    it('renders the project actions as register, list, and a back button', async () => {
+    it('renders the project TOP actions as register, list, and a back button', async () => {
         const markup = await renderMockViewMarkup('project');
 
         expect(markup).toContain('案件');
+        expect(markup).toContain('TOP');
         expect(markup).toContain('登録');
         expect(markup).toContain('一覧');
         expect(markup).toContain('戻る');
-        expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('登録'));
-        expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('戻る'));
+        expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('一覧'));
+        expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('戻る'));
         expect(markup).toContain('lucide-arrow-left');
-        expect(markup).not.toContain('TOP');
         expect(markup).not.toContain('選択へ戻る');
         expect(markup).not.toContain('TOPへ戻る');
         expect(markup).toContain('orientation:landscape');
@@ -109,9 +109,22 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('住所');
         expect(markup).toContain('メモ');
         expect(markup).toContain('登録する');
+        expect(markup).toContain('戻る');
+        expect(markup.indexOf('登録する')).toBeLessThan(markup.indexOf('戻る'));
         expect(markup).toContain('<input');
         expect(markup).toContain('<textarea');
         expect(markup).not.toContain('<form');
+    });
+
+    it('renders the project list placeholder and back button on the list tab', async () => {
+        const markup = await renderMockViewMarkup('project', 'list');
+
+        expect(markup).toContain('案件一覧');
+        expect(markup).toContain('戻る');
+        expect(markup).toContain('lucide-list');
+        expect(markup).not.toContain('登録する');
+        expect(markup).not.toContain('lucide-layers-3');
+        expect(markup).not.toMatch(/<h1[^>]*>案件<\/h1>/);
     });
 
     it('keeps excluded project register fields out of the register tab', async () => {
