@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: LumiLabo / 案件システム MOCK
-- Last reviewed: 2026-07-06
+- Last reviewed: 2026-07-07
 - Canonical source: `/lab/lumilabo-project-mock` の初期導線と画面範囲
 
 ## 目的
@@ -19,8 +19,8 @@ IDEA BOARDは機能説明資料、MOCKは画面確認であり、MOCK側へIDEA 
 TOP
   ↓ Start
 選択
-  ↓ 案件
-案件TOP
+  ├ 案件 → 案件TOP
+  └ TOPへ戻る → TOP
 ```
 
 ## 画面構成
@@ -61,9 +61,11 @@ TOPでは、LumiLaboの入口だけを見せる。
 
 現在見せるもの:
 
-- 案件ボタン / 案件カード
+- Primaryの案件ボタン / 案件カード
+- SecondaryのTOPへ戻るボタン
 
 現在は、案件以外のサブシステムを増やさない。
+TOPへ戻るはMOCK内のUI状態をTOPへ戻すだけで、DB保存、API通信、Inertia遷移、route追加は行わない。
 
 ## 案件TOP
 
@@ -100,10 +102,13 @@ TOPでは、LumiLaboの入口だけを見せる。
 ## 確認観点
 
 - TOP → Start → 選択 → 案件 → 案件TOP の導線になっていること
+- 選択で案件とTOPへ戻るを選べること
+- 選択のTOPへ戻るでTOPへ戻れること
 - TOPは LumiLabo / Start の入口だけになっていること
-- 選択は案件ボタン / 案件カードだけになっていること
+- 選択はPrimaryの案件ボタン / 案件カードとSecondaryのTOPへ戻るボタンだけになっていること
 - 案件内タブが TOP / 登録 / 一覧 であること
-- 案件TOPに戻るボタンがあり、選択へ戻れること
+- 案件TOPに選択へ戻るボタンがあり、選択へ戻れること
 - 案件詳細や工程系を標準タブにしていないこと
 - IDEA BOARDへの通常リンクをMOCK内に置いていないこと
+- スマホ横置きで案件TOPの選択へ戻る導線が画面下で見切れないこと
 - DB / Backend本実装 / API通信へ踏み込んでいないこと
