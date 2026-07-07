@@ -91,8 +91,8 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('登録');
         expect(markup).toContain('一覧');
         expect(markup).toContain('戻る');
-        expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('一覧'));
-        expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('戻る'));
+        expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('登録'));
+        expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('戻る'));
         expect(markup).toContain('lucide-arrow-left');
         expect(markup).not.toContain('TOP');
         expect(markup).not.toContain('選択へ戻る');

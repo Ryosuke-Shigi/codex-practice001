@@ -34,8 +34,8 @@ describe('LumiLaboProjectMock data', () => {
 
     it('project UI uses only the project file tags', () => {
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).toEqual([
-            '登録',
             '一覧',
+            '登録',
         ]);
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('選択');
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('TOP');
