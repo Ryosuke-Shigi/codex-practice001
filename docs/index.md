@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-06
+- Last reviewed: 2026-07-07
 
 ## このドキュメントの目的
 
@@ -144,6 +144,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/feature-module-portability.md` | Feature Module移植ルール。Feature全体移植 / PRODUCTのみ移植 / MOCKのみ移植 / PROTOTYPEのみ移植 / IDEA BOARDのみ移植、移植元repoは読むだけ、移植先repoだけに差分を出す原則、移植対象・差し替え対象・移植しない対象の固定、個別Feature移植マニフェストの追加方針 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
+| `docs/guides/frontend-screen-types.md` | UI作成、UIレビュー、MOCK画面追加、Graphic Web UI作成、Builder UI検討時に System UI / Graphic Web UI / Graphic Builder UI の画面種別を最初に選ぶ |
 | `docs/guides/ui-component-responsibility-rules.md` | Inertia / React UI実装前に Page / Layout / Section / Field / Parts / Hook の責務、モバイル確認幅、MOCK / IDEA BOARD / PRODUCT 境界を軽く確認する |
 | `docs/templates/idea-board-and-mock-template-policy.md` | IDEA BOARD / MOCK の役割、共通画面構造、タブ、タブ内インデックス、スクロール方針 |
 | `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |

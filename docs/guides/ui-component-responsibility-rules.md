@@ -3,7 +3,7 @@
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001` / Laravel / Inertia / React UI
 - Last reviewed: 2026-07-07
-- Canonical source: `docs/frontend.md`, `docs/ui.md`, `docs/development-flow.md`, `docs/ui-development-flow.md`, `docs/prototype-policy.md`
+- Canonical source: `docs/frontend.md`, `docs/ui.md`, `docs/guides/frontend-screen-types.md`, `docs/development-flow.md`, `docs/ui-development-flow.md`, `docs/prototype-policy.md`
 
 ## このガイドの目的
 
@@ -13,9 +13,12 @@
 
 詳細なReact / Inertia / TypeScript責務は `docs/frontend.md`、UIの見た目と操作基準は `docs/ui.md`、MOCK / PROTOTYPE / PRODUCTの工程は `docs/ui-development-flow.md` と `docs/development-flow.md` を正本とします。
 
+System UI / Graphic Web UI / Graphic Builder UI の画面種別を先に選ぶ必要がある場合は、`docs/guides/frontend-screen-types.md` を参照します。このガイドでは、画面種別を決めた後のPage / Layout / Section / Field / Parts / Hook責務を軽く確認します。
+
 ## 01. 基本方針
 
 - UIはモバイルファーストで考える。
+- UI作成前に、必要に応じて System UI / Graphic Web UI / Graphic Builder UI の画面種別を明記する。
 - Pageに文言、装飾、状態管理、カード構造、レスポンシブ調整を詰め込まない。
 - 画面の意味単位、入力単位、小さな部品、UI状態整理を分ける。
 - UI Componentへ業務判断、DB都合、権限判断、正式な状態遷移を押し込まない。
@@ -444,6 +447,7 @@ shadcn/ui、Radix UI、Storybook、Material Design、Apple HIGなどは参考情
 
 - `docs/frontend.md`: React / Inertia / TypeScript責務
 - `docs/ui.md`: UIの見た目、操作、Common Component責務
+- `docs/guides/frontend-screen-types.md`: System UI / Graphic Web UI / Graphic Builder UI の画面種別選定
 - `docs/development-flow.md`: IDEA BOARD / MOCK / PROTOTYPE / PRODUCTの全体工程
 - `docs/ui-development-flow.md`: UI契約の引き継ぎ
 - `docs/prototype-policy.md`: MOCK / PROTOTYPE の配置とProduct分離

@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-07-07
 
 ## このドキュメントの目的
 
@@ -10,10 +10,13 @@
 
 React / Inertia / TypeScriptの実装責務は `docs/frontend.md`、UIの見た目と操作基準はこのドキュメントで扱います。
 
+System UI / Graphic Web UI / Graphic Builder UI の画面種別を決める必要がある場合は、`docs/guides/frontend-screen-types.md` を参照します。この文書では、画面種別を決めた後も共通して守る見た目、操作、Common Component、Effectsの基準を扱います。
+
 ## 基本方針
 
 - UIはモバイルファーストで設計する
 - 見た目より、情報の優先順位、視認性、操作性を優先する
+- 画面種別ごとの責務を混ぜず、System UIへ過度な演出、Graphic Web UIへ業務ロジック、Builder UIへ業務データを押し込まない
 - UI Componentに業務判断、DB操作、外部API判断を持たせない
 - 共通UIと機能固有UIを分離する
 - 背景・演出と操作UIを分離する
