@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-07-07
 
 ## このドキュメントの目的
 
@@ -12,11 +12,14 @@
 
 UIの見た目、操作、レスポンシブ確認、Common配置、Effects、デザイン参照画像の扱いは `docs/ui.md` を正本とします。
 
+UI作業前に System UI / Graphic Web UI / Graphic Builder UI の画面種別を選ぶ必要がある場合は、`docs/guides/frontend-screen-types.md` を参照します。この文書はReact / Inertia / TypeScriptの実装責務を扱い、画面種別そのものの選定は同ガイドへ寄せます。
+
 ## 基本方針
 
 - フロントエンドは React / Inertia / TypeScript を前提とする
 - UIはモバイルファーストで構成する
 - PC表示を先に作って縮小するのではなく、スマートフォン幅で成立する構成から決める
+- 必要に応じて画面種別を先に決め、System UI / Graphic Web UI / Graphic Builder UI の責務を混ぜない
 - Component、props、UI状態、表示責務を分離する
 - バックエンドの業務判断やDB操作をComponentへ持ち込まない
 - 見た目の演出より、視認性、操作性、情報の優先順位を優先する
