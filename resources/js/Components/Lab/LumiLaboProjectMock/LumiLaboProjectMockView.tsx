@@ -12,6 +12,7 @@ import { useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
+    lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
     lumiLaboProjectItem,
     lumiLaboProjectRegisterPanel,
@@ -31,6 +32,24 @@ const projectTabIcons = {
     register: FilePlus2,
     list: List,
 } satisfies Record<LumiLaboMockProjectTabId, LucideIcon>;
+
+type ProjectActionTabId = Exclude<LumiLaboMockProjectTabId, 'top'>;
+
+type FileTagBarProps<TId extends string> = {
+    tabs: readonly LumiLaboMockTab<TId>[];
+    activeTabId: string;
+    ariaLabel: string;
+    onSelectTab: (tabId: TId) => void;
+};
+
+type ProjectEntryPanelProps = {
+    onBack: () => void;
+    onSelectProjectTab: (tabId: ProjectActionTabId) => void;
+};
+
+type BackActionProps = {
+    onBack: () => void;
+};
 
 export default function LumiLaboProjectMockView() {
     const [activeScreen, setActiveScreen] =
@@ -56,12 +75,14 @@ export default function LumiLaboProjectMockView() {
                 <FileTagBar
                     tabs={lumiLaboProjectTabs}
                     activeTabId={activeProjectTabId}
+                    ariaLabel="案件内画面"
                     onSelectTab={setActiveProjectTabId}
                 />
             ) : (
                 <FileTagBar
                     tabs={lumiLaboGlobalTabs}
                     activeTabId={activeGlobalTabId}
+                    ariaLabel="LumiLabo MOCK画面"
                     onSelectTab={selectGlobalTab}
                 />
             )}
@@ -80,9 +101,10 @@ export default function LumiLaboProjectMockView() {
 
                 {activeScreen === 'project' && activeProjectTabId === 'top' ? (
                     <ProjectEntryPanel
-                        activeProjectTabId={activeProjectTabId}
                         onBack={() => setActiveScreen('select')}
-                        onSelectProjectTab={setActiveProjectTabId}
+                        onSelectProjectTab={(tabId) =>
+                            setActiveProjectTabId(tabId)
+                        }
                     />
                 ) : null}
 
@@ -103,14 +125,14 @@ export default function LumiLaboProjectMockView() {
 function FileTagBar<TId extends string>({
     tabs,
     activeTabId,
+    ariaLabel,
     onSelectTab,
-}: {
-    tabs: readonly LumiLaboMockTab<TId>[];
-    activeTabId: string;
-    onSelectTab: (tabId: TId) => void;
-}) {
+}: FileTagBarProps<TId>) {
     return (
-        <nav className="flex-none overflow-hidden border-b border-yellow-200 bg-[#fff7c7] px-2 pt-2">
+        <nav
+            aria-label={ariaLabel}
+            className="flex-none overflow-hidden border-b border-yellow-200 bg-[#fff7c7] px-2 pt-2"
+        >
             <div className="flex gap-1 overflow-x-auto overscroll-x-contain">
                 {tabs.map((tab) => {
                     const isActive = activeTabId === tab.id;
@@ -120,6 +142,7 @@ function FileTagBar<TId extends string>({
                             key={tab.id}
                             type="button"
                             aria-pressed={isActive}
+                            aria-current={isActive ? 'page' : undefined}
                             className={getFileTagClasses(isActive)}
                             onClick={() => onSelectTab(tab.id)}
                         >
@@ -135,7 +158,7 @@ function FileTagBar<TId extends string>({
 function TopPanel({ onStart }: { onStart: () => void }) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-5 py-6 sm:py-8">
-            <div className="mx-auto grid min-h-full w-full max-w-sm content-center justify-items-center gap-5">
+            <div className="mx-auto grid min-h-full w-full max-w-sm content-start justify-items-center gap-5 pt-8 sm:content-center sm:pt-0">
                 <span className="inline-flex h-20 w-20 items-center justify-center rounded-full border border-yellow-300 bg-yellow-100 text-yellow-900 shadow-sm shadow-yellow-900/10">
                     <Sparkles className="h-10 w-10" aria-hidden />
                 </span>
@@ -163,7 +186,7 @@ function SelectPanel({
 }) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-5 py-6 sm:py-8">
-            <div className="mx-auto grid min-h-full w-full max-w-sm content-center gap-3">
+            <div className="mx-auto grid min-h-full w-full max-w-sm content-start gap-3 pt-8 sm:content-center sm:pt-0">
                 <button
                     type="button"
                     className="grid min-h-24 w-full place-items-center gap-2 rounded-md border border-yellow-500 bg-yellow-300 px-6 py-5 text-2xl font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
@@ -189,18 +212,13 @@ function SelectPanel({
 }
 
 function ProjectEntryPanel({
-    activeProjectTabId,
     onBack,
     onSelectProjectTab,
-}: {
-    activeProjectTabId: LumiLaboMockProjectTabId;
-    onBack: () => void;
-    onSelectProjectTab: (tabId: LumiLaboMockProjectTabId) => void;
-}) {
-    // スマホ横置きでは縦幅を優先し、案件TOPの戻るボタンまで見える密度にする。
+}: ProjectEntryPanelProps) {
+    // モバイル縦は上寄せ、スマホ横は二列化して通常ボタンと戻るを見切れさせない。
     return (
-        <section className="h-full min-h-0 overflow-y-auto px-5 py-5 [@media(orientation:landscape)_and_(max-height:480px)]:py-2 sm:py-8">
-            <div className="mx-auto grid min-h-full w-full max-w-sm content-center justify-items-center gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-xl [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-[auto_minmax(0,1fr)] [@media(orientation:landscape)_and_(max-height:480px)]:items-center [@media(orientation:landscape)_and_(max-height:480px)]:justify-items-stretch [@media(orientation:landscape)_and_(max-height:480px)]:gap-x-3 [@media(orientation:landscape)_and_(max-height:480px)]:gap-y-2">
+        <section className="h-full min-h-0 overflow-y-auto px-5 py-5 sm:px-6 sm:py-8 [@media(orientation:landscape)_and_(max-height:480px)]:py-3">
+            <div className="mx-auto grid min-h-full w-full max-w-sm content-start justify-items-center gap-4 pt-6 sm:content-center sm:pt-0 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-xl [@media(orientation:landscape)_and_(max-height:480px)]:content-center [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-[auto_minmax(0,1fr)] [@media(orientation:landscape)_and_(max-height:480px)]:items-center [@media(orientation:landscape)_and_(max-height:480px)]:justify-items-stretch [@media(orientation:landscape)_and_(max-height:480px)]:gap-x-3 [@media(orientation:landscape)_and_(max-height:480px)]:gap-y-2">
                 <span className="inline-flex h-16 w-16 items-center justify-center rounded-full border border-yellow-300 bg-yellow-100 text-yellow-900 shadow-sm shadow-yellow-900/10 [@media(orientation:landscape)_and_(max-height:480px)]:h-10 [@media(orientation:landscape)_and_(max-height:480px)]:w-10">
                     <Layers3 className="h-8 w-8 [@media(orientation:landscape)_and_(max-height:480px)]:h-5 [@media(orientation:landscape)_and_(max-height:480px)]:w-5" aria-hidden />
                 </span>
@@ -208,16 +226,14 @@ function ProjectEntryPanel({
                     {lumiLaboProjectItem.label}
                 </h1>
                 <div className="grid w-full gap-2 [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-2 [@media(orientation:landscape)_and_(max-height:480px)]:gap-1.5">
-                    {lumiLaboProjectTabs.filter((tab) => tab.id !== 'top').map((tab) => {
+                    {lumiLaboProjectActionTabs.map((tab) => {
                         const Icon = projectTabIcons[tab.id];
-                        const isActive = activeProjectTabId === tab.id;
 
                         return (
                             <button
                                 key={tab.id}
                                 type="button"
-                                aria-pressed={isActive}
-                                className={getProjectEntryButtonClasses(isActive)}
+                                className={getProjectEntryButtonClasses()}
                                 onClick={() => onSelectProjectTab(tab.id)}
                             >
                                 <Icon className="h-5 w-5" aria-hidden />
@@ -239,7 +255,7 @@ function ProjectEntryPanel({
     );
 }
 
-function ProjectListPanel({ onBack }: { onBack: () => void }) {
+function ProjectListPanel({ onBack }: BackActionProps) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
             <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
@@ -274,7 +290,7 @@ function ProjectListPanel({ onBack }: { onBack: () => void }) {
     );
 }
 
-function ProjectRegisterPanel({ onBack }: { onBack: () => void }) {
+function ProjectRegisterPanel({ onBack }: BackActionProps) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
             <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
@@ -382,13 +398,8 @@ function getFileTagClasses(isActive: boolean): string {
     );
 }
 
-function getProjectEntryButtonClasses(isActive: boolean): string {
-    return classNames(
-        'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border px-5 text-lg font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10 [@media(orientation:landscape)_and_(max-height:480px)]:px-3 [@media(orientation:landscape)_and_(max-height:480px)]:text-base',
-        isActive
-            ? 'border-yellow-600 bg-yellow-300 text-black shadow-sm shadow-yellow-900/20'
-            : 'border-neutral-300 bg-white text-black hover:border-yellow-500 hover:bg-yellow-50',
-    );
+function getProjectEntryButtonClasses(): string {
+    return 'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10 [@media(orientation:landscape)_and_(max-height:480px)]:px-3 [@media(orientation:landscape)_and_(max-height:480px)]:text-base';
 }
 
 function getProjectRegisterControlClasses(): string {

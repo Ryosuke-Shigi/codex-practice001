@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     lumiLaboGlobalTabs,
+    lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
     lumiLaboProjectRegisterPanel,
     lumiLaboProjectItem,
@@ -45,6 +46,12 @@ describe('LumiLaboProjectMock data', () => {
         ]);
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('選択');
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('戻る');
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).toEqual([
+            '登録',
+            '一覧',
+        ]);
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('TOP');
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('戻る');
         expect(lumiLaboProjectBackLabel).toBe('戻る');
     });
 

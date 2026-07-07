@@ -57,9 +57,12 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('選択');
         expect(markup).toContain('LumiLabo');
         expect(markup).toContain('Start');
+        expect(markup).toContain('aria-label="LumiLabo MOCK画面"');
         expect(markup).toContain('rounded-t-md');
         expect(markup).toContain('border-b-0');
         expect(markup).toContain('overflow-x-auto');
+        expect(markup).toContain('content-start');
+        expect(markup).toContain('sm:content-center');
         expect(markup).not.toContain('案件');
         expect(markup).not.toContain('IDEA BOARD');
         expect(markup).not.toContain('案件選択');
@@ -94,10 +97,13 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('戻る');
         expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('一覧'));
         expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('戻る'));
+        expect(markup).toContain('aria-label="案件内画面"');
         expect(markup).toContain('lucide-arrow-left');
+        expect(markup).toContain('content-start');
+        expect(markup).toContain('sm:content-center');
+        expect(markup).toContain('orientation:landscape');
         expect(markup).not.toContain('選択へ戻る');
         expect(markup).not.toContain('TOPへ戻る');
-        expect(markup).toContain('orientation:landscape');
     });
 
     it('renders the project register mock fields on the register tab', async () => {
