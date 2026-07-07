@@ -84,14 +84,17 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('完了');
     });
 
-    it('keeps the project TOP selection return distinct from TOP return', async () => {
+    it('renders the project navigation as register, list, and back', async () => {
         const markup = await renderMockViewMarkup('project');
 
         expect(markup).toContain('案件');
-        expect(markup).toContain('TOP');
         expect(markup).toContain('登録');
         expect(markup).toContain('一覧');
-        expect(markup).toContain('選択へ戻る');
+        expect(markup).toContain('戻る');
+        expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('一覧'));
+        expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('戻る'));
+        expect(markup).not.toContain('TOP');
+        expect(markup).not.toContain('選択へ戻る');
         expect(markup).not.toContain('TOPへ戻る');
         expect(markup).toContain('orientation:landscape');
     });

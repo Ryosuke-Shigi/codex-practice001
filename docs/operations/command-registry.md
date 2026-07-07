@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-13
+- Last reviewed: 2026-07-07
 
 ## このドキュメントの目的
 
@@ -232,11 +232,15 @@ docker compose run --rm npm npm run typecheck
 
 - `php-fpm` コンテナで npm を実行すること
 - `npm` service で artisan を実行すること
+- ホストOSの `npm` / `node` / `vite` / `vitest` でReact / TypeScript確認を続けること
 
 理由:
 
 - npm は `php-fpm` ではなく `npm` service で実行する
 - artisan は `npm` service ではなく `php-fpm` で実行する
+- ホストOS側のNodeや `node_modules` はDocker内の実行環境と一致しないため、確認結果として扱わない
+
+ホストOS側で `UNC paths are not supported`、`vitest is not recognized`、`Cannot find module @rollup/rollup-...`、Nodeバージョン不一致などが出た場合は、ホスト側のNode / npm調査を続けず、root側から `docker compose run --rm npm ...` で確認をやり直す。
 
 ## docker compose の実行場所
 
