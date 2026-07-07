@@ -1,5 +1,6 @@
 import type {
     LumiLaboMockGlobalTabId,
+    LumiLaboMockProjectDetail,
     LumiLaboMockProjectItem,
     LumiLaboMockProjectRegisterPanel,
     LumiLaboMockProjectTabId,
@@ -70,3 +71,25 @@ export const lumiLaboProjectRegisterPanel = {
     ],
     primaryActionLabel: '登録する',
 } as const satisfies LumiLaboMockProjectRegisterPanel;
+
+export const lumiLaboProjectDetail = {
+    id: 'mock-project-001',
+    companyName: 'ルミラボ工務店',
+    contactName: '山田 太郎',
+    address: '大阪府岸和田市上町 1-2-3',
+    memo: '初回訪問予定。現場確認後に写真と資料を追加する。',
+    registeredDate: '2026/07/07',
+    savedPhotos: [
+        { id: 'site-photo-1', label: '1', alt: '保存済み現場写真 1' },
+        { id: 'site-photo-2', label: '2', alt: '保存済み現場写真 2' },
+        { id: 'site-photo-3', label: '3', alt: '保存済み現場写真 3' },
+    ],
+    savedFiles: [
+        { id: 'site-file-1', fileName: '現場確認資料.pdf', fileTypeLabel: 'PDF' },
+        { id: 'site-file-2', fileName: '現場参考メモ.xlsx', fileTypeLabel: 'XLS' },
+    ],
+} as const satisfies LumiLaboMockProjectDetail;
+
+export const lumiLaboProjectDetailActionLabel = '詳細を見る';
+
+export const lumiLaboProjectDetailSavedMessage = '保存しました';

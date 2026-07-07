@@ -1,19 +1,28 @@
+import type { ChangeEvent, DragEvent, MutableRefObject } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowLeft,
+    Camera,
     FilePlus2,
+    FileText,
     FolderKanban,
     Home,
     Layers3,
     List,
+    MapPin,
+    Save,
     Sparkles,
+    Upload,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
+    lumiLaboProjectDetail,
+    lumiLaboProjectDetailActionLabel,
+    lumiLaboProjectDetailSavedMessage,
     lumiLaboProjectItem,
     lumiLaboProjectRegisterPanel,
     lumiLaboProjectTabs,
@@ -21,8 +30,12 @@ import {
 } from './mockData';
 import type {
     LumiLaboMockGlobalTabId,
-    LumiLaboMockProjectTabId,
+    LumiLaboMockProjectDetail,
+    LumiLaboMockProjectDetailDraft,
+    LumiLaboMockProjectDetailEditableFieldId,
     LumiLaboMockProjectRegisterField,
+    LumiLaboMockProjectTabId,
+    LumiLaboMockProjectViewId,
     LumiLaboMockScreen,
     LumiLaboMockTab,
 } from './types';
@@ -42,31 +55,182 @@ type FileTagBarProps<TId extends string> = {
     onSelectTab: (tabId: TId) => void;
 };
 
+type ProjectDetailTextFieldConfig = {
+    id: LumiLaboMockProjectDetailEditableFieldId;
+    label: string;
+    control: 'input' | 'textarea';
+    rows?: number;
+    autoComplete?: string;
+};
+
 type ProjectEntryPanelProps = {
     onBack: () => void;
     onSelectProjectTab: (tabId: ProjectActionTabId) => void;
+};
+
+type ProjectListPanelProps = BackActionProps & {
+    projectDetail: LumiLaboMockProjectDetail;
+    onOpenProjectDetail: () => void;
+};
+
+type ProjectDetailPanelProps = BackActionProps & {
+    projectDetail: LumiLaboMockProjectDetail;
+    draft: LumiLaboMockProjectDetailDraft;
+    hasUnsavedChanges: boolean;
+    isSaving: boolean;
+    saveMessageVisible: boolean;
+    droppedFileNames: readonly string[];
+    onChangeDraftField: (
+        fieldId: LumiLaboMockProjectDetailEditableFieldId,
+        value: string,
+    ) => void;
+    onSave: () => void;
+    onDropFiles: (files: FileList | null) => void;
+};
+
+type ProjectDetailTextFieldProps = {
+    field: ProjectDetailTextFieldConfig;
+    value: string;
+    onChange: (
+        fieldId: LumiLaboMockProjectDetailEditableFieldId,
+        value: string,
+    ) => void;
 };
 
 type BackActionProps = {
     onBack: () => void;
 };
 
+const projectDetailTextFields = [
+    {
+        id: 'companyName',
+        label: '会社名',
+        control: 'input',
+        autoComplete: 'organization',
+    },
+    {
+        id: 'contactName',
+        label: '担当者名',
+        control: 'input',
+        autoComplete: 'name',
+    },
+    {
+        id: 'address',
+        label: '住所',
+        control: 'input',
+        autoComplete: 'street-address',
+    },
+    { id: 'memo', label: 'メモ', control: 'textarea', rows: 4 },
+] as const satisfies readonly ProjectDetailTextFieldConfig[];
+
 export default function LumiLaboProjectMockView() {
     const [activeScreen, setActiveScreen] =
         useState<LumiLaboMockScreen>('top');
     const [activeProjectTabId, setActiveProjectTabId] =
         useState<LumiLaboMockProjectTabId>('top');
+    const [activeProjectViewId, setActiveProjectViewId] =
+        useState<LumiLaboMockProjectViewId>('top');
+    const [projectDetail, setProjectDetail] =
+        useState<LumiLaboMockProjectDetail>(lumiLaboProjectDetail);
+    const [projectDetailDraft, setProjectDetailDraft] =
+        useState<LumiLaboMockProjectDetailDraft>(
+            createProjectDetailDraft(lumiLaboProjectDetail),
+        );
+    const [isProjectDetailSaving, setIsProjectDetailSaving] = useState(false);
+    const [projectDetailSavedVisible, setProjectDetailSavedVisible] =
+        useState(false);
+    const [droppedFileNames, setDroppedFileNames] = useState<readonly string[]>(
+        [],
+    );
+    const saveCompleteTimerRef = useRef<ReturnType<
+        typeof window.setTimeout
+    > | null>(null);
+    const saveMessageTimerRef = useRef<ReturnType<
+        typeof window.setTimeout
+    > | null>(null);
 
     const activeGlobalTabId: LumiLaboMockGlobalTabId =
         activeScreen === 'select' ? 'select' : 'top';
+
+    const hasProjectDetailChanges = hasProjectDetailDraftChanged(
+        projectDetailDraft,
+        projectDetail,
+    );
+
+    useEffect(() => {
+        return () => {
+            clearMockTimer(saveCompleteTimerRef);
+            clearMockTimer(saveMessageTimerRef);
+        };
+    }, []);
 
     const selectGlobalTab = (tabId: LumiLaboMockGlobalTabId) => {
         setActiveScreen(tabId);
     };
 
+    const selectProjectTab = (tabId: LumiLaboMockProjectTabId) => {
+        setActiveProjectTabId(tabId);
+        setActiveProjectViewId(tabId);
+    };
+
     const openProject = () => {
         setActiveProjectTabId('top');
+        setActiveProjectViewId('top');
         setActiveScreen('project');
+    };
+
+    const openProjectDetail = () => {
+        setActiveProjectTabId('list');
+        setActiveProjectViewId('detail');
+    };
+
+    const backToProjectList = () => {
+        setActiveProjectTabId('list');
+        setActiveProjectViewId('list');
+    };
+
+    const updateProjectDetailDraft = (
+        fieldId: LumiLaboMockProjectDetailEditableFieldId,
+        value: string,
+    ) => {
+        setProjectDetailDraft((current) => ({
+            ...current,
+            [fieldId]: value,
+        }));
+        setProjectDetailSavedVisible(false);
+    };
+
+    const saveProjectDetail = () => {
+        if (isProjectDetailSaving || !hasProjectDetailChanges) {
+            return;
+        }
+
+        clearMockTimer(saveCompleteTimerRef);
+        clearMockTimer(saveMessageTimerRef);
+        setIsProjectDetailSaving(true);
+
+        saveCompleteTimerRef.current = window.setTimeout(() => {
+            setProjectDetail((current) => ({
+                ...current,
+                ...projectDetailDraft,
+            }));
+            setIsProjectDetailSaving(false);
+            setProjectDetailSavedVisible(true);
+            saveCompleteTimerRef.current = null;
+
+            saveMessageTimerRef.current = window.setTimeout(() => {
+                setProjectDetailSavedVisible(false);
+                saveMessageTimerRef.current = null;
+            }, 3000);
+        }, 250);
+    };
+
+    const updateDroppedFiles = (files: FileList | null) => {
+        if (!files) {
+            return;
+        }
+
+        setDroppedFileNames(Array.from(files).map((file) => file.name));
     };
 
     return (
@@ -76,7 +240,7 @@ export default function LumiLaboProjectMockView() {
                     tabs={lumiLaboProjectTabs}
                     activeTabId={activeProjectTabId}
                     ariaLabel="案件内画面"
-                    onSelectTab={setActiveProjectTabId}
+                    onSelectTab={selectProjectTab}
                 />
             ) : (
                 <FileTagBar
@@ -99,23 +263,42 @@ export default function LumiLaboProjectMockView() {
                     />
                 ) : null}
 
-                {activeScreen === 'project' && activeProjectTabId === 'top' ? (
+                {activeScreen === 'project' && activeProjectViewId === 'top' ? (
                     <ProjectEntryPanel
                         onBack={() => setActiveScreen('select')}
-                        onSelectProjectTab={(tabId) =>
-                            setActiveProjectTabId(tabId)
-                        }
+                        onSelectProjectTab={selectProjectTab}
                     />
                 ) : null}
 
-                {activeScreen === 'project' && activeProjectTabId === 'register' ? (
+                {activeScreen === 'project' &&
+                activeProjectViewId === 'register' ? (
                     <ProjectRegisterPanel
                         onBack={() => setActiveScreen('select')}
                     />
                 ) : null}
 
-                {activeScreen === 'project' && activeProjectTabId === 'list' ? (
-                    <ProjectListPanel onBack={() => setActiveScreen('select')} />
+                {activeScreen === 'project' && activeProjectViewId === 'list' ? (
+                    <ProjectListPanel
+                        projectDetail={projectDetail}
+                        onOpenProjectDetail={openProjectDetail}
+                        onBack={() => setActiveScreen('select')}
+                    />
+                ) : null}
+
+                {activeScreen === 'project' &&
+                activeProjectViewId === 'detail' ? (
+                    <ProjectDetailPanel
+                        projectDetail={projectDetail}
+                        draft={projectDetailDraft}
+                        hasUnsavedChanges={hasProjectDetailChanges}
+                        isSaving={isProjectDetailSaving}
+                        saveMessageVisible={projectDetailSavedVisible}
+                        droppedFileNames={droppedFileNames}
+                        onChangeDraftField={updateProjectDetailDraft}
+                        onSave={saveProjectDetail}
+                        onDropFiles={updateDroppedFiles}
+                        onBack={backToProjectList}
+                    />
                 ) : null}
             </main>
         </article>
@@ -255,7 +438,11 @@ function ProjectEntryPanel({
     );
 }
 
-function ProjectListPanel({ onBack }: BackActionProps) {
+function ProjectListPanel({
+    projectDetail,
+    onOpenProjectDetail,
+    onBack,
+}: ProjectListPanelProps) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
             <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
@@ -268,11 +455,22 @@ function ProjectListPanel({ onBack }: BackActionProps) {
                     </h1>
                 </header>
 
-                <div className="flex min-h-36 items-center justify-center rounded-md border border-neutral-300 bg-white px-5 py-6 text-black">
-                    <div className="grid justify-items-center gap-2">
-                        <List className="h-8 w-8" aria-hidden />
-                        <p className="text-lg font-black">案件一覧</p>
-                    </div>
+                <div className="grid gap-3">
+                    <article className="grid gap-3 rounded-md border border-neutral-300 bg-white p-4 text-black shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                        <div className="min-w-0">
+                            <p className="truncate text-lg font-black">
+                                {projectDetail.companyName}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-auto"
+                            onClick={onOpenProjectDetail}
+                        >
+                            <List className="h-5 w-5" aria-hidden />
+                            <span>{lumiLaboProjectDetailActionLabel}</span>
+                        </button>
+                    </article>
                 </div>
 
                 <div className="mt-auto grid gap-2 pt-1 sm:max-w-sm">
@@ -285,6 +483,295 @@ function ProjectListPanel({ onBack }: BackActionProps) {
                         <span>{lumiLaboProjectBackLabel}</span>
                     </button>
                 </div>
+            </div>
+        </section>
+    );
+}
+
+function ProjectDetailPanel({
+    projectDetail,
+    draft,
+    hasUnsavedChanges,
+    isSaving,
+    saveMessageVisible,
+    droppedFileNames,
+    onChangeDraftField,
+    onSave,
+    onDropFiles,
+    onBack,
+}: ProjectDetailPanelProps) {
+    const mapSearchUrl = createGoogleMapsSearchUrl(projectDetail.address);
+
+    return (
+        <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
+            <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                <header className="grid gap-2 rounded-md border border-neutral-200 bg-[#fffdf2] p-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+                    <button
+                        type="button"
+                        className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-base font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-auto"
+                        onClick={onBack}
+                    >
+                        <ArrowLeft className="h-5 w-5" aria-hidden />
+                        <span>{lumiLaboProjectBackLabel}</span>
+                    </button>
+                    <h1 className="text-xl font-black leading-tight text-black sm:text-2xl">
+                        案件詳細
+                    </h1>
+                    {hasUnsavedChanges ? (
+                        <button
+                            type="button"
+                            className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                            onClick={onSave}
+                            disabled={isSaving}
+                        >
+                            <Save className="h-5 w-5" aria-hidden />
+                            <span>{isSaving ? '保存中' : '保存'}</span>
+                        </button>
+                    ) : null}
+                </header>
+
+                {saveMessageVisible ? (
+                    <div
+                        role="status"
+                        className="rounded-md border border-lime-600 bg-lime-300 px-4 py-2 text-center text-lg font-black text-black"
+                    >
+                        {lumiLaboProjectDetailSavedMessage}
+                    </div>
+                ) : null}
+
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.95fr)] lg:items-start">
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {projectDetailTextFields.map((field) => (
+                            <ProjectDetailTextField
+                                key={field.id}
+                                field={field}
+                                value={draft[field.id]}
+                                onChange={onChangeDraftField}
+                            />
+                        ))}
+
+                        <div className="grid gap-2 md:col-span-2 lg:max-w-xs">
+                            <p className="text-base font-black text-black">
+                                登録日
+                            </p>
+                            <p
+                                aria-readonly="true"
+                                className="min-h-12 rounded-md border border-neutral-300 bg-neutral-50 px-3 py-3 text-base font-semibold text-black"
+                            >
+                                {projectDetail.registeredDate}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                        <MapPreview href={mapSearchUrl} />
+
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                            <button
+                                type="button"
+                                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                            >
+                                <Camera className="h-5 w-5" aria-hidden />
+                                <span>写真撮影</span>
+                            </button>
+                            <FileDropZone
+                                droppedFileNames={droppedFileNames}
+                                onDropFiles={onDropFiles}
+                            />
+                        </div>
+
+                        <SavedPhotoPreview projectDetail={projectDetail} />
+                        <SavedFilePreview projectDetail={projectDetail} />
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function ProjectDetailTextField({
+    field,
+    value,
+    onChange,
+}: ProjectDetailTextFieldProps) {
+    const controlId = `lumilabo-project-detail-${field.id}`;
+    const handleChange = (
+        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    ) => {
+        onChange(field.id, event.target.value);
+    };
+
+    return (
+        <div
+            className={classNames(
+                'grid gap-2',
+                field.control === 'textarea' ? 'md:col-span-2' : undefined,
+            )}
+        >
+            <label htmlFor={controlId} className="text-base font-black text-black">
+                {field.label}
+            </label>
+            {field.control === 'textarea' ? (
+                <textarea
+                    id={controlId}
+                    name={field.id}
+                    value={value}
+                    rows={field.rows}
+                    onChange={handleChange}
+                    className={classNames(
+                        getProjectRegisterControlClasses(),
+                        'resize-none leading-relaxed',
+                    )}
+                />
+            ) : (
+                <input
+                    id={controlId}
+                    name={field.id}
+                    type="text"
+                    value={value}
+                    autoComplete={field.autoComplete}
+                    onChange={handleChange}
+                    className={getProjectRegisterControlClasses()}
+                />
+            )}
+        </div>
+    );
+}
+
+function MapPreview({ href }: { href: string }) {
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Google Mapsで住所を開く"
+            className="relative block h-40 overflow-hidden rounded-md border border-neutral-300 bg-[#edf4dd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 sm:h-48"
+        >
+            <span className="absolute left-[-8%] top-[52%] h-3 w-[115%] rotate-1 bg-white shadow-[0_0_0_2px_#ddd7a7]" />
+            <span className="absolute left-[8%] top-[34%] h-3 w-[88%] -rotate-2 bg-white shadow-[0_0_0_2px_#ddd7a7]" />
+            <span className="absolute left-[4%] top-[76%] h-3 w-[64%] -rotate-[28deg] bg-white shadow-[0_0_0_2px_#ddd7a7]" />
+            <span className="absolute left-[20%] top-[-10%] h-[130%] w-px -rotate-12 bg-lime-200" />
+            <span className="absolute left-[45%] top-[-10%] h-[130%] w-px -rotate-12 bg-lime-200" />
+            <span className="absolute left-[70%] top-[-10%] h-[130%] w-px -rotate-12 bg-lime-200" />
+            <MapPin
+                className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 fill-red-500 text-red-700 drop-shadow"
+                aria-hidden
+            />
+        </a>
+    );
+}
+
+function FileDropZone({
+    droppedFileNames,
+    onDropFiles,
+}: {
+    droppedFileNames: readonly string[];
+    onDropFiles: (files: FileList | null) => void;
+}) {
+    const inputId = 'lumilabo-project-detail-files';
+    const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+        onDropFiles(event.target.files);
+    };
+    const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
+        event.preventDefault();
+    };
+    const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+        event.preventDefault();
+        onDropFiles(event.dataTransfer.files);
+    };
+
+    return (
+        <div className="grid gap-2">
+            <label
+                htmlFor={inputId}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-yellow-600 bg-white px-4 text-center text-base font-black text-black transition hover:bg-yellow-50 focus-within:ring-2 focus-within:ring-yellow-500"
+            >
+                <Upload className="h-5 w-5" aria-hidden />
+                <span>ファイルをまとめてドラッグ＆ドロップ</span>
+                <input
+                    id={inputId}
+                    type="file"
+                    multiple
+                    className="sr-only"
+                    aria-label="ファイルをまとめて選択"
+                    onChange={handleChange}
+                />
+            </label>
+            {droppedFileNames.length > 0 ? (
+                <ul className="grid gap-1 text-sm font-bold text-neutral-700">
+                    {droppedFileNames.map((fileName) => (
+                        <li key={fileName} className="truncate">
+                            {fileName}
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+        </div>
+    );
+}
+
+function SavedPhotoPreview({
+    projectDetail,
+}: {
+    projectDetail: LumiLaboMockProjectDetail;
+}) {
+    if (projectDetail.savedPhotos.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="grid gap-2">
+            <h2 className="text-base font-black text-black">写真</h2>
+            <div className="flex flex-wrap gap-3">
+                {projectDetail.savedPhotos.map((photo) => (
+                    <div
+                        key={photo.id}
+                        role="img"
+                        aria-label={photo.alt}
+                        className="relative h-20 w-28 overflow-hidden rounded-md border border-neutral-300 bg-sky-100"
+                    >
+                        <span className="absolute left-2 top-2 inline-flex h-6 min-w-8 items-center justify-center rounded-md bg-white px-2 text-sm font-black text-black">
+                            {photo.label}
+                        </span>
+                        <span className="absolute right-2 top-3 h-5 w-5 rounded-full bg-yellow-200" />
+                        <span className="absolute bottom-3 left-2 h-0 w-0 border-b-[28px] border-l-[46px] border-r-[28px] border-b-green-600 border-l-transparent border-r-transparent" />
+                        <span className="absolute bottom-3 left-9 h-0 w-0 border-b-[22px] border-l-[34px] border-r-[34px] border-b-green-700 border-l-transparent border-r-transparent" />
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function SavedFilePreview({
+    projectDetail,
+}: {
+    projectDetail: LumiLaboMockProjectDetail;
+}) {
+    if (projectDetail.savedFiles.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="grid gap-2">
+            <h2 className="text-base font-black text-black">ファイル</h2>
+            <div className="grid gap-2">
+                {projectDetail.savedFiles.map((file) => (
+                    <div
+                        key={file.id}
+                        className="flex min-h-14 items-center gap-3 rounded-md border border-neutral-300 bg-white px-3 text-black"
+                    >
+                        <span className="inline-flex h-10 min-w-10 items-center justify-center rounded-md border border-neutral-300 bg-white px-1 text-xs font-black">
+                            {file.fileTypeLabel}
+                        </span>
+                        <FileText className="h-5 w-5 shrink-0" aria-hidden />
+                        <span className="min-w-0 truncate text-base font-black">
+                            {file.fileName}
+                        </span>
+                    </div>
+                ))}
             </div>
         </section>
     );
@@ -387,6 +874,39 @@ function ProjectRegisterField({
             )}
         </div>
     );
+}
+
+function createProjectDetailDraft(
+    projectDetail: LumiLaboMockProjectDetail,
+): LumiLaboMockProjectDetailDraft {
+    return {
+        companyName: projectDetail.companyName,
+        contactName: projectDetail.contactName,
+        address: projectDetail.address,
+        memo: projectDetail.memo,
+    };
+}
+
+function hasProjectDetailDraftChanged(
+    draft: LumiLaboMockProjectDetailDraft,
+    saved: LumiLaboMockProjectDetail,
+): boolean {
+    return projectDetailTextFields.some((field) => draft[field.id] !== saved[field.id]);
+}
+
+function createGoogleMapsSearchUrl(address: string): string {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+
+function clearMockTimer(
+    timerRef: MutableRefObject<ReturnType<typeof window.setTimeout> | null>,
+) {
+    if (timerRef.current === null) {
+        return;
+    }
+
+    window.clearTimeout(timerRef.current);
+    timerRef.current = null;
 }
 
 function getFileTagClasses(isActive: boolean): string {
