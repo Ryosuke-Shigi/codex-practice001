@@ -182,10 +182,10 @@ function ProjectEntryPanel({
     onSelectProjectTab,
 }: {
     activeProjectTabId: LumiLaboMockProjectTabId;
-        // スマホ横置きでは縦幅を優先し、案件TOPの戻る導線まで見える密度にする。
     onBack: () => void;
     onSelectProjectTab: (tabId: LumiLaboMockProjectTabId) => void;
 }) {
+    // スマホ横置きでは縦幅を優先し、案件TOPの戻る導線まで見える密度にする。
     return (
         <section className="h-full min-h-0 overflow-y-auto px-5 py-5 [@media(orientation:landscape)_and_(max-height:480px)]:py-2 sm:py-8">
             <div className="mx-auto grid min-h-full w-full max-w-sm content-center justify-items-center gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-xl [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-[auto_minmax(0,1fr)] [@media(orientation:landscape)_and_(max-height:480px)]:items-center [@media(orientation:landscape)_and_(max-height:480px)]:justify-items-stretch [@media(orientation:landscape)_and_(max-height:480px)]:gap-x-3 [@media(orientation:landscape)_and_(max-height:480px)]:gap-y-2">
