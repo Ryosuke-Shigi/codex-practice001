@@ -14,12 +14,14 @@ import {
     lumiLaboGlobalTabs,
     lumiLaboProjectBackLabel,
     lumiLaboProjectItem,
+    lumiLaboProjectRegisterPanel,
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
 } from './mockData';
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectTabId,
+    LumiLaboMockProjectRegisterField,
     LumiLaboMockScreen,
     LumiLaboMockTab,
 } from './types';
@@ -77,11 +79,15 @@ export default function LumiLaboProjectMockView() {
                 ) : null}
 
                 {activeScreen === 'project' ? (
-                    <ProjectEntryPanel
-                        activeProjectTabId={activeProjectTabId}
-                        onBack={() => setActiveScreen('select')}
-                        onSelectProjectTab={setActiveProjectTabId}
-                    />
+                    activeProjectTabId === 'register' ? (
+                        <ProjectRegisterPanel />
+                    ) : (
+                        <ProjectEntryPanel
+                            activeProjectTabId={activeProjectTabId}
+                            onBack={() => setActiveScreen('select')}
+                            onSelectProjectTab={setActiveProjectTabId}
+                        />
+                    )
                 ) : null}
             </main>
         </article>
@@ -229,6 +235,97 @@ function ProjectEntryPanel({
     );
 }
 
+function ProjectRegisterPanel() {
+    return (
+        <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
+            <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                <header className="grid gap-1">
+                    <p className="text-sm font-black text-yellow-800">
+                        {lumiLaboProjectItem.label}
+                    </p>
+                    <h1 className="text-2xl font-black leading-tight text-black sm:text-3xl">
+                        {lumiLaboProjectRegisterPanel.title}
+                    </h1>
+                </header>
+
+                <div className="grid gap-4 md:grid-cols-2 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                    {lumiLaboProjectRegisterPanel.fields.map((field) => (
+                        <ProjectRegisterField key={field.id} field={field} />
+                    ))}
+                </div>
+
+                <div className="mt-auto grid gap-2 pt-1 sm:max-w-sm">
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                    >
+                        <FilePlus2 className="h-5 w-5" aria-hidden />
+                        <span>{lumiLaboProjectRegisterPanel.primaryActionLabel}</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function ProjectRegisterField({
+    field,
+}: {
+    field: LumiLaboMockProjectRegisterField;
+}) {
+    const controlId = `lumilabo-project-register-${field.id}`;
+    return (
+        <div
+            className={classNames(
+                'grid gap-2',
+                field.control === 'textarea' ? 'md:col-span-2' : undefined,
+            )}
+        >
+            <div className="flex items-center justify-between gap-3">
+                <label
+                    htmlFor={controlId}
+                    className="text-base font-black text-black"
+                >
+                    {field.label}
+                </label>
+                <span
+                    className={classNames(
+                        'shrink-0 rounded-md border px-2 py-1 text-xs font-black',
+                        field.requirementLabel === '必須'
+                            ? 'border-yellow-500 bg-yellow-100 text-yellow-900'
+                            : 'border-neutral-200 bg-neutral-100 text-neutral-600',
+                    )}
+                >
+                    {field.requirementLabel}
+                </span>
+            </div>
+
+            {field.control === 'textarea' ? (
+                <textarea
+                    id={controlId}
+                    name={field.id}
+                    rows={field.rows}
+                    placeholder={field.placeholder}
+                    autoComplete={field.autoComplete}
+                    className={classNames(
+                        getProjectRegisterControlClasses(),
+                        'resize-none leading-relaxed',
+                    )}
+                />
+            ) : (
+                <input
+                    id={controlId}
+                    name={field.id}
+                    type="text"
+                    placeholder={field.placeholder}
+                    autoComplete={field.autoComplete}
+                    className={getProjectRegisterControlClasses()}
+                />
+            )}
+        </div>
+    );
+}
+
 function getFileTagClasses(isActive: boolean): string {
     return classNames(
         'min-h-8 min-w-24 flex-none rounded-t-md border border-b-0 px-3 py-1.5 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500',
@@ -245,6 +342,10 @@ function getProjectEntryButtonClasses(isActive: boolean): string {
             ? 'border-yellow-600 bg-yellow-300 text-black shadow-sm shadow-yellow-900/20'
             : 'border-neutral-300 bg-white text-black hover:border-yellow-500 hover:bg-yellow-50',
     );
+}
+
+function getProjectRegisterControlClasses(): string {
+    return 'min-h-12 w-full rounded-md border border-neutral-300 bg-white px-3 py-3 text-base font-semibold text-black placeholder:text-neutral-400 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300';
 }
 
 function classNames(

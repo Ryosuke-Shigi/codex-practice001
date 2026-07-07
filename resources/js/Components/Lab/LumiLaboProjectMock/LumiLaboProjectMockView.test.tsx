@@ -1,10 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { LumiLaboMockScreen } from './types';
+import type { LumiLaboMockProjectTabId, LumiLaboMockScreen } from './types';
 
 async function renderMockViewMarkup(
     activeScreen?: LumiLaboMockScreen,
+    activeProjectTabId?: LumiLaboMockProjectTabId,
 ): Promise<string> {
     vi.resetModules();
     vi.doUnmock('react');
@@ -24,6 +25,10 @@ async function renderMockViewMarkup(
 
                     if (stateCall === 1) {
                         return [activeScreen, vi.fn()];
+                    }
+
+                    if (stateCall === 2 && activeProjectTabId) {
+                        return [activeProjectTabId, vi.fn()];
                     }
 
                     return [initialValue, vi.fn()];
@@ -60,6 +65,10 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('案件選択');
         expect(markup).not.toContain('進行中');
         expect(markup).not.toContain('完了');
+        expect(markup).not.toContain('会社名');
+        expect(markup).not.toContain('担当者名');
+        expect(markup).not.toContain('住所');
+        expect(markup).not.toContain('メモ');
     });
 
     it('renders project and TOP return actions on the selection screen', async () => {
@@ -87,7 +96,36 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('orientation:landscape');
     });
 
-    it('does not render form, table, backend, or sample metric surfaces', async () => {
+    it('renders the project register mock fields on the register tab', async () => {
+        const markup = await renderMockViewMarkup('project', 'register');
+
+        expect(markup).toContain('案件登録');
+        expect(markup).toContain('会社名');
+        expect(markup).toContain('担当者名');
+        expect(markup).toContain('住所');
+        expect(markup).toContain('メモ');
+        expect(markup).toContain('登録する');
+        expect(markup).toContain('<input');
+        expect(markup).toContain('<textarea');
+        expect(markup).not.toContain('<form');
+    });
+
+    it('keeps excluded project register fields out of the register tab', async () => {
+        const markup = await renderMockViewMarkup('project', 'register');
+
+        expect(markup).not.toContain('ステータス');
+        expect(markup).not.toContain('案件名');
+        expect(markup).not.toContain('郵便番号');
+        expect(markup).not.toContain('都道府県');
+        expect(markup).not.toContain('市区町村');
+        expect(markup).not.toContain('工程');
+        expect(markup).not.toContain('カレンダー');
+        expect(markup).not.toContain('Controller');
+        expect(markup).not.toContain('Service');
+        expect(markup).not.toContain('Repository');
+    });
+
+    it('does not render form, table, backend, or sample metric surfaces on TOP', async () => {
         const markup = await renderMockViewMarkup();
 
         expect(markup).not.toContain('<form');

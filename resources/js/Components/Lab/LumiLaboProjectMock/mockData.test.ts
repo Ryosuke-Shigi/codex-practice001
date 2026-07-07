@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     lumiLaboGlobalTabs,
     lumiLaboProjectBackLabel,
+    lumiLaboProjectRegisterPanel,
     lumiLaboProjectItem,
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
@@ -14,6 +15,8 @@ function collectMockText(): string {
         ...lumiLaboProjectTabs.map((tab) => tab.label),
         lumiLaboProjectItem.label,
         lumiLaboTopReturnLabel,
+        lumiLaboProjectRegisterPanel.title,
+        ...lumiLaboProjectRegisterPanel.fields.map((field) => field.label),
         lumiLaboProjectBackLabel,
         'LumiLabo',
         'Start',
@@ -36,6 +39,33 @@ describe('LumiLaboProjectMock data', () => {
             '一覧',
         ]);
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('選択');
+    });
+
+    it('defines only the register mock input fields', () => {
+        expect(lumiLaboProjectRegisterPanel.fields.map((field) => field.label)).toEqual([
+            '会社名',
+            '担当者名',
+            '住所',
+            'メモ',
+        ]);
+        expect(lumiLaboProjectRegisterPanel.fields.map((field) => field.id)).toEqual([
+            'companyName',
+            'contactName',
+            'address',
+            'memo',
+        ]);
+        expect(lumiLaboProjectRegisterPanel.fields[0].requirementLabel).toBe('必須');
+        expect(lumiLaboProjectRegisterPanel.fields[1].requirementLabel).toBe('任意');
+    });
+
+    it('keeps forbidden register mock concepts out of the fixed data', () => {
+        const text = collectMockText();
+
+        expect(text).not.toContain('ステータス');
+        expect(text).not.toContain('案件名');
+        expect(text).not.toContain('郵便番号');
+        expect(text).not.toContain('都道府県');
+        expect(text).not.toContain('市区町村');
     });
 
     it('keeps the fixed visible text thin', () => {
