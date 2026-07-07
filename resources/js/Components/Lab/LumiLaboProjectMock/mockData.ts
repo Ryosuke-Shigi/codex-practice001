@@ -11,10 +11,15 @@ export const lumiLaboGlobalTabs = [
     { id: 'select', label: '選択' },
 ] as const satisfies readonly LumiLaboMockTab<LumiLaboMockGlobalTabId>[];
 
-export const lumiLaboProjectTabs = [
-    { id: 'top', label: 'TOP' },
+// 案件TOPの通常ボタン用。TOPと戻るは案件内ファイルタグ配列へ混ぜない。
+export const lumiLaboProjectActionTabs = [
     { id: 'register', label: '登録' },
     { id: 'list', label: '一覧' },
+] as const satisfies readonly LumiLaboMockTab<Exclude<LumiLaboMockProjectTabId, 'top'>>[];
+
+export const lumiLaboProjectTabs = [
+    { id: 'top', label: 'TOP' },
+    ...lumiLaboProjectActionTabs,
 ] as const satisfies readonly LumiLaboMockTab<LumiLaboMockProjectTabId>[];
 
 export const lumiLaboProjectItem = {
@@ -24,7 +29,7 @@ export const lumiLaboProjectItem = {
 
 export const lumiLaboTopReturnLabel = 'TOPへ戻る';
 
-export const lumiLaboProjectBackLabel = '選択へ戻る';
+export const lumiLaboProjectBackLabel = '戻る';
 
 export const lumiLaboProjectRegisterPanel = {
     title: '案件登録',

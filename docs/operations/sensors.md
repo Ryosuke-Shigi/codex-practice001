@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001` / docs operations / feedback controls
-- Last reviewed: 2026-06-27
+- Last reviewed: 2026-07-07
 
 ## このドキュメントの目的
 
@@ -307,6 +307,19 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 現在のLevel: Level 1
 - 将来の自動化候補: branch protection、PR commit一覧とchanged filesの照合、commit messageの最低限チェック
 - 備考: 細かいcommitを増やすためのSensorではない。レビュー可能、巻き戻し可能、原因特定可能な単位になっているかを確認する。
+
+### SENS-018: Docker npm実行経路チェック
+
+- ID: SENS-018
+- 名前: Docker npm実行経路チェック
+- 種別: Manual / AI Review
+- 実行タイプ: Both
+- 実行タイミング: React / TypeScript変更時 / PR前
+- 検出したい問題: `npm run build`、`npm run test:run`、`npm run typecheck` をホストOS側のnpm / nodeで実行し、Dockerの `npm` service 経由確認として扱ってしまう状態
+- 参照docs: `docs/operations/command-registry.md` / `docs/frontend.md` / `docs/templates/pr-summary.md`
+- 現在のLevel: Level 1
+- 将来の自動化候補: PR Summaryの確認コマンドに `docker compose run --rm npm` が含まれるか、ホストnpm由来の失敗ログを未解決のまま成功扱いしていないかの照合
+- 備考: ホストOS側で `UNC paths are not supported`、`vitest is not recognized`、`Cannot find module @rollup/rollup-...`、Nodeバージョン不一致が出た場合は、ホストNode調査を続けずDocker npmで再実行する。
 
 ## PR Summaryへ残す項目
 

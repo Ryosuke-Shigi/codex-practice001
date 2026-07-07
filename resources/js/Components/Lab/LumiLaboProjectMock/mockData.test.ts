@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     lumiLaboGlobalTabs,
+    lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
     lumiLaboProjectRegisterPanel,
     lumiLaboProjectItem,
@@ -33,12 +34,25 @@ describe('LumiLaboProjectMock data', () => {
     });
 
     it('project UI uses only the project file tags', () => {
+        expect(lumiLaboProjectTabs.map((tab) => tab.id)).toEqual([
+            'top',
+            'register',
+            'list',
+        ]);
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).toEqual([
             'TOP',
             '登録',
             '一覧',
         ]);
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('選択');
+        expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('戻る');
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).toEqual([
+            '登録',
+            '一覧',
+        ]);
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('TOP');
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('戻る');
+        expect(lumiLaboProjectBackLabel).toBe('戻る');
     });
 
     it('defines only the register mock input fields', () => {
@@ -75,7 +89,8 @@ describe('LumiLaboProjectMock data', () => {
         expect(text).toContain('Start');
         expect(text).toContain('案件');
         expect(text).toContain('TOPへ戻る');
-        expect(text).toContain('選択へ戻る');
+        expect(text).toContain('戻る');
+        expect(text).not.toContain('選択へ戻る');
         expect(lumiLaboTopReturnLabel).not.toBe(lumiLaboProjectBackLabel);
         expect(text).not.toContain('案件を選択');
         expect(text).not.toContain('案件選択');

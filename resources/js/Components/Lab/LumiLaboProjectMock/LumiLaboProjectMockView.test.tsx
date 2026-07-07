@@ -57,9 +57,12 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('選択');
         expect(markup).toContain('LumiLabo');
         expect(markup).toContain('Start');
+        expect(markup).toContain('aria-label="LumiLabo MOCK画面"');
         expect(markup).toContain('rounded-t-md');
         expect(markup).toContain('border-b-0');
         expect(markup).toContain('overflow-x-auto');
+        expect(markup).toContain('content-start');
+        expect(markup).toContain('sm:content-center');
         expect(markup).not.toContain('案件');
         expect(markup).not.toContain('IDEA BOARD');
         expect(markup).not.toContain('案件選択');
@@ -84,16 +87,23 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('完了');
     });
 
-    it('keeps the project TOP selection return distinct from TOP return', async () => {
+    it('renders the project TOP actions as register, list, and a back button', async () => {
         const markup = await renderMockViewMarkup('project');
 
         expect(markup).toContain('案件');
         expect(markup).toContain('TOP');
         expect(markup).toContain('登録');
         expect(markup).toContain('一覧');
-        expect(markup).toContain('選択へ戻る');
-        expect(markup).not.toContain('TOPへ戻る');
+        expect(markup).toContain('戻る');
+        expect(markup.indexOf('登録')).toBeLessThan(markup.indexOf('一覧'));
+        expect(markup.indexOf('一覧')).toBeLessThan(markup.indexOf('戻る'));
+        expect(markup).toContain('aria-label="案件内画面"');
+        expect(markup).toContain('lucide-arrow-left');
+        expect(markup).toContain('content-start');
+        expect(markup).toContain('sm:content-center');
         expect(markup).toContain('orientation:landscape');
+        expect(markup).not.toContain('選択へ戻る');
+        expect(markup).not.toContain('TOPへ戻る');
     });
 
     it('renders the project register mock fields on the register tab', async () => {
@@ -105,9 +115,22 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('住所');
         expect(markup).toContain('メモ');
         expect(markup).toContain('登録する');
+        expect(markup).toContain('戻る');
+        expect(markup.indexOf('登録する')).toBeLessThan(markup.indexOf('戻る'));
         expect(markup).toContain('<input');
         expect(markup).toContain('<textarea');
         expect(markup).not.toContain('<form');
+    });
+
+    it('renders the project list placeholder and back button on the list tab', async () => {
+        const markup = await renderMockViewMarkup('project', 'list');
+
+        expect(markup).toContain('案件一覧');
+        expect(markup).toContain('戻る');
+        expect(markup).toContain('lucide-list');
+        expect(markup).not.toContain('登録する');
+        expect(markup).not.toContain('lucide-layers-3');
+        expect(markup).not.toMatch(/<h1[^>]*>案件<\/h1>/);
     });
 
     it('keeps excluded project register fields out of the register tab', async () => {
