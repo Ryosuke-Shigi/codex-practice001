@@ -4,8 +4,11 @@ import {
     lumiLaboGlobalTabs,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
-    lumiLaboProjectRegisterPanel,
+    lumiLaboProjectDetail,
+    lumiLaboProjectDetailActionLabel,
+    lumiLaboProjectDetailSavedMessage,
     lumiLaboProjectItem,
+    lumiLaboProjectRegisterPanel,
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
 } from './mockData';
@@ -19,6 +22,15 @@ function collectMockText(): string {
         lumiLaboProjectRegisterPanel.title,
         ...lumiLaboProjectRegisterPanel.fields.map((field) => field.label),
         lumiLaboProjectBackLabel,
+        lumiLaboProjectDetail.companyName,
+        lumiLaboProjectDetail.contactName,
+        lumiLaboProjectDetail.address,
+        lumiLaboProjectDetail.memo,
+        lumiLaboProjectDetail.registeredDate,
+        ...lumiLaboProjectDetail.savedPhotos.map((photo) => photo.alt),
+        ...lumiLaboProjectDetail.savedFiles.map((file) => file.fileName),
+        lumiLaboProjectDetailActionLabel,
+        lumiLaboProjectDetailSavedMessage,
         'LumiLabo',
         'Start',
     ].join('\n');
@@ -46,12 +58,15 @@ describe('LumiLaboProjectMock data', () => {
         ]);
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('選択');
         expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('戻る');
+        expect(lumiLaboProjectTabs.map((tab) => tab.label)).not.toContain('詳細');
+        expect(lumiLaboProjectTabs.map((tab) => tab.id)).not.toContain('detail');
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).toEqual([
             '登録',
             '一覧',
         ]);
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('TOP');
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('戻る');
+        expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('詳細');
         expect(lumiLaboProjectBackLabel).toBe('戻る');
     });
 
@@ -70,6 +85,20 @@ describe('LumiLaboProjectMock data', () => {
         ]);
         expect(lumiLaboProjectRegisterPanel.fields[0].requirementLabel).toBe('必須');
         expect(lumiLaboProjectRegisterPanel.fields[1].requirementLabel).toBe('任意');
+    });
+
+    it('defines a single project detail mock with saved preview data', () => {
+        expect(lumiLaboProjectDetail.companyName).toBe('ルミラボ工務店');
+        expect(lumiLaboProjectDetail.contactName).toBe('山田 太郎');
+        expect(lumiLaboProjectDetail.address).toBe('大阪府岸和田市上町 1-2-3');
+        expect(lumiLaboProjectDetail.registeredDate).toBe('2026/07/07');
+        expect(lumiLaboProjectDetail.savedPhotos).toHaveLength(3);
+        expect(lumiLaboProjectDetail.savedFiles.map((file) => file.fileName)).toEqual([
+            '現場確認資料.pdf',
+            '現場参考メモ.xlsx',
+        ]);
+        expect(lumiLaboProjectDetailActionLabel).toBe('詳細を見る');
+        expect(lumiLaboProjectDetailSavedMessage).toBe('保存しました');
     });
 
     it('keeps forbidden register mock concepts out of the fixed data', () => {
@@ -104,5 +133,8 @@ describe('LumiLaboProjectMock data', () => {
         expect(text).not.toContain('請求');
         expect(text).not.toContain('発注');
         expect(text).not.toContain('カレンダー');
+        expect(text).not.toContain('Google Maps API');
+        expect(text).not.toContain('Geocoding');
+        expect(text).not.toContain('Embed');
     });
 });
