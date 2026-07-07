@@ -5,6 +5,7 @@ import {
     lumiLaboProjectBackLabel,
     lumiLaboProjectItem,
     lumiLaboProjectTabs,
+    lumiLaboTopReturnLabel,
 } from './mockData';
 
 function collectMockText(): string {
@@ -12,6 +13,7 @@ function collectMockText(): string {
         ...lumiLaboGlobalTabs.map((tab) => tab.label),
         ...lumiLaboProjectTabs.map((tab) => tab.label),
         lumiLaboProjectItem.label,
+        lumiLaboTopReturnLabel,
         lumiLaboProjectBackLabel,
         'LumiLabo',
         'Start',
@@ -42,7 +44,9 @@ describe('LumiLaboProjectMock data', () => {
         expect(text).toContain('LumiLabo');
         expect(text).toContain('Start');
         expect(text).toContain('案件');
-        expect(text).toContain('戻る');
+        expect(text).toContain('TOPへ戻る');
+        expect(text).toContain('選択へ戻る');
+        expect(lumiLaboTopReturnLabel).not.toBe(lumiLaboProjectBackLabel);
         expect(text).not.toContain('案件を選択');
         expect(text).not.toContain('案件選択');
         expect(text).not.toContain('合計');

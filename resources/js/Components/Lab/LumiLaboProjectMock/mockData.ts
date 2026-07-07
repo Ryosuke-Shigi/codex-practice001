@@ -21,4 +21,6 @@ export const lumiLaboProjectItem = {
     label: '案件',
 } as const satisfies LumiLaboMockProjectItem;
 
-export const lumiLaboProjectBackLabel = '戻る';
+export const lumiLaboTopReturnLabel = 'TOPへ戻る';
+
+export const lumiLaboProjectBackLabel = '選択へ戻る';

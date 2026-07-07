@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: LumiLabo
-- Last reviewed: 2026-07-06
+- Last reviewed: 2026-07-07
 - Canonical source: LumiLabo固有の画面方針、IDEA BOARD、MOCKの入口
 
 ## 目的
@@ -31,10 +31,10 @@ LumiLaboは上位プロダクト / 上位ドメインとして扱う。
 ## 現在のMOCK
 
 - 画面: `/lab/lumilabo-project-mock`
-- 初期導線: TOP → Start → 選択 → 案件 → 案件TOP
+- 初期導線: TOP → Start → 選択 → 案件 → 案件TOP。選択からTOPへ戻る導線も持つ
 - 全体タブ: TOP / 選択
 - 案件内タブ: TOP / 登録 / 一覧
 - TOP: LumiLaboアイコン、LumiLaboタイトル、Startボタンだけを見せる
-- 選択: 案件ボタン / 案件カードだけを見せる
+- 選択: Primaryの案件ボタン / 案件カードと、SecondaryのTOPへ戻るボタンを見せる
 - 案件TOP: 案件タイトル、TOP / 登録 / 一覧 の選択、選択画面へ戻るボタンを見せる
 - 対象外: IDEA BOARDへの通常リンク / 案件詳細 / 工程デッキ / 工程カード / DB / Backend本実装 / API通信
