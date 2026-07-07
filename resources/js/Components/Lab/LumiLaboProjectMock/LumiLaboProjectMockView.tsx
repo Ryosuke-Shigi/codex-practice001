@@ -53,9 +53,9 @@ export default function LumiLaboProjectMockView() {
     return (
         <article className="flex h-full min-h-0 flex-col overflow-hidden bg-[#fffdf2] text-black">
             {activeScreen === 'project' ? (
-                <ProjectFileTagBar
+                <FileTagBar
+                    tabs={lumiLaboProjectTabs}
                     activeTabId={activeProjectTabId}
-                    onBack={() => setActiveScreen('select')}
                     onSelectTab={setActiveProjectTabId}
                 />
             ) : (
@@ -84,6 +84,7 @@ export default function LumiLaboProjectMockView() {
                     ) : (
                         <ProjectEntryPanel
                             activeProjectTabId={activeProjectTabId}
+                            onBack={() => setActiveScreen('select')}
                             onSelectProjectTab={setActiveProjectTabId}
                         />
                     )
@@ -93,52 +94,13 @@ export default function LumiLaboProjectMockView() {
     );
 }
 
-function ProjectFileTagBar({
-    activeTabId,
-    onBack,
-    onSelectTab,
-}: {
-    activeTabId: LumiLaboMockProjectTabId;
-    onBack: () => void;
-    onSelectTab: (tabId: LumiLaboMockProjectTabId) => void;
-}) {
-    return (
-        <nav className="flex-none overflow-hidden border-b border-yellow-200 bg-[#fff7c7] px-2 pt-2">
-            <div className="flex gap-1 overflow-x-auto overscroll-x-contain">
-                {lumiLaboProjectTabs.map((tab) => {
-                    const isActive = activeTabId === tab.id;
-
-                    return (
-                        <button
-                            key={tab.id}
-                            type="button"
-                            aria-pressed={isActive}
-                            className={getFileTagClasses(isActive)}
-                            onClick={() => onSelectTab(tab.id)}
-                        >
-                            {tab.label}
-                        </button>
-                    );
-                })}
-                <button
-                    type="button"
-                    className={getFileTagClasses(false)}
-                    onClick={onBack}
-                >
-                    {lumiLaboProjectBackLabel}
-                </button>
-            </div>
-        </nav>
-    );
-}
-
 function FileTagBar<TId extends string>({
     tabs,
     activeTabId,
     onSelectTab,
 }: {
     tabs: readonly LumiLaboMockTab<TId>[];
-    activeTabId: TId;
+    activeTabId: string;
     onSelectTab: (tabId: TId) => void;
 }) {
     return (
@@ -222,12 +184,14 @@ function SelectPanel({
 
 function ProjectEntryPanel({
     activeProjectTabId,
+    onBack,
     onSelectProjectTab,
 }: {
     activeProjectTabId: LumiLaboMockProjectTabId;
+    onBack: () => void;
     onSelectProjectTab: (tabId: LumiLaboMockProjectTabId) => void;
 }) {
-    // スマホ横置きでは縦幅を優先し、案件入口の主要導線が見える密度にする。
+    // スマホ横置きでは縦幅を優先し、案件TOPの戻るボタンまで見える密度にする。
     return (
         <section className="h-full min-h-0 overflow-y-auto px-5 py-5 [@media(orientation:landscape)_and_(max-height:480px)]:py-2 sm:py-8">
             <div className="mx-auto grid min-h-full w-full max-w-sm content-center justify-items-center gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:max-w-xl [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-[auto_minmax(0,1fr)] [@media(orientation:landscape)_and_(max-height:480px)]:items-center [@media(orientation:landscape)_and_(max-height:480px)]:justify-items-stretch [@media(orientation:landscape)_and_(max-height:480px)]:gap-x-3 [@media(orientation:landscape)_and_(max-height:480px)]:gap-y-2">
@@ -256,6 +220,14 @@ function ProjectEntryPanel({
                         );
                     })}
                 </div>
+                <button
+                    type="button"
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10 [@media(orientation:landscape)_and_(max-height:480px)]:text-base"
+                    onClick={onBack}
+                >
+                    <ArrowLeft className="h-5 w-5" aria-hidden />
+                    <span>{lumiLaboProjectBackLabel}</span>
+                </button>
             </div>
         </section>
     );
