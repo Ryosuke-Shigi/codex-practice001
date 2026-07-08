@@ -5,6 +5,7 @@ import { lumiLaboProjectDetail } from './mockData';
 import type {
     LumiLaboMockProjectDetail,
     LumiLaboMockProjectDetailDraft,
+    LumiLaboMockProjectDetailReturnTarget,
     LumiLaboMockProjectTabId,
     LumiLaboMockProjectViewId,
     LumiLaboMockScreen,
@@ -12,11 +13,13 @@ import type {
 
 type RenderMockViewOptions = {
     activeProjectViewId?: LumiLaboMockProjectViewId;
-    projectDetail?: LumiLaboMockProjectDetail;
+    projectDetail?: LumiLaboMockProjectDetail | null;
     detailDraft?: LumiLaboMockProjectDetailDraft;
+    projectDetailReturnTarget?: LumiLaboMockProjectDetailReturnTarget;
     isSaving?: boolean;
     saveMessageVisible?: boolean;
     droppedFileNames?: readonly string[];
+    isDeleteDialogOpen?: boolean;
 };
 
 async function renderMockViewMarkup(
@@ -29,9 +32,13 @@ async function renderMockViewMarkup(
 
     if (activeScreen) {
         let stateCall = 0;
-        const projectDetail = options.projectDetail ?? lumiLaboProjectDetail;
+        const projectDetail =
+            options.projectDetail === undefined
+                ? lumiLaboProjectDetail
+                : options.projectDetail;
         const detailDraft =
-            options.detailDraft ?? createProjectDetailDraft(projectDetail);
+            options.detailDraft ??
+            createProjectDetailDraft(projectDetail ?? lumiLaboProjectDetail);
         const activeProjectViewId =
             options.activeProjectViewId ?? activeProjectTabId ?? 'top';
 
@@ -58,23 +65,37 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 4) {
-                        return [projectDetail, vi.fn()];
+                        return [
+                            options.projectDetailReturnTarget ?? {
+                                projectTabId: 'list',
+                                projectViewId: 'list',
+                            },
+                            vi.fn(),
+                        ];
                     }
 
                     if (stateCall === 5) {
-                        return [detailDraft, vi.fn()];
+                        return [projectDetail, vi.fn()];
                     }
 
                     if (stateCall === 6) {
-                        return [options.isSaving ?? false, vi.fn()];
+                        return [detailDraft, vi.fn()];
                     }
 
                     if (stateCall === 7) {
-                        return [options.saveMessageVisible ?? false, vi.fn()];
+                        return [options.isSaving ?? false, vi.fn()];
                     }
 
                     if (stateCall === 8) {
+                        return [options.saveMessageVisible ?? false, vi.fn()];
+                    }
+
+                    if (stateCall === 9) {
                         return [options.droppedFileNames ?? [], vi.fn()];
+                    }
+
+                    if (stateCall === 10) {
+                        return [options.isDeleteDialogOpen ?? false, vi.fn()];
                     }
 
                     return [initialValue, vi.fn()];
@@ -168,25 +189,40 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('<form');
     });
 
-    it('renders only a thin project item and detail action on the list tab', async () => {
+    it('renders a keyboard-operable project item with contact and memo on the list tab', async () => {
         const markup = await renderMockViewMarkup('project', 'list');
 
         expect(markup).toContain('案件一覧');
         expect(markup).toContain('ルミラボ工務店');
-        expect(markup).toContain('詳細を見る');
+        expect(markup).toContain('担当者：山田 太郎');
+        expect(markup).toContain('メモ：初回訪問予定。現場確認後に写真と資料を追加する。');
+        expect(markup).toContain('案件詳細を開く');
+        expect(markup).toContain('overflow-hidden whitespace-nowrap');
+        expect(markup).toContain('truncate text-sm font-semibold');
+        expect(markup).toContain('lucide-chevron-right');
         expect(markup).toContain('戻る');
-        expect(markup).toContain('lucide-list');
+        expect(markup).not.toContain('詳細を見る');
         expect(markup).not.toContain('登録する');
         expect(markup).not.toContain('会社名');
         expect(markup).not.toContain('担当者名');
         expect(markup).not.toContain('住所');
-        expect(markup).not.toContain('メモ');
         expect(markup).not.toContain('登録日');
         expect(markup).not.toContain('写真撮影');
         expect(markup).not.toContain('ファイルをまとめてドラッグ');
         expect(markup).not.toContain('lucide-save');
         expect(markup).not.toContain('lucide-layers-3');
         expect(markup).not.toMatch(/<h1[^>]*>案件<\/h1>/);
+    });
+
+    it('renders an empty project list after a mock project deletion', async () => {
+        const markup = await renderMockViewMarkup('project', 'list', {
+            projectDetail: null,
+        });
+
+        expect(markup).toContain('案件一覧');
+        expect(markup).toContain('表示できる案件はありません');
+        expect(markup).not.toContain('ルミラボ工務店');
+        expect(markup).not.toContain('詳細を見る');
     });
 
     it('renders project detail without adding detail or back to file tags', async () => {
@@ -216,11 +252,30 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('ファイルをまとめてドラッグ＆ドロップ');
         expect(markup).toMatch(/<h2[^>]*>写真<\/h2>/);
         expect(markup).toMatch(/<h2[^>]*>ファイル<\/h2>/);
+        expect(markup).toContain('aria-label="保存済み現場写真 1を削除"');
+        expect(markup).toContain('aria-label="現場確認資料.pdfを削除"');
+        expect(markup.match(/lucide-x/g) ?? []).toHaveLength(5);
+        expect(markup).toContain('案件を削除');
+        expect(markup).toContain('lucide-trash-2');
         expect(markup).toContain('現場確認資料.pdf');
         expect(markup).toContain('現場参考メモ.xlsx');
         expect(markup).not.toContain('Google Maps API');
         expect(markup).not.toContain('Geocoding');
         expect(markup).not.toContain('Embed');
+    });
+
+    it('renders the project delete confirmation dialog with YES and NO', async () => {
+        const markup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            isDeleteDialogOpen: true,
+        });
+
+        expect(markup).toContain('role="dialog"');
+        expect(markup).toContain('aria-modal="true"');
+        expect(markup).toContain('削除しますか？');
+        expect(markup).toContain('YES');
+        expect(markup).toContain('NO');
+        expect(markup.indexOf('NO')).toBeLessThan(markup.indexOf('YES'));
     });
 
     it('shows the save button only when detail draft changed and can show the instant save message', async () => {

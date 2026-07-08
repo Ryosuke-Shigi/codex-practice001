@@ -4,8 +4,11 @@ import {
     lumiLaboGlobalTabs,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
+    lumiLaboProjectDeleteActionLabel,
+    lumiLaboProjectDeleteConfirmMessage,
+    lumiLaboProjectDeleteConfirmNoLabel,
+    lumiLaboProjectDeleteConfirmYesLabel,
     lumiLaboProjectDetail,
-    lumiLaboProjectDetailActionLabel,
     lumiLaboProjectDetailSavedMessage,
     lumiLaboProjectItem,
     lumiLaboProjectRegisterPanel,
@@ -29,7 +32,10 @@ function collectMockText(): string {
         lumiLaboProjectDetail.registeredDate,
         ...lumiLaboProjectDetail.savedPhotos.map((photo) => photo.alt),
         ...lumiLaboProjectDetail.savedFiles.map((file) => file.fileName),
-        lumiLaboProjectDetailActionLabel,
+        lumiLaboProjectDeleteActionLabel,
+        lumiLaboProjectDeleteConfirmMessage,
+        lumiLaboProjectDeleteConfirmYesLabel,
+        lumiLaboProjectDeleteConfirmNoLabel,
         lumiLaboProjectDetailSavedMessage,
         'LumiLabo',
         'Start',
@@ -97,7 +103,10 @@ describe('LumiLaboProjectMock data', () => {
             '現場確認資料.pdf',
             '現場参考メモ.xlsx',
         ]);
-        expect(lumiLaboProjectDetailActionLabel).toBe('詳細を見る');
+        expect(lumiLaboProjectDeleteActionLabel).toBe('案件を削除');
+        expect(lumiLaboProjectDeleteConfirmMessage).toBe('削除しますか？');
+        expect(lumiLaboProjectDeleteConfirmYesLabel).toBe('YES');
+        expect(lumiLaboProjectDeleteConfirmNoLabel).toBe('NO');
         expect(lumiLaboProjectDetailSavedMessage).toBe('保存しました');
     });
 
@@ -120,6 +129,7 @@ describe('LumiLaboProjectMock data', () => {
         expect(text).toContain('TOPへ戻る');
         expect(text).toContain('戻る');
         expect(text).not.toContain('選択へ戻る');
+        expect(text).not.toContain('詳細を見る');
         expect(lumiLaboTopReturnLabel).not.toBe(lumiLaboProjectBackLabel);
         expect(text).not.toContain('案件を選択');
         expect(text).not.toContain('案件選択');
