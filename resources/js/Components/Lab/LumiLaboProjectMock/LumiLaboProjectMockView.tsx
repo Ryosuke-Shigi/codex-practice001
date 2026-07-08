@@ -53,12 +53,19 @@ const projectTabIcons = {
     list: List,
 } satisfies Record<LumiLaboMockProjectTabId, LucideIcon>;
 
-const projectListReturnTarget = {
+const lumiLaboProjectTopReturnTarget = {
+    projectTabId: 'top',
+    projectViewId: 'top',
+} as const satisfies LumiLaboMockProjectDetailReturnTarget;
+
+const lumiLaboProjectListReturnTarget = {
     projectTabId: 'list',
     projectViewId: 'list',
 } as const satisfies LumiLaboMockProjectDetailReturnTarget;
 
 type ProjectActionTabId = Exclude<LumiLaboMockProjectTabId, 'top'>;
+
+type ProjectBackTargetId = 'select' | 'project-top' | 'detail-return-target';
 
 type FileTagBarProps<TId extends string> = {
     tabs: readonly LumiLaboMockTab<TId>[];
@@ -75,8 +82,7 @@ type ProjectDetailTextFieldConfig = {
     autoComplete?: string;
 };
 
-type ProjectEntryPanelProps = {
-    onBack: () => void;
+type ProjectEntryPanelProps = BackActionProps & {
     onSelectProjectTab: (tabId: ProjectActionTabId) => void;
 };
 
@@ -122,6 +128,7 @@ type ProjectDetailTextFieldProps = {
 
 type BackActionProps = {
     onBack: () => void;
+    backTargetId: ProjectBackTargetId;
 };
 
 const projectDetailTextFields = [
@@ -155,7 +162,7 @@ export default function LumiLaboProjectMockView() {
         useState<LumiLaboMockProjectViewId>('top');
     const [projectDetailReturnTarget, setProjectDetailReturnTarget] =
         useState<LumiLaboMockProjectDetailReturnTarget>(
-            projectListReturnTarget,
+            lumiLaboProjectListReturnTarget,
         );
     const [projectDetail, setProjectDetail] =
         useState<LumiLaboMockProjectDetail | null>(lumiLaboProjectDetail);
@@ -202,6 +209,20 @@ export default function LumiLaboProjectMockView() {
         setActiveProjectViewId(tabId);
     };
 
+    const handleBackFromProjectTop = () => {
+        setActiveScreen('select');
+    };
+
+    const handleBackFromProjectRegister = () => {
+        setActiveProjectTabId(lumiLaboProjectTopReturnTarget.projectTabId);
+        setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
+    };
+
+    const handleBackFromProjectList = () => {
+        setActiveProjectTabId(lumiLaboProjectTopReturnTarget.projectTabId);
+        setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
+    };
+
     const openProject = () => {
         setActiveProjectTabId('top');
         setActiveProjectViewId('top');
@@ -209,7 +230,7 @@ export default function LumiLaboProjectMockView() {
     };
 
     const openProjectDetailFromList = () => {
-        setProjectDetailReturnTarget(projectListReturnTarget);
+        setProjectDetailReturnTarget(lumiLaboProjectListReturnTarget);
         setActiveProjectTabId('list');
         setActiveProjectViewId('detail');
     };
@@ -349,7 +370,8 @@ export default function LumiLaboProjectMockView() {
 
                 {activeScreen === 'project' && activeProjectViewId === 'top' ? (
                     <ProjectEntryPanel
-                        onBack={() => setActiveScreen('select')}
+                        onBack={handleBackFromProjectTop}
+                        backTargetId="select"
                         onSelectProjectTab={selectProjectTab}
                     />
                 ) : null}
@@ -357,15 +379,17 @@ export default function LumiLaboProjectMockView() {
                 {activeScreen === 'project' &&
                 activeProjectViewId === 'register' ? (
                     <ProjectRegisterPanel
-                        onBack={() => setActiveScreen('select')}
+                        onBack={handleBackFromProjectRegister}
+                        backTargetId="project-top"
                     />
                 ) : null}
 
                 {activeScreen === 'project' && activeProjectViewId === 'list' ? (
                     <ProjectListPanel
                         projectDetail={projectDetail}
+                        backTargetId="project-top"
                         onOpenProjectDetail={openProjectDetailFromList}
-                        onBack={() => setActiveScreen('select')}
+                        onBack={handleBackFromProjectList}
                     />
                 ) : null}
 
@@ -374,6 +398,7 @@ export default function LumiLaboProjectMockView() {
                 projectDetail !== null ? (
                     <ProjectDetailPanel
                         projectDetail={projectDetail}
+                        backTargetId="detail-return-target"
                         draft={projectDetailDraft}
                         isDeleteDialogOpen={isProjectDeleteDialogOpen}
                         hasUnsavedChanges={hasProjectDetailChanges}
@@ -487,6 +512,7 @@ function SelectPanel({
 
 function ProjectEntryPanel({
     onBack,
+    backTargetId,
     onSelectProjectTab,
 }: ProjectEntryPanelProps) {
     // モバイル縦は上寄せ、スマホ横は二列化して通常ボタンと戻るを見切れさせない。
@@ -519,6 +545,7 @@ function ProjectEntryPanel({
                 <button
                     type="button"
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10 [@media(orientation:landscape)_and_(max-height:480px)]:text-base"
+                    data-lumilabo-back-target={backTargetId}
                     onClick={onBack}
                 >
                     <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -533,6 +560,7 @@ function ProjectListPanel({
     projectDetail,
     onOpenProjectDetail,
     onBack,
+    backTargetId,
 }: ProjectListPanelProps) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
@@ -584,6 +612,7 @@ function ProjectListPanel({
                     <button
                         type="button"
                         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        data-lumilabo-back-target={backTargetId}
                         onClick={onBack}
                     >
                         <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -612,6 +641,7 @@ function ProjectDetailPanel({
     onCancelDeleteProject,
     onConfirmDeleteProject,
     onBack,
+    backTargetId,
 }: ProjectDetailPanelProps) {
     const mapSearchUrl = createGoogleMapsSearchUrl(projectDetail.address);
 
@@ -622,6 +652,7 @@ function ProjectDetailPanel({
                     <button
                         type="button"
                         className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-base font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-auto"
+                        data-lumilabo-back-target={backTargetId}
                         onClick={onBack}
                     >
                         <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -974,7 +1005,7 @@ function SavedFilePreview({
     );
 }
 
-function ProjectRegisterPanel({ onBack }: BackActionProps) {
+function ProjectRegisterPanel({ onBack, backTargetId }: BackActionProps) {
     return (
         <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
             <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
@@ -1004,6 +1035,7 @@ function ProjectRegisterPanel({ onBack }: BackActionProps) {
                     <button
                         type="button"
                         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        data-lumilabo-back-target={backTargetId}
                         onClick={onBack}
                     >
                         <ArrowLeft className="h-5 w-5" aria-hidden />
