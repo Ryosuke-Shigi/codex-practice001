@@ -1,6 +1,6 @@
 # Laravel Portfolio - codex-practice001
 
-Laravel 11 + Inertia + React + TypeScript + Docker で構築しているポートフォリオアプリです。外部API連携、同期処理、分析UI、運用ログ、docs / test / PR運用を題材にしています。
+CodeX + Laravel 11 + Inertia + React + TypeScript + Docker で構築しているポートフォリオアプリです。外部API連携、同期処理、分析UI、運用ログ、docs / test / PR運用を題材にしています。
 
 公開URL: https://ada-works.dev
 
