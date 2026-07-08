@@ -173,6 +173,28 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('TOPへ戻る');
     });
 
+    it('marks project back targets by screen', async () => {
+        const projectTopMarkup = await renderMockViewMarkup('project');
+        const registerMarkup = await renderMockViewMarkup('project', 'register');
+        const listMarkup = await renderMockViewMarkup('project', 'list');
+        const detailMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+        });
+
+        expect(projectTopMarkup).toContain(
+            'data-lumilabo-back-target="select"',
+        );
+        expect(registerMarkup).toContain(
+            'data-lumilabo-back-target="project-top"',
+        );
+        expect(listMarkup).toContain(
+            'data-lumilabo-back-target="project-top"',
+        );
+        expect(detailMarkup).toContain(
+            'data-lumilabo-back-target="detail-return-target"',
+        );
+    });
+
     it('renders the project register mock fields on the register tab', async () => {
         const markup = await renderMockViewMarkup('project', 'register');
 
