@@ -4,6 +4,11 @@ export type LumiLaboMockProjectTabId = 'top' | 'register' | 'list';
 
 export type LumiLaboMockProjectViewId = LumiLaboMockProjectTabId | 'detail';
 
+export type LumiLaboMockProjectDetailReturnTarget = {
+    projectTabId: LumiLaboMockProjectTabId;
+    projectViewId: LumiLaboMockProjectViewId;
+};
+
 export type LumiLaboMockScreen = LumiLaboMockGlobalTabId | 'project';
 
 export type LumiLaboMockTab<TId extends string> = {

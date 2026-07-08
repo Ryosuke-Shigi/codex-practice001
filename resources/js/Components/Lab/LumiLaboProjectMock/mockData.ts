@@ -90,6 +90,12 @@ export const lumiLaboProjectDetail = {
     ],
 } as const satisfies LumiLaboMockProjectDetail;
 
-export const lumiLaboProjectDetailActionLabel = '詳細を見る';
-
 export const lumiLaboProjectDetailSavedMessage = '保存しました';
+
+export const lumiLaboProjectDeleteActionLabel = '案件を削除';
+
+export const lumiLaboProjectDeleteConfirmMessage = '削除しますか？';
+
+export const lumiLaboProjectDeleteConfirmYesLabel = 'YES';
+
+export const lumiLaboProjectDeleteConfirmNoLabel = 'NO';

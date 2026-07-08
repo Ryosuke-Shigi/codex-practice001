@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
     ArrowLeft,
     Camera,
+    ChevronRight,
     FilePlus2,
     FileText,
     FolderKanban,
@@ -12,7 +13,9 @@ import {
     MapPin,
     Save,
     Sparkles,
+    Trash2,
     Upload,
+    X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -20,8 +23,11 @@ import {
     lumiLaboGlobalTabs,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
+    lumiLaboProjectDeleteActionLabel,
+    lumiLaboProjectDeleteConfirmMessage,
+    lumiLaboProjectDeleteConfirmNoLabel,
+    lumiLaboProjectDeleteConfirmYesLabel,
     lumiLaboProjectDetail,
-    lumiLaboProjectDetailActionLabel,
     lumiLaboProjectDetailSavedMessage,
     lumiLaboProjectItem,
     lumiLaboProjectRegisterPanel,
@@ -33,6 +39,7 @@ import type {
     LumiLaboMockProjectDetail,
     LumiLaboMockProjectDetailDraft,
     LumiLaboMockProjectDetailEditableFieldId,
+    LumiLaboMockProjectDetailReturnTarget,
     LumiLaboMockProjectRegisterField,
     LumiLaboMockProjectTabId,
     LumiLaboMockProjectViewId,
@@ -45,6 +52,11 @@ const projectTabIcons = {
     register: FilePlus2,
     list: List,
 } satisfies Record<LumiLaboMockProjectTabId, LucideIcon>;
+
+const projectListReturnTarget = {
+    projectTabId: 'list',
+    projectViewId: 'list',
+} as const satisfies LumiLaboMockProjectDetailReturnTarget;
 
 type ProjectActionTabId = Exclude<LumiLaboMockProjectTabId, 'top'>;
 
@@ -69,13 +81,14 @@ type ProjectEntryPanelProps = {
 };
 
 type ProjectListPanelProps = BackActionProps & {
-    projectDetail: LumiLaboMockProjectDetail;
+    projectDetail: LumiLaboMockProjectDetail | null;
     onOpenProjectDetail: () => void;
 };
 
 type ProjectDetailPanelProps = BackActionProps & {
     projectDetail: LumiLaboMockProjectDetail;
     draft: LumiLaboMockProjectDetailDraft;
+    isDeleteDialogOpen: boolean;
     hasUnsavedChanges: boolean;
     isSaving: boolean;
     saveMessageVisible: boolean;
@@ -86,6 +99,16 @@ type ProjectDetailPanelProps = BackActionProps & {
     ) => void;
     onSave: () => void;
     onDropFiles: (files: FileList | null) => void;
+    onRemoveSavedPhoto: (photoId: string) => void;
+    onRemoveSavedFile: (fileId: string) => void;
+    onRequestDeleteProject: () => void;
+    onCancelDeleteProject: () => void;
+    onConfirmDeleteProject: () => void;
+};
+
+type ProjectDeleteConfirmDialogProps = {
+    onCancel: () => void;
+    onConfirm: () => void;
 };
 
 type ProjectDetailTextFieldProps = {
@@ -130,8 +153,12 @@ export default function LumiLaboProjectMockView() {
         useState<LumiLaboMockProjectTabId>('top');
     const [activeProjectViewId, setActiveProjectViewId] =
         useState<LumiLaboMockProjectViewId>('top');
+    const [projectDetailReturnTarget, setProjectDetailReturnTarget] =
+        useState<LumiLaboMockProjectDetailReturnTarget>(
+            projectListReturnTarget,
+        );
     const [projectDetail, setProjectDetail] =
-        useState<LumiLaboMockProjectDetail>(lumiLaboProjectDetail);
+        useState<LumiLaboMockProjectDetail | null>(lumiLaboProjectDetail);
     const [projectDetailDraft, setProjectDetailDraft] =
         useState<LumiLaboMockProjectDetailDraft>(
             createProjectDetailDraft(lumiLaboProjectDetail),
@@ -142,6 +169,8 @@ export default function LumiLaboProjectMockView() {
     const [droppedFileNames, setDroppedFileNames] = useState<readonly string[]>(
         [],
     );
+    const [isProjectDeleteDialogOpen, setIsProjectDeleteDialogOpen] =
+        useState(false);
     const saveCompleteTimerRef = useRef<ReturnType<
         typeof window.setTimeout
     > | null>(null);
@@ -154,7 +183,7 @@ export default function LumiLaboProjectMockView() {
 
     const hasProjectDetailChanges = hasProjectDetailDraftChanged(
         projectDetailDraft,
-        projectDetail,
+        projectDetail ?? lumiLaboProjectDetail,
     );
 
     useEffect(() => {
@@ -179,14 +208,16 @@ export default function LumiLaboProjectMockView() {
         setActiveScreen('project');
     };
 
-    const openProjectDetail = () => {
+    const openProjectDetailFromList = () => {
+        setProjectDetailReturnTarget(projectListReturnTarget);
         setActiveProjectTabId('list');
         setActiveProjectViewId('detail');
     };
 
-    const backToProjectList = () => {
-        setActiveProjectTabId('list');
-        setActiveProjectViewId('list');
+    const handleBackFromProjectDetail = () => {
+        setIsProjectDeleteDialogOpen(false);
+        setActiveProjectTabId(projectDetailReturnTarget.projectTabId);
+        setActiveProjectViewId(projectDetailReturnTarget.projectViewId);
     };
 
     const updateProjectDetailDraft = (
@@ -201,7 +232,11 @@ export default function LumiLaboProjectMockView() {
     };
 
     const saveProjectDetail = () => {
-        if (isProjectDetailSaving || !hasProjectDetailChanges) {
+        if (
+            projectDetail === null ||
+            isProjectDetailSaving ||
+            !hasProjectDetailChanges
+        ) {
             return;
         }
 
@@ -210,10 +245,16 @@ export default function LumiLaboProjectMockView() {
         setIsProjectDetailSaving(true);
 
         saveCompleteTimerRef.current = window.setTimeout(() => {
-            setProjectDetail((current) => ({
-                ...current,
-                ...projectDetailDraft,
-            }));
+            setProjectDetail((current) => {
+                if (current === null) {
+                    return current;
+                }
+
+                return {
+                    ...current,
+                    ...projectDetailDraft,
+                };
+            });
             setIsProjectDetailSaving(false);
             setProjectDetailSavedVisible(true);
             saveCompleteTimerRef.current = null;
@@ -231,6 +272,49 @@ export default function LumiLaboProjectMockView() {
         }
 
         setDroppedFileNames(Array.from(files).map((file) => file.name));
+    };
+
+    const removeSavedPhoto = (photoId: string) => {
+        setProjectDetail((current) => {
+            if (current === null) {
+                return current;
+            }
+
+            return {
+                ...current,
+                savedPhotos: current.savedPhotos.filter(
+                    (photo) => photo.id !== photoId,
+                ),
+            };
+        });
+    };
+
+    const removeSavedFile = (fileId: string) => {
+        setProjectDetail((current) => {
+            if (current === null) {
+                return current;
+            }
+
+            return {
+                ...current,
+                savedFiles: current.savedFiles.filter((file) => file.id !== fileId),
+            };
+        });
+    };
+
+    const requestProjectDelete = () => {
+        setIsProjectDeleteDialogOpen(true);
+    };
+
+    const confirmProjectDelete = () => {
+        clearMockTimer(saveCompleteTimerRef);
+        clearMockTimer(saveMessageTimerRef);
+        setProjectDetail(null);
+        setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
+        setIsProjectDetailSaving(false);
+        setProjectDetailSavedVisible(false);
+        setDroppedFileNames([]);
+        handleBackFromProjectDetail();
     };
 
     return (
@@ -280,16 +364,18 @@ export default function LumiLaboProjectMockView() {
                 {activeScreen === 'project' && activeProjectViewId === 'list' ? (
                     <ProjectListPanel
                         projectDetail={projectDetail}
-                        onOpenProjectDetail={openProjectDetail}
+                        onOpenProjectDetail={openProjectDetailFromList}
                         onBack={() => setActiveScreen('select')}
                     />
                 ) : null}
 
                 {activeScreen === 'project' &&
-                activeProjectViewId === 'detail' ? (
+                activeProjectViewId === 'detail' &&
+                projectDetail !== null ? (
                     <ProjectDetailPanel
                         projectDetail={projectDetail}
                         draft={projectDetailDraft}
+                        isDeleteDialogOpen={isProjectDeleteDialogOpen}
                         hasUnsavedChanges={hasProjectDetailChanges}
                         isSaving={isProjectDetailSaving}
                         saveMessageVisible={projectDetailSavedVisible}
@@ -297,7 +383,12 @@ export default function LumiLaboProjectMockView() {
                         onChangeDraftField={updateProjectDetailDraft}
                         onSave={saveProjectDetail}
                         onDropFiles={updateDroppedFiles}
-                        onBack={backToProjectList}
+                        onRemoveSavedPhoto={removeSavedPhoto}
+                        onRemoveSavedFile={removeSavedFile}
+                        onRequestDeleteProject={requestProjectDelete}
+                        onCancelDeleteProject={() => setIsProjectDeleteDialogOpen(false)}
+                        onConfirmDeleteProject={confirmProjectDelete}
+                        onBack={handleBackFromProjectDetail}
                     />
                 ) : null}
             </main>
@@ -456,21 +547,37 @@ function ProjectListPanel({
                 </header>
 
                 <div className="grid gap-3">
-                    <article className="grid gap-3 rounded-md border border-neutral-300 bg-white p-4 text-black shadow-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                        <div className="min-w-0">
-                            <p className="truncate text-lg font-black">
-                                {projectDetail.companyName}
-                            </p>
-                        </div>
+                    {projectDetail ? (
                         <button
                             type="button"
-                            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-auto"
+                            aria-label={projectDetail.companyName + 'の案件詳細を開く'}
+                            className="group flex min-h-16 w-full min-w-0 items-center justify-between gap-3 rounded-md border border-neutral-300 bg-white px-4 py-3 text-left text-black shadow-sm transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                             onClick={onOpenProjectDetail}
                         >
-                            <List className="h-5 w-5" aria-hidden />
-                            <span>{lumiLaboProjectDetailActionLabel}</span>
+                            <span className="flex min-w-0 flex-1 items-baseline gap-2 overflow-hidden whitespace-nowrap">
+                                <span className="max-w-[46%] shrink-0 truncate text-lg font-black sm:max-w-none">
+                                    {projectDetail.companyName}
+                                </span>
+                                <span className="shrink-0 text-sm font-black text-neutral-700 sm:text-base">
+                                    担当者：{projectDetail.contactName}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-600 sm:text-base">
+                                    メモ：{projectDetail.memo}
+                                </span>
+                            </span>
+                            <ChevronRight
+                                className="h-5 w-5 shrink-0 text-yellow-800 transition group-hover:translate-x-0.5"
+                                aria-hidden
+                            />
                         </button>
-                    </article>
+                    ) : (
+                        <p
+                            role="status"
+                            className="rounded-md border border-neutral-300 bg-neutral-50 px-4 py-3 text-base font-black text-neutral-700"
+                        >
+                            表示できる案件はありません
+                        </p>
+                    )}
                 </div>
 
                 <div className="mt-auto grid gap-2 pt-1 sm:max-w-sm">
@@ -491,6 +598,7 @@ function ProjectListPanel({
 function ProjectDetailPanel({
     projectDetail,
     draft,
+    isDeleteDialogOpen,
     hasUnsavedChanges,
     isSaving,
     saveMessageVisible,
@@ -498,6 +606,11 @@ function ProjectDetailPanel({
     onChangeDraftField,
     onSave,
     onDropFiles,
+    onRemoveSavedPhoto,
+    onRemoveSavedFile,
+    onRequestDeleteProject,
+    onCancelDeleteProject,
+    onConfirmDeleteProject,
     onBack,
 }: ProjectDetailPanelProps) {
     const mapSearchUrl = createGoogleMapsSearchUrl(projectDetail.address);
@@ -580,10 +693,34 @@ function ProjectDetailPanel({
                             />
                         </div>
 
-                        <SavedPhotoPreview projectDetail={projectDetail} />
-                        <SavedFilePreview projectDetail={projectDetail} />
+                        <SavedPhotoPreview
+                            projectDetail={projectDetail}
+                            onRemoveSavedPhoto={onRemoveSavedPhoto}
+                        />
+                        <SavedFilePreview
+                            projectDetail={projectDetail}
+                            onRemoveSavedFile={onRemoveSavedFile}
+                        />
                     </div>
                 </div>
+
+                <div className="mt-auto border-t border-red-200 pt-4 sm:max-w-sm">
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-red-600 bg-white px-5 text-lg font-black text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                        onClick={onRequestDeleteProject}
+                    >
+                        <Trash2 className="h-5 w-5" aria-hidden />
+                        <span>{lumiLaboProjectDeleteActionLabel}</span>
+                    </button>
+                </div>
+
+                {isDeleteDialogOpen ? (
+                    <ProjectDeleteConfirmDialog
+                        onCancel={onCancelDeleteProject}
+                        onConfirm={onConfirmDeleteProject}
+                    />
+                ) : null}
             </div>
         </section>
     );
@@ -712,10 +849,51 @@ function FileDropZone({
     );
 }
 
+function ProjectDeleteConfirmDialog({
+    onCancel,
+    onConfirm,
+}: ProjectDeleteConfirmDialogProps) {
+    return (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4">
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="lumilabo-project-delete-dialog-title"
+                className="grid w-full max-w-sm gap-4 rounded-md border border-red-300 bg-white p-4 text-black shadow-xl"
+            >
+                <h2
+                    id="lumilabo-project-delete-dialog-title"
+                    className="text-center text-xl font-black"
+                >
+                    {lumiLaboProjectDeleteConfirmMessage}
+                </h2>
+                <div className="grid gap-2">
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        onClick={onCancel}
+                    >
+                        {lumiLaboProjectDeleteConfirmNoLabel}
+                    </button>
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-red-700 bg-red-600 px-5 text-lg font-black text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                        onClick={onConfirm}
+                    >
+                        {lumiLaboProjectDeleteConfirmYesLabel}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function SavedPhotoPreview({
     projectDetail,
+    onRemoveSavedPhoto,
 }: {
     projectDetail: LumiLaboMockProjectDetail;
+    onRemoveSavedPhoto: (photoId: string) => void;
 }) {
     if (projectDetail.savedPhotos.length === 0) {
         return null;
@@ -726,18 +904,27 @@ function SavedPhotoPreview({
             <h2 className="text-base font-black text-black">写真</h2>
             <div className="flex flex-wrap gap-3">
                 {projectDetail.savedPhotos.map((photo) => (
-                    <div
-                        key={photo.id}
-                        role="img"
-                        aria-label={photo.alt}
-                        className="relative h-20 w-28 overflow-hidden rounded-md border border-neutral-300 bg-sky-100"
-                    >
-                        <span className="absolute left-2 top-2 inline-flex h-6 min-w-8 items-center justify-center rounded-md bg-white px-2 text-sm font-black text-black">
-                            {photo.label}
-                        </span>
-                        <span className="absolute right-2 top-3 h-5 w-5 rounded-full bg-yellow-200" />
-                        <span className="absolute bottom-3 left-2 h-0 w-0 border-b-[28px] border-l-[46px] border-r-[28px] border-b-green-600 border-l-transparent border-r-transparent" />
-                        <span className="absolute bottom-3 left-9 h-0 w-0 border-b-[22px] border-l-[34px] border-r-[34px] border-b-green-700 border-l-transparent border-r-transparent" />
+                    <div key={photo.id} className="relative h-20 w-28">
+                        <div
+                            role="img"
+                            aria-label={photo.alt}
+                            className="relative h-full w-full overflow-hidden rounded-md border border-neutral-300 bg-sky-100"
+                        >
+                            <span className="absolute left-2 top-2 inline-flex h-6 min-w-8 items-center justify-center rounded-md bg-white px-2 text-sm font-black text-black">
+                                {photo.label}
+                            </span>
+                            <span className="absolute right-2 top-3 h-5 w-5 rounded-full bg-yellow-200" />
+                            <span className="absolute bottom-3 left-2 h-0 w-0 border-b-[28px] border-l-[46px] border-r-[28px] border-b-green-600 border-l-transparent border-r-transparent" />
+                            <span className="absolute bottom-3 left-9 h-0 w-0 border-b-[22px] border-l-[34px] border-r-[34px] border-b-green-700 border-l-transparent border-r-transparent" />
+                        </div>
+                        <button
+                            type="button"
+                            aria-label={photo.alt + 'を削除'}
+                            className="absolute right-1 top-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                            onClick={() => onRemoveSavedPhoto(photo.id)}
+                        >
+                            <X className="h-4 w-4" aria-hidden />
+                        </button>
                     </div>
                 ))}
             </div>
@@ -747,8 +934,10 @@ function SavedPhotoPreview({
 
 function SavedFilePreview({
     projectDetail,
+    onRemoveSavedFile,
 }: {
     projectDetail: LumiLaboMockProjectDetail;
+    onRemoveSavedFile: (fileId: string) => void;
 }) {
     if (projectDetail.savedFiles.length === 0) {
         return null;
@@ -761,7 +950,7 @@ function SavedFilePreview({
                 {projectDetail.savedFiles.map((file) => (
                     <div
                         key={file.id}
-                        className="flex min-h-14 items-center gap-3 rounded-md border border-neutral-300 bg-white px-3 text-black"
+                        className="relative flex min-h-14 items-center gap-3 rounded-md border border-neutral-300 bg-white px-3 pr-12 text-black"
                     >
                         <span className="inline-flex h-10 min-w-10 items-center justify-center rounded-md border border-neutral-300 bg-white px-1 text-xs font-black">
                             {file.fileTypeLabel}
@@ -770,6 +959,14 @@ function SavedFilePreview({
                         <span className="min-w-0 truncate text-base font-black">
                             {file.fileName}
                         </span>
+                        <button
+                            type="button"
+                            aria-label={file.fileName + 'を削除'}
+                            className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                            onClick={() => onRemoveSavedFile(file.id)}
+                        >
+                            <X className="h-4 w-4" aria-hidden />
+                        </button>
                     </div>
                 ))}
             </div>
