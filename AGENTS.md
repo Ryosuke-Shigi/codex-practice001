@@ -15,6 +15,9 @@
 参照先一覧は「全部読むリスト」ではありません。
 作業種別、今回読むdocs、読まないdocs、編集禁止ファイル、停止条件を固定してから進みます。
 
+Product Design上の判断、IDEA BOARD / MOCK 作成・修正、新しい画面導線、Coding前のMOCK確認済み範囲を扱う場合だけ、[docs/product-design/index.md](docs/product-design/index.md) を読みます。
+通常の小修正、Backend責務整理、文言修正、テスト修正、画面を伴わないdocs修正、infra作業では原則として読みません。
+
 ## 作業後の戻し先確認
 
 作業完了前に [docs/ai/workflows/work-result-feedback-loop.md](docs/ai/workflows/work-result-feedback-loop.md) で、今回の結果をどこへ戻すかを確認します。
@@ -44,6 +47,8 @@ Git作業、branch確認、working tree確認、差分確認、commit前確認�
 
 ローカル環境固有の再発防止メモや確認メモはGit管理docsの正本ではありません。
 
+local系MDは、そのPC固有の環境差分として存在する場合だけ確認します。更新またはstageする前にGit管理対象かを確認し、Git外のlocalファイルをPRへ含めません。
+
 外側repoと `src/` は別repoのため、Git作業は実際に差分を出すrepoの remote / branch / status を確認し、一方のrepoの状態をもう一方のrepoの状態として扱いません。
 
 ## 主要参照先
@@ -54,6 +59,7 @@ Git作業、branch確認、working tree確認、差分確認、commit前確認�
 | 作業条件、Git / PR、停止条件 | [docs/ai/rules/agent-working-policy.md](docs/ai/rules/agent-working-policy.md) |
 | ADR Pattern、用語、責務境界 | [docs/ai/rules/responsibility-boundaries.md](docs/ai/rules/responsibility-boundaries.md) |
 | docs全体の索引、用途別の正本 | [docs/index.md](docs/index.md) |
+| Product Design、IDEA BOARD / MOCK / Coding の境界 | [docs/product-design/index.md](docs/product-design/index.md) |
 | 作業種別ごとのMDルーター | [docs/ai/workflows/md-router.md](docs/ai/workflows/md-router.md) |
 | コマンド実行、Git境界 | [docs/operations/command-registry.md](docs/operations/command-registry.md) |
 | PRレビュー強度 | [docs/operations/pr-review-strength.md](docs/operations/pr-review-strength.md) |

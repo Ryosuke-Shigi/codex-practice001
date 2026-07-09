@@ -53,6 +53,30 @@ docs/index.md は索引であり、毎回全文理解を前提にしない。MD�
 
 これはコメントを増やすための確認ではない。責務、入力、出力、DTO形、状態遷移、例外条件、外部API境界、props契約が変わったときに、既存の説明が古いまま残らないようにするための確認である。
 
+## Product Design Guideを読む条件
+
+Product Design Guideは、IDEA BOARD / MOCK / Coding の境界を決めるための軽量ガイドである。
+
+読む条件:
+
+* IDEA BOARDを作成・修正するとき
+* MOCKを作成・修正するとき
+* 新しい画面導線を決めるとき
+* Coding前にMOCK確認済み範囲を確認するとき
+* Product Design上の判断が必要なとき
+
+原則読まない条件:
+
+* 通常の小修正
+* Backend責務整理
+* PR修正
+* 文言修正
+* テスト修正
+* 画面を伴わないdocs修正
+* infra作業
+
+Product Design Guideは実装責務の正本ではない。Backend責務、ADR Pattern、レイヤード、UI Component責務は既存docsを正本とする。
+
 ## Loop Engineeringを読む条件
 
 Loop Engineeringは、AIが読む開発文脈が育つように、実行、確認、修正、再確認、記録、次回改善までを接続するための補助docsである。
@@ -130,6 +154,10 @@ Git作業を含む場合は、通常の共通docs確認に加えて以下の順�
 
 ローカル環境固有の再発防止メモや確認メモは、共有docsの正本ではない。Git操作、ブランチ操作、PR作成、main直作業回避、ローカル固有の地雷確認が絡む場合だけ、Git管理外の .local/ や .local-rules/ などを補助ハーネスとして確認する。
 
+local系MDは、そのPC固有の環境差分、コマンド差分、gh / Git操作差分を扱うものとして整理する。存在する場合だけ参照し、存在しない場合でも作業を止めない。更新する場合はGit管理対象かGit外かを必ず確認し、Git外のlocalファイルを誤ってコミットしない。
+
+local系MDは、Product Designの共通ルール、ADR Pattern、レイヤード責務、UI責務、LumiLaboのプロダクト方針、全体に適用する開発ルールを上書きしない。gh / Git / WSL / ローカル実行手順などは、local系MDに記載がある場合だけ環境差分として優先する。
+
 この補助ハーネスは正本docsではない。中身をGit管理docs、PR本文、レビューコメントへ転記せず、Git管理docsへ混ぜない。Git管理docsとローカル補助ハーネスが矛盾する場合は、勝手に統合せず停止して報告する。
 
 ## 外側環境repoと内側アプリrepoの境界
@@ -201,7 +229,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | --- | --- | --- | --- | --- |
 | README軽微修正 | docs/index.md / docs/context-management.md | 対象README | README周辺のみ | app全体 / resources全体 |
 | docs軽微修正 | docs/index.md / docs/context-management.md | 対象docs | 原則コードは読まない | 無関係feature docs / app全体 |
-| docs運用最適化 / 補助追加 | docs/index.md / docs/context-management.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/ai/workflows/loop-engineering.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md / LumiLaboに関係する場合だけ docs/lumilabo/index.md | 原則コードは読まない | 無関係feature docs / 無関係Lab docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
+| docs運用最適化 / 補助追加 | docs/index.md / docs/context-management.md / docs/ai/index.md / docs/ai/workflows/index.md / docs/ai/workflows/md-router.md / docs/ai/workflows/md-router-cases.md / docs/ai/workflows/work-result-feedback-loop.md / docs/ai/workflows/loop-engineering.md / docs/templates/pr-summary.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | docs/operations/command-registry.md / docs/ai/rules/agent-working-policy.md / docs/ai/rules/responsibility-boundaries.md / 必要に応じて docs/commenting.md / Product Designに関係する場合だけ docs/product-design/index.md / LumiLaboに関係する場合だけ docs/lumilabo/index.md | 原則コードは読まない | 無関係feature docs / 無関係Lab docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 |
 | 開発フロー修正 | docs/development-flow.md / docs/context-management.md / docs/ai/workflows/md-router.md | docs/testing.md / docs/architecture.md | 原則コードは読まない | featureコード全体 |
 | 作業方針修正 | docs/context-management.md / docs/development-flow.md / docs/ai/workflows/md-router.md | AGENTS.md / docs/testing.md | 原則コードは読まない | 無関係feature docs |
 | Feature移植準備 | docs/feature-module-portability.md / docs/architecture.md / docs/development-flow.md | docs/prototype-policy.md / docs/ui-development-flow.md / 対象feature docs | 対象Feature配下 / route / console / config / provider / migration / seeder / tests | 無関係Feature / 移植対象外のLab・MOCK・PROTOTYPE・IDEA BOARDコード |
@@ -209,11 +237,11 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Feature docs新規作成 | docs/templates/feature-doc-template.md / docs/index.md / docs/architecture.md / docs/testing.md | 対象featureに関係する既存docs / 必要に応じて docs/frontend.md / docs/ui.md | 対象Featureの入口と確認済みコード / 成功テスト | 無関係feature docs / 無関係コード全体 |
 | Feature移植先実装 | docs/feature-module-portability.md / 移植元feature docs / 移植先repoのAGENTS・INDEX・ROUTER | 移植先repoの architecture / testing docs | 移植元Featureの移植対象 / 移植先Laravel構成 / 移植先route・config・provider・migration・seeder・tests | 移植対象外Feature / 移植モード外のLab・MOCK・PROTOTYPE・IDEA BOARD |
 | PRODUCTのみ移植 | docs/feature-module-portability.md / 対象feature docs / docs/architecture.md / docs/testing.md | docs/frontend.md / docs/ui-development-flow.md | PRODUCT Controller / Request / Action / Service / Repository / DTO / Responder / Strategy / Factory / Job / Enum / Model / Migration / Seeder / Config / Product routes / Console・Scheduler / Product Page・Component / Product tests | IDEA BOARD / MOCK固定データ / MOCK専用Page・Component / PROTOTYPE仮通信 / PROTOTYPE検証Route・Controller / Lab配下の紹介ページ / モック用画像 / 一時的な調査ログ |
-| IDEA BOARD作成・修正 | docs/development-flow.md / docs/ui-development-flow.md / docs/guides/frontend-screen-types.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/idea-board-template.md | 対象feature docs / 対象Lab docs | 原則コードは読まない。既存IDEA BOARD画面を修正する場合のみ対象Page / Component | Repository / Service / Migration / API / PRODUCT実装 |
-| LumiLabo IDEA BOARD / MOCK / UI方針確認 | docs/lumilabo/index.md / docs/development-flow.md / docs/ui-development-flow.md / docs/guides/frontend-screen-types.md | docs/lumilabo/ui-design-guideline.md の対象見出し / docs/lumilabo/project-idea-board.md の対象タブ・対象外・確認観点 / MOCKを扱う場合は docs/lumilabo/project-mock.md | 既存IDEA BOARD / MOCK画面を修正する場合のみ対象Page / Component | LumiLabo以外のfeature docs / 無関係Lab docs / Repository / Service / Migration / API / PRODUCT実装 |
-| MOCK作成・修正 | docs/guides/frontend-screen-types.md / docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/ui-development-flow.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/mock-template.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration / PRODUCT実装 / 共通Component化判断 |
+| IDEA BOARD作成・修正 | docs/product-design/index.md / docs/development-flow.md / docs/ui-development-flow.md / docs/guides/frontend-screen-types.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/idea-board-template.md | 対象feature docs / 対象Lab docs | 原則コードは読まない。既存IDEA BOARD画面を修正する場合のみ対象Page / Component | Repository / Service / Migration / API / PRODUCT実装 |
+| LumiLabo IDEA BOARD / MOCK / UI方針確認 | docs/product-design/index.md / docs/lumilabo/index.md / docs/development-flow.md / docs/ui-development-flow.md / docs/guides/frontend-screen-types.md | docs/lumilabo/ui-design-guideline.md の対象見出し / docs/lumilabo/project-idea-board.md の対象タブ・対象外・確認観点 / MOCKを扱う場合は docs/lumilabo/project-mock.md | 既存IDEA BOARD / MOCK画面を修正する場合のみ対象Page / Component | LumiLabo以外のfeature docs / 無関係Lab docs / Repository / Service / Migration / API / PRODUCT実装 |
+| MOCK作成・修正 | docs/product-design/index.md / docs/guides/frontend-screen-types.md / docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/ui-development-flow.md / docs/templates/idea-board-and-mock-template-policy.md / docs/templates/mock-template.md | 対象feature docs | 対象MOCK Page / Component | Repository / Service / Migration / PRODUCT実装 / 共通Component化判断 |
 | PROTOTYPE作成・修正 | docs/guides/frontend-screen-types.md / docs/frontend.md / docs/ui.md / docs/prototype-policy.md / docs/development-flow.md | 対象feature docs | 対象Prototype Page / Component / fixture | 本番用Repository全体 / Migration |
-| PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs / UI画面種別を選ぶ場合は docs/guides/frontend-screen-types.md | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
+| PRODUCT新規実装 | docs/architecture.md / docs/testing.md / docs/frontend.md / docs/ui.md | 対象feature docs / MOCK / PROTOTYPE由来docs / Coding前にMOCK確認済み範囲を確認する場合は docs/product-design/index.md / UI画面種別を選ぶ場合は docs/guides/frontend-screen-types.md | Route / Controller / Request / Action / Service / Repository / DTO / Responder / Component / Test（実装前に責務配置を固定） | 無関係feature docs |
 | PRODUCT修正 | docs/architecture.md / docs/testing.md | 対象feature docs / 対象PRの差分 | 変更対象レイヤーと直接依存先（変更対象レイヤーと影響する責務を先に宣言） | リポジトリ全体の無差別探索 |
 | コード変更後のコメント・アノテーション追従確認 | docs/commenting.md / docs/operations/sensors.md / docs/operations/pr-review-strength.md | 対象feature docs / 対象言語・レイヤーのdocs | 変更ファイルと関連するコメント / PHPDoc / JSDoc / 型 / props契約説明 | 無関係feature docs / 仕様変更につながる周辺修正 |
 | Service修正 | docs/architecture.md / docs/testing.md | 対象feature docs | Service / DTO / Action / Test | UI全体 |
@@ -222,7 +250,7 @@ Laravel / React / app docs / tests / feature docs の作業では、`laravel11-d
 | Request / Validation修正 | docs/architecture.md / docs/testing.md | バリデーション方針docsが存在する場合は読む / 対象feature docs | Request / Controller / Feature Test | 無関係UI全体 |
 | React UI修正 | docs/guides/frontend-screen-types.md / docs/frontend.md / docs/ui.md | 対象feature docs | Page / Component / hooks / type | Repository全体 |
 | Inertia props修正 | docs/frontend.md / docs/architecture.md / docs/testing.md | 対象feature docs | Controller / Action / Responder / Page / Test | 無関係Service |
-| 画面導線修正 | docs/guides/frontend-screen-types.md / docs/frontend.md / docs/ui.md / docs/development-flow.md | 対象feature docs / MOCK / PROTOTYPE docs | Route / Page / Component / Test | 無関係Repository |
+| 画面導線修正 | docs/product-design/index.md / docs/guides/frontend-screen-types.md / docs/frontend.md / docs/ui.md / docs/development-flow.md | 対象feature docs / MOCK / PROTOTYPE docs | Route / Page / Component / Test | 無関係Repository |
 | Job修正 | docs/architecture.md / docs/testing.md / コマンド台帳が存在する場合は読む | 対象feature docs | Job / Action / Service / Repository / Test | UI全体 |
 | Artisan Command修正 | docs/architecture.md / docs/testing.md / コマンド台帳が存在する場合は読む | 対象feature docs | Command / Action / Service / Test | UI全体 |
 | Scheduler修正 | docs/architecture.md / docs/testing.md / コマンド台帳が存在する場合は読む | 存在する運用docs | routes/console.php / Console関連ファイル / Schedule / Command / Job / logs | UI全体 |
