@@ -72,6 +72,27 @@ class ApplicationFileStorageServiceTest extends TestCase
         ));
     }
 
+    public function test_get_reads_from_fake_s3_without_external_connection(): void
+    {
+        Storage::fake('s3');
+
+        $this->service()->put(
+            contents: 'read me',
+            path: 'storage-smoke-tests/read-me.txt',
+            originalName: 'read-me.txt',
+            mimeType: 'text/plain',
+            size: 7,
+            disk: 's3',
+            prefix: 'system',
+        );
+
+        $this->assertSame('read me', $this->service()->get(
+            path: 'storage-smoke-tests/read-me.txt',
+            disk: 's3',
+            prefix: 'system',
+        ));
+    }
+
     private function service(): ApplicationFileStorageService
     {
         return app(ApplicationFileStorageService::class);
