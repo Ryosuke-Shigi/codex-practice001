@@ -166,6 +166,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/operations/code-responsibility-inventory.md` | 全コード責務棚卸し、コメント / 型 / DTO / Inertia props境界の確認結果 |
 | `docs/coding-standards.md` | PHP / TypeScript / JavaScript / React / CSS の実装作法、型、命名、確認コマンド |
 | `docs/testing.md` | テスト追加、仕様固定、CI確認 |
+| `docs/storage.md` | S3互換Storageのアプリ側共通境界、Feature側の利用方針、テストで実S3 / MinIOへ接続しない方針 |
 | `docs/frontend.md` | React / Inertia / TypeScript、props、Component責務 |
 | `docs/ui.md` | UI、Common、モバイル、操作、Effects |
 | `docs/prototype-policy.md` | MOCK / Prototypeの配置、許可範囲、Product化 |

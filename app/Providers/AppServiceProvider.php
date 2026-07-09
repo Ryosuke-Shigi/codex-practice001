@@ -53,6 +53,8 @@ use App\Repositories\Operations\ServerHealth\DiskUsageRepository;
 use App\Repositories\Operations\ServerHealth\DiskUsageRepositoryInterface;
 use App\Repositories\Operations\ServerHealth\MySqlUsageRepository;
 use App\Repositories\Operations\ServerHealth\MySqlUsageRepositoryInterface;
+use App\Repositories\Storage\FileStorageRepositoryInterface;
+use App\Repositories\Storage\LaravelFileStorageRepository;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -124,6 +126,12 @@ class AppServiceProvider extends ServiceProvider
          */
         $this->app->bind(DiskUsageRepositoryInterface::class, DiskUsageRepository::class);
         $this->app->bind(MySqlUsageRepositoryInterface::class, MySqlUsageRepository::class);
+
+        /*
+         * S3互換Storageの共通境界です。
+         * Feature側は Storage::disk() ではなく、ApplicationFileStorageService 経由で利用します。
+         */
+        $this->app->bind(FileStorageRepositoryInterface::class, LaravelFileStorageRepository::class);
     }
 
     /**
