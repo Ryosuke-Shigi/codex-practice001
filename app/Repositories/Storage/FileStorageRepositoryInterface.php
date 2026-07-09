@@ -8,6 +8,8 @@ interface FileStorageRepositoryInterface
 {
     public function put(string $disk, string $path, string $contents, string $visibility): bool;
 
+    public function get(string $disk, string $path): ?string;
+
     public function delete(string $disk, string $path): bool;
 
     public function exists(string $disk, string $path): bool;

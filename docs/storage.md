@@ -50,6 +50,24 @@ Storage境界のテストは `Storage::fake('s3')` を使い、AWS credentials�
 
 `.env.example` のMinIO設定はローカル開発確認用であり、自動テストの接続先として扱いません。
 
+## 疎通確認Command
+
+Local MinIO と Production AWS S3 は、同じLaravel disk名 `s3` で切り替えます。
+
+手動のStorage疎通確認には次のArtisan Commandを使います。
+
+```bash
+php artisan storage:smoke-test --disk=s3
+```
+
+このCommandは `system/storage-smoke-tests/` 配下に一時テキストを保存し、保存後の存在確認、内容取得、削除、削除後の不存在確認を行います。すべて成功した場合だけ成功終了します。
+
+Commandは `ApplicationFileStorageService` 経由でStorageを扱い、Feature側やCommand内へ `Storage::disk('s3')` を広げません。
+
+自動テストでは `Storage::fake('s3')` を使い、実S3 / 実MinIO / 外部ネットワークへ接続しません。
+
+本番 `.env` 全文、AWS access key、secret access key の実値はdocs、Command出力、テストへ書きません。
+
 ## 秘密情報
 
 本番S3 credentials、AWS access key、secret、bucket固有の秘密値、本番 `.env` の実値をGitへ入れません。

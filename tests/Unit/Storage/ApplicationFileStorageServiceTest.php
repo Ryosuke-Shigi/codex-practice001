@@ -88,6 +88,24 @@ class ApplicationFileStorageServiceTest extends TestCase
         );
     }
 
+    public function test_get_normalizes_prefix_before_calling_storage_repository(): void
+    {
+        $repository = $this->createMock(FileStorageRepositoryInterface::class);
+
+        $repository
+            ->expects($this->once())
+            ->method('get')
+            ->with('s3', 'system/storage-smoke-tests/check.txt')
+            ->willReturn('smoke test contents');
+
+        $contents = $this->service($repository)->get(
+            path: '/storage-smoke-tests/check.txt',
+            prefix: 'system/',
+        );
+
+        $this->assertSame('smoke test contents', $contents);
+    }
+
     private function service(FileStorageRepositoryInterface $repository): ApplicationFileStorageService
     {
         return new ApplicationFileStorageService($repository);

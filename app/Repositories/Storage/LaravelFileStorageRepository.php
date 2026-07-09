@@ -20,6 +20,17 @@ class LaravelFileStorageRepository implements FileStorageRepositoryInterface
         ]);
     }
 
+    public function get(string $disk, string $path): ?string
+    {
+        try {
+            $contents = Storage::disk($disk)->get($path);
+
+            return is_string($contents) ? $contents : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
     public function delete(string $disk, string $path): bool
     {
         return Storage::disk($disk)->delete($path);

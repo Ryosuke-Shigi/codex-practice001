@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-07
+- Last reviewed: 2026-07-09
 
 ## このドキュメントの目的
 
@@ -324,6 +324,15 @@ docker compose exec php-fpm php artisan route:list
 docker compose exec php-fpm php artisan migrate:status
 docker compose exec php-fpm php artisan optimize:clear
 ```
+
+S3互換Storageの疎通確認:
+
+```bash
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan storage:smoke-test --disk=s3
+```
+
+このCommandは Local MinIO / Production AWS S3 を同じLaravel disk名 `s3` で確認するための入口です。保存、存在確認、内容取得、削除、削除後の不存在確認だけを行い、bucket作成、IAM操作、AWS credential操作、本番 `.env` 更新は扱いません。
 
 Japan Quake Wave Map の地震情報取得Command / Scheduler確認:
 

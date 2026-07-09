@@ -79,6 +79,14 @@ class ApplicationFileStorageService
         );
     }
 
+    public function get(string $path, ?string $disk = null, ?string $prefix = null): ?string
+    {
+        return $this->storageRepository->get(
+            $this->disk($disk),
+            $this->path($path, $prefix),
+        );
+    }
+
     public function exists(string $path, ?string $disk = null, ?string $prefix = null): bool
     {
         return $this->storageRepository->exists(
