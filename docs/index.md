@@ -27,6 +27,8 @@
 
 ローカル構成では外側Docker repoと `src/` 内アプリrepoが別Git管理のため、作業対象に応じたGit境界の確認は `docs/operations/command-registry.md` を正本とします。ローカル専用メモはGit管理docs体系に含めません。
 
+local系MDは、そのPC固有の環境差分、gh / Git / WSL / ローカル実行手順の差分を確認するための補助資料です。存在する場合だけ参照し、存在しない場合でも作業を止めません。local系MDの内容を汎用docsへ無断で移植せず、Git外のlocalファイルをPRへ含めません。
+
 ### Git / PR作業方針
 
 - `docs/ai/rules/agent-working-policy.md`
@@ -34,6 +36,15 @@
 - `docs/templates/pr-summary.md`
 
 作業ブランチ、main直作業禁止、commit粒度の判断基準は `docs/ai/rules/agent-working-policy.md` を正本とします。PR前のGit確認コマンドは `docs/operations/command-registry.md`、PR本文に残す実装後の事実整理は `docs/templates/pr-summary.md` に従います。
+
+### Product Design / IDEA BOARD / MOCK / Coding
+
+- `docs/product-design/index.md`
+- `docs/development-flow.md`
+- `docs/ui-development-flow.md`
+- `docs/templates/idea-board-and-mock-template-policy.md`
+
+Product Design Guide は、Coding前に「何を作るか」「どう見せるか」「どこまで作るか」を整理する軽量ガイドです。IDEA BOARD / MOCK 作成・修正、新しい画面導線、Coding前のMOCK確認済み範囲を扱う場合だけ読みます。通常の小修正、Backend責務整理、文言修正、テスト修正、画面を伴わないdocs修正、infra作業では原則として読みません。
 
 
 ### PR確認・レビュー強度
@@ -140,6 +151,7 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 | `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
 | `docs/ai/workflows/work-result-feedback-loop.md` | 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール |
+| `docs/product-design/index.md` | IDEA BOARD / MOCK / Coding の境界、Coding前ゲート、Product Design上の判断が必要な作業で読む軽量ガイド |
 | `docs/ai/workflows/md-router-cases.md` | `docs/ai/workflows/md-router.md` の実戦ケース集 |
 | `docs/feature-module-portability.md` | Feature Module移植ルール。Feature全体移植 / PRODUCTのみ移植 / MOCKのみ移植 / PROTOTYPEのみ移植 / IDEA BOARDのみ移植、移植元repoは読むだけ、移植先repoだけに差分を出す原則、移植対象・差し替え対象・移植しない対象の固定、個別Feature移植マニフェストの追加方針 |
 | `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
@@ -175,6 +187,12 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 
 新しい機能固有文書を追加した場合は、この一覧も更新します。
 
+### Product Design 文書
+
+| 文書 | 対象 |
+|---|---|
+| [docs/product-design/index.md](product-design/index.md) | Coding前に何を作るか、どう見せるか、どこまで作るかを整理する。IDEA BOARD / MOCK / Coding の境界、MOCKを通すゲート、未確認範囲を勝手に補完しないルール |
+
 ### LumiLabo 文書
 
 | 文書 | 対象 |
@@ -207,6 +225,10 @@ Architecture Decision Recordの略称としてADRとだけ書くとADR Pattern�
 ### `docs/features/`
 
 特定機能だけに有効な仕様、入口、処理フロー、テスト固定内容を置きます。
+
+### `docs/product-design/`
+
+IDEA BOARD / MOCK / Coding の境界、Coding前ゲート、Product Design上の判断を置きます。実装責務の詳細は既存のADR Pattern、レイヤード、UI責務docsを正本とします。
 
 ### `README.md`
 

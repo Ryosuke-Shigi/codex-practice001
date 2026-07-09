@@ -113,6 +113,14 @@ Git操作の原則:
 - `/src` の変更なのに root側だけ `pull` して完了扱いしない
 - root側は Docker 構成確認だけが目的なら、ブランチを作らず `status` と `docker compose config --services` の確認に留める
 
+## local系MDの扱い
+
+local系MDは、このPC固有の環境差分、gh / Git / WSL / ローカル実行手順を確認するための補助資料です。存在する場合だけ参照し、存在しない場合でも作業を止めません。
+
+local系MDを更新またはstageする前に、必ずGit管理対象かGit外かを確認します。Git外のlocalファイルはPRへ含めません。
+
+local系MDは、Product Design、ADR Pattern、レイヤード責務、UI責務、LumiLaboのプロダクト方針、全体開発ルールを上書きしません。中身を汎用docsやPR本文へ無断で転記しません。
+
 ## 作業開始前のリポジトリ確認
 
 実装、docs更新、テスト追加、PR作成の前に、作業対象リポジトリを確認します。

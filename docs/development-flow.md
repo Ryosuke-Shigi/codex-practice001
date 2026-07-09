@@ -14,6 +14,8 @@ MOCKで作る画面単体、PROTOTYPEで作る画面間の接続、PRODUCTへ引
 
 IDEA BOARD / MOCK のMarkdownテンプレートと、タイトル / タブ / タブ内インデックス / 内容表示エリアの共通画面構造は `docs/templates/idea-board-and-mock-template-policy.md` を正本とします。
 
+Coding前に、IDEA BOARD / MOCK / Coding の境界、MOCKを通すゲート、未確認範囲を勝手に補完しないルールを確認する場合は `docs/product-design/index.md` を参照します。
+
 実装作法、型、命名、format / typecheck の確認は `docs/coding-standards.md` を正本とします。
 
 MDルーターの詳細は `docs/ai/workflows/md-router.md` を正本とします。
@@ -320,6 +322,7 @@ PR確認時のレビュー強度は `docs/operations/pr-review-strength.md` に�
 
 ## 関連文書
 
+- Product Design、IDEA BOARD / MOCK / Coding の境界: `docs/product-design/index.md`
 - MOCK / Prototypeの配置・削除: `docs/prototype-policy.md`
 - MOCK / PROTOTYPE / PRODUCT UI作成工程: `docs/ui-development-flow.md`
 - IDEA BOARD / MOCK 共通作成ルール: `docs/templates/idea-board-and-mock-template-policy.md`

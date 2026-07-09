@@ -14,6 +14,8 @@ MOCKを見た目の参考資料として扱わず、PRODUCTへ引き継ぐUI契�
 
 IDEA BOARD / MOCK のMarkdownテンプレートと共通画面構造は `docs/templates/idea-board-and-mock-template-policy.md` を正本とします。
 
+IDEA BOARD / MOCK / Coding の役割分離、Coding前ゲート、MOCK未確認範囲を勝手に補完しないルールは `docs/product-design/index.md` を参照します。
+
 ## 基本方針
 
 MOCK / PROTOTYPE / PRODUCT は、次の役割で分けます。

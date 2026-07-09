@@ -38,6 +38,7 @@
 | [workflows/md-router.md](workflows/md-router.md) | 作業種別ごとの読むdocs、読まないdocs、停止条件 |
 | [workflows/work-result-feedback-loop.md](workflows/work-result-feedback-loop.md) | 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール |
 | [workflows/md-router-cases.md](workflows/md-router-cases.md) | `md-router.md` の実戦ケース集 |
+| [../product-design/index.md](../product-design/index.md) | Product Design、IDEA BOARD / MOCK / Coding の境界、Coding前ゲート |
 | [../development-flow.md](../development-flow.md) | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
 | [../ui-development-flow.md](../ui-development-flow.md) | MOCK / PROTOTYPE / PRODUCT UI作成工程 |
 | [../prototype-policy.md](../prototype-policy.md) | MOCK / Prototypeの配置、削除、Productとの分離 |
