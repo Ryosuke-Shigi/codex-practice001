@@ -113,7 +113,8 @@
 ### Backend PRODUCT実装 / 修正
 
 - 読む: [responsibility-boundaries.md](../rules/responsibility-boundaries.md)、`docs/architecture.md`、`docs/testing.md`、対象feature docs、対象Routeと変更レイヤー
-- 条件付きで読む: Inertia propsは `docs/frontend.md`、外部APIは `docs/security.md` と `docs/logging.md`、Job / Schedulerはcommand registryと対象運用docs
+- 条件付きで読む: 新規PRODUCT実装・PRODUCT化・段階移行は `docs/development-flow.md`、MOCK / PROTOTYPEのUI契約を引き継ぐ場合は `docs/ui-development-flow.md`、新規PRODUCT実装または実装作法・型・コメント条件へ影響する場合は `docs/coding-standards.md` と `docs/commenting.md`、Inertia propsは `docs/frontend.md`、外部APIは `docs/security.md` と `docs/logging.md`、Job / Schedulerはcommand registryと対象運用docs
+- 軽量化: 既存PRODUCTの小修正で段階移行、UI契約、実装作法、型、コメント条件へ影響しない場合は、上記の条件付きdocsを追加しない
 - 読まない: 無関係feature docs、無関係UI、Docker / 本番docs
 - 編集しない: 責務配置と関係しないレイヤー、確認済み範囲外のUI仕様
 - 停止条件: Action / Service / Repository / DTO / Responderの責務を固定できない、feature docsと現在コードが矛盾する
