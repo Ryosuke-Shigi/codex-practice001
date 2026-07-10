@@ -30,7 +30,7 @@
 1. 作業目的、対象repo、対象階層を確定する
 2. MDルーターで作業プロファイルを選ぶ
 3. 読む、条件付きで読む、読まない、編集しない範囲を固定する
-4. 共通docs、feature docs、対象コードの順に必要箇所を読む
+4. プロファイルで指定された順序と条件に従い、feature / project docs、共通docs、対象コードの必要箇所を読む
 5. 名前、Route、Class、Test、エラー、変更ファイルから入口を検索する
 6. 直接依存が判明した場合だけ、理由を明示して範囲を追加する
 
@@ -44,7 +44,7 @@
 検索の手がかり:
 
 - 機能名、画面名、Route名
-- Controller、Action、Service、Repository、DTO、Responde
+- Controller、Action、Service、Repository、DTO、Responder
 - Component、Hook、Test
 - 明示されたエラー文、変更ファイル
 - MDルーター、共通docs、feature docsからの直接参照

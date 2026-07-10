@@ -13,7 +13,7 @@
 
 1. [AGENTS.md](../../../AGENTS.md) でrepo境界と共通安全ルールを確認する
 2. このMDで該当する作業プロファイルを選ぶ
-3. プロファイルの「読む」から共通docs、feature docs、対象コードへ進む
+3. プロファイルの「読む」から共通docs、feature / project docs、対象コードへ進む
 4. 依存が判明した場合だけ「条件付きで読む」を追加する
 5. 作業後は [work-result-feedback-loop.md](work-result-feedback-loop.md) で戻し先を確認する
 
@@ -62,23 +62,53 @@
 
 ### 小さいReact / 既存MOCK修正
 
-- 読む: `docs/frontend.md`、`docs/ui.md`、対象Page / Component
-- 条件付きで読む: props契約を変える場合は `docs/architecture.md` と `docs/testing.md`、機能仕様に触れる場合は対象feature docs、画面種別を変える場合は `docs/guides/frontend-screen-types.md`
-- 読まない: 無関係feature docs、Repository、Migration、Docker、本番運用docs
+- 読む: 対象feature / project docsの該当箇所、対象Page / Component / Hook / Type / Test、対象画面の現在導線と固定仕様
+- 条件付きで読む: React責務やComponent構造を変える場合だけ `docs/frontend.md`、UI共通方針やCommon / Effectsを変える場合だけ `docs/ui.md`、UI責務を変える場合だけ `docs/guides/ui-component-responsibility-rules.md`、画面種別を変える場合だけ `docs/guides/frontend-screen-types.md`、props契約を変える場合だけ `docs/architecture.md` と `docs/testing.md`、新しい画面導線やProduct Design判断が必要な場合だけ `docs/product-design/index.md`
+- 読まない: 無関係feature docs、Backend共通docs、Repository、Migration、Docker / 本番運用docs、Storage、Queue、Scheduler
 - 編集しない: DB、Backend責務、PRODUCT / MOCKのうち今回と異なる段階
-- 停止条件: props、Route、API、DB条件の変更が必要になる、MOCK未確認範囲を補完する必要がある
+- 停止条件: 対象画面の固定仕様を確認できない、props、Route、API、DB条件の変更が必要になる、MOCK未確認範囲を補完する必要がある
 - 確認コマンド: [command-registry.md](../../operations/command-registry.md) のReact / TypeScript変更時のコマンド
 - PRレビュー強度: 原則Level 2。propsや画面導線、複数レイヤーへ広がる場合はLevel 3
 
 ### 新しいMOCK画面 / 画面導線
 
-- 読む: `docs/product-design/index.md`、`docs/development-flow.md`、`docs/ui-development-flow.md`、`docs/prototype-policy.md`、`docs/templates/idea-board-and-mock-template-policy.md`、`docs/templates/mock-template.md`、対象feature / project docs
-- 条件付きで読む: 画面種別選定では `docs/guides/frontend-screen-types.md`、既存UI契約を使う場合は `docs/frontend.md` と `docs/ui.md`
+- 読む: `docs/product-design/index.md`、対象feature / project docs、`docs/templates/mock-template.md`、対象となる既存画面・Route・Page / Component
+- 条件付きで読む: 段階境界を判断する場合は `docs/development-flow.md`、UI契約を接続する場合は `docs/ui-development-flow.md`、MOCK / Prototype配置を判断する場合は `docs/prototype-policy.md`、画面種別を判断する場合は `docs/guides/frontend-screen-types.md`、React / UI責務を変える場合は `docs/frontend.md`、`docs/ui.md`、`docs/guides/ui-component-responsibility-rules.md`、IDEA BOARD / MOCK共通構造を変える場合は `docs/templates/idea-board-and-mock-template-policy.md`
 - 読まない: Backend、DB、Storage、Migration、Queue、Scheduler、本番運用docs
 - 編集しない: Controller、Request、Action、Service、Repository、DTO、Responder、Migration
 - 停止条件: MOCK確認なしにPRODUCT仕様を確定する、Backendや永続化が必要になる、画面範囲を判断できない
 - 確認コマンド: [command-registry.md](../../operations/command-registry.md) のReact / TypeScript変更時のコマンド
 - PRレビュー強度: UIのみはLevel 2。Routeや画面導線変更を含む場合はLevel 3
+
+### IDEA BOARD
+
+- 読む: `docs/product-design/index.md`、対象feature / project docs、`docs/templates/idea-board-template.md`
+- 条件付きで読む: 共通構造が必要な場合は `docs/templates/idea-board-and-mock-template-policy.md`、画面種別を選ぶ場合は `docs/guides/frontend-screen-types.md`、UI契約や段階間の引き継ぎを判断する場合は `docs/development-flow.md` または `docs/ui-development-flow.md`、既存画面を変える場合だけ対象Page / Component
+- 読まない: 無関係feature docs、Repository、Service、Migration、API、DB保存、PRODUCT実装
+- 編集しない: Backend、DB、API、PRODUCTコード
+- 停止条件: IDEA BOARDの目的と範囲を確定できない、MOCKやPRODUCTの仕様を先取りする必要がある
+- 確認コマンド: docsのみは `git diff --check`。既存画面を変えた場合はReact / TypeScript変更時のコマンド
+- PRレビュー強度: docsのみはLevel 1。既存画面変更を含む場合はLevel 2
+
+### PROTOTYPE
+
+- 読む: `docs/prototype-policy.md`、`docs/development-flow.md`、対象feature / project docs、対象Prototype Page / Component / fixture
+- 条件付きで読む: UI契約の接続は `docs/ui-development-flow.md`、React責務変更は `docs/frontend.md` と `docs/ui.md`、画面種別判断は `docs/guides/frontend-screen-types.md`
+- 読まない: 本番用DB保存、正式なRepository、本番Scheduler、本番権限判断、無関係feature docs
+- 編集しない: PRODUCT実装、Migration、本番設定
+- 停止条件: PROTOTYPEの検証目的を確定できない、PrototypeコードをそのままPRODUCTへ昇格する必要がある
+- 確認コマンド: [command-registry.md](../../operations/command-registry.md) のReact / TypeScript変更時のコマンド
+- PRレビュー強度: 原則Level 2。画面導線や複数レイヤーへ広がる場合はLevel 3
+
+### LumiLabo既存MOCKの小修正
+
+- 読む: `docs/lumilabo/project-mock.md` の対象画面・導線・対象外、対象Page / Component / Test
+- 条件付きで読む: LumiLabo全体UI方針を変える場合だけ `docs/lumilabo/ui-design-guideline.md` の該当見出し、IDEA BOARD上の説明へ影響する場合だけ `docs/lumilabo/project-idea-board.md` の該当箇所、React / UI責務を変える場合だけ関連共通docs
+- 読まない: LumiLabo以外のfeature docs、Backend、DB、API、S3、Queue、Scheduler、無関係なLumiLabo文書の全文
+- 編集しない: LumiLaboの固定仕様と異なる段階、Backend、DB、API
+- 停止条件: 案件内ファイルタグ、戻る導線、保存済み写真・ファイル0件時の非表示等の対象MOCK固定仕様を確認できない、共通UI docsで機能固有仕様を上書きする必要がある
+- 確認コマンド: [command-registry.md](../../operations/command-registry.md) のReact / TypeScript変更時のコマンド
+- PRレビュー強度: 原則Level 2。Routeや画面導線変更を含む場合はLevel 3
 
 ### Backend PRODUCT実装 / 修正
 
@@ -90,15 +120,29 @@
 - 確認コマンド: [command-registry.md](../../operations/command-registry.md) のLaravel変更時のコマンド
 - PRレビュー強度: 原則Level 3。DB、認証認可、外部API更新、Queue / Schedulerへ触れる場合はLevel 4
 
+### Feature移植
+
+- 移植モード: `full` / `product-only` / `mock-only` / `prototype-only` / `idea-board-only` のいずれかを最初に固定する
+- 読む: `docs/feature-module-portability.md`、対象feature docs、移植元・移植先の対象段階に必要なdocs、移植先repoのAGENTS / MDルーター / architecture / testing等の必要範囲
+- 条件付きで読む: 選択した移植モードと移植先構成に必要なroute / config / provider / DB / queue / scheduler / UI docs
+- 守ること: 移植元repoは参照専用とし、差分は移植先repoだけへ出す。`product-only` 以外をBackend PRODUCT作業へ寄せず、存在未確認のファイルや構成をマニフェストへ書かない
+- 読まない: 無関係Feature、選択した移植モードで移植しない段階、未確認のファイルや構成
+- 編集しない: 移植元repo、移植対象外ファイル、差し替え条件を確認できない設定
+- 停止条件: 移植モード、移植元・移植先、移植対象・除外対象・差し替え対象を固定できない、移植元へ差分が必要になる、env / route / config / provider / DB / queue / scheduler等の差し替え条件を確認できない
+- 確認コマンド: 移植先repoのcommand registryと選択した移植モードに従う
+- PRレビュー強度: docs / マニフェストのみはLevel 1。PRODUCTや複数レイヤーはLevel 3、DB・認証認可・Queue / Scheduler等はLevel 4
+
 ### docsのみの修正
 
 - 読む: 対象docs、そのdocsが直接参照する正本
 - 条件付きで読む: docs体系・配置・正本を変える場合は [docs/index.md](../../index.md)、文脈運用を変える場合は [context-management.md](../../context-management.md)、入口を変える場合はこのMDと [work-result-feedback-loop.md](work-result-feedback-loop.md)
 - 読まない: 無関係feature docs、アプリコード、Docker / 本番docs
 - 編集しない: PHP、TypeScript、テスト、設定、`.local/`（ローカル環境固有作業として明示された場合を除く）
-- 停止条件: 新規MDが必要になる、機能仕様やコード変更が必要になる、正本を判断できない
+- 停止条件: 新規MDの目的・配置先・正本・Status・索引更新先を確定できない、既存MDとの重複可能性を解消できない、機能仕様やコード変更が必要になる
 - 確認コマンド: `git diff --check`。必要に応じて既存のdocs確認コマンド
 - PRレビュー強度: 原則Level 1。AGENTS、索引、ルーター、Sensors、operations docsの導線変更はLevel 2以上
+
+目的、配置先、正本、必要な索引更新が確定しているfeature docs、運用正本、テンプレート等は新規作成できます。新規MDを作る場合も、重複文書を増やさず、必要な索引とルーターだけを更新します。
 
 ### PRレビュー Level 1〜4
 
@@ -118,6 +162,16 @@
 - 編集しない: 無関係schema、secrets、外側repoのDocker構成
 - 停止条件: rollback、権限境界、既存データ影響、秘密情報の扱いを確認できない
 - 確認コマンド: command registryに登録されたLaravel、Migration、Security関連の確認
+- PRレビュー強度: Level 4
+
+### GitHub Actions / CI
+
+- 読む: `docs/testing.md`、[command-registry.md](../../operations/command-registry.md)、対象workflow、対象composer / package scripts、存在確認できたCI関連docs
+- 条件付きで読む: secretsや権限を扱う場合は `docs/security.md`、Docker構成へ影響する場合は外側repoの正本、MigrationやDBへ影響する場合だけMigration関連範囲
+- 読まない: 無関係feature docs、無関係なMigration / 認証 / 認可コード、LumiLaboやUI固有仕様
+- 編集しない: 無関係workflow、未確認script、目的外のアプリ・DB・Docker構成
+- 停止条件: workflow、実行script、権限、secrets、対象runnerを確認できない、外側repoやDB変更が必要になる
+- 確認コマンド: command registryと対象workflowに存在するコマンド
 - PRレビュー強度: Level 4
 
 ### Docker / nginx / Lightsail / 本番運用
@@ -154,11 +208,7 @@
 
 | 作業 | 基本プロファイル | 追加で読む正本 |
 |---|---|---|
-| IDEA BOARD | 新しいMOCK画面 / 画面導線 | `docs/product-design/index.md` と対象テンプレート |
-| PROTOTYPE | 小さいReact / 既存MOCK修正 | `docs/prototype-policy.md`、`docs/development-flow.md` |
-| Feature移植 | Backend PRODUCT実装 / 修正 | `docs/feature-module-portability.md` と移植元・移植先の対象docs |
 | Queue / Job / Scheduler | Backend PRODUCT実装 / 修正 | `docs/architecture.md`、`docs/testing.md`、command registry |
-| GitHub Actions / CI | Migration / 認証 / 認可 / Security | `docs/testing.md` と確認済みCI docs |
 | コメント / PHPDoc / JSDoc | 差分元の作業プロファイル | `docs/commenting.md` |
 
 既存プロファイルで読む範囲を固定できない新しい作業種別が出た場合は、推測で近いルートへ押し込まず停止します。背景や具体例はこのMDへ増やしすぎず、必要なら既存の [md-router-cases.md](md-router-cases.md) へ追加します。

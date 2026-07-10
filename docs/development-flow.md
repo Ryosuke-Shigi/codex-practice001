@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-13
+- Last reviewed: 2026-07-10
 
 ## このドキュメントの目的
 
@@ -239,9 +239,9 @@ docsは実装と分離した古い説明書ではなく、使っていくうち�
 ## Product実装の基本手順
 
 ```text
-AGENTS.md / docs/ai/index.md / docs/index.mdで作業分類
+AGENTS.md → docs/ai/workflows/md-router.md の該当プロファイルで作業分類
     ↓
-必要な共通docs・feature docs・対象コードを確認
+必要な共通docs・feature / project docs・対象コードを確認
     ↓
 UI作業では docs/ui-development-flow.md で引き継ぐUI契約を確認
     ↓
@@ -306,8 +306,8 @@ PR確認時のレビュー強度は `docs/operations/pr-review-strength.md` に�
 
 主なガードレール:
 
-- `AGENTS.md`、`docs/ai/index.md`、`docs/index.md` による入口固定
-- `docs/ai/workflows/md-router.md` による作業種別ごとの参照範囲固定
+- `AGENTS.md` から `docs/ai/workflows/md-router.md` の該当プロファイルへ進む入口固定
+- `docs/index.md` と `docs/ai/index.md` は索引・正本・配置・役割確認が必要な場合だけ参照
 - 共通docsとfeature docsによる責務・仕様の分離
 - 明示された作業条件による対象・成功条件・失敗条件の固定
 - DTOによるデータ契約
