@@ -1,106 +1,139 @@
 # Laravel Portfolio - codex-practice001
 
-CodeX + Laravel 11 + Inertia + React + TypeScript + Docker で構築しているポートフォリオアプリです。外部API連携、同期処理、分析UI、運用ログ、docs / test / PR運用を題材にしています。
+Laravel 11 / Inertia / React / TypeScriptを中心に、外部API連携、非同期同期、分析UI、運用ログ、S3互換Storage、AI支援開発の運用までをまとめたポートフォリオです。
 
-公開URL: https://ada-works.dev
+- 公開URL: https://ada-works.dev
+- Project Hub: https://ada-works.dev/projects
+- Docker / infrastructure: https://github.com/Ryosuke-Shigi/laravel11-docker
 
-## このポートフォリオについて
+## このポートフォリオで示していること
 
-このリポジトリは、Laravelアプリケーションを題材に、設計・実装・検証・運用の流れをまとめた実装例です。機能ごとに、外部データの取得、保存、表示、非同期処理、docs / test / PRでの確認を分けています。
+このリポジトリは、画面だけを並べたデモではなく、構想、UI確認、本実装、検証、運用までを段階ごとに分けて追える実装例です。
 
-- Laravel / React を使った一連の実装
-- Action - Domain - Responder を軸にした責務分離
-- Controller / Request / Action / Service / Repository / DTO / Responder / Component の境界設計
-- Event / Listener / Job / Scheduler / Queue による副作用と非同期処理の整理
-- Strategy / Factory による処理差分の切り替え
-- Feature / Unit / React test による仕様固定
-- Pull Request / CI / docs による変更管理
-- AI支援は利用しつつ、人間が仕様・責務境界・完成判定を確認する開発プロセス
+- Laravel / React / Inertia / TypeScriptによるフルスタック実装
+- Action - Domain - Responderを軸にしたレイヤード設計
+- Controller / Request / Action / Service / Repository / DTO / Responder / Componentの責務分離
+- YouTube Data API、APIs.guru、気象庁XMLを使った外部データ連携
+- Queue / Scheduler / Job / Event / Listenerによる非同期処理と副作用の分離
+- snapshot / read modelを使った、同期処理と参照画面の分離
+- API連携ログ、エラーログ、運用通知による状態確認
+- S3互換StorageをFeatureから切り離す共通境界
+- Feature / Unit / React test、CI、Pull Request、docsによる仕様固定
+- CodexなどのAI支援を利用しつつ、人間が仕様、責務境界、合格条件、merge判断を持つ開発プロセス
 
-レビュー時に確認する観点もdocs側に整理しています。READMEでは詳細を複製せず、概要と参照先に留めます。
+READMEは外部閲覧者向けの概要に絞り、詳細な仕様と作業ルールは用途別のdocsへ分離しています。
 
-## AI開発フローについて
+## 開発段階
 
-このポートフォリオでは、AIを単発のコード生成ツールとしてではなく、人間が目的・境界・確認条件を設計したうえで、差分を検証しながら反復する開発補助として扱っています。詳しい考え方は [設計思想ページ](https://ada-works.dev/design-philosophy) と関連ドキュメントを参照してください。
+構想と実装済み機能を混同しないため、次の段階を分けています。
 
-## 設計と実装の概要
+| 段階 | 役割 |
+|---|---|
+| IDEA BOARD | 目的、価値、流れ、画面候補をお客様向けに説明する |
+| MOCK | 固定データで画面、導線、操作感、状態表示を確認する |
+| PROTOTYPE | 仮データや簡易通信で画面間の接続とデータの流れを検証する |
+| PRODUCT | DB、API、Validation、権限、責務境界、テストを持つ本実装 |
 
-- **外部APIと保存データ**: YouTube Data API、APIs.guru、気象庁XMLを扱い、取得・保存・表示の責務を分けています。
-- **同期と表示の分離**: Scheduler / Queue / Job でデータを集め、表示側は保存済みsnapshotやread modelを参照します。
-- **ログと状態確認**: API連携ログとエラーログを保存し、公開ポートフォリオ上で状態を追えるようにしています。
-- **段階的な開発**: IDEA BOARD / MOCK / PRODUCT を分け、構想やUI確認と本実装を混ぜないようにしています。
-- **docsへの導線**: READMEは概要に絞り、詳細な設計・テスト・機能仕様はdocsへ分離しています。
+MOCKやPROTOTYPEのコードを、そのままPRODUCT完成版として扱いません。確認できたUI契約や仕様を取り出し、PRODUCTでは責務境界に沿って実装し直します。
 
-## Main Projects
+## Projects / Current Stage
+
+公開画面ではProject Hubを中心に、各Projectで現在公開しているStage / Moduleや運用画面へ進めます。
+
+| Project | 現在公開しているStage / 入口 | 概要 |
+|---|---|---|
+| DanceShorts | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot、地域別ランキング、比較分析 |
+| API Discovery Hub | PRODUCT / MOCK / IDEA BOARD | 公開APIカタログの同期、検索、詳細、調査メモ |
+| Japan Quake Wave Map | PRODUCT / MOCK / IDEA BOARD | 気象庁XMLの取得、保存、震源・震度・波紋の地図表示 |
+| LumiLabo | MOCK / IDEA BOARD | 案件システムを最初のサブシステムとして育てる上位プロダクト |
+| 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積、請求、領収の画面検証 |
+| イベント・カードカレンダー | IDEA BOARD | イベントを起点に入金・出金・請求カードを可視化する構想 |
+| アプリログ | 運用画面 | API連携ログとエラーログの確認、対応済み管理 |
+
+## PRODUCT実装
 
 ### DanceShorts
 
-YouTube Shorts のダンス動画を保存・観測し、伸び方や地域別候補を確認するProjectです。
+YouTube Shortsのダンス動画を保存・観測し、伸び方や地域別候補を確認するProjectです。
 
-- **Radar**: 保存済みsnapshotから地域別ランキング候補や上昇候補を表示します。
-- **Analyzer**: 保存済み動画を検索し、選択したShortsのsnapshotを横比較します。
-
-主な内容:
-
+- **Radar**: 保存済みsnapshotから地域別ランキング候補や上昇候補を表示
+- **Analyzer**: 保存済み動画を検索し、選択したShortsのsnapshotを横比較
 - YouTube Data API連携、動画保存、snapshot保存
-- Queue / Scheduler による通常同期、page2同期、snapshot専用同期
-- ranking read model と ECharts による表示
-- Strategy / Factory / Responder によるランキング条件と表示整形の分離
-- 保存済みデータを使う分析画面として、YouTube APIを追加で呼ばない設計
+- Queue / Schedulerによる通常同期、page2同期、snapshot専用同期
+- ranking read modelとEChartsによる表示
+- Strategy / Factory / Responderによるランキング条件と表示整形の分離
+- Analyzerでは保存済みデータを使い、分析表示のためにYouTube APIを追加で呼ばない設計
 
 ### API Discovery Hub
 
-APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査メモ保存ができるProjectです。
+APIs.guruの公開APIカタログを取得し、検索、詳細確認、調査メモ保存ができるProjectです。
 
-主な内容:
-
-- `list.json` の同期キャッシュ
-- insert / update / skip の差分同期
-- `payload_hash` による変更検知
-- provider / domain / keyword 検索
+- `list.json`の同期キャッシュ
+- insert / update / skipの差分同期
+- `payload_hash`による変更検知
+- provider / domain / keyword検索
 - APIごとの調査メモCRUD
-- Repository / Service / DTO / Action / Responder の責務分離
+- 同期開始、status polling、完了後の部分更新
+- Repository / Service / DTO / Action / Responderの責務分離
 
 ### Japan Quake Wave Map
 
-気象庁の地震火山情報Atom feedと個別XMLを取得し、保存済みの震源・震度・波紋を地図上で確認するProjectです。
-
-主な内容:
+気象庁の地震火山情報Atom feedと個別XMLを取得し、保存済みの震源、震度、波紋を地図上で確認するProjectです。
 
 - Atom feed取得、entry保存、個別XML解析
 - 震源座標、最大震度、マグニチュード、深さの抽出
-- 緯度・経度・最大震度を持つデータだけをmap pin化
+- 緯度、経度、最大震度を持つデータだけをmap pin化
 - 座標なし、震度なし、XML取得失敗、XML解析失敗の扱いを分離
-- 15分ごとの更新入口とstatus API
+- feed entry同期とmap pin同期を別処理として管理
+- Queue Jobを実行入口に寄せ、処理本体をCommand Action / Serviceへ分離
+- 同期開始API、status API、polling、完了後のpartial reloadを責務別に整理
 
 ### Project Logs / アプリログ
 
-アプリ内で保存したAPI連携ログとエラーログを確認するためのProjectです。
-
-主な内容:
+アプリ内で保存したAPI連携ログとエラーログを確認するための機能です。
 
 - API連携ログとエラーログを別テーブルで保存
-- Event / Listener / Repository でログ保存の副作用を分離
-- 成功ログを大量化させず、処理単位や分類ごとの要約ログへ集約
+- Event / Listener / Repositoryでログ保存の副作用を分離
+- 成功ログを処理単位や分類ごとの要約へ集約
 - エラーログの詳細表示と対応済み管理
+
+## IDEA BOARD / MOCK
+
+### LumiLabo
+
+LumiLaboは、案件システムを最初のサブシステムとして育てる上位プロダクトです。現在公開しているのはIDEA BOARD / MOCKであり、PRODUCT完成済みの業務システムではありません。
+
+IDEA BOARDでは案件システムの目的、価値、流れ、画面候補を説明し、MOCKでは登録、一覧、詳細などの画面導線と操作感を固定データで確認しています。DB、API、本番CRUD、S3保存にはまだ接続していません。
+
+詳細は [LumiLabo docs](docs/lumilabo/index.md) と [案件システム MOCK](docs/lumilabo/project-mock.md) を参照してください。
+
+### 工事発注管理
+
+案件、作業カード、見積、請求、領収の流れを、現場向けの入力体験として整理するProjectです。現在はIDEA BOARD / MOCK段階で、固定データによるCSV投入、案件詳細、帳票プレビューなどを確認しています。
+
+### イベント・カードカレンダー
+
+イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ広げる構想Projectです。現在はIDEA BOARD段階です。
+
+## Cross-cutting Foundations
+
+### S3-compatible Storage
+
+Feature側がLaravel Storageへ直接依存しないための、共通Service / Repository / DTO境界を実装しています。ローカルMinIOとAWS S3向け環境を同じLaravel disk名`s3`で切り替え、自動テストは`Storage::fake('s3')`を使います。
+
+この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDへはまだ接続していません。詳細は [Storage](docs/storage.md) を参照してください。
 
 ### Operations / Notification
 
-運用確認のための通知・リアルタイム基盤も段階的に整えています。
+Laravel Reverb / Broadcastingの基盤、Daily Server Health Reportのメール通知、API連携ログとエラーログを、Scheduler、Artisan Command、Command Action、Notification、Queueなどの責務へ分けて実装しています。
 
-主な内容:
+個別Broadcast EventやReactのリアルタイム通知UIが完成済みであるとは扱っていません。
 
-- Laravel Reverb / Broadcasting の設定を持つ、リアルタイム通知基盤の準備
-- Daily Server Health Report のメール通知
-- Scheduler、Command Action、Notification、Queue を分けた運用処理
+### AI-assisted Development
 
-現時点のREADMEでは、個別Broadcast EventやReact通知UIが完成済みであるとは扱いません。
+AIは調査、実装補助、差分修正、レビュー補助に使い、人間が仕様、責務境界、完成判定、merge判断を持ちます。作業時は [AGENTS.md](AGENTS.md) から該当する [MD Router](docs/ai/workflows/md-router.md) のプロファイルへ進み、必要なdocsと対象コードだけを確認します。
 
-### 工事発注管理 IDEA / MOCK
-
-案件、作業カード、見積、請求、領収の流れを、現場向けの入力体験として整理するProjectです。
-
-このProjectは **IDEA BOARD / MOCK段階** です。固定データでCSV投入、案件詳細、帳票プレビューなどのUIを確認する段階であり、PRODUCT完成済みの業務システムとしては扱っていません。
+詳しい考え方は [設計思想ページ](https://ada-works.dev/design-philosophy) を参照してください。
 
 ## Tech Stack
 
@@ -109,8 +142,8 @@ APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査�
 - PHP 8.3
 - Laravel 11
 - Inertia Laravel
-- MySQL
-- Redis
+- MySQL 8
+- Redis 7
 - Laravel Queue / Scheduler / Notification
 - Laravel Reverb
 - Flysystem AWS S3 Adapter
@@ -123,24 +156,27 @@ APIs.guru の公開APIカタログを取得し、検索・詳細確認・調査�
 - Vite
 - Tailwind CSS
 - ECharts
+- Mermaid
 - Vitest
-- motion
-- lucide-react
+- `motion`
+- `lucide-react`
 
 ### Infrastructure / CI
 
 - Docker Compose
 - nginx
 - php-fpm
+- queue / scheduler / Reverb services
+- MinIO、Mailpit、Adminer（ローカル開発用）
 - AWS Lightsail
 - Cloudflare
 - GitHub Actions
 
-ローカル開発では MinIO、Mailpit、Adminer なども使いますが、これらは開発確認用であり、本番公開対象ではありません。
+ローカル用のMinIO、Mailpit、Adminerは開発確認用であり、本番公開対象ではありません。
 
 ## Architecture / Design Policy
 
-このプロジェクトでは、Action - Domain - Responder をADR Patternとして扱います。
+このプロジェクトでいうADR Patternは **Action - Domain - Responder** を意味します。Architecture Decision Recordと混同しないため、設計判断の記録はDecision Recordまたは設計判断記録と呼びます。
 
 ```text
 Controller / Request
@@ -154,45 +190,54 @@ Responder
 React / Inertia
 ```
 
-主な整理:
+- ControllerはHTTP入口、Requestは入力形式のValidation
+- Actionは1ユースケースの手順
+- Serviceは業務判断とドメインルール
+- RepositoryはDBや外部データソースとの境界
+- DTO / ListDTOはレイヤー間のデータキャリア
+- ResponderはInertia propsやJSONなどの出力整形
+- Event / Listenerは発生した事実と副作用を分離
+- Job / Artisan Command / Schedulerは実行入口
+- React Page / Hook / Componentは画面入口、UI状態、表示、操作を分担
+- 単純な処理へ不要なService、Factory、Strategyを機械的に増やさない
 
-- ControllerはHTTP入口、Requestは入力形式の検証に寄せる
-- Actionは1ユースケースの手順を扱う
-- Serviceは業務判断、RepositoryはDBや外部データソースとの境界を扱う
-- DTO / ListDTOはレイヤー間のデータキャリアとして扱う
-- ResponderはInertia propsやJSONなどの出力整形を担当する
-- React Componentは表示、操作、UI状態を扱い、業務判断を再構築しない
-
-詳細は [Architecture](docs/architecture.md)、[Frontend](docs/frontend.md)、[UI](docs/ui.md) を参照してください。
+詳細は [Architecture](docs/architecture.md)、[Responsibility Boundaries](docs/ai/rules/responsibility-boundaries.md)、[Frontend](docs/frontend.md)、[UI](docs/ui.md) を参照してください。
 
 ## Testing / CI / Review
 
-テストは、変更時に保つべき仕様を確認するための実行可能な資料として扱います。
+テストは、壊してはいけない仕様と責務境界を固定する実行可能な資料として扱います。
 
 - Laravel Feature / Unit test
 - React utility / component test
-- Responder / Inertia props の確認
-- Job / Artisan Command / Scheduler の実行境界
-- CIでの Laravel Pint check、frontend build、Laravel tests、Vitest
+- Request Validation、Action / Service / Repository / DTO / Responderの境界確認
+- Inertia props / API JSON contractの確認
+- Job / Artisan Command / Schedulerの実行境界
+- `Storage::fake('s3')`によるStorage境界の確認
+- TypeScript typecheckとfrontend build
 
-docs-onlyの変更ではアプリテストを必須にせず、`git diff --check` とMarkdown差分の確認を中心にしています。詳細は [Testing](docs/testing.md) と [PR Review Strength](docs/operations/pr-review-strength.md) を参照してください。
+GitHub Actionsでは、PHP 8.3 / Node 22環境で、変更PHPファイルのPint check、frontend build、Laravel tests、Vitestを実行します。
+
+詳細は [Testing](docs/testing.md)、[PR Review Strength](docs/operations/pr-review-strength.md)、[Sensors](docs/operations/sensors.md) を参照してください。
 
 ## Documentation
 
-READMEは外部閲覧者向けの概要です。内部の作業ルールや詳細仕様は、用途ごとのdocsへ分離しています。
+READMEは外部閲覧者向けの概要です。内部の作業ルール、機能固有仕様、確認コマンドは用途ごとの正本へ分離しています。
 
-- [AGENTS.md](AGENTS.md): 作業時の入口
-- [Documentation Index](docs/index.md): docs全体の案内と用途別の正本
-- [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
+- [Documentation Index](docs/index.md): docs全体の総合索引、用途別の正本、配置基準
 - [Architecture](docs/architecture.md): ADR Patternとレイヤー責務
-- [Testing](docs/testing.md): テスト方針
 - [Development Flow](docs/development-flow.md): IDEA BOARD / MOCK / PROTOTYPE / PRODUCT
-- [Feature Module Portability](docs/feature-module-portability.md): 別Laravelプロジェクトへの移植観点
+- [Product Design Guide](docs/product-design/index.md): IDEA BOARD / MOCK / Coding前の境界
+- [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
+- [LumiLabo docs](docs/lumilabo/index.md): LumiLabo固有のIDEA BOARD / MOCK
+- [Storage](docs/storage.md): S3互換Storageの共通境界
+- [Command Registry](docs/operations/command-registry.md): Docker経由の実行コマンドとrepo境界
 
-詳細なAI運用、docs運用、PR運用、検出観点はREADMEへ複製せず、docs側を正本として扱います。
+同じ詳細をREADMEへ複製せず、現在挙動はコード、Migration、設定、成功しているテストで確認します。
 
 ## Local Development / Notes
 
-ローカル環境はDocker Composeを前提にしています。Laravelアプリ本体はこのリポジトリ、Docker / nginx / php-fpm / MySQL / Redis などの外側構成は別の管理領域として扱います。
+Laravel / React / app docs / testsはこのリポジトリで管理し、Docker / nginx / php-fpm / MySQL / Redis / MinIO / queue / schedulerなどの外側構成は [laravel11-docker](https://github.com/Ryosuke-Shigi/laravel11-docker) で管理しています。
 
-実行コマンドやDocker serviceの詳細は [Docker Command Registry](docs/operations/command-registry.md) を参照してください。READMEには認証値や本番接続情報を載せません。
+ローカル実行はDocker Composeを前提とし、具体的なコマンドとservice名は [Command Registry](docs/operations/command-registry.md) を参照してください。
+
+README、docs、PR、ログには、本番`.env`、APIキー、DBパスワード、AWS credentials、token、cookie、session、個人情報を載せません。
