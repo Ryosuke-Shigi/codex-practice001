@@ -2,246 +2,168 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-07
+- Last reviewed: 2026-07-10
 
 ## このドキュメントの目的
 
-このドキュメントは、どの文書をいつ読むか、どの情報を正本として扱うかを示す案内板です。
+この文書は、docs全体の総合索引、用途別の正本、配置基準、文書Statusを確認するための案内板です。
+通常作業は `AGENTS.md` から `docs/ai/workflows/md-router.md` の該当プロファイルへ進み、この文書を毎回全文確認しません。
 
-`AGENTS.md` は作業時の入口、この文書はdocs全体の索引として扱います。
+この文書を確認する条件:
+
+- 用途ごとの正本を確認する
+- 新しいdocsの配置先や索引更新先を判断する
+- docs体系、参照導線、文書Statusを変更する
+- MDルーターだけでは参照先を判断できない
+- docs同士の役割、正本、`active / archived / superseded` が衝突している
 
 ## 用途別の正本
 
-情報は1本の順位だけで決めません。用途ごとに正本を分けます。
+| 用途 | 正本 |
+|---|---|
+| 全作業の短い入口、安全境界 | `AGENTS.md` |
+| 作業種別ごとの参照範囲 | `docs/ai/workflows/md-router.md` |
+| docs全体の索引、配置基準、Status | この文書 |
+| Git / branch / commit / PR | `docs/ai/rules/agent-working-policy.md` |
+| コマンド実行、root / `src/` Git境界 | `docs/operations/command-registry.md` |
+| ADR Pattern、用語、責務境界 | `docs/ai/rules/responsibility-boundaries.md`、`docs/architecture.md` |
+| Product Design / IDEA BOARD / MOCK / Coding境界 | `docs/product-design/index.md` |
+| PRレビュー強度 | `docs/operations/pr-review-strength.md` |
+| 検出項目 | `docs/operations/sensors.md` |
+| 作業後の反映先 | `docs/ai/workflows/work-result-feedback-loop.md` |
+| 文脈読込、探索範囲、理解再起動 | `docs/context-management.md` |
+| コメント、PHPDoc、JSDoc | `docs/commenting.md` |
+| 機能固有の意図・制約 | 該当する `docs/features/` |
+| 実装済みの現在挙動 | 現在のコード、Migration、設定、成功しているテスト |
+| 外部向け説明 | `README.md` |
+| ローカル環境固有情報 | Git管理外の `.local/` |
 
-### 全体ルール・禁止事項
+feature docsは共通ルールを上書きしません。コード、テスト、共通docs、feature docsが矛盾する場合は自動的に優先せず、差異を報告して停止します。
+ローカル専用メモは共有docsの正本にせず、Git管理docsやPR本文へ内容を転記しません。
 
-- `AGENTS.md`
-- `docs/index.md`
-- `docs/context-management.md`
-- 共通方針docs
+## 用語の正本
 
-### コマンド実行・Git境界
+| 用語 | 確認先 |
+|---|---|
+| ADR Pattern | `docs/ai/rules/responsibility-boundaries.md`、`docs/architecture.md` |
+| Decision Record / 設計判断記録 | `docs/ai/rules/responsibility-boundaries.md`、`docs/architecture.md` |
+| Command Action / Query Action / Artisan Command | `docs/ai/rules/responsibility-boundaries.md`、`docs/architecture.md` |
+| IDEA BOARD / MOCK / PROTOTYPE / PRODUCT | `docs/development-flow.md`、`docs/product-design/index.md` |
 
-- `docs/operations/command-registry.md`
+この索引では詳細定義を複製せず、用語を変更する場合に更新すべき正本を示します。
 
-ローカル構成では外側Docker repoと `src/` 内アプリrepoが別Git管理のため、作業対象に応じたGit境界の確認は `docs/operations/command-registry.md` を正本とします。ローカル専用メモはGit管理docs体系に含めません。
-
-local系MDは、そのPC固有の環境差分、gh / Git / WSL / ローカル実行手順の差分を確認するための補助資料です。存在する場合だけ参照し、存在しない場合でも作業を止めません。local系MDの内容を汎用docsへ無断で移植せず、Git外のlocalファイルをPRへ含めません。
-
-### Git / PR作業方針
-
-- `docs/ai/rules/agent-working-policy.md`
-- `docs/operations/command-registry.md`
-- `docs/templates/pr-summary.md`
-
-作業ブランチ、main直作業禁止、commit粒度の判断基準は `docs/ai/rules/agent-working-policy.md` を正本とします。PR前のGit確認コマンドは `docs/operations/command-registry.md`、PR本文に残す実装後の事実整理は `docs/templates/pr-summary.md` に従います。
-
-### Product Design / IDEA BOARD / MOCK / Coding
-
-- `docs/product-design/index.md`
-- `docs/development-flow.md`
-- `docs/ui-development-flow.md`
-- `docs/templates/idea-board-and-mock-template-policy.md`
-
-Product Design Guide は、Coding前に「何を作るか」「どう見せるか」「どこまで作るか」を整理する軽量ガイドです。IDEA BOARD / MOCK 作成・修正、新しい画面導線、Coding前のMOCK確認済み範囲を扱う場合だけ読みます。通常の小修正、Backend責務整理、文言修正、テスト修正、画面を伴わないdocs修正、infra作業では原則として読みません。
-
-
-### PR確認・レビュー強度
-
-- `docs/operations/pr-review-strength.md`
-- `docs/operations/sensors.md`
-- `docs/operations/code-responsibility-inventory.md`
-
-### 作業後の反映先判定
-
-- docs/ai/workflows/work-result-feedback-loop.md
-- docs/templates/pr-summary.md
-- docs/operations/sensors.md
-
-作業結果を AGENTS.md、docs索引、MDルーター、feature docs、operations docs、Sensors、PR Summary のどこへ戻すかは docs/ai/workflows/work-result-feedback-loop.md で判定します。
-
-### コメント・アノテーション整合
-
-- docs/commenting.md
-- docs/operations/pr-review-strength.md
-- docs/operations/sensors.md
-
-ソースコード変更時は、関連するコメント、PHPDoc、JSDoc、型アノテーション、props契約説明が実装と矛盾していないか確認します。目的は不要なコメントを増やすことではなく、コードと説明のズレを残さないことです。
-
-### 実装済みの現在挙動
-
-- 現在のコード
-- Migration・設定
-- 成功しているテスト
-
-### 機能固有の意図・制約
-
-- `docs/features/` の該当文書
-- 関連する成功テスト
-
-feature docsは機能固有の意図・制約を記録し、現在の実装挙動はコード・Migration・設定・成功テストで確認します。どちらか一方だけを全用途の正本とは扱いません。
-
-### 外部向け説明
-
-- `README.md`
-
-### 理解再起動
-
-- `docs/context-management.md`
-- `docs/architecture.md`
-- `docs/testing.md`
-- 該当する `docs/features/`
-- 現在のコードと成功しているテスト
-
-コードが共通方針に違反していても、コードが存在するという理由だけで正しい設計とは判断しません。
-
-feature docsが共通ルールを上書きすることも認めません。
-
-コード・テスト・共通docs・feature docsが矛盾している場合は、自動的に優先順位を決めず、推測で進めず差異を報告します。
-
-## 用語
-
-### ADR Pattern
-
-このプロジェクトでいうADR Patternは、次を指します。
-
-```text
-Action - Domain - Responder
-```
-
-Actionはユースケースの手順、Domain側のService等は業務判断、Responderは出力整形を担当します。
-
-### Decision Record
-
-重要な設計判断と、その理由・却下案・影響を残す記録です。
-
-Architecture Decision Recordの略称としてADRとだけ書くとADR Patternと衝突するため、このプロジェクトでは `Decision Record` または `設計判断記録` と表記します。
-
-### Command Action / Query Action / Artisan Command
-
-- `Command Action`: 登録・更新・削除・同期開始など、状態を変更するユースケースのAction
-- `Query Action`: 一覧・詳細・検索・ランキングなど、参照するユースケースのAction
-- `Artisan Command`: Laravelのコンソール実行入口。JobをdispatchするかActionを呼び、業務ロジック本体を持たない
-
-`Command` だけではCommand ActionとArtisan Commandを区別できないため、文書では対象を明記します。
-
-## 常時確認する文書
+## 共通docs
 
 | 文書 | 役割 |
 |---|---|
-| `AGENTS.md` | 作業時に守る入口ルール |
-| `docs/index.md` | docsの索引、正本の役割分担、用語 |
-| `docs/ai/workflows/md-router.md` | 作業種別ごとに読むdocs、読まないdocs、停止条件、作業後の保守ルール |
-
-## 作業フロー・参照範囲ルーター
-
-作業フロー・参照範囲ルーターは、作業開始時に参照範囲と編集禁止範囲を固定する入口です。MD群は全部読む知識ベースではなく、作業ごとに必要な棚だけ開きます。
-
-詳細な作業種別別ルーティング、PRレビュー強度との接続、停止条件、作業後の保守ルールは `docs/ai/workflows/md-router.md` を正本とします。
-
-作業前に宣言する項目は `docs/ai/workflows/md-router.md` を確認してください。
-
-`docs/ai/` と `docs/ai/workflows/` は既存配置名です。作業フロー・責務境界・停止条件のdocsとして扱い、将来的に `docs/workflows/` または `docs/process/` へ寄せるかは別PRで判断します。
-
-## 作業内容に応じて確認する文書
-
-| 文書 | 読む条件 |
-|---|---|
-| `docs/context-management.md` | 文脈読込、トークン節約、理解再起動 |
-| `docs/ai/workflows/md-router.md` | 作業種別ごとの読むdocs、読まないdocs、停止条件、PRレビュー強度との接続 |
-| `docs/ai/workflows/work-result-feedback-loop.md` | 作業後にどのdocs / 型 / コメント / テストへ戻すかの判定ルール |
-| `docs/product-design/index.md` | IDEA BOARD / MOCK / Coding の境界、Coding前ゲート、Product Design上の判断が必要な作業で読む軽量ガイド |
-| `docs/ai/workflows/md-router-cases.md` | `docs/ai/workflows/md-router.md` の実戦ケース集 |
-| `docs/feature-module-portability.md` | Feature Module移植ルール。Feature全体移植 / PRODUCTのみ移植 / MOCKのみ移植 / PROTOTYPEのみ移植 / IDEA BOARDのみ移植、移植元repoは読むだけ、移植先repoだけに差分を出す原則、移植対象・差し替え対象・移植しない対象の固定、個別Feature移植マニフェストの追加方針 |
-| `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT、Product化 |
-| `docs/ui-development-flow.md` | MOCKで作る画面単体、PROTOTYPEで作る接続、PRODUCTへ引き継ぐUI契約 |
-| `docs/guides/frontend-screen-types.md` | UI作成、UIレビュー、MOCK画面追加、Graphic Web UI作成、Builder UI検討時に System UI / Graphic Web UI / Graphic Builder UI の画面種別を最初に選ぶ |
-| `docs/guides/ui-component-responsibility-rules.md` | Inertia / React UI実装前に Page / Layout / Section / Field / Parts / Hook の責務、モバイル確認幅、MOCK / IDEA BOARD / PRODUCT 境界を軽く確認する |
-| `docs/templates/idea-board-and-mock-template-policy.md` | IDEA BOARD / MOCK の役割、共通画面構造、タブ、タブ内インデックス、スクロール方針 |
-| `docs/architecture.md` | ADR Pattern、レイヤード、責務境界、Command Action / Query Action / Artisan Command |
-| `docs/operations/command-registry.md` | Docker経由コマンド、root / `/src` のGit境界、作業種別ごとの確認 |
-| `docs/operations/pr-review-strength.md` | PRの作業種別、影響範囲、危険度に応じたレビュー強度 |
-| `docs/operations/sensors.md` | PR前確認、AIレビュー、スクリプト、CI fail候補として育てる検出項目の台帳 |
-| `docs/operations/code-responsibility-inventory.md` | 全コード責務棚卸し、コメント / 型 / DTO / Inertia props境界の確認結果 |
-| `docs/coding-standards.md` | PHP / TypeScript / JavaScript / React / CSS の実装作法、型、命名、確認コマンド |
+| `docs/ai/index.md` | AI作業用docsの補助索引 |
+| `docs/ai/rules/agent-working-policy.md` | 作業条件、Git / PR、停止条件、完了確認 |
+| `docs/ai/rules/responsibility-boundaries.md` | ADR Pattern、用語、責務境界 |
+| `docs/ai/workflows/md-router.md` | 作業種別ごとの読む・読まない範囲、停止条件 |
+| `docs/ai/workflows/md-router-cases.md` | MDルーターの実戦ケース集 |
+| `docs/ai/workflows/loop-engineering.md` | 実行、確認、修正、再確認、記録の作業ループ |
+| `docs/ai/workflows/work-result-feedback-loop.md` | 作業後の反映先判定 |
+| `docs/context-management.md` | 文脈読込、探索範囲、理解再起動 |
+| `docs/development-flow.md` | IDEA BOARD / MOCK / PROTOTYPE / PRODUCT |
+| `docs/ui-development-flow.md` | UI工程と段階間の契約 |
+| `docs/feature-module-portability.md` | Feature Module移植 |
+| `docs/architecture.md` | 実装レイヤー責務の詳細 |
+| `docs/coding-standards.md` | PHP / TypeScript / React / CSSの実装作法 |
 | `docs/testing.md` | テスト追加、仕様固定、CI確認 |
-| `docs/storage.md` | S3互換Storageのアプリ側共通境界、Feature側の利用方針、テストで実S3 / MinIOへ接続しない方針 |
 | `docs/frontend.md` | React / Inertia / TypeScript、props、Component責務 |
 | `docs/ui.md` | UI、Common、モバイル、操作、Effects |
-| `docs/prototype-policy.md` | MOCK / Prototypeの配置、許可範囲、Product化 |
-| `docs/logging.md` | ログ分類、出力責務、保持期間 |
-| `docs/security.md` | 秘密情報、本番接続、破壊的操作、外部公開、バリデーションの安全境界 |
+| `docs/prototype-policy.md` | MOCK / Prototypeの配置とProductとの分離 |
+| `docs/logging.md` | ログ分類、出力責務、保持 |
+| `docs/security.md` | 秘密情報、本番接続、破壊的操作 |
 | `docs/commenting.md` | コメント、PHPDoc、JSDoc |
+| `docs/storage.md` | Storageの共通境界 |
+| `docs/guides/frontend-screen-types.md` | Frontend画面種別 |
+| `docs/guides/ui-component-responsibility-rules.md` | Page / Layout / Section / Field / Parts / Hook責務 |
+| `docs/operations/command-registry.md` | 実行コマンドとGit境界 |
+| `docs/operations/pr-review-strength.md` | PRレビュー強度 |
+| `docs/operations/sensors.md` | 検出項目の台帳 |
+| `docs/operations/code-responsibility-inventory.md` | コード責務棚卸し |
+| `docs/templates/pr-summary.md` | PR本文テンプレート |
+
+この一覧は全部読むリストではありません。読む範囲はMDルーターの該当プロファイルで決めます。
 
 ## 機能固有文書
 
-機能固有の実行時刻、取得条件、DB条件、API制約、テスト仕様は、共通docsへ書き込みすぎず `docs/features/` に置きます。
+機能固有の実行条件、DB条件、API制約、表示条件、テスト固定仕様は、共通docsへ移さず該当文書に置きます。
 
 | 文書 | 対象 |
 |---|---|
-| `docs/features/api-discovery-hub.md` | API Discovery Hubの同期、検索、保存メモ、テスト固定仕様 |
-| `docs/features/dance-shorts-analyzer.md` | DanceShortsAnalyzerの保存済み動画検索、Analyze表示、snapshot計算、テスト固定仕様 |
-| `docs/features/dance-shorts-radar.md` | DanceShortsRadarの同期、ランキング、テスト固定仕様 |
-| `docs/features/japan-quake-wave-map.md` | Japan Quake Wave Mapのfeed、XML、map pin、status API |
-| `docs/features/application-logs.md` | Project Hub logsのAPI連携ログ、ERRORログ、対応済み管理、テスト固定仕様 |
+| `docs/features/api-discovery-hub.md` | API Discovery Hub |
+| `docs/features/dance-shorts-analyzer.md` | DanceShortsAnalyzer |
+| `docs/features/dance-shorts-radar.md` | DanceShortsRadar |
+| `docs/features/japan-quake-wave-map.md` | Japan Quake Wave Map |
+| `docs/features/application-logs.md` | Project Hub logs |
 
-新しい機能固有文書を追加した場合は、この一覧も更新します。
+新しい機能固有文書を追加した場合は、この一覧と必要なルーターだけを更新します。
 
-### Product Design 文書
-
-| 文書 | 対象 |
-|---|---|
-| [docs/product-design/index.md](product-design/index.md) | Coding前に何を作るか、どう見せるか、どこまで作るかを整理する。IDEA BOARD / MOCK / Coding の境界、MOCKを通すゲート、未確認範囲を勝手に補完しないルール |
-
-### LumiLabo 文書
+## Product Design / LumiLabo
 
 | 文書 | 対象 |
 |---|---|
-| [docs/lumilabo/index.md](lumilabo/index.md) | LumiLabo docs入口。UI方針と案件システム IDEA BOARD / MOCKへ辿る導線 |
-| [docs/lumilabo/ui-design-guideline.md](lumilabo/ui-design-guideline.md) | LumiLaboの画面設計、表示方針、操作方針、レスポンシブ方針、日付別カードカレンダー、カードswitch方針 |
-| [docs/lumilabo/project-idea-board.md](lumilabo/project-idea-board.md) | LumiLabo 案件システム IDEA BOARD の目的、上位タブ、薄いファイルタグ、フロー、図解、グラフ、画面候補、対象外 |
-| [docs/lumilabo/project-mock.md](lumilabo/project-mock.md) | LumiLabo 案件システム MOCK の初期導線、画面範囲、戻る導線、対象外 |
+| `docs/product-design/index.md` | IDEA BOARD / MOCK / Coding境界、Coding前ゲート |
+| `docs/lumilabo/index.md` | LumiLabo docs入口 |
+| `docs/lumilabo/ui-design-guideline.md` | LumiLabo画面設計・表示・操作方針 |
+| `docs/lumilabo/project-idea-board.md` | LumiLabo案件システム IDEA BOARD |
+| `docs/lumilabo/project-mock.md` | LumiLabo案件システム MOCK |
+
+Product DesignやLumiLaboに関係しない作業では、これらを読みません。
 
 ## テンプレート
 
 | 文書 | 用途 |
 |---|---|
 | `docs/templates/pr-summary.md` | Pull Requestのレビュー用まとめ |
-| `docs/templates/feature-doc-template.md` | 新規Feature docs作成時のテンプレート |
-| `docs/templates/idea-board-and-mock-template-policy.md` | IDEA BOARD / MOCK 作成時の共通ルール、画面構造、タブ、スクロール方針 |
-| `docs/templates/idea-board-template.md` | IDEA BOARD 作成時のテンプレート |
-| `docs/templates/mock-template.md` | MOCK 作成時のテンプレート |
+| `docs/templates/feature-doc-template.md` | 新規Feature docs |
+| `docs/templates/idea-board-and-mock-template-policy.md` | IDEA BOARD / MOCK共通ルール |
+| `docs/templates/idea-board-template.md` | IDEA BOARD |
+| `docs/templates/mock-template.md` | MOCK |
 
 ## 文書の配置基準
 
 ### `AGENTS.md`
 
-全作業で守らないと事故につながる短いルールと、参照先だけを置きます。
+全作業で守らないと事故につながる短い入口ルールと、MDルーター・正本へのリンクだけを置きます。
+
+### `docs/ai/rules/`
+
+複数作業に共通する作業条件、停止条件、責務境界を置きます。
+
+### `docs/ai/workflows/`
+
+作業種別の分岐、作業ループ、作業後の戻し先を置きます。背景や実例は正本ルーターへ増やしすぎず、既存ケース集へ分けます。
 
 ### 共通方針docs
 
-複数機能に共通する判断基準だけを置きます。
+複数機能に共通する設計、実装、テスト、UI、Security等の判断基準を置きます。
 
 ### `docs/features/`
 
-特定機能だけに有効な仕様、入口、処理フロー、テスト固定内容を置きます。
+特定機能だけに有効な目的、仕様、入口、処理フロー、テスト固定内容を置きます。
 
 ### `docs/product-design/`
 
-IDEA BOARD / MOCK / Coding の境界、Coding前ゲート、Product Design上の判断を置きます。実装責務の詳細は既存のADR Pattern、レイヤード、UI責務docsを正本とします。
+IDEA BOARD / MOCK / Coding境界とCoding前ゲートを置きます。実装責務の詳細は責務境界docsを正本とします。
+
+### `docs/operations/`
+
+確認コマンド、レビュー強度、Sensorsなど、反復して使う運用ルールを置きます。
 
 ### `README.md`
 
-外部閲覧者向けの概要、技術構成、利用方法を置きます。内部の詳細ルールは置きすぎません。
+外部閲覧者向けの概要、技術構成、利用方法を置きます。内部ルールを複製しません。
 
-### 理解再起動の配置
+### ローカル・一時情報
 
-後から目的、責務、入力、出力、禁止事項、変更時の注意を回収するための情報は、該当する共通docs、feature docs、コメント、型、テストへ分散して残します。作業者個人の一時メモや会話運用メモは、Git管理docs体系へ含めません。
+会話ログ、個人メモ、ローカル環境差分、秘密情報はGit管理docs体系へ含めません。
 
 ## 文書メタデータ
 
-長期保存する情報源・機能文書には、必要に応じて次を付けます。
+長期保存する文書には、必要に応じて次を付けます。
 
 ```text
 Status: active / archived / superseded
@@ -251,17 +173,14 @@ Canonical source: 用途ごとの正本となる文書・コード・テスト
 Supersedes: 置き換えた旧資料
 ```
 
-`Canonical source` は全用途を1本へ集約する意味ではありません。機能固有文書では、意図・制約と現在挙動の正本を分けて記載します。
-
+`Canonical source` は全用途を1本へ集約する意味ではありません。古い資料を残す場合は `archived` または `superseded` を明記し、通常ルートから外します。
 
 ## 更新ルール
 
-- 共通ルール変更時は、正本となる共通docsだけを先に更新する
-- 機能仕様変更時は、コード・テストと該当する `docs/features/` を更新する
-- README、feature docs、操作ガイドは正本変更後に必要な範囲だけ追従させる
-- 作業完了前に `docs/ai/workflows/work-result-feedback-loop.md` でdocs反映要否を確認する
-- AGENTS.mdを肥大化させず、入口、案内板、ルーター、operations docs、feature docs、PR Summary、Sensorsの役割へ分けて戻す
-- ローカル環境固有の情報はGit管理docsへ混ぜず、PR本文にも転記しない
-- 古い資料を残す場合は `archived` または `superseded` を明記する
+- 共通ルール変更時は、正本だけを先に更新する
+- 機能仕様変更時は、コード・テストと該当feature docsを更新する
+- 新規docs追加時は、配置先、正本、必要な索引・ルートだけを更新する
 - 同じ詳細ルールを複数文書へ全文複製しない
-- 他文書で同じ観点を確認する場合は、その文書の責務に必要な要約と正本への参照だけを置く
+- 正本以外には、その文書の責務に必要な短い要約とリンクだけを置く
+- 作業完了前に `docs/ai/workflows/work-result-feedback-loop.md` で反映先を確認する
+- ローカル環境固有情報をGit管理docsやPR本文へ混ぜない
