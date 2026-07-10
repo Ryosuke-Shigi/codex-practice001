@@ -118,7 +118,7 @@
 - 読まない: 無関係feature docs、無関係UI、Docker / 本番docs
 - 編集しない: 責務配置と関係しないレイヤー、確認済み範囲外のUI仕様
 - 停止条件: Action / Service / Repository / DTO / Responderの責務を固定できない、feature docsと現在コードが矛盾する
-- 確認コマンド: [command-registry.md](../../operations/command-registry.md) のLaravel変更時のコマンド
+- 確認コマンド: [command-registry.md](../../operations/command-registry.md) のLaravel変更時のコマンド。React / TypeScript / Inertia Page / Componentに差分がある場合は、対象テスト、typecheck、buildも追加する。未実行の確認がある場合は理由をPR本文へ記載する
 - PRレビュー強度: 原則Level 3。DB、認証認可、外部API更新、Queue / Schedulerへ触れる場合はLevel 4
 
 ### Feature移植

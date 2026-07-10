@@ -7,7 +7,7 @@ Laravel / React / app docs / tests はこのリポジトリで扱い、外側wor
 
 1. 作業対象repoの remote / branch / status を確認する
 2. [docs/ai/workflows/md-router.md](docs/ai/workflows/md-router.md) で該当する作業プロファイルを選ぶ
-3. プロファイルの「読む」と、必要なfeature docs・対象コードだけを確認する
+3. プロファイルで指定された範囲と条件に従い、必要な共通docs・feature / project docs・対象コードだけを確認する
 
 [docs/index.md](docs/index.md) はdocs全体の総合索引です。通常作業で毎回読むものではなく、次の場合に確認します。
 

@@ -22,7 +22,7 @@
 
 1. [AGENTS.md](../../AGENTS.md)
 2. [MDルーター](workflows/md-router.md) の該当作業プロファイル
-3. プロファイルで指定された共通docs、feature docs、対象コード
+3. プロファイルで指定された範囲と条件に従い、共通docs、feature / project docs、対象コードを確認する
 4. 作業後に [work-result-feedback-loop.md](workflows/work-result-feedback-loop.md)
 
 [docs/index.md](../index.md) は、正本確認、docs配置判断、docs体系変更、役割・Status衝突時に確認する総合索引です。
