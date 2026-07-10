@@ -17,7 +17,7 @@ Laravel 11 / Inertia / React / TypeScriptを中心に、外部API連携、非同
 - Queue / Scheduler / Job / Event / Listenerによる非同期処理と副作用の分離
 - snapshot / read modelを使った、同期処理と参照画面の分離
 - API連携ログ、エラーログ、運用通知による状態確認
-- S3互換StorageをFeatureから切り離す共通Service / Repository / DTO境界
+- S3互換StorageをFeatureから切り離す共通境界
 - Feature / Unit / React test、CI、Pull Request、docsによる仕様固定
 - CodexなどのAI支援を利用しつつ、人間が仕様、責務境界、合格条件、merge判断を持つ開発プロセス
 
@@ -38,9 +38,9 @@ MOCKやPROTOTYPEのコードを、そのままPRODUCT完成版として扱いま
 
 ## Projects / Current Stage
 
-公開画面ではProject Hubから、各ProjectのIDEA BOARD、MOCK、PRODUCTへ進めます。
+公開画面ではProject Hubを中心に、各Projectで現在公開しているStage / Moduleや運用画面へ進めます。
 
-| Project | 現在公開している段階 | 概要 |
+| Project | 現在公開しているStage / 入口 | 概要 |
 |---|---|---|
 | DanceShorts | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot、地域別ランキング、比較分析 |
 | API Discovery Hub | PRODUCT / MOCK / IDEA BOARD | 公開APIカタログの同期、検索、詳細、調査メモ |
@@ -48,7 +48,7 @@ MOCKやPROTOTYPEのコードを、そのままPRODUCT完成版として扱いま
 | LumiLabo | MOCK / IDEA BOARD | 案件システムを最初のサブシステムとして育てる上位プロダクト |
 | 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積、請求、領収の画面検証 |
 | イベント・カードカレンダー | IDEA BOARD | イベントを起点に入金・出金・請求カードを可視化する構想 |
-| アプリログ | 運用機能 | API連携ログとエラーログの確認、対応済み管理 |
+| アプリログ | 運用画面 | API連携ログとエラーログの確認、対応済み管理 |
 
 ## PRODUCT実装
 
@@ -56,7 +56,7 @@ MOCKやPROTOTYPEのコードを、そのままPRODUCT完成版として扱いま
 
 YouTube Shortsのダンス動画を保存・観測し、伸び方や地域別候補を確認するProjectです。
 
-- **Radar**: 保存済みsnapshotから、地域別ランキング候補や上昇候補を表示
+- **Radar**: 保存済みsnapshotから地域別ランキング候補や上昇候補を表示
 - **Analyzer**: 保存済み動画を検索し、選択したShortsのsnapshotを横比較
 - YouTube Data API連携、動画保存、snapshot保存
 - Queue / Schedulerによる通常同期、page2同期、snapshot専用同期
@@ -94,125 +94,46 @@ APIs.guruの公開APIカタログを取得し、検索、詳細確認、調査�
 
 - API連携ログとエラーログを別テーブルで保存
 - Event / Listener / Repositoryでログ保存の副作用を分離
-- 成功ログを大量化させず、処理単位や分類ごとの要約ログへ集約
+- 成功ログを処理単位や分類ごとの要約へ集約
 - エラーログの詳細表示と対応済み管理
 
-## LumiLabo
+## IDEA BOARD / MOCK
 
-LumiLaboは上位プロダクトとして扱い、最初のサブシステムとして案件システムを設計しています。現在公開しているのは **IDEA BOARD / MOCK** であり、PRODUCT完成済みの業務システムではありません。
+### LumiLabo
 
-### IDEA BOARD
+LumiLaboは、案件システムを最初のサブシステムとして育てる上位プロダクトです。現在公開しているのはIDEA BOARD / MOCKであり、PRODUCT完成済みの業務システムではありません。
 
-案件システムの目的、価値、流れ、機能説明、画面候補、図解、グラフを、お客様向けの資料として整理しています。DB設計やBackend実装を確定する場所ではありません。
-
-### MOCK
-
-現在の主な導線は次のとおりです。
-
-```text
-TOP
-  ↓ Start
-選択
-  ├ 案件 → 案件TOP
-  │          ├ 登録 → 案件TOP
-  │          └ 一覧 → 案件詳細 → 一覧
-  └ TOPへ戻る → TOP
-```
-
-現在確認できる内容:
-
-- 登録画面: 会社名、担当者名、住所、メモ
-- 一覧画面: 固定データの案件カードから詳細へ進む導線
-- 詳細画面: 編集、擬似保存完了表示、Google Maps検索、保存済み写真・ファイルの表示削除、案件削除確認
-- モバイル縦、スマートフォン横を含むレスポンシブ表示
-- 戻る先と削除後の戻り先を、MOCK内部のUI stateで管理
-
-現在のMOCKは固定データとReact内stateだけを使います。DB、Migration、API通信、Inertia送信、本番CRUD、S3保存・削除、カメラ本実装、Google Maps APIはまだ実装していません。
+IDEA BOARDでは案件システムの目的、価値、流れ、画面候補を説明し、MOCKでは登録、一覧、詳細などの画面導線と操作感を固定データで確認しています。DB、API、本番CRUD、S3保存にはまだ接続していません。
 
 詳細は [LumiLabo docs](docs/lumilabo/index.md) と [案件システム MOCK](docs/lumilabo/project-mock.md) を参照してください。
 
-## IDEA BOARD / MOCK Projects
-
 ### 工事発注管理
 
-案件、作業カード、見積、請求、領収の流れを、現場向けの入力体験として整理するProjectです。
-
-現在はIDEA BOARD / MOCK段階です。固定データでCSV投入、案件詳細、帳票プレビューなどを確認しており、PRODUCT完成済みの業務システムとしては扱っていません。
+案件、作業カード、見積、請求、領収の流れを、現場向けの入力体験として整理するProjectです。現在はIDEA BOARD / MOCK段階で、固定データによるCSV投入、案件詳細、帳票プレビューなどを確認しています。
 
 ### イベント・カードカレンダー
 
-イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ広げる構想Projectです。
-
-現在はIDEA BOARD段階です。DB保存、通知、本番集計、実グラフを持つPRODUCT実装ではありません。
+イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ広げる構想Projectです。現在はIDEA BOARD段階です。
 
 ## Cross-cutting Foundations
 
 ### S3-compatible Storage
 
-Feature側が`Storage::disk('s3')`へ直接依存しないよう、アプリ共通のStorage境界を実装しています。
+Feature側がLaravel Storageへ直接依存しないための、共通Service / Repository / DTO境界を実装しています。ローカルMinIOとAWS S3向け環境を同じLaravel disk名`s3`で切り替え、自動テストは`Storage::fake('s3')`を使います。
 
-```text
-Feature
-  ↓
-ApplicationFileStorageService
-  ↓
-FileStorageRepositoryInterface
-  ↓
-LaravelFileStorageRepository
-  ↓
-Laravel Storage / S3-compatible storage
-```
-
-主な内容:
-
-- 保存結果を`StoredFileDTO`で受け渡す
-- disk、prefix、visibility、path正規化をServiceへ集約
-- visibilityは原則`private`
-- ローカルMinIOとAWS S3向け環境を、同じLaravel disk名`s3`で切り替える
-- 自動テストは`Storage::fake('s3')`を使い、実S3、実MinIO、外部ネットワークへ依存しない
-- 保存、取得、存在確認、削除を確認するStorage smoke test Commandを用意
-
-手動の疎通確認には、次のArtisan Commandを使います。
-
-```bash
-php artisan storage:smoke-test --disk=s3
-```
-
-この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDへはまだ接続していません。
-
-詳細は [Storage](docs/storage.md) を参照してください。
+この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDへはまだ接続していません。詳細は [Storage](docs/storage.md) を参照してください。
 
 ### Operations / Notification
 
-- Laravel Reverb / Broadcastingの設定とDocker service
-- Daily Server Health Reportのメール通知
-- Scheduler、Artisan Command、Command Action、Notification、Queueの責務分離
-- API連携ログ、エラーログ、処理状態の確認
+Laravel Reverb / Broadcastingの基盤、Daily Server Health Reportのメール通知、API連携ログとエラーログを、Scheduler、Artisan Command、Command Action、Notification、Queueなどの責務へ分けて実装しています。
 
 個別Broadcast EventやReactのリアルタイム通知UIが完成済みであるとは扱っていません。
 
 ### AI-assisted Development
 
-AIは単発のコード生成ツールではなく、人間が目的、境界、合格条件を定義した後の調査、実装補助、差分修正、レビュー補助に使います。
+AIは調査、実装補助、差分修正、レビュー補助に使い、人間が仕様、責務境界、完成判定、merge判断を持ちます。作業時は [AGENTS.md](AGENTS.md) から該当する [MD Router](docs/ai/workflows/md-router.md) のプロファイルへ進み、必要なdocsと対象コードだけを確認します。
 
-```text
-AGENTS.md
-  ↓
-作業種別に対応するMDルータープロファイル
-  ↓
-必要な共通docs / feature・project docs / 対象コード
-  ↓
-実装 → test / build / PR / Sensors → 修正 → 再確認
-```
-
-- `AGENTS.md`は短い作業入口と安全境界
-- MDルーターは作業種別ごとに「読む / 条件付きで読む / 読まない」を固定
-- IDEA BOARD / MOCK / PROTOTYPE / PRODUCTを分け、段階外の実装を持ち込まない
-- 目的別branch、レビュー可能なcommit、PRレビュー強度、Sensorsで差分を確認
-- コード、テスト、docs、指示が矛盾する場合は推測で実装しない
-- 仕様、責務境界、完成判定、merge判断は人間が持つ
-
-詳しい考え方は [設計思想ページ](https://ada-works.dev/design-philosophy)、[AGENTS.md](AGENTS.md)、[MD Router](docs/ai/workflows/md-router.md) を参照してください。
+詳しい考え方は [設計思想ページ](https://ada-works.dev/design-philosophy) を参照してください。
 
 ## Tech Stack
 
@@ -237,8 +158,8 @@ AGENTS.md
 - ECharts
 - Mermaid
 - Vitest
-- Motion
-- lucide-react
+- `motion`
+- `lucide-react`
 
 ### Infrastructure / CI
 
@@ -269,17 +190,15 @@ Responder
 React / Inertia
 ```
 
-主な整理:
-
 - ControllerはHTTP入口、Requestは入力形式のValidation
 - Actionは1ユースケースの手順
 - Serviceは業務判断とドメインルール
 - RepositoryはDBや外部データソースとの境界
 - DTO / ListDTOはレイヤー間のデータキャリア
 - ResponderはInertia propsやJSONなどの出力整形
-- Eventは発生した事実、Listenerは通知、ログ、外部連携などの副作用
-- Job / Artisan Command / Schedulerは実行入口で、業務ロジック本体を持たない
-- React Page / Hook / Componentは画面入口、UI状態、表示、操作を分担し、Backendの業務判断を再構築しない
+- Event / Listenerは発生した事実と副作用を分離
+- Job / Artisan Command / Schedulerは実行入口
+- React Page / Hook / Componentは画面入口、UI状態、表示、操作を分担
 - 単純な処理へ不要なService、Factory、Strategyを機械的に増やさない
 
 詳細は [Architecture](docs/architecture.md)、[Responsibility Boundaries](docs/ai/rules/responsibility-boundaries.md)、[Frontend](docs/frontend.md)、[UI](docs/ui.md) を参照してください。
@@ -295,9 +214,8 @@ React / Inertia
 - Job / Artisan Command / Schedulerの実行境界
 - `Storage::fake('s3')`によるStorage境界の確認
 - TypeScript typecheckとfrontend build
-- 差分に応じたPRレビュー強度とSensors確認
 
-GitHub Actionsでは、PHP 8.3 / Node 22環境で、変更PHPファイルのPint check、frontend build、Laravel tests、Vitestを実行します。docs-only変更ではアプリテストを機械的に必須にせず、`git diff --check`、リンク、Markdown差分を中心に確認します。
+GitHub Actionsでは、PHP 8.3 / Node 22環境で、変更PHPファイルのPint check、frontend build、Laravel tests、Vitestを実行します。
 
 詳細は [Testing](docs/testing.md)、[PR Review Strength](docs/operations/pr-review-strength.md)、[Sensors](docs/operations/sensors.md) を参照してください。
 
@@ -305,17 +223,13 @@ GitHub Actionsでは、PHP 8.3 / Node 22環境で、変更PHPファイルのPint
 
 READMEは外部閲覧者向けの概要です。内部の作業ルール、機能固有仕様、確認コマンドは用途ごとの正本へ分離しています。
 
-- [AGENTS.md](AGENTS.md): 全作業の短い入口と安全境界
-- [MD Router](docs/ai/workflows/md-router.md): 作業種別ごとの参照範囲、停止条件、確認候補
 - [Documentation Index](docs/index.md): docs全体の総合索引、用途別の正本、配置基準
 - [Architecture](docs/architecture.md): ADR Patternとレイヤー責務
-- [Testing](docs/testing.md): テスト方針
 - [Development Flow](docs/development-flow.md): IDEA BOARD / MOCK / PROTOTYPE / PRODUCT
 - [Product Design Guide](docs/product-design/index.md): IDEA BOARD / MOCK / Coding前の境界
 - [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
 - [LumiLabo docs](docs/lumilabo/index.md): LumiLabo固有のIDEA BOARD / MOCK
 - [Storage](docs/storage.md): S3互換Storageの共通境界
-- [Feature Module Portability](docs/feature-module-portability.md): 別Laravelプロジェクトへの移植観点
 - [Command Registry](docs/operations/command-registry.md): Docker経由の実行コマンドとrepo境界
 
 同じ詳細をREADMEへ複製せず、現在挙動はコード、Migration、設定、成功しているテストで確認します。
