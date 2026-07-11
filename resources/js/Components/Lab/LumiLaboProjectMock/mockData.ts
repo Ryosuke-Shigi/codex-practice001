@@ -104,6 +104,6 @@ export const lumiLaboProjectDeleteActionLabel = '案件を削除する';
 
 export const lumiLaboProjectDeleteConfirmMessage = 'この案件を削除しますか？';
 
-export const lumiLaboProjectDeleteConfirmYesLabel = '削除する';
+export const lumiLaboProjectDeleteConfirmYesLabel = 'はい';
 
-export const lumiLaboProjectDeleteConfirmNoLabel = '削除しない';
+export const lumiLaboProjectDeleteConfirmNoLabel = 'いいえ';

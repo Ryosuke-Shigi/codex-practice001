@@ -124,6 +124,7 @@ type ProjectDeleteConfirmDialogProps = {
 type ProjectDetailTextFieldProps = {
     field: ProjectDetailTextFieldConfig;
     value: string;
+    mapSearchUrl?: string;
     onChange: (
         fieldId: LumiLaboMockProjectDetailEditableFieldId,
         value: string,
@@ -647,7 +648,9 @@ function ProjectDetailPanel({
     onBack,
     backTargetId,
 }: ProjectDetailPanelProps) {
-    const mapSearchUrl = createGoogleMapsSearchUrl(projectDetail.address);
+    const mapAddress = draft.address.trim();
+    const mapSearchUrl =
+        mapAddress === '' ? undefined : createGoogleMapsSearchUrl(mapAddress);
     const statusLabel = isSaving
         ? lumiLaboProjectDetailSavingLabel
         : saveMessageVisible
@@ -745,7 +748,7 @@ function ProjectDetailPanel({
                                 : 'border-l-stone-300',
                         )}
                     >
-                        <h2 className="text-2xl font-black leading-tight text-black">
+                        <h2 className="mb-5 text-2xl font-black leading-tight text-black">
                             基本情報
                         </h2>
 
@@ -755,6 +758,11 @@ function ProjectDetailPanel({
                                     key={field.id}
                                     field={field}
                                     value={draft[field.id]}
+                                    mapSearchUrl={
+                                        field.id === 'address'
+                                            ? mapSearchUrl
+                                            : undefined
+                                    }
                                     onChange={onChangeDraftField}
                                 />
                             ))}
@@ -774,10 +782,6 @@ function ProjectDetailPanel({
                     </section>
 
                     <div className="grid gap-4">
-                        <section className="rounded-[4px] border border-stone-300 bg-[#fffef9] p-4 shadow-sm shadow-stone-900/10 sm:p-5">
-                            <MapPreview href={mapSearchUrl} />
-                        </section>
-
                         <section className="rounded-[8px] border border-stone-300 bg-[#fffefa] p-4 shadow-sm shadow-stone-900/10 sm:p-5">
                             <button
                                 type="button"
@@ -830,6 +834,7 @@ function ProjectDetailPanel({
 function ProjectDetailTextField({
     field,
     value,
+    mapSearchUrl,
     onChange,
 }: ProjectDetailTextFieldProps) {
     const controlId = `lumilabo-project-detail-${field.id}`;
@@ -872,6 +877,7 @@ function ProjectDetailTextField({
                     className={getProjectDetailControlClasses()}
                 />
             )}
+            {mapSearchUrl ? <MapPreview href={mapSearchUrl} /> : null}
         </div>
     );
 }

@@ -114,8 +114,8 @@ describe('LumiLaboProjectMock data', () => {
         ]);
         expect(lumiLaboProjectDeleteActionLabel).toBe('案件を削除する');
         expect(lumiLaboProjectDeleteConfirmMessage).toBe('この案件を削除しますか？');
-        expect(lumiLaboProjectDeleteConfirmYesLabel).toBe('削除する');
-        expect(lumiLaboProjectDeleteConfirmNoLabel).toBe('削除しない');
+        expect(lumiLaboProjectDeleteConfirmYesLabel).toBe('はい');
+        expect(lumiLaboProjectDeleteConfirmNoLabel).toBe('いいえ');
         expect(lumiLaboProjectDetailSavedMessage).toBe('保存しました');
         expect(lumiLaboProjectDetailSaveLabel).toBe('保存する');
         expect(lumiLaboProjectDetailSavingLabel).toBe('保存中です');

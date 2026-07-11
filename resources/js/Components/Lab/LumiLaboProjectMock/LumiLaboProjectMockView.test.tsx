@@ -275,6 +275,12 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain(mapUrl);
         expect(markup).toContain('target="_blank"');
         expect(markup).toContain('rel="noopener noreferrer"');
+        expect(markup.indexOf('name="address"')).toBeLessThan(
+            markup.indexOf('aria-label="Google Mapsで住所を確認する"'),
+        );
+        expect(markup.indexOf('aria-label="Google Mapsで住所を確認する"')).toBeLessThan(
+            markup.indexOf('name="memo"'),
+        );
         expect(markup).toContain('写真を撮影する');
         expect(markup).toContain('ファイルを選択、またはまとめてドラッグ＆ドロップ');
         expect(markup).toMatch(/<h3[^>]*>保存済み写真<\/h3>/);
@@ -300,13 +306,44 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('role="dialog"');
         expect(markup).toContain('aria-modal="true"');
         expect(markup).toContain('この案件を削除しますか？');
-        expect(markup).toContain('削除する');
-        expect(markup).toContain('削除しない');
+        expect(markup).toContain('いいえ');
+        expect(markup).toContain('はい');
         expect(markup).not.toContain('YES');
         expect(markup).not.toContain('NO');
-        expect(markup.indexOf('削除しない')).toBeLessThan(
-            markup.lastIndexOf('削除する'),
+        expect(markup).not.toContain('削除しない');
+        expect(markup).not.toMatch(/<button[^>]*>\s*削除する\s*<\/button>/);
+        expect(markup.indexOf('いいえ')).toBeLessThan(
+            markup.lastIndexOf('はい'),
         );
+    });
+
+    it('keeps the map preview and search URL in sync with the draft address', async () => {
+        const changedAddress = '東京都千代田区丸の内 2-2-2';
+        const changedMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                address: changedAddress,
+            },
+        });
+        const emptyAddressMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                address: '   ',
+            },
+        });
+        const changedMapUrl = `https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(changedAddress)}`;
+
+        expect(changedMarkup).toContain(`住所：${changedAddress}`);
+        expect(changedMarkup).toContain(changedMapUrl);
+        expect(changedMarkup).not.toContain(
+            `query=${encodeURIComponent(lumiLaboProjectDetail.address)}`,
+        );
+        expect(emptyAddressMarkup).not.toContain(
+            'aria-label="Google Mapsで住所を確認する"',
+        );
+        expect(emptyAddressMarkup).not.toContain('https://www.google.com/maps');
     });
 
     it('shows the save button only when detail draft changed and can show the instant save message', async () => {
