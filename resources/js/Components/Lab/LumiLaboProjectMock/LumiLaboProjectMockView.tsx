@@ -27,6 +27,10 @@ import {
     lumiLaboProjectDeleteConfirmMessage,
     lumiLaboProjectDeleteConfirmNoLabel,
     lumiLaboProjectDeleteConfirmYesLabel,
+    lumiLaboProjectDetailBackLabel,
+    lumiLaboProjectDetailEditingLabel,
+    lumiLaboProjectDetailSaveLabel,
+    lumiLaboProjectDetailSavingLabel,
     lumiLaboProjectDetail,
     lumiLaboProjectDetailSavedMessage,
     lumiLaboProjectItem,
@@ -644,101 +648,167 @@ function ProjectDetailPanel({
     backTargetId,
 }: ProjectDetailPanelProps) {
     const mapSearchUrl = createGoogleMapsSearchUrl(projectDetail.address);
+    const statusLabel = isSaving
+        ? lumiLaboProjectDetailSavingLabel
+        : saveMessageVisible
+          ? lumiLaboProjectDetailSavedMessage
+          : hasUnsavedChanges
+            ? lumiLaboProjectDetailEditingLabel
+            : null;
 
     return (
-        <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
-            <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
-                <header className="grid gap-2 rounded-md border border-neutral-200 bg-[#fffdf2] p-2 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
-                    <button
-                        type="button"
-                        className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-4 text-base font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-auto"
-                        data-lumilabo-back-target={backTargetId}
-                        onClick={onBack}
-                    >
-                        <ArrowLeft className="h-5 w-5" aria-hidden />
-                        <span>{lumiLaboProjectBackLabel}</span>
-                    </button>
-                    <h1 className="text-xl font-black leading-tight text-black sm:text-2xl">
-                        案件詳細
-                    </h1>
-                    {hasUnsavedChanges ? (
-                        <button
-                            type="button"
-                            className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
-                            onClick={onSave}
-                            disabled={isSaving}
-                        >
-                            <Save className="h-5 w-5" aria-hidden />
-                            <span>{isSaving ? '保存中' : '保存'}</span>
-                        </button>
-                    ) : null}
+        <section className="relative h-full min-h-0 overflow-y-auto bg-[#f6efdd] px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
+            <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(87,77,56,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(87,77,56,0.06)_1px,transparent_1px)] bg-[size:28px_28px]"
+            />
+            <div className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                <header className="rounded-[8px] border border-stone-300 border-l-[6px] border-l-yellow-300 bg-[#fffdf7] p-4 text-black shadow-sm shadow-stone-900/10 sm:p-5">
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,auto)] lg:items-start">
+                        <div className="grid min-w-0 gap-3">
+                            <button
+                                type="button"
+                                className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-stone-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-fit"
+                                data-lumilabo-back-target={backTargetId}
+                                onClick={onBack}
+                            >
+                                <ArrowLeft className="h-5 w-5" aria-hidden />
+                                <span>{lumiLaboProjectDetailBackLabel}</span>
+                            </button>
+
+                            <div className="grid gap-2">
+                                <p className="text-base font-black text-yellow-900">
+                                    案件詳細
+                                </p>
+                                <h1 className="break-words text-[1.75rem] font-black leading-tight text-black sm:text-4xl">
+                                    {draft.companyName}
+                                </h1>
+                                <div className="flex flex-wrap gap-2 text-base font-bold leading-relaxed text-stone-800 sm:text-lg">
+                                    <span className="rounded-[4px] border border-stone-200 bg-white/80 px-3 py-1">
+                                        担当者：{draft.contactName}
+                                    </span>
+                                    <span className="rounded-[4px] border border-stone-200 bg-white/80 px-3 py-1">
+                                        住所：{draft.address}
+                                    </span>
+                                    <span className="rounded-[4px] border border-stone-200 bg-stone-50 px-3 py-1">
+                                        登録日：{projectDetail.registeredDate}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {statusLabel || hasUnsavedChanges ? (
+                            <div className="grid gap-3">
+                                {statusLabel ? (
+                                    <p
+                                        role="status"
+                                        aria-live="polite"
+                                        className={classNames(
+                                            'text-lg font-black',
+                                            isSaving
+                                                ? 'text-yellow-900'
+                                                : saveMessageVisible
+                                                  ? 'text-lime-800'
+                                                  : 'text-yellow-900',
+                                        )}
+                                    >
+                                        {statusLabel}
+                                    </p>
+                                ) : null}
+
+                                {hasUnsavedChanges ? (
+                                    <button
+                                        type="button"
+                                        className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
+                                        onClick={onSave}
+                                        disabled={isSaving}
+                                    >
+                                        <Save className="h-5 w-5" aria-hidden />
+                                        <span>
+                                            {isSaving
+                                                ? lumiLaboProjectDetailSavingLabel
+                                                : lumiLaboProjectDetailSaveLabel}
+                                        </span>
+                                    </button>
+                                ) : null}
+                            </div>
+                        ) : null}
+                    </div>
                 </header>
 
-                {saveMessageVisible ? (
-                    <div
-                        role="status"
-                        className="rounded-md border border-lime-600 bg-lime-300 px-4 py-2 text-center text-lg font-black text-black"
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:items-start">
+                    <section
+                        className={classNames(
+                            'rounded-[8px] border border-stone-300 border-l-[6px] bg-[#fffefa] p-4 shadow-sm shadow-stone-900/10 sm:p-5',
+                            hasUnsavedChanges || isSaving
+                                ? 'border-l-yellow-400 shadow-yellow-900/10'
+                                : 'border-l-stone-300',
+                        )}
                     >
-                        {lumiLaboProjectDetailSavedMessage}
-                    </div>
-                ) : null}
+                        <h2 className="text-2xl font-black leading-tight text-black">
+                            基本情報
+                        </h2>
 
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.95fr)] lg:items-start">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {projectDetailTextFields.map((field) => (
-                            <ProjectDetailTextField
-                                key={field.id}
-                                field={field}
-                                value={draft[field.id]}
-                                onChange={onChangeDraftField}
-                            />
-                        ))}
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {projectDetailTextFields.map((field) => (
+                                <ProjectDetailTextField
+                                    key={field.id}
+                                    field={field}
+                                    value={draft[field.id]}
+                                    onChange={onChangeDraftField}
+                                />
+                            ))}
+                        </div>
 
-                        <div className="grid gap-2 md:col-span-2 lg:max-w-xs">
-                            <p className="text-base font-black text-black">
+                        <div className="mt-4 rounded-[4px] border border-stone-200 bg-stone-50/80 p-3">
+                            <p className="text-lg font-black text-black">
                                 登録日
                             </p>
                             <p
                                 aria-readonly="true"
-                                className="min-h-12 rounded-md border border-neutral-300 bg-neutral-50 px-3 py-3 text-base font-semibold text-black"
+                                className="mt-2 min-h-14 rounded-[4px] border border-stone-300 bg-white px-3 py-3 text-lg font-semibold leading-relaxed text-black"
                             >
                                 {projectDetail.registeredDate}
                             </p>
                         </div>
-                    </div>
+                    </section>
 
                     <div className="grid gap-4">
-                        <MapPreview href={mapSearchUrl} />
+                        <section className="rounded-[4px] border border-stone-300 bg-[#fffef9] p-4 shadow-sm shadow-stone-900/10 sm:p-5">
+                            <MapPreview href={mapSearchUrl} />
+                        </section>
 
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                        <section className="rounded-[8px] border border-stone-300 bg-[#fffefa] p-4 shadow-sm shadow-stone-900/10 sm:p-5">
                             <button
                                 type="button"
-                                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                                className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                             >
                                 <Camera className="h-5 w-5" aria-hidden />
-                                <span>写真撮影</span>
+                                <span>写真を撮影する</span>
                             </button>
+                            <SavedPhotoPreview
+                                projectDetail={projectDetail}
+                                onRemoveSavedPhoto={onRemoveSavedPhoto}
+                            />
+                        </section>
+
+                        <section className="rounded-[8px] border border-stone-300 bg-[#fffefa] p-4 shadow-sm shadow-stone-900/10 sm:p-5">
                             <FileDropZone
                                 droppedFileNames={droppedFileNames}
                                 onDropFiles={onDropFiles}
                             />
-                        </div>
-
-                        <SavedPhotoPreview
-                            projectDetail={projectDetail}
-                            onRemoveSavedPhoto={onRemoveSavedPhoto}
-                        />
-                        <SavedFilePreview
-                            projectDetail={projectDetail}
-                            onRemoveSavedFile={onRemoveSavedFile}
-                        />
+                            <SavedFilePreview
+                                projectDetail={projectDetail}
+                                onRemoveSavedFile={onRemoveSavedFile}
+                            />
+                        </section>
                     </div>
                 </div>
 
-                <div className="mt-auto border-t border-red-200 pt-4 sm:max-w-sm">
+                <div className="mt-2 sm:max-w-xl">
                     <button
                         type="button"
-                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-red-600 bg-white px-5 text-lg font-black text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                        className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-red-700 bg-white px-5 text-lg font-black text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
                         onClick={onRequestDeleteProject}
                     >
                         <Trash2 className="h-5 w-5" aria-hidden />
@@ -776,7 +846,7 @@ function ProjectDetailTextField({
                 field.control === 'textarea' ? 'md:col-span-2' : undefined,
             )}
         >
-            <label htmlFor={controlId} className="text-base font-black text-black">
+            <label htmlFor={controlId} className="text-lg font-black text-black">
                 {field.label}
             </label>
             {field.control === 'textarea' ? (
@@ -787,8 +857,8 @@ function ProjectDetailTextField({
                     rows={field.rows}
                     onChange={handleChange}
                     className={classNames(
-                        getProjectRegisterControlClasses(),
-                        'resize-none leading-relaxed',
+                        getProjectDetailControlClasses(),
+                        'min-h-32 resize-y leading-relaxed',
                     )}
                 />
             ) : (
@@ -799,7 +869,7 @@ function ProjectDetailTextField({
                     value={value}
                     autoComplete={field.autoComplete}
                     onChange={handleChange}
-                    className={getProjectRegisterControlClasses()}
+                    className={getProjectDetailControlClasses()}
                 />
             )}
         </div>
@@ -812,8 +882,8 @@ function MapPreview({ href }: { href: string }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Google Mapsで住所を開く"
-            className="relative block h-40 overflow-hidden rounded-md border border-neutral-300 bg-[#edf4dd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 sm:h-48"
+            aria-label="Google Mapsで住所を確認する"
+            className="relative block min-h-56 overflow-hidden rounded-[4px] border border-stone-300 bg-[#edf4dd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 sm:min-h-64"
         >
             <span className="absolute left-[-8%] top-[52%] h-3 w-[115%] rotate-1 bg-white shadow-[0_0_0_2px_#ddd7a7]" />
             <span className="absolute left-[8%] top-[34%] h-3 w-[88%] -rotate-2 bg-white shadow-[0_0_0_2px_#ddd7a7]" />
@@ -822,7 +892,7 @@ function MapPreview({ href }: { href: string }) {
             <span className="absolute left-[45%] top-[-10%] h-[130%] w-px -rotate-12 bg-lime-200" />
             <span className="absolute left-[70%] top-[-10%] h-[130%] w-px -rotate-12 bg-lime-200" />
             <MapPin
-                className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 fill-red-500 text-red-700 drop-shadow"
+                className="absolute left-1/2 top-[50%] h-16 w-16 -translate-x-1/2 -translate-y-1/2 fill-red-500 text-red-700 drop-shadow"
                 aria-hidden
             />
         </a>
@@ -849,15 +919,15 @@ function FileDropZone({
     };
 
     return (
-        <div className="grid gap-2">
+        <div className="grid gap-3">
             <label
                 htmlFor={inputId}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-yellow-600 bg-white px-4 text-center text-base font-black text-black transition hover:bg-yellow-50 focus-within:ring-2 focus-within:ring-yellow-500"
+                className="inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-white px-4 text-center text-lg font-black leading-snug text-black transition hover:bg-yellow-50 focus-within:ring-2 focus-within:ring-yellow-500 active:translate-y-px"
             >
-                <Upload className="h-5 w-5" aria-hidden />
-                <span>ファイルをまとめてドラッグ＆ドロップ</span>
+                <Upload className="h-5 w-5 shrink-0" aria-hidden />
+                <span>ファイルを選択、またはまとめてドラッグ＆ドロップ</span>
                 <input
                     id={inputId}
                     type="file"
@@ -868,9 +938,9 @@ function FileDropZone({
                 />
             </label>
             {droppedFileNames.length > 0 ? (
-                <ul className="grid gap-1 text-sm font-bold text-neutral-700">
+                <ul className="grid gap-2 rounded-[4px] border border-yellow-300 bg-yellow-50 p-3 text-base font-bold leading-relaxed text-stone-800">
                     {droppedFileNames.map((fileName) => (
-                        <li key={fileName} className="truncate">
+                        <li key={fileName} className="break-all">
                             {fileName}
                         </li>
                     ))}
@@ -885,30 +955,30 @@ function ProjectDeleteConfirmDialog({
     onConfirm,
 }: ProjectDeleteConfirmDialogProps) {
     return (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 px-4">
             <div
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="lumilabo-project-delete-dialog-title"
-                className="grid w-full max-w-sm gap-4 rounded-md border border-red-300 bg-white p-4 text-black shadow-xl"
+                className="grid w-full max-w-sm gap-4 rounded-[6px] border border-red-300 bg-white p-5 text-black shadow-xl shadow-red-950/20"
             >
                 <h2
                     id="lumilabo-project-delete-dialog-title"
-                    className="text-center text-xl font-black"
+                    className="text-center text-2xl font-black leading-tight"
                 >
                     {lumiLaboProjectDeleteConfirmMessage}
                 </h2>
                 <div className="grid gap-2">
                     <button
                         type="button"
-                        className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        className="inline-flex min-h-14 w-full items-center justify-center rounded-[6px] border border-stone-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                         onClick={onCancel}
                     >
                         {lumiLaboProjectDeleteConfirmNoLabel}
                     </button>
                     <button
                         type="button"
-                        className="inline-flex min-h-12 w-full items-center justify-center rounded-md border border-red-700 bg-red-600 px-5 text-lg font-black text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                        className="inline-flex min-h-14 w-full items-center justify-center rounded-[6px] border border-red-700 bg-red-600 px-5 text-lg font-black text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
                         onClick={onConfirm}
                     >
                         {lumiLaboProjectDeleteConfirmYesLabel}
@@ -931,30 +1001,30 @@ function SavedPhotoPreview({
     }
 
     return (
-        <section className="grid gap-2">
-            <h2 className="text-base font-black text-black">写真</h2>
+        <section className="mt-4 grid gap-3 rounded-[4px] border border-stone-200 bg-white/80 p-3">
+            <h3 className="text-xl font-black text-black">保存済み写真</h3>
             <div className="flex flex-wrap gap-3">
                 {projectDetail.savedPhotos.map((photo) => (
-                    <div key={photo.id} className="relative h-20 w-28">
+                    <div key={photo.id} className="relative h-24 w-32">
                         <div
                             role="img"
                             aria-label={photo.alt}
-                            className="relative h-full w-full overflow-hidden rounded-md border border-neutral-300 bg-sky-100"
+                            className="relative h-full w-full overflow-hidden rounded-[4px] border border-stone-300 bg-sky-100"
                         >
-                            <span className="absolute left-2 top-2 inline-flex h-6 min-w-8 items-center justify-center rounded-md bg-white px-2 text-sm font-black text-black">
+                            <span className="absolute left-2 top-2 inline-flex h-7 min-w-9 items-center justify-center rounded-[4px] bg-white px-2 text-base font-black text-black">
                                 {photo.label}
                             </span>
-                            <span className="absolute right-2 top-3 h-5 w-5 rounded-full bg-yellow-200" />
-                            <span className="absolute bottom-3 left-2 h-0 w-0 border-b-[28px] border-l-[46px] border-r-[28px] border-b-green-600 border-l-transparent border-r-transparent" />
-                            <span className="absolute bottom-3 left-9 h-0 w-0 border-b-[22px] border-l-[34px] border-r-[34px] border-b-green-700 border-l-transparent border-r-transparent" />
+                            <span className="absolute right-3 top-[50%] h-5 w-5 rounded-full bg-yellow-200" />
+                            <span className="absolute bottom-3 left-2 h-0 w-0 border-b-[32px] border-l-[52px] border-r-[30px] border-b-green-600 border-l-transparent border-r-transparent" />
+                            <span className="absolute bottom-3 left-9 h-0 w-0 border-b-[26px] border-l-[38px] border-r-[38px] border-b-green-700 border-l-transparent border-r-transparent" />
                         </div>
                         <button
                             type="button"
                             aria-label={photo.alt + 'を削除'}
-                            className="absolute right-1 top-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                            className="absolute right-1 top-1 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
                             onClick={() => onRemoveSavedPhoto(photo.id)}
                         >
-                            <X className="h-4 w-4" aria-hidden />
+                            <X className="h-5 w-5" aria-hidden />
                         </button>
                     </div>
                 ))}
@@ -975,34 +1045,38 @@ function SavedFilePreview({
     }
 
     return (
-        <section className="grid gap-2">
-            <h2 className="text-base font-black text-black">ファイル</h2>
+        <section className="mt-4 grid gap-3 rounded-[4px] border border-stone-200 bg-white/80 p-3">
+            <h3 className="text-xl font-black text-black">保存済みファイル</h3>
             <div className="grid gap-2">
                 {projectDetail.savedFiles.map((file) => (
                     <div
                         key={file.id}
-                        className="relative flex min-h-14 items-center gap-3 rounded-md border border-neutral-300 bg-white px-3 pr-12 text-black"
+                        className="relative flex min-h-16 items-center gap-3 rounded-[4px] border border-stone-300 bg-white px-3 py-2 pr-14 text-black"
                     >
-                        <span className="inline-flex h-10 min-w-10 items-center justify-center rounded-md border border-neutral-300 bg-white px-1 text-xs font-black">
+                        <span className="inline-flex h-11 min-w-12 items-center justify-center rounded-[4px] border border-stone-300 bg-stone-50 px-2 text-sm font-black">
                             {file.fileTypeLabel}
                         </span>
-                        <FileText className="h-5 w-5 shrink-0" aria-hidden />
-                        <span className="min-w-0 truncate text-base font-black">
+                        <FileText className="h-6 w-6 shrink-0" aria-hidden />
+                        <span className="min-w-0 break-all text-lg font-black leading-snug">
                             {file.fileName}
                         </span>
                         <button
                             type="button"
                             aria-label={file.fileName + 'を削除'}
-                            className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                            className="absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
                             onClick={() => onRemoveSavedFile(file.id)}
                         >
-                            <X className="h-4 w-4" aria-hidden />
+                            <X className="h-5 w-5" aria-hidden />
                         </button>
                     </div>
                 ))}
             </div>
         </section>
     );
+}
+
+function getProjectDetailControlClasses(): string {
+    return 'min-h-14 w-full rounded-[4px] border border-stone-300 bg-white px-3 py-3 text-lg font-semibold leading-relaxed text-black placeholder:text-stone-500 focus:border-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300';
 }
 
 function ProjectRegisterPanel({ onBack, backTargetId }: BackActionProps) {
