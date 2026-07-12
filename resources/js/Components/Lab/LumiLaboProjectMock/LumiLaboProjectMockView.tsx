@@ -116,6 +116,13 @@ type ProjectDetailPanelProps = BackActionProps & {
     onConfirmDeleteProject: () => void;
 };
 
+type ProjectDetailSaveBarProps = {
+    statusLabel: string;
+    hasUnsavedChanges: boolean;
+    isSaving: boolean;
+    onSave: () => void;
+};
+
 type ProjectDeleteConfirmDialogProps = {
     onCancel: () => void;
     onConfirm: () => void;
@@ -658,6 +665,7 @@ function ProjectDetailPanel({
           : hasUnsavedChanges
             ? lumiLaboProjectDetailEditingLabel
             : null;
+    const shouldShowSaveBar = statusLabel !== null || hasUnsavedChanges;
 
     return (
         <section className="relative h-full min-h-0 overflow-y-auto bg-[#f6efdd] px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
@@ -666,8 +674,10 @@ function ProjectDetailPanel({
                 className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(87,77,56,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(87,77,56,0.06)_1px,transparent_1px)] bg-[size:28px_28px]"
             />
             <div className="relative mx-auto flex min-h-full w-full max-w-5xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                {shouldShowSaveBar && statusLabel ? <ProjectDetailSaveBar statusLabel={statusLabel} hasUnsavedChanges={hasUnsavedChanges} isSaving={isSaving} onSave={onSave} /> : null}
+
                 <header className="rounded-[8px] border border-stone-300 border-l-[6px] border-l-yellow-300 bg-[#fffdf7] p-4 text-black shadow-sm shadow-stone-900/10 sm:p-5">
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,auto)] lg:items-start">
+                    <div className="grid gap-4">
                         <div className="grid min-w-0 gap-3">
                             <button
                                 type="button"
@@ -699,43 +709,6 @@ function ProjectDetailPanel({
                                 </div>
                             </div>
                         </div>
-
-                        {statusLabel || hasUnsavedChanges ? (
-                            <div className="grid gap-3">
-                                {statusLabel ? (
-                                    <p
-                                        role="status"
-                                        aria-live="polite"
-                                        className={classNames(
-                                            'text-lg font-black',
-                                            isSaving
-                                                ? 'text-yellow-900'
-                                                : saveMessageVisible
-                                                  ? 'text-lime-800'
-                                                  : 'text-yellow-900',
-                                        )}
-                                    >
-                                        {statusLabel}
-                                    </p>
-                                ) : null}
-
-                                {hasUnsavedChanges ? (
-                                    <button
-                                        type="button"
-                                        className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70"
-                                        onClick={onSave}
-                                        disabled={isSaving}
-                                    >
-                                        <Save className="h-5 w-5" aria-hidden />
-                                        <span>
-                                            {isSaving
-                                                ? lumiLaboProjectDetailSavingLabel
-                                                : lumiLaboProjectDetailSaveLabel}
-                                        </span>
-                                    </button>
-                                ) : null}
-                            </div>
-                        ) : null}
                     </div>
                 </header>
 
@@ -828,6 +801,53 @@ function ProjectDetailPanel({
                 ) : null}
             </div>
         </section>
+    );
+}
+
+function ProjectDetailSaveBar({
+    statusLabel,
+    hasUnsavedChanges,
+    isSaving,
+    onSave,
+}: ProjectDetailSaveBarProps) {
+    return (
+        <div
+            className="sticky top-0 z-20 rounded-[8px] border border-yellow-200/80 bg-white/85 p-2.5 text-black shadow-sm shadow-stone-900/10 backdrop-blur-md sm:p-3"
+            data-lumilabo-save-bar="true"
+        >
+            <div
+                className={classNames(
+                    'grid min-h-12 items-center gap-3',
+                    hasUnsavedChanges
+                        ? 'grid-cols-[minmax(0,1fr)_auto]'
+                        : 'grid-cols-1',
+                )}
+            >
+                <p
+                    role="status"
+                    aria-live="polite"
+                    className="inline-flex min-w-0 items-center gap-2 rounded-full border border-yellow-200 bg-yellow-50/90 px-3 py-2 text-base font-black leading-tight text-yellow-950 sm:text-lg"
+                >
+                    <span
+                        aria-hidden
+                        className="h-2.5 w-2.5 shrink-0 rounded-full bg-yellow-300 shadow-[0_0_0_4px_rgba(253,224,71,0.2)]"
+                    />
+                    <span className="min-w-0 truncate">{statusLabel}</span>
+                </p>
+
+                {hasUnsavedChanges ? (
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-yellow-300 px-4 text-base font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-36 sm:px-5 sm:text-lg"
+                        onClick={onSave}
+                        disabled={isSaving}
+                    >
+                        <Save className="h-5 w-5 shrink-0" aria-hidden />
+                        <span>{lumiLaboProjectDetailSaveLabel}</span>
+                    </button>
+                ) : null}
+            </div>
+        </div>
     );
 }
 
@@ -933,7 +953,10 @@ function FileDropZone({
                 className="inline-flex min-h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-white px-4 text-center text-lg font-black leading-snug text-black transition hover:bg-yellow-50 focus-within:ring-2 focus-within:ring-yellow-500 active:translate-y-px"
             >
                 <Upload className="h-5 w-5 shrink-0" aria-hidden />
-                <span>ファイルを選択、またはまとめてドラッグ＆ドロップ</span>
+                <span className="md:hidden">ファイルを選択</span>
+                <span className="hidden md:inline">
+                    ファイルを選択、またはまとめてドラッグ＆ドロップ
+                </span>
                 <input
                     id={inputId}
                     type="file"
