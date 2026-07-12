@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-    createLumiLaboProjectDetail,
     lumiLaboGlobalTabs,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
@@ -101,33 +100,6 @@ describe('LumiLaboProjectMock data', () => {
         ]);
         expect(lumiLaboProjectRegisterPanel.fields[0].requirementLabel).toBe('必須');
         expect(lumiLaboProjectRegisterPanel.fields[1].requirementLabel).toBe('任意');
-    });
-
-    it('creates a selected project detail with the shared saved photo and file fixture', () => {
-        const selectedProjectDetail = createLumiLaboProjectDetail({
-            id: 'mock-project-020',
-            companyName: '高槻木工',
-            contactName: '清水 恒一',
-            address: '大阪府高槻市芥川町 2-16-4',
-            memo: '収納改修の図面を確認。',
-            registeredDate: '2026/06/20',
-        }, {
-            companyName: '高槻木工 改訂',
-            contactName: '清水 恒一',
-            address: '大阪府高槻市芥川町 2-16-4',
-            memo: '保存済みのメモ',
-        });
-
-        expect(selectedProjectDetail.id).toBe('mock-project-020');
-        expect(selectedProjectDetail.companyName).toBe('高槻木工 改訂');
-        expect(selectedProjectDetail.memo).toBe('保存済みのメモ');
-        expect(selectedProjectDetail.registeredDate).toBe('2026/06/20');
-        expect(selectedProjectDetail.savedPhotos).toBe(
-            lumiLaboProjectDetail.savedPhotos,
-        );
-        expect(selectedProjectDetail.savedFiles).toBe(
-            lumiLaboProjectDetail.savedFiles,
-        );
     });
 
     it('defines a single project detail mock with saved preview data', () => {

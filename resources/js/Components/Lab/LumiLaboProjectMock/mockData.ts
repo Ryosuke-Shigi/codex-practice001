@@ -1,9 +1,7 @@
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectDetail,
-    LumiLaboMockProjectDetailDraft,
     LumiLaboMockProjectItem,
-    LumiLaboMockProjectListItem,
     LumiLaboMockProjectRegisterPanel,
     LumiLaboMockProjectTabId,
     LumiLaboMockTab,
@@ -93,22 +91,6 @@ export const lumiLaboProjectDetail = {
         { id: 'site-file-2', fileName: '現場参考メモ.xlsx', fileTypeLabel: 'XLS' },
     ],
 } as const satisfies LumiLaboMockProjectDetail;
-
-export function createLumiLaboProjectDetail(
-    project: LumiLaboMockProjectListItem,
-    override?: LumiLaboMockProjectDetailDraft,
-): LumiLaboMockProjectDetail {
-    return {
-        id: project.id,
-        companyName: override?.companyName ?? project.companyName,
-        contactName: override?.contactName ?? project.contactName,
-        address: override?.address ?? project.address,
-        memo: override?.memo ?? project.memo,
-        registeredDate: project.registeredDate,
-        savedPhotos: lumiLaboProjectDetail.savedPhotos,
-        savedFiles: lumiLaboProjectDetail.savedFiles,
-    };
-}
 
 export const lumiLaboProjectDetailSavedMessage = '保存しました';
 

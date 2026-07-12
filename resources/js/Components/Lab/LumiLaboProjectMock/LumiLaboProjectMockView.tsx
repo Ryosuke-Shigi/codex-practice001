@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
     ArrowLeft,
     Camera,
+    ChevronRight,
     FilePlus2,
     FileText,
     FolderKanban,
@@ -20,7 +21,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
-    createLumiLaboProjectDetail,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
     lumiLaboProjectDeleteActionLabel,
@@ -38,15 +38,12 @@ import {
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
 } from './mockData';
-import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectDetail,
     LumiLaboMockProjectDetailDraft,
     LumiLaboMockProjectDetailEditableFieldId,
     LumiLaboMockProjectDetailReturnTarget,
-    LumiLaboMockProjectList,
-    LumiLaboMockProjectListItem,
     LumiLaboMockProjectRegisterField,
     LumiLaboMockProjectTabId,
     LumiLaboMockProjectViewId,
@@ -93,6 +90,10 @@ type ProjectEntryPanelProps = BackActionProps & {
     onSelectProjectTab: (tabId: ProjectActionTabId) => void;
 };
 
+type ProjectListPanelProps = BackActionProps & {
+    projectDetail: LumiLaboMockProjectDetail | null;
+    onOpenProjectDetail: () => void;
+};
 
 type ProjectDetailPanelProps = BackActionProps & {
     projectDetail: LumiLaboMockProjectDetail;
@@ -164,13 +165,7 @@ const projectDetailTextFields = [
     { id: 'memo', label: 'メモ', control: 'textarea', rows: 4 },
 ] as const satisfies readonly ProjectDetailTextFieldConfig[];
 
-type LumiLaboProjectMockViewProps = {
-    projectList: LumiLaboMockProjectList;
-};
-
-export default function LumiLaboProjectMockView({
-    projectList,
-}: LumiLaboProjectMockViewProps) {
+export default function LumiLaboProjectMockView() {
     const [activeScreen, setActiveScreen] =
         useState<LumiLaboMockScreen>('top');
     const [activeProjectTabId, setActiveProjectTabId] =
@@ -181,21 +176,12 @@ export default function LumiLaboProjectMockView({
         useState<LumiLaboMockProjectDetailReturnTarget>(
             lumiLaboProjectListReturnTarget,
         );
-    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-        null,
-    );
     const [projectDetail, setProjectDetail] =
-        useState<LumiLaboMockProjectDetail | null>(null);
+        useState<LumiLaboMockProjectDetail | null>(lumiLaboProjectDetail);
     const [projectDetailDraft, setProjectDetailDraft] =
         useState<LumiLaboMockProjectDetailDraft>(
             createProjectDetailDraft(lumiLaboProjectDetail),
         );
-    const [projectOverrides, setProjectOverrides] = useState<
-        Record<string, LumiLaboMockProjectDetailDraft | undefined>
-    >({});
-    const [deletedProjectIds, setDeletedProjectIds] = useState<ReadonlySet<string>>(
-        new Set(),
-    );
     const [isProjectDetailSaving, setIsProjectDetailSaving] = useState(false);
     const [projectDetailSavedVisible, setProjectDetailSavedVisible] =
         useState(false);
@@ -255,17 +241,7 @@ export default function LumiLaboProjectMockView({
         setActiveScreen('project');
     };
 
-    const openProjectDetailFromList = (
-        project: LumiLaboMockProjectListItem,
-    ) => {
-        const detail = createLumiLaboProjectDetail(
-            project,
-            projectOverrides[project.id],
-        );
-
-        setSelectedProjectId(project.id);
-        setProjectDetail(detail);
-        setProjectDetailDraft(createProjectDetailDraft(detail));
+    const openProjectDetailFromList = () => {
         setProjectDetailReturnTarget(lumiLaboProjectListReturnTarget);
         setActiveProjectTabId('list');
         setActiveProjectViewId('detail');
@@ -291,15 +267,11 @@ export default function LumiLaboProjectMockView({
     const saveProjectDetail = () => {
         if (
             projectDetail === null ||
-            selectedProjectId === null ||
             isProjectDetailSaving ||
             !hasProjectDetailChanges
         ) {
             return;
         }
-
-        const savedProjectId = selectedProjectId;
-        const savedDraft = projectDetailDraft;
 
         clearMockTimer(saveCompleteTimerRef);
         clearMockTimer(saveMessageTimerRef);
@@ -313,13 +285,9 @@ export default function LumiLaboProjectMockView({
 
                 return {
                     ...current,
-                    ...savedDraft,
+                    ...projectDetailDraft,
                 };
             });
-            setProjectOverrides((current) => ({
-                ...current,
-                [savedProjectId]: savedDraft,
-            }));
             setIsProjectDetailSaving(false);
             setProjectDetailSavedVisible(true);
             saveCompleteTimerRef.current = null;
@@ -372,21 +340,8 @@ export default function LumiLaboProjectMockView({
     };
 
     const confirmProjectDelete = () => {
-        if (projectDetail === null) {
-            return;
-        }
-
-        const deletedProjectId = projectDetail.id;
-
         clearMockTimer(saveCompleteTimerRef);
         clearMockTimer(saveMessageTimerRef);
-        setDeletedProjectIds((current) => {
-            const next = new Set(current);
-            next.add(deletedProjectId);
-
-            return next;
-        });
-        setSelectedProjectId(null);
         setProjectDetail(null);
         setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
         setIsProjectDetailSaving(false);
@@ -442,10 +397,8 @@ export default function LumiLaboProjectMockView({
                 ) : null}
 
                 {activeScreen === 'project' && activeProjectViewId === 'list' ? (
-                    <LumiLaboProjectListPanel
-                        projectList={projectList}
-                        projectOverrides={projectOverrides}
-                        deletedProjectIds={deletedProjectIds}
+                    <ProjectListPanel
+                        projectDetail={projectDetail}
                         backTargetId="project-top"
                         onOpenProjectDetail={openProjectDetailFromList}
                         onBack={handleBackFromProjectList}
@@ -610,6 +563,74 @@ function ProjectEntryPanel({
                     <ArrowLeft className="h-5 w-5" aria-hidden />
                     <span>{lumiLaboProjectBackLabel}</span>
                 </button>
+            </div>
+        </section>
+    );
+}
+
+function ProjectListPanel({
+    projectDetail,
+    onOpenProjectDetail,
+    onBack,
+    backTargetId,
+}: ProjectListPanelProps) {
+    return (
+        <section className="h-full min-h-0 overflow-y-auto px-4 py-4 [@media(orientation:landscape)_and_(max-height:480px)]:py-3 sm:px-6 sm:py-6">
+            <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
+                <header className="grid gap-1">
+                    <p className="text-sm font-black text-yellow-800">
+                        {lumiLaboProjectItem.label}
+                    </p>
+                    <h1 className="text-2xl font-black leading-tight text-black sm:text-3xl">
+                        案件一覧
+                    </h1>
+                </header>
+
+                <div className="grid gap-3">
+                    {projectDetail ? (
+                        <button
+                            type="button"
+                            aria-label={projectDetail.companyName + 'の案件詳細を開く'}
+                            className="group flex min-h-16 w-full min-w-0 items-center justify-between gap-3 rounded-md border border-neutral-300 bg-white px-4 py-3 text-left text-black shadow-sm transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                            onClick={onOpenProjectDetail}
+                        >
+                            <span className="flex min-w-0 flex-1 items-baseline gap-2 overflow-hidden whitespace-nowrap">
+                                <span className="max-w-[46%] shrink-0 truncate text-lg font-black sm:max-w-none">
+                                    {projectDetail.companyName}
+                                </span>
+                                <span className="shrink-0 text-sm font-black text-neutral-700 sm:text-base">
+                                    担当者：{projectDetail.contactName}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-600 sm:text-base">
+                                    メモ：{projectDetail.memo}
+                                </span>
+                            </span>
+                            <ChevronRight
+                                className="h-5 w-5 shrink-0 text-yellow-800 transition group-hover:translate-x-0.5"
+                                aria-hidden
+                            />
+                        </button>
+                    ) : (
+                        <p
+                            role="status"
+                            className="rounded-md border border-neutral-300 bg-neutral-50 px-4 py-3 text-base font-black text-neutral-700"
+                        >
+                            表示できる案件はありません
+                        </p>
+                    )}
+                </div>
+
+                <div className="mt-auto grid gap-2 pt-1 sm:max-w-sm">
+                    <button
+                        type="button"
+                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                        data-lumilabo-back-target={backTargetId}
+                        onClick={onBack}
+                    >
+                        <ArrowLeft className="h-5 w-5" aria-hidden />
+                        <span>{lumiLaboProjectBackLabel}</span>
+                    </button>
+                </div>
             </div>
         </section>
     );
