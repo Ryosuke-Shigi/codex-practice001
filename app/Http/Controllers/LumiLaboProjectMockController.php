@@ -25,6 +25,7 @@ class LumiLaboProjectMockController extends Controller
             $request->page(),
             $request->perPage(),
             $request->deletedProjectIds(),
+            $request->projectOverrides(),
         ));
     }
 }

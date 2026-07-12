@@ -154,6 +154,10 @@ class LumiLaboProjectMockTest extends TestCase
                 ->has('projectList.items', 3)
                 ->where('projectList.items.0.id', 'mock-project-004')
                 ->where('projectList.showPagination', true)
+                ->where('initialDeletedProjectIds', [
+                    'mock-project-002',
+                    'mock-project-003',
+                ])
             );
 
         $this
@@ -200,6 +204,48 @@ class LumiLaboProjectMockTest extends TestCase
             );
     }
 
+    public function test_saved_project_overrides_are_used_for_server_side_search_and_list_items(): void
+    {
+        $overrides = [
+            [
+                'id' => 'mock-project-001',
+                'company_name' => '新会社',
+                'contact_name' => '新しい担当者',
+                'address' => '大阪府新住所',
+                'memo' => '新しいメモ',
+            ],
+        ];
+
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 20,
+                'keyword' => '新会社 新しい担当者 大阪府新住所 新しいメモ',
+                'overrides' => $overrides,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 1)
+                ->where('projectList.items.0.id', 'mock-project-001')
+                ->where('projectList.items.0.companyName', '新会社')
+                ->where('projectList.items.0.contactName', '新しい担当者')
+                ->where('projectList.items.0.address', '大阪府新住所')
+                ->where('projectList.items.0.memo', '新しいメモ')
+                ->where('initialProjectOverrides.0.id', 'mock-project-001')
+                ->where('initialProjectOverrides.0.companyName', '新会社')
+            );
+
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 20,
+                'keyword' => 'ルミラボ工務店',
+                'overrides' => $overrides,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 0)
+            );
+    }
+
     public function test_invalid_query_values_are_validation_errors(): void
     {
         $this
@@ -227,8 +273,40 @@ class LumiLaboProjectMockTest extends TestCase
             ->assertSessionHasErrors(['deleted_ids.0']);
 
         $this
+            ->from('/lab/lumilabo-project-mock')
+            ->get('/lab/lumilabo-project-mock?overrides[0][id]=mock-project-001&overrides[0][company_name]=新会社')
+            ->assertRedirect('/lab/lumilabo-project-mock')
+            ->assertSessionHasErrors([
+                'overrides.0.contact_name',
+                'overrides.0.address',
+                'overrides.0.memo',
+            ]);
+
+        $this
             ->get('/lab/lumilabo-project-mock?per_page=20&deleted_ids[]=mock-project-999')
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('projectList.items', 20));
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 20)
+                ->where('initialDeletedProjectIds', [])
+            );
+
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 20,
+                'overrides' => [
+                    [
+                        'id' => 'mock-project-999',
+                        'company_name' => '存在しない会社',
+                        'contact_name' => '存在しない担当者',
+                        'address' => '存在しない住所',
+                        'memo' => '存在しないメモ',
+                    ],
+                ],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 20)
+                ->where('initialProjectOverrides', [])
+            );
     }
 }

@@ -78,6 +78,10 @@ export type LumiLaboMockProjectDetailDraft = Record<
     string
 >;
 
+export type LumiLaboMockProjectOverride = LumiLaboMockProjectDetailDraft & {
+    id: string;
+};
+
 export type LumiLaboMockProjectSavedPhoto = {
     id: string;
     label: string;

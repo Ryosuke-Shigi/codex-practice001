@@ -23,7 +23,7 @@ type RenderMockViewOptions = {
     projectOverrides?: Record<string, LumiLaboMockProjectDetailDraft | undefined>;
     deletedProjectIds?: ReadonlySet<string>;
     isSearchDialogOpen?: boolean;
-    shouldRefreshForDeletedProjects?: boolean;
+    shouldRefreshProjectList?: boolean;
     listIsLoading?: boolean;
     droppedFileNames?: readonly string[];
     isDeleteDialogOpen?: boolean;
@@ -164,7 +164,7 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 15) {
-                        return [options.shouldRefreshForDeletedProjects ?? false, vi.fn()];
+                        return [options.shouldRefreshProjectList ?? false, vi.fn()];
                     }
 
                     if (stateCall === 16) {
@@ -186,7 +186,11 @@ async function renderMockViewMarkup(
     );
 
     return renderToStaticMarkup(
-        <LumiLaboProjectMockView projectList={options.projectList ?? testProjectList} />,
+        <LumiLaboProjectMockView
+            projectList={options.projectList ?? testProjectList}
+            initialDeletedProjectIds={[]}
+            initialProjectOverrides={[]}
+        />,
     );
 }
 
@@ -322,11 +326,31 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('role="dialog"');
         expect(markup).toContain('案件を検索');
         expect(markup).toContain('一覧を更新しています');
-        expect(markup).toContain('sm:order-2');
-        expect(markup).toContain('sm:order-1');
-        expect(markup.indexOf('>検索</button>')).toBeLessThan(
-            markup.indexOf('>閉じる</button>'),
+        const mobileActionsStart = markup.indexOf(
+            'class="mt-5 grid gap-3 sm:hidden"',
         );
+        const desktopActionsStart = markup.indexOf(
+            'class="mt-5 hidden gap-3 sm:grid sm:grid-cols-2"',
+        );
+        const mobileActions = markup.slice(
+            mobileActionsStart,
+            desktopActionsStart,
+        );
+        const desktopActions = markup.slice(desktopActionsStart);
+
+        expect(mobileActionsStart).toBeGreaterThan(-1);
+        expect(desktopActionsStart).toBeGreaterThan(mobileActionsStart);
+        expect(mobileActions).not.toContain('sm:order-');
+        expect(desktopActions).not.toContain('sm:order-');
+        expect(mobileActions.indexOf('>検索</button>')).toBeLessThan(
+            mobileActions.indexOf('>閉じる</button>'),
+        );
+        expect(desktopActions.indexOf('>閉じる</button>')).toBeLessThan(
+            desktopActions.indexOf('>検索</button>'),
+        );
+        expect(mobileActions).toMatch(/<button type="submit"[^>]*>検索<\/button>/);
+        expect(desktopActions).toMatch(/<button type="submit"[^>]*>検索<\/button>/);
+        expect(markup).toMatch(/<button type="button"[^>]*>閉じる<\/button>/);
         expect(markup).not.toContain('＜＜');
         expect(markup).not.toContain('＞＞');
         expect(markup).not.toContain('aria-label="検索を閉じる"');
@@ -349,20 +373,21 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('＞＞');
     });
 
-    it('applies ID-specific saved overrides and deleted IDs to the current list page', async () => {
+    it('uses the Laravel-returned saved values and hides stale rows during a refresh', async () => {
         const overriddenMarkup = await renderMockViewMarkup('project', 'list', {
-            projectOverrides: {
-                'mock-project-001': {
-                    companyName: 'ルミラボ工務店 保存後',
-                    contactName: '山田 太郎',
-                    address: '大阪府岸和田市上町 1-2-3',
-                    memo: '保存済みのメモ',
-                },
+            projectList: {
+                ...testProjectList,
+                items: [
+                    {
+                        ...testProjectList.items[0],
+                        companyName: 'ルミラボ工務店 保存後',
+                    },
+                ],
             },
         });
         const deletedMarkup = await renderMockViewMarkup('project', 'list', {
             deletedProjectIds: new Set(['mock-project-001']),
-            shouldRefreshForDeletedProjects: true,
+            shouldRefreshProjectList: true,
         });
 
         expect(overriddenMarkup).toContain('ルミラボ工務店 保存後');

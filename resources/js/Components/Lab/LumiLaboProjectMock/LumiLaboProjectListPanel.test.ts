@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
     calculateLumiLaboProjectListPerPage,
+    createLumiLaboProjectListRequestCallbacks,
     createLumiLaboProjectListRequestData,
     shouldReloadLumiLaboProjectList,
     LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
@@ -19,6 +20,14 @@ describe("LumiLaboProjectListPanel measurement and partial reload contract", () 
                     perPage: 7,
                 },
                 ["mock-project-001", "mock-project-004"],
+                {
+                    "mock-project-002": {
+                        companyName: "保存後の会社名",
+                        contactName: "保存後の担当者名",
+                        address: "保存後の住所",
+                        memo: "保存後のメモ",
+                    },
+                },
             ),
         ).toEqual({
             keyword: undefined,
@@ -26,6 +35,15 @@ describe("LumiLaboProjectListPanel measurement and partial reload contract", () 
             page: 2,
             per_page: 7,
             deleted_ids: ["mock-project-001", "mock-project-004"],
+            overrides: [
+                {
+                    id: "mock-project-002",
+                    company_name: "保存後の会社名",
+                    contact_name: "保存後の担当者名",
+                    address: "保存後の住所",
+                    memo: "保存後のメモ",
+                },
+            ],
         });
     });
     it("calculates a whole-row page size from the list region and row height", () => {
@@ -49,5 +67,37 @@ describe("LumiLaboProjectListPanel measurement and partial reload contract", () 
 
     it("reloads only the server-owned project list props", () => {
         expect(LUMILABO_PROJECT_LIST_PARTIAL_PROPS).toEqual(["projectList"]);
+    });
+
+    it("treats only a successful refresh as complete and preserves the failed request for retry", () => {
+        const requestData = createLumiLaboProjectListRequestData(
+            {
+                keyword: "岸和田",
+                sort: "registered_asc",
+                page: 2,
+                perPage: 5,
+            },
+            ["mock-project-001"],
+        );
+        const completed: string[] = [];
+        const failedRequests: unknown[] = [];
+        const callbacks = createLumiLaboProjectListRequestCallbacks(
+            requestData,
+            {
+                onSuccess: () => completed.push("success"),
+                onFailure: (failedRequest) =>
+                    failedRequests.push(failedRequest),
+            },
+        );
+
+        callbacks.onError();
+        callbacks.onCancel();
+
+        expect(completed).toEqual([]);
+        expect(failedRequests).toEqual([requestData, requestData]);
+
+        callbacks.onSuccess();
+
+        expect(completed).toEqual(["success"]);
     });
 });

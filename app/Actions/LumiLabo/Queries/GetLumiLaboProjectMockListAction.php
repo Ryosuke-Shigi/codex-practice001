@@ -189,7 +189,9 @@ final readonly class GetLumiLaboProjectMockListAction
      *     previousPage: ?int,
      *     hasNext: bool,
      *     nextPage: ?int,
-     *     showPagination: bool
+     *     showPagination: bool,
+     *     initialDeletedProjectIds: array<int, string>,
+     *     initialProjectOverrides: array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string}>
      * }
      */
     public function execute(
@@ -198,11 +200,19 @@ final readonly class GetLumiLaboProjectMockListAction
         int $page,
         ?int $perPage,
         array $deletedProjectIds = [],
+        array $projectOverrides = [],
     ): array {
         $terms = $this->splitSearchTerms($keyword);
-        $projects = $this->excludeDeletedProjects(
-            $this->filteredProjects($terms),
-            $deletedProjectIds,
+        $initialDeletedProjectIds = $this->knownProjectIds($deletedProjectIds);
+        $initialProjectOverrides = $this->knownProjectOverrides(
+            $projectOverrides,
+        );
+        $projects = $this->filteredProjects(
+            $this->excludeDeletedProjects(
+                $this->projectsWithOverrides($initialProjectOverrides),
+                $initialDeletedProjectIds,
+            ),
+            $terms,
         );
         $this->sortProjects($projects, $sort);
 
@@ -219,6 +229,8 @@ final readonly class GetLumiLaboProjectMockListAction
                 'hasNext' => false,
                 'nextPage' => null,
                 'showPagination' => false,
+                'initialDeletedProjectIds' => $initialDeletedProjectIds,
+                'initialProjectOverrides' => $initialProjectOverrides,
             ];
         }
 
@@ -242,6 +254,8 @@ final readonly class GetLumiLaboProjectMockListAction
             'hasNext' => $currentPage < $totalPages,
             'nextPage' => $currentPage < $totalPages ? $currentPage + 1 : null,
             'showPagination' => count($projects) > $perPage,
+            'initialDeletedProjectIds' => $initialDeletedProjectIds,
+            'initialProjectOverrides' => $initialProjectOverrides,
         ];
     }
 
@@ -261,44 +275,110 @@ final readonly class GetLumiLaboProjectMockListAction
     }
 
     /**
+     * @return array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string, order: int}>
+     */
+    private function projectsWithOverrides(array $projectOverrides): array
+    {
+        $overridesByProjectId = array_column($projectOverrides, null, 'id');
+
+        return array_map(
+            fn (array $project, int $order): array => [
+                ...$project,
+                ...($overridesByProjectId[$project['id']] ?? []),
+                'order' => $order,
+            ],
+            self::PROJECTS,
+            array_keys(self::PROJECTS),
+        );
+    }
+
+    /**
+     * @param  array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string, order: int}>  $projects
      * @param  array<int, string>  $terms
      * @return array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string, order: int}>
      */
-    private function filteredProjects(array $terms): array
+    private function filteredProjects(array $projects, array $terms): array
     {
-        return array_values(array_filter(
-            array_map(
-                fn (array $project, int $order): array => [...$project, 'order' => $order],
-                self::PROJECTS,
-                array_keys(self::PROJECTS),
-            ),
-            function (array $project) use ($terms): bool {
-                $searchableValues = [
-                    $project['companyName'],
-                    $project['contactName'],
-                    $project['address'],
-                    $project['memo'],
-                ];
+        return array_values(array_filter($projects, function (array $project) use ($terms): bool {
+            $searchableValues = [
+                $project['companyName'],
+                $project['contactName'],
+                $project['address'],
+                $project['memo'],
+            ];
 
-                foreach ($terms as $term) {
-                    $matchesTerm = false;
+            foreach ($terms as $term) {
+                $matchesTerm = false;
 
-                    foreach ($searchableValues as $value) {
-                        if (str_contains($value, $term)) {
-                            $matchesTerm = true;
+                foreach ($searchableValues as $value) {
+                    if (str_contains($value, $term)) {
+                        $matchesTerm = true;
 
-                            break;
-                        }
-                    }
-
-                    if (! $matchesTerm) {
-                        return false;
+                        break;
                     }
                 }
 
-                return true;
-            },
-        ));
+                if (! $matchesTerm) {
+                    return false;
+                }
+            }
+
+            return true;
+        }));
+    }
+
+    /**
+     * @param  array<int, string>  $projectIds
+     * @return array<int, string>
+     */
+    private function knownProjectIds(array $projectIds): array
+    {
+        $availableProjectIds = array_fill_keys(
+            array_column(self::PROJECTS, 'id'),
+            true,
+        );
+
+        return array_values(array_unique(array_filter(
+            $projectIds,
+            fn (mixed $projectId): bool => is_string($projectId) && isset($availableProjectIds[$projectId]),
+        )));
+    }
+
+    /**
+     * @param  array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string}>  $projectOverrides
+     * @return array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string}>
+     */
+    private function knownProjectOverrides(array $projectOverrides): array
+    {
+        $availableProjectIds = array_fill_keys(
+            array_column(self::PROJECTS, 'id'),
+            true,
+        );
+        $overridesByProjectId = [];
+
+        foreach ($projectOverrides as $projectOverride) {
+            if (
+                ! is_array($projectOverride) ||
+                ! is_string($projectOverride['id'] ?? null) ||
+                ! isset($availableProjectIds[$projectOverride['id']]) ||
+                ! is_string($projectOverride['companyName'] ?? null) ||
+                ! is_string($projectOverride['contactName'] ?? null) ||
+                ! is_string($projectOverride['address'] ?? null) ||
+                ! is_string($projectOverride['memo'] ?? null)
+            ) {
+                continue;
+            }
+
+            $overridesByProjectId[$projectOverride['id']] = [
+                'id' => $projectOverride['id'],
+                'companyName' => $projectOverride['companyName'],
+                'contactName' => $projectOverride['contactName'],
+                'address' => $projectOverride['address'],
+                'memo' => $projectOverride['memo'],
+            ];
+        }
+
+        return array_values($overridesByProjectId);
     }
 
     /**

@@ -47,6 +47,7 @@ import type {
     LumiLaboMockProjectDetailReturnTarget,
     LumiLaboMockProjectList,
     LumiLaboMockProjectListItem,
+    LumiLaboMockProjectOverride,
     LumiLaboMockProjectRegisterField,
     LumiLaboMockProjectTabId,
     LumiLaboMockProjectViewId,
@@ -221,7 +222,7 @@ export function canCompleteLumiLaboMockProjectSave(
 export function applyLumiLaboMockProjectSaveToCurrentDetail(
     currentProjectDetail: LumiLaboMockProjectDetail | null,
     savedProjectId: string,
-    savedDetail: LumiLaboMockProjectDetail,
+    savedDraft: LumiLaboMockProjectDetailDraft,
 ): LumiLaboMockProjectDetail | null {
     if (
         currentProjectDetail === null ||
@@ -230,15 +231,35 @@ export function applyLumiLaboMockProjectSaveToCurrentDetail(
         return currentProjectDetail;
     }
 
-    return savedDetail;
+    return {
+        ...currentProjectDetail,
+        ...savedDraft,
+    };
+}
+
+export function applyLumiLaboMockProjectSaveToSession(
+    session: LumiLaboMockProjectSession,
+    savedDraft: LumiLaboMockProjectDetailDraft,
+): LumiLaboMockProjectSession {
+    return {
+        detail: {
+            ...session.detail,
+            ...savedDraft,
+        },
+        draft: session.draft,
+    };
 }
 
 type LumiLaboProjectMockViewProps = {
     projectList: LumiLaboMockProjectList;
+    initialDeletedProjectIds: readonly string[];
+    initialProjectOverrides: readonly LumiLaboMockProjectOverride[];
 };
 
 export default function LumiLaboProjectMockView({
     projectList,
+    initialDeletedProjectIds,
+    initialProjectOverrides,
 }: LumiLaboProjectMockViewProps) {
     const [activeScreen, setActiveScreen] =
         useState<LumiLaboMockScreen>('top');
@@ -261,9 +282,9 @@ export default function LumiLaboProjectMockView({
         );
     const [projectOverrides, setProjectOverrides] = useState<
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
-    >({});
+    >(() => createProjectOverrideRecord(initialProjectOverrides));
     const [deletedProjectIds, setDeletedProjectIds] = useState<ReadonlySet<string>>(
-        new Set(),
+        () => new Set(initialDeletedProjectIds),
     );
     const [savingProjectIds, setSavingProjectIds] = useState<ReadonlySet<string>>(
         new Set(),
@@ -279,7 +300,9 @@ export default function LumiLaboProjectMockView({
         useState<LumiLaboMockProjectSessionById>({});
     const [shouldRefreshProjectList, setShouldRefreshProjectList] =
         useState(false);
-    const deletedProjectIdsRef = useRef<ReadonlySet<string>>(new Set());
+    const deletedProjectIdsRef = useRef<ReadonlySet<string>>(
+        new Set(initialDeletedProjectIds),
+    );
     const saveCompleteTimerRef = useRef<
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
     >({});
@@ -333,7 +356,7 @@ export default function LumiLaboProjectMockView({
         setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
     };
 
-    const handleDeletedProjectsRefreshed = useCallback(() => {
+    const handleProjectListRefreshed = useCallback(() => {
         setShouldRefreshProjectList(false);
     }, []);
 
@@ -426,33 +449,29 @@ export default function LumiLaboProjectMockView({
                 return;
             }
 
-            const savedDetail = {
-                ...projectDetail,
-                ...savedDraft,
-            };
-
             setProjectDetail((current) =>
                 applyLumiLaboMockProjectSaveToCurrentDetail(
                     current,
                     savedProjectId,
-                    savedDetail,
+                    savedDraft,
                 ),
             );
             setProjectSessions((current) =>
                 updateLumiLaboMockProjectSession(
                     current,
                     savedProjectId,
-                    (session) => ({
-                        ...session,
-                        detail: savedDetail,
-                        draft: savedDraft,
-                    }),
+                    (session) =>
+                        applyLumiLaboMockProjectSaveToSession(
+                            session,
+                            savedDraft,
+                        ),
                 ),
             );
             setProjectOverrides((current) => ({
                 ...current,
                 [savedProjectId]: savedDraft,
             }));
+            setShouldRefreshProjectList(true);
             setSavingProjectIds((current) =>
                 removeProjectId(current, savedProjectId),
             );
@@ -635,8 +654,8 @@ export default function LumiLaboProjectMockView({
                         projectList={projectList}
                         projectOverrides={projectOverrides}
                         deletedProjectIds={Array.from(deletedProjectIds)}
-                        shouldRefreshForDeletedProjects={shouldRefreshProjectList}
-                        onDeletedProjectsRefreshed={handleDeletedProjectsRefreshed}
+                        shouldRefreshProjectList={shouldRefreshProjectList}
+                        onProjectListRefreshed={handleProjectListRefreshed}
                         backTargetId="project-top"
                         onOpenProjectDetail={openProjectDetailFromList}
                         onBack={handleBackFromProjectList}
@@ -1387,6 +1406,17 @@ function createProjectDetailDraft(
         address: projectDetail.address,
         memo: projectDetail.memo,
     };
+}
+
+function createProjectOverrideRecord(
+    projectOverrides: readonly LumiLaboMockProjectOverride[],
+): Record<string, LumiLaboMockProjectDetailDraft | undefined> {
+    return Object.fromEntries(
+        projectOverrides.map(({ id, ...projectOverride }) => [
+            id,
+            projectOverride,
+        ]),
+    );
 }
 
 function hasProjectDetailDraftChanged(

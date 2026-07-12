@@ -1,7 +1,7 @@
 import { router } from "@inertiajs/react";
 import { ArrowLeft, ChevronRight, Search } from "lucide-react";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { lumiLaboProjectBackLabel } from "./mockData";
 import type {
@@ -16,8 +16,8 @@ type LumiLaboProjectListPanelProps = {
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
     >;
     deletedProjectIds: readonly string[];
-    shouldRefreshForDeletedProjects: boolean;
-    onDeletedProjectsRefreshed: () => void;
+    shouldRefreshProjectList: boolean;
+    onProjectListRefreshed: () => void;
     onOpenProjectDetail: (project: LumiLaboMockProjectListItem) => void;
     onBack: () => void;
     backTargetId: string;
@@ -33,16 +33,64 @@ export type LumiLaboProjectListQuery = {
 export const LUMILABO_PROJECT_LIST_PARTIAL_PROPS = ["projectList"];
 export const LUMILABO_PROJECT_LIST_MAX_PER_PAGE = 20;
 
+export type LumiLaboProjectListRequestData = {
+    keyword: string | undefined;
+    sort: LumiLaboMockProjectList["sort"];
+    page: number;
+    per_page: number;
+    deleted_ids: string[];
+    overrides: Array<{
+        id: string;
+        company_name: string;
+        contact_name: string;
+        address: string;
+        memo: string;
+    }>;
+};
+
+export type LumiLaboProjectListRequestCallbacks = {
+    onSuccess?: () => void;
+    onFailure?: (requestData: LumiLaboProjectListRequestData) => void;
+};
+
+export function createLumiLaboProjectListRequestCallbacks(
+    requestData: LumiLaboProjectListRequestData,
+    callbacks: LumiLaboProjectListRequestCallbacks = {},
+) {
+    return {
+        onSuccess: () => callbacks.onSuccess?.(),
+        onError: () => callbacks.onFailure?.(requestData),
+        onCancel: () => callbacks.onFailure?.(requestData),
+    };
+}
+
 export function createLumiLaboProjectListRequestData(
     query: LumiLaboProjectListQuery,
     deletedProjectIds: readonly string[],
-) {
+    projectOverrides: Readonly<
+        Record<string, LumiLaboMockProjectDetailDraft | undefined>
+    > = {},
+): LumiLaboProjectListRequestData {
     return {
         keyword: query.keyword === "" ? undefined : query.keyword,
         sort: query.sort,
         page: query.page,
         per_page: query.perPage,
         deleted_ids: [...deletedProjectIds],
+        overrides: Object.entries(projectOverrides).flatMap(
+            ([projectId, projectOverride]) =>
+                projectOverride === undefined
+                    ? []
+                    : [
+                          {
+                              id: projectId,
+                              company_name: projectOverride.companyName,
+                              contact_name: projectOverride.contactName,
+                              address: projectOverride.address,
+                              memo: projectOverride.memo,
+                          },
+                      ],
+        ),
     };
 }
 
@@ -70,8 +118,8 @@ export default function LumiLaboProjectListPanel({
     projectList,
     projectOverrides,
     deletedProjectIds,
-    shouldRefreshForDeletedProjects,
-    onDeletedProjectsRefreshed,
+    shouldRefreshProjectList,
+    onProjectListRefreshed,
     onOpenProjectDetail,
     onBack,
     backTargetId,
@@ -84,9 +132,13 @@ export default function LumiLaboProjectListPanel({
     );
     const projectListRef = useRef(projectList);
     const deletedProjectIdsRef = useRef(deletedProjectIds);
+    const projectOverridesRef = useRef(projectOverrides);
     const measuredPerPageRef = useRef<number | null>(projectList.perPage);
+    const refreshRequestStartedRef = useRef(false);
     const listRegionRef = useRef<HTMLDivElement>(null);
     const rowMeasurementRef = useRef<HTMLDivElement>(null);
+    const [failedRefreshRequest, setFailedRefreshRequest] =
+        useState<LumiLaboProjectListRequestData | null>(null);
 
     useEffect(() => {
         projectListRef.current = projectList;
@@ -96,10 +148,38 @@ export default function LumiLaboProjectListPanel({
         deletedProjectIdsRef.current = deletedProjectIds;
     }, [deletedProjectIds]);
 
+    useEffect(() => {
+        projectOverridesRef.current = projectOverrides;
+    }, [projectOverrides]);
+
+    const visitProjectList = useCallback(
+        (
+            requestData: LumiLaboProjectListRequestData,
+            callbacks?: LumiLaboProjectListRequestCallbacks,
+        ) => {
+            const requestCallbacks =
+                createLumiLaboProjectListRequestCallbacks(
+                    requestData,
+                    callbacks,
+                );
+
+            router.get(projectListRef.current.action, requestData, {
+                only: LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setIsLoading(true),
+                ...requestCallbacks,
+                onFinish: () => setIsLoading(false),
+            });
+        },
+        [],
+    );
+
     const reloadProjectList = useCallback(
         (
             changes: Partial<LumiLaboProjectListQuery>,
-            onFinished?: () => void,
+            callbacks?: LumiLaboProjectListRequestCallbacks,
         ) => {
             const current = projectListRef.current;
             const perPage = changes.perPage ?? measuredPerPageRef.current;
@@ -115,26 +195,16 @@ export default function LumiLaboProjectListPanel({
                 perPage,
             };
 
-            router.get(
-                current.action,
+            visitProjectList(
                 createLumiLaboProjectListRequestData(
                     nextQuery,
                     deletedProjectIdsRef.current,
+                    projectOverridesRef.current,
                 ),
-                {
-                    only: LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                    onStart: () => setIsLoading(true),
-                    onFinish: () => {
-                        setIsLoading(false);
-                        onFinished?.();
-                    },
-                },
+                callbacks,
             );
         },
-        [],
+        [visitProjectList],
     );
 
     const measurePerPage = useCallback(() => {
@@ -188,35 +258,53 @@ export default function LumiLaboProjectListPanel({
     }, [measurePerPage]);
 
     useEffect(() => {
+        if (!shouldRefreshProjectList) {
+            refreshRequestStartedRef.current = false;
+            setFailedRefreshRequest(null);
+
+            return;
+        }
+
         if (
-            !shouldRefreshForDeletedProjects ||
-            measuredPerPageRef.current === null
+            measuredPerPageRef.current === null ||
+            refreshRequestStartedRef.current ||
+            failedRefreshRequest !== null
         ) {
             return;
         }
 
+        refreshRequestStartedRef.current = true;
         reloadProjectList(
             { page: projectListRef.current.currentPage },
-            onDeletedProjectsRefreshed,
+            {
+                onSuccess: onProjectListRefreshed,
+                onFailure: setFailedRefreshRequest,
+            },
         );
     }, [
-        onDeletedProjectsRefreshed,
+        failedRefreshRequest,
+        onProjectListRefreshed,
         reloadProjectList,
-        shouldRefreshForDeletedProjects,
+        shouldRefreshProjectList,
     ]);
 
-    const isListLoading =
-        isLoading || !isMeasurementReady || !projectList.isReady || shouldRefreshForDeletedProjects;
+    const retryProjectListRefresh = () => {
+        if (failedRefreshRequest === null) {
+            return;
+        }
 
-    const visibleItems = useMemo(
-        () =>
-            projectList.items
-                .map((project) => ({
-                    ...project,
-                    ...projectOverrides[project.id],
-                })),
-        [projectList.items, projectOverrides],
-    );
+        setFailedRefreshRequest(null);
+        visitProjectList(failedRefreshRequest, {
+            onSuccess: onProjectListRefreshed,
+            onFailure: () => setFailedRefreshRequest(failedRefreshRequest),
+        });
+    };
+
+    const isListLoading =
+        isLoading ||
+        !isMeasurementReady ||
+        !projectList.isReady ||
+        (shouldRefreshProjectList && failedRefreshRequest === null);
 
     const openSearchDialog = () => {
         setSearchKeyword(projectList.keyword);
@@ -248,7 +336,7 @@ export default function LumiLaboProjectListPanel({
                             aria-label="登録日順"
                             className="min-h-12 min-w-0 rounded-md border border-neutral-300 bg-white px-3 text-base font-black text-black outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500 disabled:cursor-not-allowed disabled:bg-neutral-100"
                             value={projectList.sort}
-                            disabled={isLoading}
+                            disabled={isListLoading || failedRefreshRequest !== null}
                             onChange={(event) =>
                                 reloadProjectList({
                                     sort: event.target
@@ -265,7 +353,7 @@ export default function LumiLaboProjectListPanel({
                     <button
                         type="button"
                         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-base font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500"
-                        disabled={isLoading}
+                        disabled={isListLoading || failedRefreshRequest !== null}
                         onClick={openSearchDialog}
                     >
                         <Search className="h-5 w-5" aria-hidden />
@@ -279,7 +367,7 @@ export default function LumiLaboProjectListPanel({
                         <button
                             type="button"
                             className="underline decoration-2 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:text-neutral-500"
-                            disabled={isLoading}
+                            disabled={isListLoading || failedRefreshRequest !== null}
                             onClick={clearSearch}
                         >
                             解除
@@ -315,7 +403,22 @@ export default function LumiLaboProjectListPanel({
                         />
                     </div>
 
-                    {isListLoading ? (
+                    {failedRefreshRequest !== null ? (
+                        <div
+                            role="alert"
+                            className="grid gap-3 px-4 py-6 text-base font-black text-red-800"
+                        >
+                            <p>一覧の更新に失敗しました。もう一度お試しください。</p>
+                            <button
+                                type="button"
+                                className="inline-flex min-h-12 w-fit items-center justify-center rounded-md border border-red-700 bg-white px-4 text-base font-black text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:text-neutral-500"
+                                disabled={isLoading}
+                                onClick={retryProjectListRefresh}
+                            >
+                                再試行
+                            </button>
+                        </div>
+                    ) : isListLoading ? (
                         <p
                             role="status"
                             className="px-4 py-6 text-base font-black text-yellow-900"
@@ -324,16 +427,16 @@ export default function LumiLaboProjectListPanel({
                                 ? "一覧を更新しています"
                                 : "一覧の表示件数を計測しています"}
                         </p>
-                    ) : visibleItems.length > 0 ? (
+                    ) : projectList.items.length > 0 ? (
                         <div className="divide-y divide-neutral-200">
-                            {visibleItems.map((project) => (
+                            {projectList.items.map((project) => (
                                 <button
                                     key={project.id}
                                     type="button"
                                     aria-label={`${project.companyName}の案件詳細を開く`}
                                     style={{ containerType: "inline-size" }}
                                     className="group flex min-h-16 w-full min-w-0 items-center gap-3 px-4 py-3 text-left text-black transition hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-yellow-500 disabled:cursor-not-allowed"
-                                    disabled={isLoading}
+                                    disabled={isListLoading || failedRefreshRequest !== null}
                                     onClick={() => onOpenProjectDetail(project)}
                                 >
                                     <span className="min-w-0 flex-1">
@@ -365,7 +468,10 @@ export default function LumiLaboProjectListPanel({
                 </div>
 
                 <div className="min-h-12">
-                    {!isListLoading && projectList.isReady && projectList.showPagination ? (
+                    {!isListLoading &&
+                    failedRefreshRequest === null &&
+                    projectList.isReady &&
+                    projectList.showPagination ? (
                         <nav
                             aria-label="案件一覧のページ移動"
                             className="flex items-center justify-between gap-3"
@@ -469,21 +575,38 @@ function ProjectSearchDialog({
                         className="min-h-14 rounded-md border border-neutral-300 px-3 text-lg font-bold text-black outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500"
                     />
                 </label>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="mt-5 grid gap-3 sm:hidden">
                     <button
                         type="submit"
-                        className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500 sm:order-2"
+                        className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500"
                         disabled={isLoading}
                     >
                         検索
                     </button>
                     <button
                         type="button"
-                        className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 sm:order-1"
+                        className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
                         disabled={isLoading}
                         onClick={onClose}
                     >
                         閉じる
+                    </button>
+                </div>
+                <div className="mt-5 hidden gap-3 sm:grid sm:grid-cols-2">
+                    <button
+                        type="button"
+                        className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+                        disabled={isLoading}
+                        onClick={onClose}
+                    >
+                        閉じる
+                    </button>
+                    <button
+                        type="submit"
+                        className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500"
+                        disabled={isLoading}
+                    >
+                        検索
                     </button>
                 </div>
             </form>

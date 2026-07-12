@@ -4,6 +4,7 @@ import {
     createLumiLaboMockProjectSession,
     addProjectId,
     applyLumiLaboMockProjectSaveToCurrentDetail,
+    applyLumiLaboMockProjectSaveToSession,
     canCompleteLumiLaboMockProjectSave,
     removeProjectId,
     setLumiLaboMockProjectDroppedFileNames,
@@ -70,9 +71,11 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
             id: 'mock-project-002',
             companyName: '南海リフォーム',
         };
-        const savedProjectA = {
-            ...projectA,
+        const savedProjectADraft = {
             companyName: 'ルミラボ工務店 保存後',
+            contactName: projectA.contactName,
+            address: projectA.address,
+            memo: projectA.memo,
         };
 
         const savingProjectIds = addProjectId(new Set(), projectA.id);
@@ -80,7 +83,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
             applyLumiLaboMockProjectSaveToCurrentDetail(
                 projectB,
                 projectA.id,
-                savedProjectA,
+                savedProjectADraft,
             );
         const savingProjectIdsAfterCompletion = removeProjectId(
             savingProjectIds,
@@ -97,6 +100,40 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
         expect(savingProjectIdsAfterCompletion).not.toContain(projectB.id);
         expect(savedProjectIdsAfterCompletion).toContain(projectA.id);
         expect(savedProjectIdsAfterCompletion).not.toContain(projectB.id);
+    });
+
+    it('preserves draft and media changes made after a save began', () => {
+        const sessionAfterChanges = {
+            detail: {
+                ...lumiLaboProjectDetail,
+                savedPhotos: lumiLaboProjectDetail.savedPhotos.slice(1),
+                savedFiles: lumiLaboProjectDetail.savedFiles.slice(1),
+            },
+            draft: {
+                companyName: '保存開始後の会社名',
+                contactName: lumiLaboProjectDetail.contactName,
+                address: lumiLaboProjectDetail.address,
+                memo: '保存開始後のメモ',
+            },
+        };
+        const savedDraft = {
+            companyName: 'ルミラボ工務店 保存後',
+            contactName: lumiLaboProjectDetail.contactName,
+            address: lumiLaboProjectDetail.address,
+            memo: lumiLaboProjectDetail.memo,
+        };
+        const completedSession = applyLumiLaboMockProjectSaveToSession(
+            sessionAfterChanges,
+            savedDraft,
+        );
+
+        expect(completedSession.detail.companyName).toBe(
+            'ルミラボ工務店 保存後',
+        );
+        expect(completedSession.detail.savedPhotos).toHaveLength(2);
+        expect(completedSession.detail.savedFiles).toHaveLength(1);
+        expect(completedSession.draft.companyName).toBe('保存開始後の会社名');
+        expect(completedSession.draft.memo).toBe('保存開始後のメモ');
     });
 
     it('does not complete a timer for a deleted project', () => {

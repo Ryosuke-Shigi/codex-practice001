@@ -28,6 +28,19 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'between:1,20'],
             'deleted_ids' => ['nullable', 'array', 'max:20'],
             'deleted_ids.*' => ['string', 'regex:/^mock-project-\d{3}$/'],
+            'overrides' => ['nullable', 'array', 'max:20'],
+            'overrides.*' => [
+                'array:id,company_name,contact_name,address,memo',
+            ],
+            'overrides.*.id' => [
+                'required',
+                'string',
+                'regex:/^mock-project-\d{3}$/',
+            ],
+            'overrides.*.company_name' => ['required', 'string', 'max:100'],
+            'overrides.*.contact_name' => ['required', 'string', 'max:100'],
+            'overrides.*.address' => ['required', 'string', 'max:200'],
+            'overrides.*.memo' => ['required', 'string', 'max:1000'],
         ];
     }
 
@@ -80,5 +93,42 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
             $deletedIds,
             fn (mixed $deletedId): bool => is_string($deletedId),
         )));
+    }
+
+    /**
+     * @return array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string}>
+     */
+    public function projectOverrides(): array
+    {
+        $overrides = $this->validated('overrides', []);
+
+        if (! is_array($overrides)) {
+            return [];
+        }
+
+        $normalizedOverrides = [];
+
+        foreach ($overrides as $override) {
+            if (
+                ! is_array($override) ||
+                ! is_string($override['id'] ?? null) ||
+                ! is_string($override['company_name'] ?? null) ||
+                ! is_string($override['contact_name'] ?? null) ||
+                ! is_string($override['address'] ?? null) ||
+                ! is_string($override['memo'] ?? null)
+            ) {
+                continue;
+            }
+
+            $normalizedOverrides[$override['id']] = [
+                'id' => $override['id'],
+                'companyName' => $override['company_name'],
+                'contactName' => $override['contact_name'],
+                'address' => $override['address'],
+                'memo' => $override['memo'],
+            ];
+        }
+
+        return array_values($normalizedOverrides);
     }
 }

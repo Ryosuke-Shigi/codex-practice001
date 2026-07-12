@@ -22,11 +22,20 @@ final readonly class LumiLaboProjectMockResponder
      *     previousPage: ?int,
      *     hasNext: bool,
      *     nextPage: ?int,
-     *     showPagination: bool
+     *     showPagination: bool,
+     *     initialDeletedProjectIds: array<int, string>,
+     *     initialProjectOverrides: array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string}>
      * }  $projectList
      */
     public function index(array $projectList): Response
     {
+        $initialDeletedProjectIds = $projectList['initialDeletedProjectIds'];
+        $initialProjectOverrides = $projectList['initialProjectOverrides'];
+        unset(
+            $projectList['initialDeletedProjectIds'],
+            $projectList['initialProjectOverrides'],
+        );
+
         return Inertia::render('Lab/LumiLaboProjectMock', [
             'projectList' => [
                 ...$projectList,
@@ -39,6 +48,8 @@ final readonly class LumiLaboProjectMockResponder
                 ),
                 'action' => route('lab.lumilabo-project-mock'),
             ],
+            'initialDeletedProjectIds' => $initialDeletedProjectIds,
+            'initialProjectOverrides' => $initialProjectOverrides,
         ]);
     }
 }
