@@ -9,12 +9,6 @@ namespace App\Actions\LumiLabo\Queries;
  */
 final readonly class GetLumiLaboProjectMockListAction
 {
-    private const PER_PAGE_BY_VIEWPORT = [
-        'mobile' => 5,
-        'tablet' => 8,
-        'desktop' => 10,
-    ];
-
     /**
      * 固定定義順は同じ登録日の安定した並び順だけに使い、React props へは公開しません。
      *
@@ -188,7 +182,8 @@ final readonly class GetLumiLaboProjectMockListAction
      *     items: array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string}>,
      *     keyword: string,
      *     sort: string,
-     *     viewport: string,
+     *     perPage: ?int,
+     *     isReady: bool,
      *     currentPage: int,
      *     hasPrevious: bool,
      *     previousPage: ?int,
@@ -197,13 +192,28 @@ final readonly class GetLumiLaboProjectMockListAction
      *     showPagination: bool
      * }
      */
-    public function execute(?string $keyword, string $sort, int $page, string $viewport): array
+    public function execute(?string $keyword, string $sort, int $page, ?int $perPage): array
     {
         $terms = $this->splitSearchTerms($keyword);
         $projects = $this->filteredProjects($terms);
         $this->sortProjects($projects, $sort);
 
-        $perPage = self::PER_PAGE_BY_VIEWPORT[$viewport];
+        if ($perPage === null) {
+            return [
+                'items' => [],
+                'keyword' => implode(' ', $terms),
+                'sort' => $sort,
+                'perPage' => null,
+                'isReady' => false,
+                'currentPage' => 1,
+                'hasPrevious' => false,
+                'previousPage' => null,
+                'hasNext' => false,
+                'nextPage' => null,
+                'showPagination' => false,
+            ];
+        }
+
         $totalPages = max(1, (int) ceil(count($projects) / $perPage));
         $currentPage = min($page, $totalPages);
         $offset = ($currentPage - 1) * $perPage;
@@ -216,7 +226,8 @@ final readonly class GetLumiLaboProjectMockListAction
             'items' => $items,
             'keyword' => implode(' ', $terms),
             'sort' => $sort,
-            'viewport' => $viewport,
+            'perPage' => $perPage,
+            'isReady' => true,
             'currentPage' => $currentPage,
             'hasPrevious' => $currentPage > 1,
             'previousPage' => $currentPage > 1 ? $currentPage - 1 : null,

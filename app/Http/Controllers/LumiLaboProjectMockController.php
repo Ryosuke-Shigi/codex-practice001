@@ -23,7 +23,7 @@ class LumiLaboProjectMockController extends Controller
             $request->keyword(),
             $request->sort(),
             $request->page(),
-            $request->viewport(),
+            $request->perPage(),
         ));
     }
 }

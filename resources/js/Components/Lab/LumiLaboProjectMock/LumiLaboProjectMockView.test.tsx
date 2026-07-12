@@ -41,7 +41,8 @@ const testProjectList = {
     ],
     keyword: '',
     sort: 'registered_desc',
-    viewport: 'mobile',
+    perPage: 1,
+    isReady: true,
     currentPage: 1,
     hasPrevious: false,
     previousPage: null,
@@ -270,7 +271,7 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('2026/07/07');
         expect(markup).toContain('案件詳細を開く');
         expect(markup).toContain('<button');
-        expect(markup).not.toContain('担当者：山田 太郎');
+        expect(markup).toContain('[@container(min-width:36rem)]:block');
         expect(markup).not.toContain('大阪府岸和田市上町 1-2-3');
         expect(markup).not.toContain('初回訪問予定。現場確認後に写真と資料を追加する。');
         expect(markup).not.toContain('詳細を見る');
@@ -278,11 +279,10 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('＞＞');
     });
 
-    it('shows contact information from tablet width and confines search loading to the list', async () => {
+    it('uses the row container for contact information and confines search loading to the list', async () => {
         const markup = await renderMockViewMarkup('project', 'list', {
             projectList: {
                 ...testProjectList,
-                viewport: 'tablet',
                 showPagination: true,
                 hasNext: true,
                 nextPage: 2,
@@ -291,13 +291,13 @@ describe('LumiLaboProjectMockView', () => {
             listIsLoading: true,
         });
 
-        expect(markup).toContain('担当者：山田 太郎');
-        expect(markup).toContain('hidden truncate text-base font-bold text-neutral-700 md:block');
+        expect(markup).toContain('hidden truncate text-base font-bold text-neutral-700 [@container(min-width:36rem)]:block');
         expect(markup).toContain('role="dialog"');
         expect(markup).toContain('案件を検索');
         expect(markup).toContain('一覧を更新しています');
         expect(markup).toContain('＜＜');
         expect(markup).toContain('＞＞');
+        expect(markup).not.toContain('aria-label="検索を閉じる"');
         expect(markup).toContain('disabled=""');
         expect(markup).not.toContain('詳細を見る');
     });

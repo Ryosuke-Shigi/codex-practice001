@@ -25,7 +25,7 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
             'keyword' => ['nullable', 'string', 'max:100'],
             'sort' => ['nullable', 'string', 'in:registered_desc,registered_asc'],
             'page' => ['nullable', 'integer', 'min:1'],
-            'viewport' => ['nullable', 'string', 'in:mobile,tablet,desktop'],
+            'per_page' => ['nullable', 'integer', 'between:1,20'],
         ];
     }
 
@@ -56,10 +56,10 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
         return $page === null ? 1 : (int) $page;
     }
 
-    public function viewport(): string
+    public function perPage(): ?int
     {
-        $viewport = $this->validated('viewport');
+        $perPage = $this->validated('per_page');
 
-        return is_string($viewport) ? $viewport : 'mobile';
+        return $perPage === null ? null : (int) $perPage;
     }
 }

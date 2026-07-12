@@ -4,8 +4,6 @@ export type LumiLaboMockProjectTabId = 'top' | 'register' | 'list';
 
 export type LumiLaboMockProjectViewId = LumiLaboMockProjectTabId | 'detail';
 
-export type LumiLaboMockViewport = 'mobile' | 'tablet' | 'desktop';
-
 export type LumiLaboMockProjectListItem = {
     id: string;
     companyName: string;
@@ -19,7 +17,8 @@ export type LumiLaboMockProjectList = {
     items: readonly LumiLaboMockProjectListItem[];
     keyword: string;
     sort: 'registered_desc' | 'registered_asc';
-    viewport: LumiLaboMockViewport;
+    perPage: number | null;
+    isReady: boolean;
     currentPage: number;
     hasPrevious: boolean;
     previousPage: number | null;
