@@ -283,6 +283,8 @@ describe('LumiLaboProjectMockView', () => {
         );
         expect(markup).toContain('写真を撮影する');
         expect(markup).toContain('ファイルを選択、またはまとめてドラッグ＆ドロップ');
+        expect(markup).toContain('class="md:hidden"');
+        expect(markup).toContain('class="hidden md:inline"');
         expect(markup).toMatch(/<h3[^>]*>保存済み写真<\/h3>/);
         expect(markup).toMatch(/<h3[^>]*>保存済みファイル<\/h3>/);
         expect(markup).toContain('aria-label="保存済み現場写真 1を削除"');
@@ -346,7 +348,7 @@ describe('LumiLaboProjectMockView', () => {
         expect(emptyAddressMarkup).not.toContain('https://www.google.com/maps');
     });
 
-    it('shows the save button only when detail draft changed and can show the instant save message', async () => {
+    it('shows the sticky save bar only when detail draft changed and can show save states', async () => {
         const initialMarkup = await renderMockViewMarkup('project', 'list', {
             activeProjectViewId: 'detail',
         });
@@ -370,14 +372,24 @@ describe('LumiLaboProjectMockView', () => {
             saveMessageVisible: true,
         });
 
+        expect(initialMarkup).not.toContain('data-lumilabo-save-bar="true"');
         expect(initialMarkup).not.toContain('lucide-save');
         expect(initialMarkup).not.toContain('role="status"');
+        expect(changedMarkup).toContain('data-lumilabo-save-bar="true"');
+        expect(changedMarkup).toContain('sticky top-0 z-20');
+        expect(changedMarkup).toContain('grid-cols-[minmax(0,1fr)_auto]');
         expect(changedMarkup).toContain('lucide-save');
-        expect(changedMarkup).toContain('<span>保存する</span>');
+        expect(changedMarkup).toContain('保存する');
         expect(changedMarkup).toContain('編集中');
+        expect(changedMarkup.indexOf('編集中')).toBeLessThan(
+            changedMarkup.indexOf('保存する'),
+        );
         expect(savingMarkup).toContain('保存中です');
+        expect(savingMarkup).toContain('disabled=""');
+        expect(savedMarkup).toContain('data-lumilabo-save-bar="true"');
         expect(savedMarkup).toContain('role="status"');
         expect(savedMarkup).toContain('保存しました');
+        expect(savedMarkup).not.toContain('lucide-save');
     });
 
     it('does not render saved photo or file preview headings when detail has no saved previews', async () => {
