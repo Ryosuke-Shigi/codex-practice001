@@ -6,6 +6,7 @@ import type {
     LumiLaboMockProjectDetail,
     LumiLaboMockProjectDetailDraft,
     LumiLaboMockProjectDetailReturnTarget,
+    LumiLaboMockProjectList,
     LumiLaboMockProjectTabId,
     LumiLaboMockProjectViewId,
     LumiLaboMockScreen,
@@ -18,9 +19,37 @@ type RenderMockViewOptions = {
     projectDetailReturnTarget?: LumiLaboMockProjectDetailReturnTarget;
     isSaving?: boolean;
     saveMessageVisible?: boolean;
+    projectList?: LumiLaboMockProjectList;
+    projectOverrides?: Record<string, LumiLaboMockProjectDetailDraft | undefined>;
+    deletedProjectIds?: ReadonlySet<string>;
+    isSearchDialogOpen?: boolean;
+    listIsLoading?: boolean;
     droppedFileNames?: readonly string[];
     isDeleteDialogOpen?: boolean;
 };
+
+const testProjectList = {
+    items: [
+        {
+            id: 'mock-project-001',
+            companyName: 'ルミラボ工務店',
+            contactName: '山田 太郎',
+            address: '大阪府岸和田市上町 1-2-3',
+            memo: '初回訪問予定。現場確認後に写真と資料を追加する。',
+            registeredDate: '2026/07/07',
+        },
+    ],
+    keyword: '',
+    sort: 'registered_desc',
+    viewport: 'mobile',
+    currentPage: 1,
+    hasPrevious: false,
+    previousPage: null,
+    hasNext: false,
+    nextPage: null,
+    showPagination: false,
+    action: '/lab/lumilabo-project-mock',
+} satisfies LumiLaboMockProjectList;
 
 async function renderMockViewMarkup(
     activeScreen?: LumiLaboMockScreen,
@@ -75,27 +104,47 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 5) {
-                        return [projectDetail, vi.fn()];
+                        return [projectDetail?.id ?? null, vi.fn()];
                     }
 
                     if (stateCall === 6) {
-                        return [detailDraft, vi.fn()];
+                        return [projectDetail, vi.fn()];
                     }
 
                     if (stateCall === 7) {
-                        return [options.isSaving ?? false, vi.fn()];
+                        return [detailDraft, vi.fn()];
                     }
 
                     if (stateCall === 8) {
-                        return [options.saveMessageVisible ?? false, vi.fn()];
+                        return [options.projectOverrides ?? {}, vi.fn()];
                     }
 
                     if (stateCall === 9) {
-                        return [options.droppedFileNames ?? [], vi.fn()];
+                        return [options.deletedProjectIds ?? new Set(), vi.fn()];
                     }
 
                     if (stateCall === 10) {
+                        return [options.isSaving ?? false, vi.fn()];
+                    }
+
+                    if (stateCall === 11) {
+                        return [options.saveMessageVisible ?? false, vi.fn()];
+                    }
+
+                    if (stateCall === 12) {
+                        return [options.droppedFileNames ?? [], vi.fn()];
+                    }
+
+                    if (stateCall === 13) {
                         return [options.isDeleteDialogOpen ?? false, vi.fn()];
+                    }
+
+                    if (stateCall === 14) {
+                        return [options.isSearchDialogOpen ?? false, vi.fn()];
+                    }
+
+                    if (stateCall === 16) {
+                        return [options.listIsLoading ?? false, vi.fn()];
                     }
 
                     return [initialValue, vi.fn()];
@@ -108,7 +157,9 @@ async function renderMockViewMarkup(
         './LumiLaboProjectMockView'
     );
 
-    return renderToStaticMarkup(<LumiLaboProjectMockView />);
+    return renderToStaticMarkup(
+        <LumiLaboProjectMockView projectList={options.projectList ?? testProjectList} />,
+    );
 }
 
 afterEach(() => {
@@ -211,40 +262,81 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('<form');
     });
 
-    it('renders a keyboard-operable project item with contact and memo on the list tab', async () => {
+    it('renders a mobile project row with company and date but no contact, address, or memo', async () => {
         const markup = await renderMockViewMarkup('project', 'list');
 
         expect(markup).toContain('案件一覧');
         expect(markup).toContain('ルミラボ工務店');
-        expect(markup).toContain('担当者：山田 太郎');
-        expect(markup).toContain('メモ：初回訪問予定。現場確認後に写真と資料を追加する。');
+        expect(markup).toContain('2026/07/07');
         expect(markup).toContain('案件詳細を開く');
-        expect(markup).toContain('overflow-hidden whitespace-nowrap');
-        expect(markup).toContain('truncate text-sm font-semibold');
-        expect(markup).toContain('lucide-chevron-right');
-        expect(markup).toContain('戻る');
+        expect(markup).toContain('<button');
+        expect(markup).not.toContain('担当者：山田 太郎');
+        expect(markup).not.toContain('大阪府岸和田市上町 1-2-3');
+        expect(markup).not.toContain('初回訪問予定。現場確認後に写真と資料を追加する。');
         expect(markup).not.toContain('詳細を見る');
-        expect(markup).not.toContain('登録する');
-        expect(markup).not.toContain('会社名');
-        expect(markup).not.toContain('担当者名');
-        expect(markup).not.toContain('住所');
-        expect(markup).not.toContain('登録日');
-        expect(markup).not.toContain('写真を撮影する');
-        expect(markup).not.toContain('ファイルを選択、またはまとめてドラッグ');
-        expect(markup).not.toContain('lucide-save');
-        expect(markup).not.toContain('lucide-layers-3');
-        expect(markup).not.toMatch(/<h1[^>]*>案件<\/h1>/);
+        expect(markup).not.toContain('＜＜');
+        expect(markup).not.toContain('＞＞');
     });
 
-    it('renders an empty project list after a mock project deletion', async () => {
+    it('shows contact information from tablet width and confines search loading to the list', async () => {
         const markup = await renderMockViewMarkup('project', 'list', {
-            projectDetail: null,
+            projectList: {
+                ...testProjectList,
+                viewport: 'tablet',
+                showPagination: true,
+                hasNext: true,
+                nextPage: 2,
+            },
+            isSearchDialogOpen: true,
+            listIsLoading: true,
+        });
+
+        expect(markup).toContain('担当者：山田 太郎');
+        expect(markup).toContain('hidden truncate text-base font-bold text-neutral-700 md:block');
+        expect(markup).toContain('role="dialog"');
+        expect(markup).toContain('案件を検索');
+        expect(markup).toContain('一覧を更新しています');
+        expect(markup).toContain('＜＜');
+        expect(markup).toContain('＞＞');
+        expect(markup).toContain('disabled=""');
+        expect(markup).not.toContain('詳細を見る');
+    });
+
+    it('renders an empty project list without pagination', async () => {
+        const markup = await renderMockViewMarkup('project', 'list', {
+            projectList: {
+                ...testProjectList,
+                items: [],
+            },
         });
 
         expect(markup).toContain('案件一覧');
         expect(markup).toContain('表示できる案件はありません');
         expect(markup).not.toContain('ルミラボ工務店');
-        expect(markup).not.toContain('詳細を見る');
+        expect(markup).not.toContain('＜＜');
+        expect(markup).not.toContain('＞＞');
+    });
+
+    it('applies ID-specific saved overrides and deleted IDs to the current list page', async () => {
+        const overriddenMarkup = await renderMockViewMarkup('project', 'list', {
+            projectOverrides: {
+                'mock-project-001': {
+                    companyName: 'ルミラボ工務店 保存後',
+                    contactName: '山田 太郎',
+                    address: '大阪府岸和田市上町 1-2-3',
+                    memo: '保存済みのメモ',
+                },
+            },
+        });
+        const deletedMarkup = await renderMockViewMarkup('project', 'list', {
+            deletedProjectIds: new Set(['mock-project-001']),
+        });
+
+        expect(overriddenMarkup).toContain('ルミラボ工務店 保存後');
+        expect(overriddenMarkup).not.toContain('>ルミラボ工務店<');
+        expect(overriddenMarkup).not.toContain('保存済みのメモ');
+        expect(deletedMarkup).toContain('表示できる案件はありません');
+        expect(deletedMarkup).not.toContain('ルミラボ工務店');
     });
 
     it('renders project detail without adding detail or back to file tags', async () => {
