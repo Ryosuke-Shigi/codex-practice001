@@ -321,19 +321,6 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 将来の自動化候補: PR Summaryの確認コマンドに `docker compose run --rm npm` が含まれるか、ホストnpm由来の失敗ログを未解決のまま成功扱いしていないかの照合
 - 備考: ホストOS側で `UNC paths are not supported`、`vitest is not recognized`、`Cannot find module @rollup/rollup-...`、Nodeバージョン不一致が出た場合は、ホストNode調査を続けずDocker npmで再実行する。
 
-### SENS-019: 視覚資料の仕様確定チェック
-
-- ID: SENS-019
-- 名前: 視覚資料の仕様確定チェック
-- 種別: Manual / AI Review
-- 実行タイプ: Inferential
-- 実行タイミング: UI仕様確認時 / 実装前 / PR前
-- 検出したい問題: PDF、画像、画面キャプチャ、モックの見た目にある件数、breakpoint、初期状態、余白、表示条件を、人間が承認した仕様なしにコード、テスト、docs、コメント、PR本文へ確定値として固定する状態
-- 参照docs: `docs/ai/workflows/md-router.md` / 対象feature docs / `docs/operations/pr-review-strength.md`
-- 現在のLevel: Level 1
-- 将来の自動化候補: 視覚資料だけでは承認状態を機械判定できないため、PR SummaryとAIレビューで確認する
-- 備考: 視覚資料は一覧構成や操作の参考に使えるが、数値・境界・初期値は承認済みの別情報源で一意に確認できるまで未確定として扱う。
-
 ## PR Summaryへ残す項目
 
 Sensorsに関係するPRでは、`docs/templates/pr-summary.md` に従い、少なくとも次を残します。
