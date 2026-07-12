@@ -224,10 +224,10 @@ Route::get('/lab/lumilabo-project-idea-board', function () {
     return Inertia::render('Lab/LumiLaboProjectIdeaBoard');
 })->name('lab.lumilabo-project-idea-board');
 
-Route::get('/lab/lumilabo-project-mock', function () {
-    // LumiLabo start-flow display-only MOCK. No DB, API, or backend layer work.
-    return Inertia::render('Lab/LumiLaboProjectMock');
-})->name('lab.lumilabo-project-mock');
+// 固定MOCKデータをController / Request / Query Action / Responderで一覧表示する。DB、外部API、本番保存は行わない。
+// 一覧の検索、登録日順、PaginationはこのMOCK専用の処理に限定する。
+Route::get('/lab/lumilabo-project-mock', \App\Http\Controllers\LumiLaboProjectMockController::class)
+    ->name('lab.lumilabo-project-mock');
 
 Route::redirect('/lab/lumilabo-project-create-idea-board', '/lab/lumilabo-project-idea-board')
     ->name('lab.lumilabo-project-create-idea-board.redirect');
