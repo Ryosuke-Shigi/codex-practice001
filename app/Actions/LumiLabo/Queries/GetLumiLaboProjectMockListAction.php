@@ -192,10 +192,18 @@ final readonly class GetLumiLaboProjectMockListAction
      *     showPagination: bool
      * }
      */
-    public function execute(?string $keyword, string $sort, int $page, ?int $perPage): array
-    {
+    public function execute(
+        ?string $keyword,
+        string $sort,
+        int $page,
+        ?int $perPage,
+        array $deletedProjectIds = [],
+    ): array {
         $terms = $this->splitSearchTerms($keyword);
-        $projects = $this->filteredProjects($terms);
+        $projects = $this->excludeDeletedProjects(
+            $this->filteredProjects($terms),
+            $deletedProjectIds,
+        );
         $this->sortProjects($projects, $sort);
 
         if ($perPage === null) {
@@ -290,6 +298,21 @@ final readonly class GetLumiLaboProjectMockListAction
 
                 return true;
             },
+        ));
+    }
+
+    /**
+     * @param  array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string, order: int}>  $projects
+     * @param  array<int, string>  $deletedProjectIds
+     * @return array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string, order: int}>
+     */
+    private function excludeDeletedProjects(array $projects, array $deletedProjectIds): array
+    {
+        $deletedProjectIdSet = array_fill_keys($deletedProjectIds, true);
+
+        return array_values(array_filter(
+            $projects,
+            fn (array $project): bool => ! isset($deletedProjectIdSet[$project['id']]),
         ));
     }
 

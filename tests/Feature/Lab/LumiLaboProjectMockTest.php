@@ -145,6 +145,61 @@ class LumiLaboProjectMockTest extends TestCase
             );
     }
 
+    public function test_deleted_projects_are_excluded_before_pagination_and_search(): void
+    {
+        $this
+            ->get('/lab/lumilabo-project-mock?per_page=3&deleted_ids[]=mock-project-002&deleted_ids[]=mock-project-003')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 3)
+                ->where('projectList.items.0.id', 'mock-project-004')
+                ->where('projectList.showPagination', true)
+            );
+
+        $this
+            ->get('/lab/lumilabo-project-mock?per_page=3&page=7&deleted_ids[]=mock-project-001&deleted_ids[]=mock-project-002')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('projectList.currentPage', 6)
+                ->where('projectList.hasNext', false)
+                ->where('projectList.items.0.id', 'mock-project-018')
+            );
+
+        $this
+            ->get('/lab/lumilabo-project-mock?per_page=20&keyword=%E5%B2%B8%E5%92%8C%E7%94%B0&deleted_ids[]=mock-project-005')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 3)
+                ->where('projectList.items.0.id', 'mock-project-004')
+                ->where('projectList.items.2.id', 'mock-project-016')
+                ->missing('projectList.total')
+            );
+    }
+
+    public function test_all_deleted_projects_return_an_empty_first_page_without_pagination(): void
+    {
+        $deletedProjectIds = array_map(
+            fn (int $number): string => sprintf('mock-project-%03d', $number),
+            range(1, 20),
+        );
+
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 3,
+                'page' => 7,
+                'deleted_ids' => $deletedProjectIds,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('projectList.currentPage', 1)
+                ->where('projectList.showPagination', false)
+                ->where('projectList.hasPrevious', false)
+                ->where('projectList.hasNext', false)
+                ->has('projectList.items', 0)
+                ->missing('projectList.total')
+            );
+    }
+
     public function test_invalid_query_values_are_validation_errors(): void
     {
         $this
@@ -158,5 +213,22 @@ class LumiLaboProjectMockTest extends TestCase
             ->get('/lab/lumilabo-project-mock?per_page=21')
             ->assertRedirect('/lab/lumilabo-project-mock')
             ->assertSessionHasErrors(['per_page']);
+
+        $this
+            ->from('/lab/lumilabo-project-mock')
+            ->get('/lab/lumilabo-project-mock?deleted_ids=mock-project-001')
+            ->assertRedirect('/lab/lumilabo-project-mock')
+            ->assertSessionHasErrors(['deleted_ids']);
+
+        $this
+            ->from('/lab/lumilabo-project-mock')
+            ->get('/lab/lumilabo-project-mock?deleted_ids[]=invalid-project')
+            ->assertRedirect('/lab/lumilabo-project-mock')
+            ->assertSessionHasErrors(['deleted_ids.0']);
+
+        $this
+            ->get('/lab/lumilabo-project-mock?per_page=20&deleted_ids[]=mock-project-999')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->has('projectList.items', 20));
     }
 }

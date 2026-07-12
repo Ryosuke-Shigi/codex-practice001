@@ -2,12 +2,32 @@ import { describe, expect, it } from "vitest";
 
 import {
     calculateLumiLaboProjectListPerPage,
+    createLumiLaboProjectListRequestData,
     shouldReloadLumiLaboProjectList,
     LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
     LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
 } from "./LumiLaboProjectListPanel";
 
 describe("LumiLaboProjectListPanel measurement and partial reload contract", () => {
+    it("keeps deleted project IDs in a list reload request", () => {
+        expect(
+            createLumiLaboProjectListRequestData(
+                {
+                    keyword: "",
+                    sort: "registered_desc",
+                    page: 2,
+                    perPage: 7,
+                },
+                ["mock-project-001", "mock-project-004"],
+            ),
+        ).toEqual({
+            keyword: undefined,
+            sort: "registered_desc",
+            page: 2,
+            per_page: 7,
+            deleted_ids: ["mock-project-001", "mock-project-004"],
+        });
+    });
     it("calculates a whole-row page size from the list region and row height", () => {
         expect(calculateLumiLaboProjectListPerPage(701, 100)).toBe(7);
         expect(calculateLumiLaboProjectListPerPage(99, 100)).toBe(1);

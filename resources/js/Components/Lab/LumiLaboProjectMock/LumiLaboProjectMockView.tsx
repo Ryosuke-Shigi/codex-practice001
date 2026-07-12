@@ -16,7 +16,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
@@ -164,6 +164,75 @@ const projectDetailTextFields = [
     { id: 'memo', label: 'メモ', control: 'textarea', rows: 4 },
 ] as const satisfies readonly ProjectDetailTextFieldConfig[];
 
+export type LumiLaboMockProjectSession = {
+    detail: LumiLaboMockProjectDetail;
+    draft: LumiLaboMockProjectDetailDraft;
+};
+
+export type LumiLaboMockProjectSessionById = Record<
+    string,
+    LumiLaboMockProjectSession | undefined
+>;
+
+export function createLumiLaboMockProjectSession(
+    detail: LumiLaboMockProjectDetail,
+): LumiLaboMockProjectSession {
+    return {
+        detail,
+        draft: createProjectDetailDraft(detail),
+    };
+}
+
+export function updateLumiLaboMockProjectSession(
+    sessions: LumiLaboMockProjectSessionById,
+    projectId: string,
+    update: (session: LumiLaboMockProjectSession) => LumiLaboMockProjectSession,
+): LumiLaboMockProjectSessionById {
+    const session = sessions[projectId];
+
+    if (session === undefined) {
+        return sessions;
+    }
+
+    return {
+        ...sessions,
+        [projectId]: update(session),
+    };
+}
+
+export function setLumiLaboMockProjectDroppedFileNames(
+    droppedFileNamesByProjectId: Record<string, readonly string[] | undefined>,
+    projectId: string,
+    droppedFileNames: readonly string[],
+): Record<string, readonly string[] | undefined> {
+    return {
+        ...droppedFileNamesByProjectId,
+        [projectId]: droppedFileNames,
+    };
+}
+
+export function canCompleteLumiLaboMockProjectSave(
+    projectId: string,
+    deletedProjectIds: ReadonlySet<string>,
+): boolean {
+    return !deletedProjectIds.has(projectId);
+}
+
+export function applyLumiLaboMockProjectSaveToCurrentDetail(
+    currentProjectDetail: LumiLaboMockProjectDetail | null,
+    savedProjectId: string,
+    savedDetail: LumiLaboMockProjectDetail,
+): LumiLaboMockProjectDetail | null {
+    if (
+        currentProjectDetail === null ||
+        currentProjectDetail.id !== savedProjectId
+    ) {
+        return currentProjectDetail;
+    }
+
+    return savedDetail;
+}
+
 type LumiLaboProjectMockViewProps = {
     projectList: LumiLaboMockProjectList;
 };
@@ -196,23 +265,38 @@ export default function LumiLaboProjectMockView({
     const [deletedProjectIds, setDeletedProjectIds] = useState<ReadonlySet<string>>(
         new Set(),
     );
-    const [isProjectDetailSaving, setIsProjectDetailSaving] = useState(false);
-    const [projectDetailSavedVisible, setProjectDetailSavedVisible] =
-        useState(false);
-    const [droppedFileNames, setDroppedFileNames] = useState<readonly string[]>(
-        [],
+    const [savingProjectIds, setSavingProjectIds] = useState<ReadonlySet<string>>(
+        new Set(),
     );
+    const [savedProjectIds, setSavedProjectIds] = useState<ReadonlySet<string>>(
+        new Set(),
+    );
+    const [droppedFileNamesByProjectId, setDroppedFileNamesByProjectId] =
+        useState<Record<string, readonly string[] | undefined>>({});
     const [isProjectDeleteDialogOpen, setIsProjectDeleteDialogOpen] =
         useState(false);
-    const saveCompleteTimerRef = useRef<ReturnType<
-        typeof window.setTimeout
-    > | null>(null);
-    const saveMessageTimerRef = useRef<ReturnType<
-        typeof window.setTimeout
-    > | null>(null);
+    const [projectSessions, setProjectSessions] =
+        useState<LumiLaboMockProjectSessionById>({});
+    const [shouldRefreshProjectList, setShouldRefreshProjectList] =
+        useState(false);
+    const deletedProjectIdsRef = useRef<ReadonlySet<string>>(new Set());
+    const saveCompleteTimerRef = useRef<
+        Record<string, ReturnType<typeof window.setTimeout> | undefined>
+    >({});
+    const saveMessageTimerRef = useRef<
+        Record<string, ReturnType<typeof window.setTimeout> | undefined>
+    >({});
 
     const activeGlobalTabId: LumiLaboMockGlobalTabId =
         activeScreen === 'select' ? 'select' : 'top';
+    const isProjectDetailSaving =
+        projectDetail !== null && savingProjectIds.has(projectDetail.id);
+    const projectDetailSavedVisible =
+        projectDetail !== null && savedProjectIds.has(projectDetail.id);
+    const droppedFileNames =
+        projectDetail === null
+            ? []
+            : (droppedFileNamesByProjectId[projectDetail.id] ?? []);
 
     const hasProjectDetailChanges = hasProjectDetailDraftChanged(
         projectDetailDraft,
@@ -221,8 +305,8 @@ export default function LumiLaboProjectMockView({
 
     useEffect(() => {
         return () => {
-            clearMockTimer(saveCompleteTimerRef);
-            clearMockTimer(saveMessageTimerRef);
+            clearProjectTimers(saveCompleteTimerRef);
+            clearProjectTimers(saveMessageTimerRef);
         };
     }, []);
 
@@ -249,6 +333,10 @@ export default function LumiLaboProjectMockView({
         setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
     };
 
+    const handleDeletedProjectsRefreshed = useCallback(() => {
+        setShouldRefreshProjectList(false);
+    }, []);
+
     const openProject = () => {
         setActiveProjectTabId('top');
         setActiveProjectViewId('top');
@@ -258,14 +346,23 @@ export default function LumiLaboProjectMockView({
     const openProjectDetailFromList = (
         project: LumiLaboMockProjectListItem,
     ) => {
-        const detail = createLumiLaboProjectDetail(
-            project,
-            projectOverrides[project.id],
-        );
+        const session =
+            projectSessions[project.id] ??
+            createLumiLaboMockProjectSession(
+                createLumiLaboProjectDetail(
+                    project,
+                    projectOverrides[project.id],
+                ),
+            );
 
         setSelectedProjectId(project.id);
-        setProjectDetail(detail);
-        setProjectDetailDraft(createProjectDetailDraft(detail));
+        setProjectDetail(session.detail);
+        setProjectDetailDraft(session.draft);
+        setProjectSessions((current) =>
+            current[project.id] === undefined
+                ? { ...current, [project.id]: session }
+                : current,
+        );
         setProjectDetailReturnTarget(lumiLaboProjectListReturnTarget);
         setActiveProjectTabId('list');
         setActiveProjectViewId('detail');
@@ -281,52 +378,92 @@ export default function LumiLaboProjectMockView({
         fieldId: LumiLaboMockProjectDetailEditableFieldId,
         value: string,
     ) => {
-        setProjectDetailDraft((current) => ({
-            ...current,
+        if (projectDetail === null) {
+            return;
+        }
+
+        const nextDraft = {
+            ...projectDetailDraft,
             [fieldId]: value,
-        }));
-        setProjectDetailSavedVisible(false);
+        };
+
+        setProjectDetailDraft(nextDraft);
+        setProjectSessions((current) =>
+            updateLumiLaboMockProjectSession(
+                current,
+                projectDetail.id,
+                (session) => ({ ...session, draft: nextDraft }),
+            ),
+        );
+        setSavedProjectIds((current) => removeProjectId(current, projectDetail.id));
     };
 
     const saveProjectDetail = () => {
         if (
             projectDetail === null ||
             selectedProjectId === null ||
-            isProjectDetailSaving ||
+            savingProjectIds.has(selectedProjectId) ||
             !hasProjectDetailChanges
         ) {
             return;
         }
 
         const savedProjectId = selectedProjectId;
-        const savedDraft = projectDetailDraft;
+        const savedDraft = { ...projectDetailDraft };
 
-        clearMockTimer(saveCompleteTimerRef);
-        clearMockTimer(saveMessageTimerRef);
-        setIsProjectDetailSaving(true);
+        clearProjectTimer(saveCompleteTimerRef, savedProjectId);
+        clearProjectTimer(saveMessageTimerRef, savedProjectId);
+        setSavingProjectIds((current) => addProjectId(current, savedProjectId));
+        setSavedProjectIds((current) => removeProjectId(current, savedProjectId));
 
-        saveCompleteTimerRef.current = window.setTimeout(() => {
-            setProjectDetail((current) => {
-                if (current === null) {
-                    return current;
-                }
+        saveCompleteTimerRef.current[savedProjectId] = window.setTimeout(() => {
+            if (!canCompleteLumiLaboMockProjectSave(savedProjectId, deletedProjectIdsRef.current)) {
+                setSavingProjectIds((current) =>
+                    removeProjectId(current, savedProjectId),
+                );
+                delete saveCompleteTimerRef.current[savedProjectId];
 
-                return {
-                    ...current,
-                    ...savedDraft,
-                };
-            });
+                return;
+            }
+
+            const savedDetail = {
+                ...projectDetail,
+                ...savedDraft,
+            };
+
+            setProjectDetail((current) =>
+                applyLumiLaboMockProjectSaveToCurrentDetail(
+                    current,
+                    savedProjectId,
+                    savedDetail,
+                ),
+            );
+            setProjectSessions((current) =>
+                updateLumiLaboMockProjectSession(
+                    current,
+                    savedProjectId,
+                    (session) => ({
+                        ...session,
+                        detail: savedDetail,
+                        draft: savedDraft,
+                    }),
+                ),
+            );
             setProjectOverrides((current) => ({
                 ...current,
                 [savedProjectId]: savedDraft,
             }));
-            setIsProjectDetailSaving(false);
-            setProjectDetailSavedVisible(true);
-            saveCompleteTimerRef.current = null;
+            setSavingProjectIds((current) =>
+                removeProjectId(current, savedProjectId),
+            );
+            setSavedProjectIds((current) => addProjectId(current, savedProjectId));
+            delete saveCompleteTimerRef.current[savedProjectId];
 
-            saveMessageTimerRef.current = window.setTimeout(() => {
-                setProjectDetailSavedVisible(false);
-                saveMessageTimerRef.current = null;
+            saveMessageTimerRef.current[savedProjectId] = window.setTimeout(() => {
+                setSavedProjectIds((current) =>
+                    removeProjectId(current, savedProjectId),
+                );
+                delete saveMessageTimerRef.current[savedProjectId];
             }, 3000);
         }, 250);
     };
@@ -336,12 +473,27 @@ export default function LumiLaboProjectMockView({
             return;
         }
 
-        setDroppedFileNames(Array.from(files).map((file) => file.name));
+        if (projectDetail === null) {
+            return;
+        }
+
+        setDroppedFileNamesByProjectId((current) =>
+            setLumiLaboMockProjectDroppedFileNames(
+                current,
+                projectDetail.id,
+                Array.from(files).map((file) => file.name),
+            ),
+        );
     };
 
     const removeSavedPhoto = (photoId: string) => {
+        if (projectDetail === null) {
+            return;
+        }
+
+        const projectId = projectDetail.id;
         setProjectDetail((current) => {
-            if (current === null) {
+            if (current === null || current.id !== projectId) {
                 return current;
             }
 
@@ -352,11 +504,27 @@ export default function LumiLaboProjectMockView({
                 ),
             };
         });
+        setProjectSessions((current) =>
+            updateLumiLaboMockProjectSession(current, projectId, (session) => ({
+                ...session,
+                detail: {
+                    ...session.detail,
+                    savedPhotos: session.detail.savedPhotos.filter(
+                        (photo) => photo.id !== photoId,
+                    ),
+                },
+            })),
+        );
     };
 
     const removeSavedFile = (fileId: string) => {
+        if (projectDetail === null) {
+            return;
+        }
+
+        const projectId = projectDetail.id;
         setProjectDetail((current) => {
-            if (current === null) {
+            if (current === null || current.id !== projectId) {
                 return current;
             }
 
@@ -365,6 +533,17 @@ export default function LumiLaboProjectMockView({
                 savedFiles: current.savedFiles.filter((file) => file.id !== fileId),
             };
         });
+        setProjectSessions((current) =>
+            updateLumiLaboMockProjectSession(current, projectId, (session) => ({
+                ...session,
+                detail: {
+                    ...session.detail,
+                    savedFiles: session.detail.savedFiles.filter(
+                        (file) => file.id !== fileId,
+                    ),
+                },
+            })),
+        );
     };
 
     const requestProjectDelete = () => {
@@ -378,20 +557,30 @@ export default function LumiLaboProjectMockView({
 
         const deletedProjectId = projectDetail.id;
 
-        clearMockTimer(saveCompleteTimerRef);
-        clearMockTimer(saveMessageTimerRef);
-        setDeletedProjectIds((current) => {
-            const next = new Set(current);
-            next.add(deletedProjectId);
+        clearProjectTimer(saveCompleteTimerRef, deletedProjectId);
+        clearProjectTimer(saveMessageTimerRef, deletedProjectId);
+        const nextDeletedProjectIds = addProjectId(
+            deletedProjectIdsRef.current,
+            deletedProjectId,
+        );
 
-            return next;
-        });
+        deletedProjectIdsRef.current = nextDeletedProjectIds;
+        setDeletedProjectIds(nextDeletedProjectIds);
+        setProjectSessions((current) => removeProjectSession(current, deletedProjectId));
+        setProjectOverrides((current) => removeProjectRecord(current, deletedProjectId));
+        setDroppedFileNamesByProjectId((current) =>
+            removeProjectRecord(current, deletedProjectId),
+        );
+        setSavingProjectIds((current) =>
+            removeProjectId(current, deletedProjectId),
+        );
+        setSavedProjectIds((current) =>
+            removeProjectId(current, deletedProjectId),
+        );
+        setShouldRefreshProjectList(true);
         setSelectedProjectId(null);
         setProjectDetail(null);
         setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
-        setIsProjectDetailSaving(false);
-        setProjectDetailSavedVisible(false);
-        setDroppedFileNames([]);
         handleBackFromProjectDetail();
     };
 
@@ -445,7 +634,9 @@ export default function LumiLaboProjectMockView({
                     <LumiLaboProjectListPanel
                         projectList={projectList}
                         projectOverrides={projectOverrides}
-                        deletedProjectIds={deletedProjectIds}
+                        deletedProjectIds={Array.from(deletedProjectIds)}
+                        shouldRefreshForDeletedProjects={shouldRefreshProjectList}
+                        onDeletedProjectsRefreshed={handleDeletedProjectsRefreshed}
                         backTargetId="project-top"
                         onOpenProjectDetail={openProjectDetailFromList}
                         onBack={handleBackFromProjectList}
@@ -1209,15 +1400,62 @@ function createGoogleMapsSearchUrl(address: string): string {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
 
-function clearMockTimer(
-    timerRef: MutableRefObject<ReturnType<typeof window.setTimeout> | null>,
-) {
-    if (timerRef.current === null) {
+export function addProjectId(
+    projectIds: ReadonlySet<string>,
+    projectId: string,
+): ReadonlySet<string> {
+    return new Set(projectIds).add(projectId);
+}
+
+export function removeProjectId(
+    projectIds: ReadonlySet<string>,
+    projectId: string,
+): ReadonlySet<string> {
+    const nextProjectIds = new Set(projectIds);
+    nextProjectIds.delete(projectId);
+
+    return nextProjectIds;
+}
+
+function removeProjectRecord<T>(
+    record: Record<string, T | undefined>,
+    projectId: string,
+): Record<string, T | undefined> {
+    if (record[projectId] === undefined) {
+        return record;
+    }
+
+    const { [projectId]: _, ...remaining } = record;
+
+    return remaining;
+}
+
+function removeProjectSession(
+    sessions: LumiLaboMockProjectSessionById,
+    projectId: string,
+): LumiLaboMockProjectSessionById {
+    return removeProjectRecord(sessions, projectId);
+}
+
+type ProjectTimerRef = MutableRefObject<
+    Record<string, ReturnType<typeof window.setTimeout> | undefined>
+>;
+
+function clearProjectTimer(timerRef: ProjectTimerRef, projectId: string) {
+    const timer = timerRef.current[projectId];
+
+    if (timer === undefined) {
         return;
     }
 
-    window.clearTimeout(timerRef.current);
-    timerRef.current = null;
+    window.clearTimeout(timer);
+    delete timerRef.current[projectId];
+}
+
+function clearProjectTimers(timerRef: ProjectTimerRef) {
+    Object.keys(timerRef.current).forEach((projectId) =>
+        clearProjectTimer(timerRef, projectId),
+    );
 }
 
 function getFileTagClasses(isActive: boolean): string {

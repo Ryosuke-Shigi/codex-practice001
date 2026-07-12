@@ -15,13 +15,15 @@ type LumiLaboProjectListPanelProps = {
     projectOverrides: Readonly<
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
     >;
-    deletedProjectIds: ReadonlySet<string>;
+    deletedProjectIds: readonly string[];
+    shouldRefreshForDeletedProjects: boolean;
+    onDeletedProjectsRefreshed: () => void;
     onOpenProjectDetail: (project: LumiLaboMockProjectListItem) => void;
     onBack: () => void;
     backTargetId: string;
 };
 
-type ProjectListQuery = {
+export type LumiLaboProjectListQuery = {
     keyword: string;
     sort: LumiLaboMockProjectList["sort"];
     page: number;
@@ -30,6 +32,20 @@ type ProjectListQuery = {
 
 export const LUMILABO_PROJECT_LIST_PARTIAL_PROPS = ["projectList"];
 export const LUMILABO_PROJECT_LIST_MAX_PER_PAGE = 20;
+
+export function createLumiLaboProjectListRequestData(
+    query: LumiLaboProjectListQuery,
+    deletedProjectIds: readonly string[],
+) {
+    return {
+        keyword: query.keyword === "" ? undefined : query.keyword,
+        sort: query.sort,
+        page: query.page,
+        per_page: query.perPage,
+        deleted_ids: [...deletedProjectIds],
+    };
+}
+
 
 export function calculateLumiLaboProjectListPerPage(
     listHeight: number,
@@ -54,6 +70,8 @@ export default function LumiLaboProjectListPanel({
     projectList,
     projectOverrides,
     deletedProjectIds,
+    shouldRefreshForDeletedProjects,
+    onDeletedProjectsRefreshed,
     onOpenProjectDetail,
     onBack,
     backTargetId,
@@ -65,6 +83,7 @@ export default function LumiLaboProjectListPanel({
         projectList.isReady,
     );
     const projectListRef = useRef(projectList);
+    const deletedProjectIdsRef = useRef(deletedProjectIds);
     const measuredPerPageRef = useRef<number | null>(projectList.perPage);
     const listRegionRef = useRef<HTMLDivElement>(null);
     const rowMeasurementRef = useRef<HTMLDivElement>(null);
@@ -73,8 +92,15 @@ export default function LumiLaboProjectListPanel({
         projectListRef.current = projectList;
     }, [projectList]);
 
+    useEffect(() => {
+        deletedProjectIdsRef.current = deletedProjectIds;
+    }, [deletedProjectIds]);
+
     const reloadProjectList = useCallback(
-        (changes: Partial<ProjectListQuery>) => {
+        (
+            changes: Partial<LumiLaboProjectListQuery>,
+            onFinished?: () => void,
+        ) => {
             const current = projectListRef.current;
             const perPage = changes.perPage ?? measuredPerPageRef.current;
 
@@ -82,7 +108,7 @@ export default function LumiLaboProjectListPanel({
                 return;
             }
 
-            const nextQuery: ProjectListQuery = {
+            const nextQuery: LumiLaboProjectListQuery = {
                 keyword: changes.keyword ?? current.keyword,
                 sort: changes.sort ?? current.sort,
                 page: changes.page ?? current.currentPage,
@@ -91,22 +117,20 @@ export default function LumiLaboProjectListPanel({
 
             router.get(
                 current.action,
-                {
-                    keyword:
-                        nextQuery.keyword === ""
-                            ? undefined
-                            : nextQuery.keyword,
-                    sort: nextQuery.sort,
-                    page: nextQuery.page,
-                    per_page: nextQuery.perPage,
-                },
+                createLumiLaboProjectListRequestData(
+                    nextQuery,
+                    deletedProjectIdsRef.current,
+                ),
                 {
                     only: LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
                     onStart: () => setIsLoading(true),
-                    onFinish: () => setIsLoading(false),
+                    onFinish: () => {
+                        setIsLoading(false);
+                        onFinished?.();
+                    },
                 },
             );
         },
@@ -163,18 +187,35 @@ export default function LumiLaboProjectListPanel({
         return () => observer.disconnect();
     }, [measurePerPage]);
 
+    useEffect(() => {
+        if (
+            !shouldRefreshForDeletedProjects ||
+            measuredPerPageRef.current === null
+        ) {
+            return;
+        }
+
+        reloadProjectList(
+            { page: projectListRef.current.currentPage },
+            onDeletedProjectsRefreshed,
+        );
+    }, [
+        onDeletedProjectsRefreshed,
+        reloadProjectList,
+        shouldRefreshForDeletedProjects,
+    ]);
+
     const isListLoading =
-        isLoading || !isMeasurementReady || !projectList.isReady;
+        isLoading || !isMeasurementReady || !projectList.isReady || shouldRefreshForDeletedProjects;
 
     const visibleItems = useMemo(
         () =>
             projectList.items
-                .filter((project) => !deletedProjectIds.has(project.id))
                 .map((project) => ({
                     ...project,
                     ...projectOverrides[project.id],
                 })),
-        [deletedProjectIds, projectList.items, projectOverrides],
+        [projectList.items, projectOverrides],
     );
 
     const openSearchDialog = () => {
@@ -324,7 +365,7 @@ export default function LumiLaboProjectListPanel({
                 </div>
 
                 <div className="min-h-12">
-                    {projectList.isReady && projectList.showPagination ? (
+                    {!isListLoading && projectList.isReady && projectList.showPagination ? (
                         <nav
                             aria-label="案件一覧のページ移動"
                             className="flex items-center justify-between gap-3"
@@ -430,19 +471,19 @@ function ProjectSearchDialog({
                 </label>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     <button
+                        type="submit"
+                        className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500 sm:order-2"
+                        disabled={isLoading}
+                    >
+                        検索
+                    </button>
+                    <button
                         type="button"
-                        className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
+                        className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 sm:order-1"
                         disabled={isLoading}
                         onClick={onClose}
                     >
                         閉じる
-                    </button>
-                    <button
-                        type="submit"
-                        className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500"
-                        disabled={isLoading}
-                    >
-                        検索
                     </button>
                 </div>
             </form>

@@ -23,6 +23,7 @@ type RenderMockViewOptions = {
     projectOverrides?: Record<string, LumiLaboMockProjectDetailDraft | undefined>;
     deletedProjectIds?: ReadonlySet<string>;
     isSearchDialogOpen?: boolean;
+    shouldRefreshForDeletedProjects?: boolean;
     listIsLoading?: boolean;
     droppedFileNames?: readonly string[];
     isDeleteDialogOpen?: boolean;
@@ -125,15 +126,33 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 10) {
-                        return [options.isSaving ?? false, vi.fn()];
+                        return [
+                            options.isSaving && projectDetail !== null
+                                ? new Set([projectDetail.id])
+                                : new Set(),
+                            vi.fn(),
+                        ];
                     }
 
                     if (stateCall === 11) {
-                        return [options.saveMessageVisible ?? false, vi.fn()];
+                        return [
+                            options.saveMessageVisible && projectDetail !== null
+                                ? new Set([projectDetail.id])
+                                : new Set(),
+                            vi.fn(),
+                        ];
                     }
 
                     if (stateCall === 12) {
-                        return [options.droppedFileNames ?? [], vi.fn()];
+                        return [
+                            projectDetail === null
+                                ? {}
+                                : {
+                                      [projectDetail.id]:
+                                          options.droppedFileNames ?? [],
+                                  },
+                            vi.fn(),
+                        ];
                     }
 
                     if (stateCall === 13) {
@@ -141,10 +160,18 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 14) {
-                        return [options.isSearchDialogOpen ?? false, vi.fn()];
+                        return [{}, vi.fn()];
+                    }
+
+                    if (stateCall === 15) {
+                        return [options.shouldRefreshForDeletedProjects ?? false, vi.fn()];
                     }
 
                     if (stateCall === 16) {
+                        return [options.isSearchDialogOpen ?? false, vi.fn()];
+                    }
+
+                    if (stateCall === 18) {
                         return [options.listIsLoading ?? false, vi.fn()];
                     }
 
@@ -295,8 +322,13 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('role="dialog"');
         expect(markup).toContain('案件を検索');
         expect(markup).toContain('一覧を更新しています');
-        expect(markup).toContain('＜＜');
-        expect(markup).toContain('＞＞');
+        expect(markup).toContain('sm:order-2');
+        expect(markup).toContain('sm:order-1');
+        expect(markup.indexOf('>検索</button>')).toBeLessThan(
+            markup.indexOf('>閉じる</button>'),
+        );
+        expect(markup).not.toContain('＜＜');
+        expect(markup).not.toContain('＞＞');
         expect(markup).not.toContain('aria-label="検索を閉じる"');
         expect(markup).toContain('disabled=""');
         expect(markup).not.toContain('詳細を見る');
@@ -330,13 +362,17 @@ describe('LumiLaboProjectMockView', () => {
         });
         const deletedMarkup = await renderMockViewMarkup('project', 'list', {
             deletedProjectIds: new Set(['mock-project-001']),
+            shouldRefreshForDeletedProjects: true,
         });
 
         expect(overriddenMarkup).toContain('ルミラボ工務店 保存後');
         expect(overriddenMarkup).not.toContain('>ルミラボ工務店<');
         expect(overriddenMarkup).not.toContain('保存済みのメモ');
-        expect(deletedMarkup).toContain('表示できる案件はありません');
+        expect(deletedMarkup).toContain('一覧を更新しています');
         expect(deletedMarkup).not.toContain('ルミラボ工務店');
+        expect(deletedMarkup).not.toContain('表示できる案件はありません');
+        expect(deletedMarkup).not.toContain('＜＜');
+        expect(deletedMarkup).not.toContain('＞＞');
     });
 
     it('renders project detail without adding detail or back to file tags', async () => {

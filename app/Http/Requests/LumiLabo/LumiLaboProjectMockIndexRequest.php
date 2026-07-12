@@ -26,6 +26,8 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
             'sort' => ['nullable', 'string', 'in:registered_desc,registered_asc'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'between:1,20'],
+            'deleted_ids' => ['nullable', 'array', 'max:20'],
+            'deleted_ids.*' => ['string', 'regex:/^mock-project-\d{3}$/'],
         ];
     }
 
@@ -61,5 +63,22 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
         $perPage = $this->validated('per_page');
 
         return $perPage === null ? null : (int) $perPage;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function deletedProjectIds(): array
+    {
+        $deletedIds = $this->validated('deleted_ids', []);
+
+        if (! is_array($deletedIds)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(
+            $deletedIds,
+            fn (mixed $deletedId): bool => is_string($deletedId),
+        )));
     }
 }
