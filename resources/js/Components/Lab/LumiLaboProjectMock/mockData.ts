@@ -32,6 +32,8 @@ export const lumiLaboTopReturnLabel = 'TOPへ戻る';
 
 export const lumiLaboProjectBackLabel = '戻る';
 
+export const lumiLaboProjectDetailBackLabel = '案件一覧へ戻る';
+
 export const lumiLaboProjectRegisterPanel = {
     title: '案件登録',
     fields: [
@@ -92,10 +94,16 @@ export const lumiLaboProjectDetail = {
 
 export const lumiLaboProjectDetailSavedMessage = '保存しました';
 
-export const lumiLaboProjectDeleteActionLabel = '案件を削除';
+export const lumiLaboProjectDetailSaveLabel = '保存する';
 
-export const lumiLaboProjectDeleteConfirmMessage = '削除しますか？';
+export const lumiLaboProjectDetailSavingLabel = '保存中です';
 
-export const lumiLaboProjectDeleteConfirmYesLabel = 'YES';
+export const lumiLaboProjectDetailEditingLabel = '編集中';
 
-export const lumiLaboProjectDeleteConfirmNoLabel = 'NO';
+export const lumiLaboProjectDeleteActionLabel = '案件を削除する';
+
+export const lumiLaboProjectDeleteConfirmMessage = 'この案件を削除しますか？';
+
+export const lumiLaboProjectDeleteConfirmYesLabel = 'はい';
+
+export const lumiLaboProjectDeleteConfirmNoLabel = 'いいえ';

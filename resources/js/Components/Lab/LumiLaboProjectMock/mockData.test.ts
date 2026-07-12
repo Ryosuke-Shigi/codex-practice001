@@ -8,6 +8,10 @@ import {
     lumiLaboProjectDeleteConfirmMessage,
     lumiLaboProjectDeleteConfirmNoLabel,
     lumiLaboProjectDeleteConfirmYesLabel,
+    lumiLaboProjectDetailBackLabel,
+    lumiLaboProjectDetailEditingLabel,
+    lumiLaboProjectDetailSaveLabel,
+    lumiLaboProjectDetailSavingLabel,
     lumiLaboProjectDetail,
     lumiLaboProjectDetailSavedMessage,
     lumiLaboProjectItem,
@@ -25,6 +29,7 @@ function collectMockText(): string {
         lumiLaboProjectRegisterPanel.title,
         ...lumiLaboProjectRegisterPanel.fields.map((field) => field.label),
         lumiLaboProjectBackLabel,
+        lumiLaboProjectDetailBackLabel,
         lumiLaboProjectDetail.companyName,
         lumiLaboProjectDetail.contactName,
         lumiLaboProjectDetail.address,
@@ -37,6 +42,9 @@ function collectMockText(): string {
         lumiLaboProjectDeleteConfirmYesLabel,
         lumiLaboProjectDeleteConfirmNoLabel,
         lumiLaboProjectDetailSavedMessage,
+        lumiLaboProjectDetailSaveLabel,
+        lumiLaboProjectDetailSavingLabel,
+        lumiLaboProjectDetailEditingLabel,
         'LumiLabo',
         'Start',
     ].join('\n');
@@ -74,6 +82,7 @@ describe('LumiLaboProjectMock data', () => {
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('戻る');
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('詳細');
         expect(lumiLaboProjectBackLabel).toBe('戻る');
+        expect(lumiLaboProjectDetailBackLabel).toBe('案件一覧へ戻る');
     });
 
     it('defines only the register mock input fields', () => {
@@ -103,11 +112,14 @@ describe('LumiLaboProjectMock data', () => {
             '現場確認資料.pdf',
             '現場参考メモ.xlsx',
         ]);
-        expect(lumiLaboProjectDeleteActionLabel).toBe('案件を削除');
-        expect(lumiLaboProjectDeleteConfirmMessage).toBe('削除しますか？');
-        expect(lumiLaboProjectDeleteConfirmYesLabel).toBe('YES');
-        expect(lumiLaboProjectDeleteConfirmNoLabel).toBe('NO');
+        expect(lumiLaboProjectDeleteActionLabel).toBe('案件を削除する');
+        expect(lumiLaboProjectDeleteConfirmMessage).toBe('この案件を削除しますか？');
+        expect(lumiLaboProjectDeleteConfirmYesLabel).toBe('はい');
+        expect(lumiLaboProjectDeleteConfirmNoLabel).toBe('いいえ');
         expect(lumiLaboProjectDetailSavedMessage).toBe('保存しました');
+        expect(lumiLaboProjectDetailSaveLabel).toBe('保存する');
+        expect(lumiLaboProjectDetailSavingLabel).toBe('保存中です');
+        expect(lumiLaboProjectDetailEditingLabel).toBe('編集中');
     });
 
     it('keeps forbidden register mock concepts out of the fixed data', () => {
@@ -128,8 +140,11 @@ describe('LumiLaboProjectMock data', () => {
         expect(text).toContain('案件');
         expect(text).toContain('TOPへ戻る');
         expect(text).toContain('戻る');
+        expect(text).toContain('案件一覧へ戻る');
         expect(text).not.toContain('選択へ戻る');
         expect(text).not.toContain('詳細を見る');
+        expect(text).not.toContain('YES');
+        expect(text).not.toContain('NO');
         expect(lumiLaboTopReturnLabel).not.toBe(lumiLaboProjectBackLabel);
         expect(text).not.toContain('案件を選択');
         expect(text).not.toContain('案件選択');

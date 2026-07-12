@@ -229,8 +229,8 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('担当者名');
         expect(markup).not.toContain('住所');
         expect(markup).not.toContain('登録日');
-        expect(markup).not.toContain('写真撮影');
-        expect(markup).not.toContain('ファイルをまとめてドラッグ');
+        expect(markup).not.toContain('写真を撮影する');
+        expect(markup).not.toContain('ファイルを選択、またはまとめてドラッグ');
         expect(markup).not.toContain('lucide-save');
         expect(markup).not.toContain('lucide-layers-3');
         expect(markup).not.toMatch(/<h1[^>]*>案件<\/h1>/);
@@ -256,6 +256,11 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain('aria-label="案件内画面"');
         expect(markup).toContain('aria-current="page"');
         expect(markup).toContain('案件詳細');
+        expect(markup).toContain('案件一覧へ戻る');
+        expect(markup).toContain('ルミラボ工務店');
+        expect(markup).not.toContain('role="status"');
+        expect(markup).not.toContain('保存状態');
+        expect(markup).not.toContain('変更はありません');
         expect(markup).toContain('会社名');
         expect(markup).toContain('担当者名');
         expect(markup).toContain('住所');
@@ -270,14 +275,20 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).toContain(mapUrl);
         expect(markup).toContain('target="_blank"');
         expect(markup).toContain('rel="noopener noreferrer"');
-        expect(markup).toContain('写真撮影');
-        expect(markup).toContain('ファイルをまとめてドラッグ＆ドロップ');
-        expect(markup).toMatch(/<h2[^>]*>写真<\/h2>/);
-        expect(markup).toMatch(/<h2[^>]*>ファイル<\/h2>/);
+        expect(markup.indexOf('name="address"')).toBeLessThan(
+            markup.indexOf('aria-label="Google Mapsで住所を確認する"'),
+        );
+        expect(markup.indexOf('aria-label="Google Mapsで住所を確認する"')).toBeLessThan(
+            markup.indexOf('name="memo"'),
+        );
+        expect(markup).toContain('写真を撮影する');
+        expect(markup).toContain('ファイルを選択、またはまとめてドラッグ＆ドロップ');
+        expect(markup).toMatch(/<h3[^>]*>保存済み写真<\/h3>/);
+        expect(markup).toMatch(/<h3[^>]*>保存済みファイル<\/h3>/);
         expect(markup).toContain('aria-label="保存済み現場写真 1を削除"');
         expect(markup).toContain('aria-label="現場確認資料.pdfを削除"');
         expect(markup.match(/lucide-x/g) ?? []).toHaveLength(5);
-        expect(markup).toContain('案件を削除');
+        expect(markup).toContain('案件を削除する');
         expect(markup).toContain('lucide-trash-2');
         expect(markup).toContain('現場確認資料.pdf');
         expect(markup).toContain('現場参考メモ.xlsx');
@@ -286,7 +297,7 @@ describe('LumiLaboProjectMockView', () => {
         expect(markup).not.toContain('Embed');
     });
 
-    it('renders the project delete confirmation dialog with YES and NO', async () => {
+    it('renders the project delete confirmation dialog with Japanese actions', async () => {
         const markup = await renderMockViewMarkup('project', 'list', {
             activeProjectViewId: 'detail',
             isDeleteDialogOpen: true,
@@ -294,10 +305,45 @@ describe('LumiLaboProjectMockView', () => {
 
         expect(markup).toContain('role="dialog"');
         expect(markup).toContain('aria-modal="true"');
-        expect(markup).toContain('削除しますか？');
-        expect(markup).toContain('YES');
-        expect(markup).toContain('NO');
-        expect(markup.indexOf('NO')).toBeLessThan(markup.indexOf('YES'));
+        expect(markup).toContain('この案件を削除しますか？');
+        expect(markup).toContain('いいえ');
+        expect(markup).toContain('はい');
+        expect(markup).not.toContain('YES');
+        expect(markup).not.toContain('NO');
+        expect(markup).not.toContain('削除しない');
+        expect(markup).not.toMatch(/<button[^>]*>\s*削除する\s*<\/button>/);
+        expect(markup.indexOf('いいえ')).toBeLessThan(
+            markup.lastIndexOf('はい'),
+        );
+    });
+
+    it('keeps the map preview and search URL in sync with the draft address', async () => {
+        const changedAddress = '東京都千代田区丸の内 2-2-2';
+        const changedMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                address: changedAddress,
+            },
+        });
+        const emptyAddressMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                address: '   ',
+            },
+        });
+        const changedMapUrl = `https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(changedAddress)}`;
+
+        expect(changedMarkup).toContain(`住所：${changedAddress}`);
+        expect(changedMarkup).toContain(changedMapUrl);
+        expect(changedMarkup).not.toContain(
+            `query=${encodeURIComponent(lumiLaboProjectDetail.address)}`,
+        );
+        expect(emptyAddressMarkup).not.toContain(
+            'aria-label="Google Mapsで住所を確認する"',
+        );
+        expect(emptyAddressMarkup).not.toContain('https://www.google.com/maps');
     });
 
     it('shows the save button only when detail draft changed and can show the instant save message', async () => {
@@ -311,14 +357,25 @@ describe('LumiLaboProjectMockView', () => {
                 memo: '変更したメモ',
             },
         });
+        const savingMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                memo: '保存中のメモ',
+            },
+            isSaving: true,
+        });
         const savedMarkup = await renderMockViewMarkup('project', 'list', {
             activeProjectViewId: 'detail',
             saveMessageVisible: true,
         });
 
         expect(initialMarkup).not.toContain('lucide-save');
+        expect(initialMarkup).not.toContain('role="status"');
         expect(changedMarkup).toContain('lucide-save');
-        expect(changedMarkup).toContain('<span>保存</span>');
+        expect(changedMarkup).toContain('<span>保存する</span>');
+        expect(changedMarkup).toContain('編集中');
+        expect(savingMarkup).toContain('保存中です');
         expect(savedMarkup).toContain('role="status"');
         expect(savedMarkup).toContain('保存しました');
     });
@@ -335,10 +392,10 @@ describe('LumiLaboProjectMockView', () => {
             detailDraft: createProjectDetailDraft(emptyProjectDetail),
         });
 
-        expect(markup).toContain('写真撮影');
-        expect(markup).toContain('ファイルをまとめてドラッグ＆ドロップ');
-        expect(markup).not.toMatch(/<h2[^>]*>写真<\/h2>/);
-        expect(markup).not.toMatch(/<h2[^>]*>ファイル<\/h2>/);
+        expect(markup.match(/>写真を撮影する</g) ?? []).toHaveLength(1);
+        expect(markup).toContain('ファイルを選択、またはまとめてドラッグ＆ドロップ');
+        expect(markup).not.toContain('保存済み写真');
+        expect(markup).not.toContain('保存済みファイル');
         expect(markup).not.toContain('保存済み現場写真');
         expect(markup).not.toContain('現場確認資料.pdf');
         expect(markup).not.toContain('現場参考メモ.xlsx');
