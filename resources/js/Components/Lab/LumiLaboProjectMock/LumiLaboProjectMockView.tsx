@@ -16,7 +16,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
@@ -219,6 +219,12 @@ export function canCompleteLumiLaboMockProjectSave(
     return !deletedProjectIds.has(projectId);
 }
 
+export function createLumiLaboMockInitialDeletedProjectIds(
+    projectIds: readonly string[],
+): ReadonlySet<string> {
+    return new Set(projectIds);
+}
+
 export function applyLumiLaboMockProjectSaveToCurrentDetail(
     currentProjectDetail: LumiLaboMockProjectDetail | null,
     savedProjectId: string,
@@ -247,6 +253,29 @@ export function applyLumiLaboMockProjectSaveToSession(
             ...savedDraft,
         },
         draft: session.draft,
+    };
+}
+
+export type LumiLaboMockCompletedProjectSave = {
+    session: LumiLaboMockProjectSession;
+    hasUnsavedChanges: boolean;
+};
+
+export function completeLumiLaboMockProjectSave(
+    session: LumiLaboMockProjectSession,
+    savedDraft: LumiLaboMockProjectDetailDraft,
+): LumiLaboMockCompletedProjectSave {
+    const nextSession = applyLumiLaboMockProjectSaveToSession(
+        session,
+        savedDraft,
+    );
+
+    return {
+        session: nextSession,
+        hasUnsavedChanges: hasProjectDetailDraftChanged(
+            nextSession.draft,
+            nextSession.detail,
+        ),
     };
 }
 
@@ -283,9 +312,12 @@ export default function LumiLaboProjectMockView({
     const [projectOverrides, setProjectOverrides] = useState<
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
     >(() => createProjectOverrideRecord(initialProjectOverrides));
-    const [deletedProjectIds, setDeletedProjectIds] = useState<ReadonlySet<string>>(
-        () => new Set(initialDeletedProjectIds),
-    );
+    const [deletedProjectIds, setDeletedProjectIds] =
+        useState<ReadonlySet<string>>(() =>
+            createLumiLaboMockInitialDeletedProjectIds(
+                initialDeletedProjectIds,
+            ),
+        );
     const [savingProjectIds, setSavingProjectIds] = useState<ReadonlySet<string>>(
         new Set(),
     );
@@ -298,11 +330,12 @@ export default function LumiLaboProjectMockView({
         useState(false);
     const [projectSessions, setProjectSessions] =
         useState<LumiLaboMockProjectSessionById>({});
-    const [shouldRefreshProjectList, setShouldRefreshProjectList] =
-        useState(false);
+    const [projectListRefreshRevision, setProjectListRefreshRevision] =
+        useState(0);
     const deletedProjectIdsRef = useRef<ReadonlySet<string>>(
-        new Set(initialDeletedProjectIds),
+        createLumiLaboMockInitialDeletedProjectIds(initialDeletedProjectIds),
     );
+    const projectSessionsRef = useRef<LumiLaboMockProjectSessionById>({});
     const saveCompleteTimerRef = useRef<
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
     >({});
@@ -333,6 +366,17 @@ export default function LumiLaboProjectMockView({
         };
     }, []);
 
+    const updateProjectSessions = (
+        update: (
+            sessions: LumiLaboMockProjectSessionById,
+        ) => LumiLaboMockProjectSessionById,
+    ) => {
+        const nextSessions = update(projectSessionsRef.current);
+
+        projectSessionsRef.current = nextSessions;
+        setProjectSessions(nextSessions);
+    };
+
     const selectGlobalTab = (tabId: LumiLaboMockGlobalTabId) => {
         setActiveScreen(tabId);
     };
@@ -356,10 +400,6 @@ export default function LumiLaboProjectMockView({
         setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
     };
 
-    const handleProjectListRefreshed = useCallback(() => {
-        setShouldRefreshProjectList(false);
-    }, []);
-
     const openProject = () => {
         setActiveProjectTabId('top');
         setActiveProjectViewId('top');
@@ -370,6 +410,7 @@ export default function LumiLaboProjectMockView({
         project: LumiLaboMockProjectListItem,
     ) => {
         const session =
+            projectSessionsRef.current[project.id] ??
             projectSessions[project.id] ??
             createLumiLaboMockProjectSession(
                 createLumiLaboProjectDetail(
@@ -381,7 +422,7 @@ export default function LumiLaboProjectMockView({
         setSelectedProjectId(project.id);
         setProjectDetail(session.detail);
         setProjectDetailDraft(session.draft);
-        setProjectSessions((current) =>
+        updateProjectSessions((current) =>
             current[project.id] === undefined
                 ? { ...current, [project.id]: session }
                 : current,
@@ -411,7 +452,7 @@ export default function LumiLaboProjectMockView({
         };
 
         setProjectDetailDraft(nextDraft);
-        setProjectSessions((current) =>
+        updateProjectSessions((current) =>
             updateLumiLaboMockProjectSession(
                 current,
                 projectDetail.id,
@@ -456,28 +497,45 @@ export default function LumiLaboProjectMockView({
                     savedDraft,
                 ),
             );
-            setProjectSessions((current) =>
-                updateLumiLaboMockProjectSession(
-                    current,
-                    savedProjectId,
-                    (session) =>
-                        applyLumiLaboMockProjectSaveToSession(
-                            session,
-                            savedDraft,
-                        ),
-                ),
+            const session = projectSessionsRef.current[savedProjectId];
+
+            if (session === undefined) {
+                setSavingProjectIds((current) =>
+                    removeProjectId(current, savedProjectId),
+                );
+                delete saveCompleteTimerRef.current[savedProjectId];
+
+                return;
+            }
+
+            const completedSave = completeLumiLaboMockProjectSave(
+                session,
+                savedDraft,
             );
+
+            updateProjectSessions((current) => ({
+                ...current,
+                [savedProjectId]: completedSave.session,
+            }));
             setProjectOverrides((current) => ({
                 ...current,
                 [savedProjectId]: savedDraft,
             }));
-            setShouldRefreshProjectList(true);
+            setProjectListRefreshRevision((current) => current + 1);
             setSavingProjectIds((current) =>
                 removeProjectId(current, savedProjectId),
             );
-            setSavedProjectIds((current) => addProjectId(current, savedProjectId));
             delete saveCompleteTimerRef.current[savedProjectId];
 
+            if (completedSave.hasUnsavedChanges) {
+                setSavedProjectIds((current) =>
+                    removeProjectId(current, savedProjectId),
+                );
+
+                return;
+            }
+
+            setSavedProjectIds((current) => addProjectId(current, savedProjectId));
             saveMessageTimerRef.current[savedProjectId] = window.setTimeout(() => {
                 setSavedProjectIds((current) =>
                     removeProjectId(current, savedProjectId),
@@ -523,7 +581,7 @@ export default function LumiLaboProjectMockView({
                 ),
             };
         });
-        setProjectSessions((current) =>
+        updateProjectSessions((current) =>
             updateLumiLaboMockProjectSession(current, projectId, (session) => ({
                 ...session,
                 detail: {
@@ -552,7 +610,7 @@ export default function LumiLaboProjectMockView({
                 savedFiles: current.savedFiles.filter((file) => file.id !== fileId),
             };
         });
-        setProjectSessions((current) =>
+        updateProjectSessions((current) =>
             updateLumiLaboMockProjectSession(current, projectId, (session) => ({
                 ...session,
                 detail: {
@@ -585,7 +643,9 @@ export default function LumiLaboProjectMockView({
 
         deletedProjectIdsRef.current = nextDeletedProjectIds;
         setDeletedProjectIds(nextDeletedProjectIds);
-        setProjectSessions((current) => removeProjectSession(current, deletedProjectId));
+        updateProjectSessions((current) =>
+            removeProjectSession(current, deletedProjectId),
+        );
         setProjectOverrides((current) => removeProjectRecord(current, deletedProjectId));
         setDroppedFileNamesByProjectId((current) =>
             removeProjectRecord(current, deletedProjectId),
@@ -596,7 +656,7 @@ export default function LumiLaboProjectMockView({
         setSavedProjectIds((current) =>
             removeProjectId(current, deletedProjectId),
         );
-        setShouldRefreshProjectList(true);
+        setProjectListRefreshRevision((current) => current + 1);
         setSelectedProjectId(null);
         setProjectDetail(null);
         setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
@@ -654,8 +714,7 @@ export default function LumiLaboProjectMockView({
                         projectList={projectList}
                         projectOverrides={projectOverrides}
                         deletedProjectIds={Array.from(deletedProjectIds)}
-                        shouldRefreshProjectList={shouldRefreshProjectList}
-                        onProjectListRefreshed={handleProjectListRefreshed}
+                        projectListRefreshRevision={projectListRefreshRevision}
                         backTargetId="project-top"
                         onOpenProjectDetail={openProjectDetailFromList}
                         onBack={handleBackFromProjectList}
@@ -849,10 +908,10 @@ function ProjectDetailPanel({
         mapAddress === '' ? undefined : createGoogleMapsSearchUrl(mapAddress);
     const statusLabel = isSaving
         ? lumiLaboProjectDetailSavingLabel
-        : saveMessageVisible
-          ? lumiLaboProjectDetailSavedMessage
-          : hasUnsavedChanges
-            ? lumiLaboProjectDetailEditingLabel
+        : hasUnsavedChanges
+          ? lumiLaboProjectDetailEditingLabel
+          : saveMessageVisible
+            ? lumiLaboProjectDetailSavedMessage
             : null;
     const shouldShowSaveBar = statusLabel !== null || hasUnsavedChanges;
 
@@ -1408,7 +1467,7 @@ function createProjectDetailDraft(
     };
 }
 
-function createProjectOverrideRecord(
+export function createProjectOverrideRecord(
     projectOverrides: readonly LumiLaboMockProjectOverride[],
 ): Record<string, LumiLaboMockProjectDetailDraft | undefined> {
     return Object.fromEntries(

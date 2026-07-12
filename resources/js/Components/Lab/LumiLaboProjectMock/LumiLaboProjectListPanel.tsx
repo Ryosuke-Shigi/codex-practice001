@@ -16,8 +16,7 @@ type LumiLaboProjectListPanelProps = {
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
     >;
     deletedProjectIds: readonly string[];
-    shouldRefreshProjectList: boolean;
-    onProjectListRefreshed: () => void;
+    projectListRefreshRevision: number;
     onOpenProjectDetail: (project: LumiLaboMockProjectListItem) => void;
     onBack: () => void;
     backTargetId: string;
@@ -52,6 +51,28 @@ export type LumiLaboProjectListRequestCallbacks = {
     onSuccess?: () => void;
     onFailure?: (requestData: LumiLaboProjectListRequestData) => void;
 };
+
+export type LumiLaboProjectListFailedRefresh = {
+    revision: number;
+    requestData: LumiLaboProjectListRequestData;
+};
+
+export function getNextLumiLaboProjectListRefreshRevision(
+    requestedRevision: number,
+    lastSuccessfulRevision: number,
+    activeRevision: number | null,
+    failedRevision: number | null,
+): number | null {
+    if (
+        requestedRevision <= lastSuccessfulRevision ||
+        activeRevision !== null ||
+        failedRevision !== null
+    ) {
+        return null;
+    }
+
+    return requestedRevision;
+}
 
 export function createLumiLaboProjectListRequestCallbacks(
     requestData: LumiLaboProjectListRequestData,
@@ -118,8 +139,7 @@ export default function LumiLaboProjectListPanel({
     projectList,
     projectOverrides,
     deletedProjectIds,
-    shouldRefreshProjectList,
-    onProjectListRefreshed,
+    projectListRefreshRevision,
     onOpenProjectDetail,
     onBack,
     backTargetId,
@@ -134,11 +154,15 @@ export default function LumiLaboProjectListPanel({
     const deletedProjectIdsRef = useRef(deletedProjectIds);
     const projectOverridesRef = useRef(projectOverrides);
     const measuredPerPageRef = useRef<number | null>(projectList.perPage);
-    const refreshRequestStartedRef = useRef(false);
     const listRegionRef = useRef<HTMLDivElement>(null);
     const rowMeasurementRef = useRef<HTMLDivElement>(null);
     const [failedRefreshRequest, setFailedRefreshRequest] =
-        useState<LumiLaboProjectListRequestData | null>(null);
+        useState<LumiLaboProjectListFailedRefresh | null>(null);
+    const [activeRefreshRevision, setActiveRefreshRevision] = useState<
+        number | null
+    >(null);
+    const [lastSuccessfulRefreshRevision, setLastSuccessfulRefreshRevision] =
+        useState(0);
 
     useEffect(() => {
         projectListRef.current = projectList;
@@ -257,35 +281,72 @@ export default function LumiLaboProjectListPanel({
         return () => observer.disconnect();
     }, [measurePerPage]);
 
+    const startProjectListRefresh = useCallback(
+        (
+            revision: number,
+            retryRequestData?: LumiLaboProjectListRequestData,
+        ) => {
+            const perPage = measuredPerPageRef.current;
+
+            if (perPage === null) {
+                return;
+            }
+
+            const current = projectListRef.current;
+            const requestData =
+                retryRequestData ??
+                createLumiLaboProjectListRequestData(
+                    {
+                        keyword: current.keyword,
+                        sort: current.sort,
+                        page: current.currentPage,
+                        perPage,
+                    },
+                    deletedProjectIdsRef.current,
+                    projectOverridesRef.current,
+                );
+
+            setActiveRefreshRevision(revision);
+            visitProjectList(requestData, {
+                onSuccess: () => {
+                    setActiveRefreshRevision(null);
+                    setFailedRefreshRequest(null);
+                    setLastSuccessfulRefreshRevision((currentRevision) =>
+                        Math.max(currentRevision, revision),
+                    );
+                },
+                onFailure: () => {
+                    setActiveRefreshRevision(null);
+                    setFailedRefreshRequest({ revision, requestData });
+                },
+            });
+        },
+        [visitProjectList],
+    );
+
     useEffect(() => {
-        if (!shouldRefreshProjectList) {
-            refreshRequestStartedRef.current = false;
-            setFailedRefreshRequest(null);
-
+        if (measuredPerPageRef.current === null) {
             return;
         }
 
-        if (
-            measuredPerPageRef.current === null ||
-            refreshRequestStartedRef.current ||
-            failedRefreshRequest !== null
-        ) {
-            return;
-        }
-
-        refreshRequestStartedRef.current = true;
-        reloadProjectList(
-            { page: projectListRef.current.currentPage },
-            {
-                onSuccess: onProjectListRefreshed,
-                onFailure: setFailedRefreshRequest,
-            },
+        const nextRevision = getNextLumiLaboProjectListRefreshRevision(
+            projectListRefreshRevision,
+            lastSuccessfulRefreshRevision,
+            activeRefreshRevision,
+            failedRefreshRequest?.revision ?? null,
         );
+
+        if (nextRevision === null) {
+            return;
+        }
+
+        startProjectListRefresh(nextRevision);
     }, [
+        activeRefreshRevision,
         failedRefreshRequest,
-        onProjectListRefreshed,
-        reloadProjectList,
-        shouldRefreshProjectList,
+        lastSuccessfulRefreshRevision,
+        projectListRefreshRevision,
+        startProjectListRefresh,
     ]);
 
     const retryProjectListRefresh = () => {
@@ -294,17 +355,19 @@ export default function LumiLaboProjectListPanel({
         }
 
         setFailedRefreshRequest(null);
-        visitProjectList(failedRefreshRequest, {
-            onSuccess: onProjectListRefreshed,
-            onFailure: () => setFailedRefreshRequest(failedRefreshRequest),
-        });
+        startProjectListRefresh(
+            failedRefreshRequest.revision,
+            failedRefreshRequest.requestData,
+        );
     };
 
     const isListLoading =
         isLoading ||
         !isMeasurementReady ||
         !projectList.isReady ||
-        (shouldRefreshProjectList && failedRefreshRequest === null);
+        activeRefreshRevision !== null ||
+        (projectListRefreshRevision > lastSuccessfulRefreshRevision &&
+            failedRefreshRequest === null);
 
     const openSearchDialog = () => {
         setSearchKeyword(projectList.keyword);

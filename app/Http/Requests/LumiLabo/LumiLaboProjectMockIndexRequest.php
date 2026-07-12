@@ -37,10 +37,10 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
                 'string',
                 'regex:/^mock-project-\d{3}$/',
             ],
-            'overrides.*.company_name' => ['required', 'string', 'max:100'],
-            'overrides.*.contact_name' => ['required', 'string', 'max:100'],
-            'overrides.*.address' => ['required', 'string', 'max:200'],
-            'overrides.*.memo' => ['required', 'string', 'max:1000'],
+            'overrides.*.company_name' => ['required', 'string'],
+            'overrides.*.contact_name' => ['present', 'nullable', 'string'],
+            'overrides.*.address' => ['present', 'nullable', 'string'],
+            'overrides.*.memo' => ['present', 'nullable', 'string'],
         ];
     }
 
@@ -112,10 +112,19 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
             if (
                 ! is_array($override) ||
                 ! is_string($override['id'] ?? null) ||
-                ! is_string($override['company_name'] ?? null) ||
-                ! is_string($override['contact_name'] ?? null) ||
-                ! is_string($override['address'] ?? null) ||
-                ! is_string($override['memo'] ?? null)
+                ! is_string($override['company_name'] ?? null)
+            ) {
+                continue;
+            }
+
+            $contactName = $override['contact_name'] ?? null;
+            $address = $override['address'] ?? null;
+            $memo = $override['memo'] ?? null;
+
+            if (
+                (! is_string($contactName) && $contactName !== null) ||
+                (! is_string($address) && $address !== null) ||
+                (! is_string($memo) && $memo !== null)
             ) {
                 continue;
             }
@@ -123,9 +132,9 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
             $normalizedOverrides[$override['id']] = [
                 'id' => $override['id'],
                 'companyName' => $override['company_name'],
-                'contactName' => $override['contact_name'],
-                'address' => $override['address'],
-                'memo' => $override['memo'],
+                'contactName' => $contactName ?? '',
+                'address' => $address ?? '',
+                'memo' => $memo ?? '',
             ];
         }
 

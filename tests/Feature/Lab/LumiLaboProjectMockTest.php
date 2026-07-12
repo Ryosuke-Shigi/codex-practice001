@@ -309,4 +309,77 @@ class LumiLaboProjectMockTest extends TestCase
                 ->where('initialProjectOverrides', [])
             );
     }
+
+    public function test_empty_optional_override_values_are_normalized_and_work_with_search_pagination_and_deleted_projects(): void
+    {
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 3,
+                'keyword' => '空欄を含む会社',
+                'deleted_ids' => ['mock-project-002'],
+                'overrides' => [[
+                    'id' => 'mock-project-001',
+                    'company_name' => '空欄を含む会社',
+                    'contact_name' => '',
+                    'address' => '',
+                    'memo' => '',
+                ]],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('projectList.keyword', '空欄を含む会社')
+                ->has('projectList.items', 1)
+                ->where('projectList.items.0.id', 'mock-project-001')
+                ->where('projectList.items.0.contactName', '')
+                ->where('projectList.items.0.address', '')
+                ->where('projectList.items.0.memo', '')
+                ->where('initialDeletedProjectIds', ['mock-project-002'])
+                ->where('initialProjectOverrides.0.contactName', '')
+                ->where('initialProjectOverrides.0.address', '')
+                ->where('initialProjectOverrides.0.memo', '')
+            );
+    }
+
+    public function test_override_optional_values_reject_non_string_values(): void
+    {
+        foreach (['contact_name', 'address', 'memo'] as $field) {
+            $this
+                ->from('/lab/lumilabo-project-mock')
+                ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                    'overrides' => [[
+                        'id' => 'mock-project-001',
+                        'company_name' => '新会社',
+                        'contact_name' => '新しい担当者',
+                        'address' => '大阪府新住所',
+                        'memo' => '新しいメモ',
+                        $field => ['不正な配列値'],
+                    ]],
+                ]))
+                ->assertRedirect('/lab/lumilabo-project-mock')
+                ->assertSessionHasErrors("overrides.0.{$field}");
+        }
+    }
+
+    public function test_override_values_do_not_add_undocumented_maximum_lengths(): void
+    {
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 20,
+                'overrides' => [[
+                    'id' => 'mock-project-001',
+                    'company_name' => str_repeat('会', 101),
+                    'contact_name' => str_repeat('担', 101),
+                    'address' => str_repeat('住', 201),
+                    'memo' => str_repeat('メ', 1001),
+                ]],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('projectList.items', 20)
+                ->where('initialProjectOverrides.0.companyName', str_repeat('会', 101))
+                ->where('initialProjectOverrides.0.contactName', str_repeat('担', 101))
+                ->where('initialProjectOverrides.0.address', str_repeat('住', 201))
+                ->where('initialProjectOverrides.0.memo', str_repeat('メ', 1001))
+            );
+    }
 }

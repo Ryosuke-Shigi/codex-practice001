@@ -524,6 +524,18 @@ describe('LumiLaboProjectMockView', () => {
             activeProjectViewId: 'detail',
             saveMessageVisible: true,
         });
+        const unsavedAfterSaveMarkup = await renderMockViewMarkup(
+            'project',
+            'list',
+            {
+                activeProjectViewId: 'detail',
+                detailDraft: {
+                    ...createProjectDetailDraft(lumiLaboProjectDetail),
+                    memo: '保存完了後に追加したメモ',
+                },
+                saveMessageVisible: true,
+            },
+        );
 
         expect(initialMarkup).not.toContain('data-lumilabo-save-bar="true"');
         expect(initialMarkup).not.toContain('lucide-save');
@@ -543,6 +555,9 @@ describe('LumiLaboProjectMockView', () => {
         expect(savedMarkup).toContain('role="status"');
         expect(savedMarkup).toContain('保存しました');
         expect(savedMarkup).not.toContain('lucide-save');
+        expect(unsavedAfterSaveMarkup).toContain('編集中');
+        expect(unsavedAfterSaveMarkup).toContain('lucide-save');
+        expect(unsavedAfterSaveMarkup).not.toContain('保存しました');
     });
 
     it('does not render saved photo or file preview headings when detail has no saved previews', async () => {

@@ -4,6 +4,7 @@ import {
     calculateLumiLaboProjectListPerPage,
     createLumiLaboProjectListRequestCallbacks,
     createLumiLaboProjectListRequestData,
+    getNextLumiLaboProjectListRefreshRevision,
     shouldReloadLumiLaboProjectList,
     LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
     LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
@@ -99,5 +100,62 @@ describe("LumiLaboProjectListPanel measurement and partial reload contract", () 
         callbacks.onSuccess();
 
         expect(completed).toEqual(["success"]);
+    });
+
+    it("keeps a newer refresh revision pending until the active revision succeeds", () => {
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(1, 0, null, null),
+        ).toBe(1);
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(2, 0, 1, null),
+        ).toBeNull();
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null),
+        ).toBe(2);
+    });
+
+    it("does not complete a pending refresh from an older successful revision", () => {
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null),
+        ).toBe(2);
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(2, 1, null, 1),
+        ).toBeNull();
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(2, 2, null, null),
+        ).toBeNull();
+    });
+
+    it("builds a later revision with the latest save and deletion state", () => {
+        expect(
+            createLumiLaboProjectListRequestData(
+                {
+                    keyword: "",
+                    sort: "registered_desc",
+                    page: 1,
+                    perPage: 5,
+                },
+                ["mock-project-004"],
+                {
+                    "mock-project-002": {
+                        companyName: "案件Bの保存後会社名",
+                        contactName: "",
+                        address: "大阪府堺市",
+                        memo: "",
+                    },
+                },
+            ),
+        ).toMatchObject({
+            deleted_ids: ["mock-project-004"],
+            overrides: [
+                {
+                    id: "mock-project-002",
+                    company_name: "案件Bの保存後会社名",
+                    contact_name: "",
+                    address: "大阪府堺市",
+                    memo: "",
+                },
+            ],
+        });
     });
 });
