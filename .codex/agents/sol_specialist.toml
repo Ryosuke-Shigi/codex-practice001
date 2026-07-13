@@ -1,4 +1,4 @@
-name = "sol-specialist"
+name = "sol_specialist"
 description = "複雑、曖昧、高価値、高リスク、複数レイヤー、原因不明の作業を深く分析し、設計・実装を支援する専門agent。"
 model = "gpt-5.6-sol"
 model_reasoning_effort = "xhigh"

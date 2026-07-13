@@ -57,15 +57,17 @@ project全体の既定model、approval、network、MCP、skills、sandboxの全�
 
 ## 5種類のagent
 
-| Agent | Model | Reasoning | Sandbox | 主な用途 |
+| Agent | Model | Reasoning | Project sandbox既定 / effective確認 | 主な用途 |
 |---|---|---|---|---|
-| luna-explorer | gpt-5.6-luna | low | read-only | 対象特定、検索、分類、抽出、参照確認 |
-| terra-implementer | gpt-5.6-terra | medium | 親セッションから継承 | 仕様と責務が確定した通常実装 |
-| sol-specialist | gpt-5.6-sol | xhigh | 親セッションから継承 | 複雑、曖昧、高リスク、複数レイヤー、原因不明 |
-| terra-verifier | gpt-5.6-terra | medium | 親セッションから継承 | 実装担当から分離したコマンド確認 |
-| sol-reviewer | gpt-5.6-sol | high | read-only | 実装担当から独立した最終差分レビュー |
+| luna_explorer | gpt-5.6-luna | low | read-only / 起動時に確認 | 対象特定、検索、分類、抽出、参照確認 |
+| terra_implementer | gpt-5.6-terra | medium | 未指定（親から継承）/ 起動時に確認 | 仕様と責務が確定した通常実装 |
+| sol_specialist | gpt-5.6-sol | xhigh | 未指定（親から継承）/ 起動時に確認 | 複雑、曖昧、高リスク、複数レイヤー、原因不明 |
+| terra_verifier | gpt-5.6-terra | medium | 未指定（親から継承）/ 起動時に確認 | 実装担当から分離したコマンド確認 |
+| sol_reviewer | gpt-5.6-sol | high | read-only / 起動時に確認 | 実装担当から独立した最終差分レビュー |
 
-### luna-explorer
+Sandbox列の左側はproject設定上の既定値、右側は起動時にeffective sandboxを確認する必要があることを示します。project既定だけで実効値を断定しません。
+
+### luna_explorer
 
 対象ファイル、関連docs、Route、型、テスト、変更候補を特定し、grep、検索、差分分類、ログ整理、参照関係の確認を行います。明確で反復可能な情報抽出に限定し、根拠となるファイルと該当箇所を親エージェントへ返します。
 
@@ -73,7 +75,7 @@ project全体の既定model、approval、network、MCP、skills、sandboxの全�
 
 編集、設計判断、矛盾解消が必要になった場合は停止し、TerraまたはSolへの昇格要否を親エージェントへ返します。
 
-### terra-implementer
+### terra_implementer
 
 仕様、対象、責務配置、成功条件が確定した通常実装を担当します。小規模から中規模のLaravel、React、TypeScript、docs修正と、既存設計内のテスト追加・修正を、MDルーターで確定した範囲内だけで行います。
 
@@ -88,7 +90,7 @@ project全体の既定model、approval、network、MCP、skills、sandboxの全�
 - 既存構造の変更または設計判断が必要
 - 仕様を推測しなければ進められない
 
-### sol-specialist
+### sol_specialist
 
 複雑、曖昧、高価値、高リスクな作業、複数レイヤーの責務判断、原因不明障害の根本原因分析、Terraでは成立しない作業を担当します。
 
@@ -98,7 +100,7 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 
 対象repo、仕様、責務、rollback、権限境界、既存データ影響を確認できない場合は、Solでも停止して親エージェントへ返します。
 
-### terra-verifier
+### terra_verifier
 
 実装担当から分離し、command registryと対象docsに存在するコマンドを実装完了後に実行します。test、typecheck、build、format check、lint、git diff --check、CI、ログ結果を整理し、実行前後のworking treeを確認します。
 
@@ -106,7 +108,7 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 
 ソースコード、docs、設定、テストの修正、失敗原因を修正しての再実行、未登録コマンドの標準確認化、生成差分や未追跡ファイルの独断cleanup、Git / Pull Request操作は禁止します。コマンド実行でworking treeが変化した場合は、変更内容を親エージェントへ報告します。
 
-### sol-reviewer
+### sol_reviewer
 
 実装担当から独立し、指示、正本docs、changed files、diff、テスト結果、CI結果を直接照合します。仕様漏れ、回帰、責務違反、過剰実装、テスト不足、停止条件違反、ADR Patternとレイヤードアーキテクチャの境界、PRレビュー強度と変更リスクの一致を確認します。
 
@@ -120,21 +122,21 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 
 | 状態 | 選択 |
 |---|---|
-| 対象が未特定で、検索、分類、抽出が中心 | luna-explorer |
-| 仕様と責務が確定した通常実装 | terra-implementer |
-| 複雑、曖昧、高リスク、複数レイヤー、原因不明 | sol-specialist |
-| 差分作成後のコマンド確認 | terra-verifier |
-| Level 3 / Level 4、AI harness、MDルーター、共通責務変更、重要な最終確認 | sol-reviewer |
+| 対象が未特定で、検索、分類、抽出が中心 | luna_explorer |
+| 仕様と責務が確定した通常実装 | terra_implementer |
+| 複雑、曖昧、高リスク、複数レイヤー、原因不明 | sol_specialist |
+| 差分作成後のコマンド確認 | terra_verifier |
+| Level 3 / Level 4、AI harness、MDルーター、共通責務変更、重要な最終確認 | sol_reviewer |
 
 小さい単一作業で、subagentを使う品質または速度上の利点がない場合は、親エージェントだけで処理します。すべての作業で機械的に5種類を起動しません。
 
 ## 並列と単一writer
 
 - 同時に編集するsubagentは最大1体とする
-- terra-implementerとsol-specialistを同時に編集させない
+- terra_implementerとsol_specialistを同時に編集させない
 - 並列化は探索、ログ整理、検証、レビュー等の独立したread-heavy作業に限定する
-- terra-verifierは実装完了後に実行する
-- sol-reviewerは実装と検証結果が揃った後に実行する
+- terra_verifierは実装完了後に実行する
+- sol_reviewerは実装と検証結果が揃った後に実行する
 - 親エージェントは必要なsubagentの完了を待ってから結果を統合する
 - subagentからsubagentを起動しない
 - subagentの結果は、親エージェントが現在の差分と照合してから使う
@@ -146,12 +148,12 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 - Solが必要な作業を節約目的だけでTerraへ降格しない
 - Solでも必要な前提、安全境界、rollback、既存データ影響を確認できない場合は停止する
 - modelが利用できない場合は、別modelへ黙って置換しない
-- runtime permissionがagent設定より厳しい場合は、親セッションのpermissionを優先する
+- 親ターンのlive runtime overrideはsubagent起動時に再適用される場合があるため、agent TOMLのsandbox_modeだけで実効sandboxを断定しない
 - docs、コード、テスト、指示の矛盾をsubagent内で推測統合しない
 
 ## verifierとreviewerの独立性
 
-terra-verifierとsol-reviewerは、実装担当と同一の判断を追認するために使いません。
+terra_verifierとsol_reviewerは、実装担当と同一の判断を追認するために使いません。
 
 - verifierは修正せず、コマンドとworking treeの事実を返す
 - reviewerは実装担当の説明ではなく、指示、正本docs、差分、確認結果を直接読む
@@ -180,8 +182,8 @@ project-scoped agent設定を成功扱いするには、projectがtrustedで、�
 
 - 5種類のagentが指定nameで認識される
 - 各agentが指定modelとreasoning設定で起動する
-- luna-explorerとsol-reviewerがread-onlyで動作する
-- terra-implementer、sol-specialist、terra-verifierが親セッションのsandboxを越えない
+- luna_explorerとsol_reviewerは、起動時のeffective sandboxがread-onlyであることを確認できた場合だけread-only確認済みとする
+- terra_implementer、sol_specialist、terra_verifierのeffective sandboxが親セッションの境界を越えないことを確認する
 - 各agentが担当条件、昇格条件、停止条件を返す
 - subagentが再委譲しない
 - model利用不可時に別modelへ黙って置換しない
@@ -190,10 +192,13 @@ Codex version、アカウント、trust、session再読込のいずれかで確�
 
 ## permissionとsandbox
 
-- subagentは親セッションのpermission、approval、runtime overrideを越えない
+- permission、approval、runtime overrideは親セッションの境界を越えない
 - sandbox_modeを省略したagentは親セッションから継承する
-- read-onlyが必要なluna-explorerとsol-reviewerだけをagent設定で固定する
-- runtime側がより厳しい場合は、より厳しい制約を優先する
+- luna_explorerとsol_reviewerの`sandbox_mode = "read-only"`はproject設定上の既定値であり、絶対的な権限制御ではない
+- 親ターンのlive runtime overrideはsubagent起動時に再適用される場合がある
+- explorer / reviewerは起動時にeffective sandboxを確認し、確認できない場合はread-only確認済みと記載しない
+- 親セッション側で権限が引き上げられている場合は、read-only agentの安全確認を未完了として報告する
+- `developer_instructions`に記載した編集禁止は維持するが、sandboxによる権限制御の代替とは扱わない
 - danger-full-access、approval回避、権限拡張を追加しない
 - model routingのためにapproval、network、MCP、skills、sandboxのproject全体設定を追加しない
 

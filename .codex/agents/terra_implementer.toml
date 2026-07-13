@@ -1,4 +1,4 @@
-name = "terra-implementer"
+name = "terra_implementer"
 description = "仕様、対象、責務配置、成功条件が確定した通常のLaravel、React、TypeScript、docs、テスト修正を担当する実装agent。"
 model = "gpt-5.6-terra"
 model_reasoning_effort = "medium"
