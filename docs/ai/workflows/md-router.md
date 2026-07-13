@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-10
+- Last reviewed: 2026-07-13
 
 ## 目的
 
@@ -15,7 +15,8 @@
 2. このMDで該当する作業プロファイルを選ぶ
 3. プロファイルの「読む」から共通docs、feature / project docs、対象コードへ進む
 4. 依存が判明した場合だけ「条件付きで読む」を追加する
-5. 作業後は [work-result-feedback-loop.md](work-result-feedback-loop.md) で戻し先を確認する
+5. 読む範囲と作業対象を確定した後、独立した探索・実装・検証・レビューへ分割する効果がある場合だけ [model-routing-policy.md](../rules/model-routing-policy.md) に従ってsubagentへ委譲し、親が結果を統合する
+6. 作業後は [work-result-feedback-loop.md](work-result-feedback-loop.md) で戻し先を確認する
 
 [docs/index.md](../../index.md) は通常作業で毎回読むものではありません。正本確認、docs配置判断、docs体系変更、ルーターで参照先を確定できない場合、docsの役割・Status・正本が衝突する場合に使います。
 
@@ -26,6 +27,7 @@
 | 観点 | 正本 |
 |---|---|
 | Git / branch / commit / PR | [agent-working-policy.md](../rules/agent-working-policy.md) |
+| subagent / model routing | [model-routing-policy.md](../rules/model-routing-policy.md) |
 | ADR Pattern、責務境界 | [responsibility-boundaries.md](../rules/responsibility-boundaries.md)、[architecture.md](../../architecture.md) |
 | コマンドとroot / `src/` Git境界 | [command-registry.md](../../operations/command-registry.md) |
 | PRレビュー強度 | [pr-review-strength.md](../../operations/pr-review-strength.md) |
