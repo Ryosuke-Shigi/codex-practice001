@@ -32,7 +32,7 @@
 | Path | 役割 |
 |---|---|
 | [rules/agent-working-policy.md](rules/agent-working-policy.md) | 作業条件、Git / PR、停止条件、完了確認 |
-| [rules/model-routing-policy.md](rules/model-routing-policy.md) | subagent / model routing、fork制約、runtime検証、並列・単一writer、昇格・停止、親の統合責務 |
+| [rules/model-routing-policy.md](rules/model-routing-policy.md) | subagent / model routing、fork制約、runtime確認基準、並列・単一writer、昇格・停止、親の統合責務 |
 | [rules/responsibility-boundaries.md](rules/responsibility-boundaries.md) | ADR Pattern、用語、責務境界 |
 | [../architecture.md](../architecture.md) | 実装レイヤー責務の詳細 |
 | [../coding-standards.md](../coding-standards.md) | PHP / TypeScript / React / CSSの実装作法 |
@@ -71,6 +71,7 @@
 
 - 機能固有の作業索引は [projects/index.md](projects/index.md) から対象feature docsへ進みます
 - 失敗改善、再発防止、理解再起動の索引は [logs/index.md](logs/index.md) を使います
+- custom subagentの個別runtime実測は [runtime検証履歴](logs/2026-07-14-custom-subagent-runtime-verification.md) を参照します
 - 一時的なローカル情報はGit管理外の `.local/` に分離し、この索引へ内容を複製しません
 
 ## 配置ルール

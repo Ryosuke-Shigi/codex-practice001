@@ -219,41 +219,21 @@ project-scoped agent設定を成功扱いするには、projectがtrustedで、�
 
 Codex version、アカウント、trust、session再読込のいずれかで確認できない場合は、その項目を未確認として報告します。確認だけのためにNOOPファイル、ダミーコード、不要なcommitを作りません。
 
-### 2026-07-14 runtime検証
+### 起動時のruntime確認
 
-Windows Codex Desktop + WSL環境では、Windows側ユーザー設定の`$env:USERPROFILE\.codex\config.toml`へ次の2項目を同時に追加し、`fork_turns = "none"`で起動した場合に、名前付きcustom agentのrole選択とagentごとのmodel / reasoning effort routingが動作しました。
+custom agent起動時は、親側に表示されるruntime metadataまたはsession traceを使い、次を確認します。
 
-```toml
-[features.multi_agent_v2]
-hide_spawn_agent_metadata = false
-tool_namespace = "agents"
-```
+- `agent_role`
+- resolved model
+- resolved reasoning effort
+- effective sandboxとpermission profile
+- project root、branch、HEAD、working tree
 
-この設定はrepo外の検証前提です。Windows側ユーザー設定をrepoへコピー、commit、追跡せず、[project設定](../../../.codex/config.toml)へも追加しません。ユーザー設定に同名セクションが既にある場合は、セクションを重複させず既存セクションへ2項目を追加します。
+agent TOMLは設定値、roleごとのmodelとreasoningは期待値として扱い、runtime実測値と混同しません。子agentの自己申告だけ、`inherited`表示からの推測、ファイルを変更しなかった事実だけでは、resolved値やread-only sandboxの成立を確認済みにしません。親側の根拠を取得できない項目は未確認として残します。
 
-確認の時系列は次のとおりです。
+Windows Codex Desktop + WSL等、一部環境ではcustom agent metadataを利用するためにrepo外のWindows側ユーザー設定が必要になる場合があります。ユーザー設定と[project設定](../../../.codex/config.toml)を分離し、Windows固有の回避設定をprojectへコピー、commit、追跡しません。
 
-1. デフォルト状態ではcustom roleが適用されず、親設定を継承したgeneric childが起動した
-2. metadata公開だけではreserved schemaエラーが発生した
-3. Windows側ユーザー設定へ上記2項目を同時に追加した
-4. `fork_turns = "none"`で6agentを個別起動し、すべてのrole選択に成功した
-
-実測結果:
-
-| Agent | role | resolved model | resolved reasoning effort | effective sandbox |
-|---|---|---|---|---|
-| luna_explorer | 確認済み | gpt-5.6-luna | low | project root書き込み可能、`.git/`書き込み不可 |
-| terra_implementer | 確認済み | gpt-5.6-terra | medium | workspace-write |
-| terra_docs_maintainer | 確認済み | gpt-5.6-terra | medium | restricted filesystem / workspace-write相当 |
-| terra_verifier | 確認済み | `inherited`表示のため独立確認未完了 | `inherited`表示のため独立確認未完了 | workspace-write |
-| sol_specialist | 確認済み | gpt-5.6-sol | xhigh | workspace-write |
-| sol_reviewer | 確認済み | gpt-5.6-sol | high | workspace-write |
-
-この検証で確認できたのは、6agentすべてのrole選択と、terra_verifierを除く5agentの実行時model / reasoning effortです。terra_verifierの設定値は`gpt-5.6-terra` / `medium`ですが、実行時metadataが`inherited`表示だったため、resolved値の実測確認済みとは扱いません。
-
-luna_explorerとsol_reviewerはproject設定でread-onlyを意図していますが、この検証のeffective sandboxではworkspace-writeでした。read-only sandboxは未成立であり、原因は未特定です。子agentがファイルを変更しなかった事実はdeveloper instructionsへの遵守結果であり、sandboxによる書き込み禁止の証明ではありません。
-
-全検証後もworking treeはcleanで、子agentによるファイル変更、設定変更、commit、push、Pull Request操作はありませんでした。この結果から、回避設定なしでのmodel routing、全環境でのcustom agent動作、agent TOMLのsandbox設定が常にeffective sandboxへ反映されることは保証しません。
+日時、session ID、個別agentの実測値、失敗経緯、未確認事項は、[runtime検証履歴](../logs/2026-07-14-custom-subagent-runtime-verification.md)に集約します。正本へ個別taskの時系列を複製せず、最新の検証で未確認の項目を確認済みに置き換えません。
 
 ## permissionとsandbox
 
