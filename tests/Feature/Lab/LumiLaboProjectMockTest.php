@@ -355,6 +355,65 @@ class LumiLaboProjectMockTest extends TestCase
             );
     }
 
+    public function test_only_override_company_names_keep_whitespace_before_validation(): void
+    {
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'sort' => ' registered_asc ',
+                'page' => ' 2 ',
+                'per_page' => ' 2 ',
+                'overrides' => [
+                    [
+                        'id' => 'mock-project-001',
+                        'company_name' => '  会社A　',
+                        'contact_name' => '  担当者A  ',
+                        'address' => '  大阪府A  ',
+                        'memo' => '  メモA  ',
+                    ],
+                    [
+                        'id' => 'mock-project-002',
+                        'company_name' => '　会社B  ',
+                        'contact_name' => '  担当者B  ',
+                        'address' => '  大阪府B  ',
+                        'memo' => '  メモB  ',
+                    ],
+                ],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('projectList.sort', 'registered_asc')
+                ->where('projectList.currentPage', 2)
+                ->where('projectList.perPage', 2)
+                ->where('initialProjectOverrides.0.companyName', '  会社A　')
+                ->where('initialProjectOverrides.0.contactName', '担当者A')
+                ->where('initialProjectOverrides.0.address', '大阪府A')
+                ->where('initialProjectOverrides.0.memo', 'メモA')
+                ->where('initialProjectOverrides.1.companyName', '　会社B  ')
+                ->where('initialProjectOverrides.1.contactName', '担当者B')
+                ->where('initialProjectOverrides.1.address', '大阪府B')
+                ->where('initialProjectOverrides.1.memo', 'メモB')
+            );
+
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'keyword' => '  会社A  ',
+                'per_page' => 20,
+                'overrides' => [
+                    [
+                        'id' => 'mock-project-001',
+                        'company_name' => '  会社A　',
+                        'contact_name' => '',
+                        'address' => '',
+                        'memo' => '',
+                    ],
+                ],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('projectList.keyword', '会社A')
+            );
+    }
+
     public function test_empty_optional_override_values_are_normalized_and_work_with_search_pagination_and_deleted_projects(): void
     {
         $this

@@ -415,6 +415,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
                 parentRefreshState.requestedRevision,
                 parentRefreshState.successfulRevision,
                 parentRefreshState.activeRevision,
+                parentRefreshState.activeNormalRequestId,
                 parentRefreshState.failedRefresh?.revision ?? null,
             ),
         ).toBeNull();
@@ -444,6 +445,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
                 parentRefreshState.requestedRevision,
                 parentRefreshState.successfulRevision,
                 parentRefreshState.activeRevision,
+                parentRefreshState.activeNormalRequestId,
                 parentRefreshState.failedRefresh?.revision ?? null,
             ),
         ).toBeNull();
@@ -463,6 +465,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
                 parentRefreshState.requestedRevision,
                 parentRefreshState.successfulRevision,
                 parentRefreshState.activeRevision,
+                parentRefreshState.activeNormalRequestId,
                 parentRefreshState.failedRefresh?.revision ?? null,
             ),
         ).toBeNull();
@@ -501,6 +504,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
                 parentRefreshState.requestedRevision,
                 parentRefreshState.successfulRevision,
                 parentRefreshState.activeRevision,
+                parentRefreshState.activeNormalRequestId,
                 parentRefreshState.failedRefresh?.revision ?? null,
             ),
         ).toBe(2);
@@ -517,7 +521,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
         expect(latestSuccess.successfulRevision).toBe(2);
         expect(latestSuccess.activeRevision).toBe(2);
         expect(
-            getNextLumiLaboProjectListRefreshRevision(0, 0, null, null),
+            getNextLumiLaboProjectListRefreshRevision(0, 0, null, null, null),
         ).toBeNull();
     });
 

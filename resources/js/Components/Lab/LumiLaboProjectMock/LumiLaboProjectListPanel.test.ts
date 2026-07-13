@@ -162,25 +162,25 @@ describe("LumiLaboProjectListPanel measurement and partial reload contract", () 
 
     it("keeps a newer refresh revision pending until the active revision succeeds", () => {
         expect(
-            getNextLumiLaboProjectListRefreshRevision(1, 0, null, null),
+            getNextLumiLaboProjectListRefreshRevision(1, 0, null, null, null),
         ).toBe(1);
         expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 0, 1, null),
+            getNextLumiLaboProjectListRefreshRevision(2, 0, 1, null, null),
         ).toBeNull();
         expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null),
+            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null, null),
         ).toBe(2);
     });
 
     it("does not complete a pending refresh from an older successful revision", () => {
         expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null),
+            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null, null),
         ).toBe(2);
         expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 1, null, 1),
+            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null, 1),
         ).toBeNull();
         expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 2, null, null),
+            getNextLumiLaboProjectListRefreshRevision(2, 2, null, null, null),
         ).toBeNull();
     });
 

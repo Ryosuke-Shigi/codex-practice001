@@ -82,12 +82,12 @@ async function renderMockViewMarkup(
 
             return {
                 ...actual,
-                useReducer: vi.fn((_, initialState: unknown) => [
-                    options.projectListRefreshState ?? initialState,
-                    vi.fn(),
-                ]),
                 useState: vi.fn((initialValue: unknown) => {
                     stateCall += 1;
+                    const resolvedInitialValue =
+                        typeof initialValue === 'function'
+                            ? (initialValue as () => unknown)()
+                            : initialValue;
 
                     if (stateCall === 1) {
                         return [activeScreen, vi.fn()];
@@ -174,14 +174,22 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 16) {
+                        return [
+                            options.projectListRefreshState ??
+                                resolvedInitialValue,
+                            vi.fn(),
+                        ];
+                    }
+
+                    if (stateCall === 17) {
                         return [options.isSearchDialogOpen ?? false, vi.fn()];
                     }
 
-                    if (stateCall === 18) {
+                    if (stateCall === 19) {
                         return [options.listIsLoading ?? false, vi.fn()];
                     }
 
-                    return [initialValue, vi.fn()];
+                    return [resolvedInitialValue, vi.fn()];
                 }),
             };
         });
@@ -396,6 +404,8 @@ describe('LumiLaboProjectMockView', () => {
             projectListRefreshState: {
                 requestedRevision: 1,
                 activeRevision: 1,
+                activeNormalRequestId: null,
+                normalRequestSequence: 0,
                 successfulRevision: 0,
                 failedRefresh: null,
             },
@@ -424,6 +434,8 @@ describe('LumiLaboProjectMockView', () => {
             projectListRefreshState: {
                 requestedRevision: 1,
                 activeRevision: null,
+                activeNormalRequestId: null,
+                normalRequestSequence: 0,
                 successfulRevision: 1,
                 failedRefresh: null,
             },
@@ -432,6 +444,8 @@ describe('LumiLaboProjectMockView', () => {
             projectListRefreshState: {
                 requestedRevision: 1,
                 activeRevision: 1,
+                activeNormalRequestId: null,
+                normalRequestSequence: 0,
                 successfulRevision: 0,
                 failedRefresh: null,
             },
@@ -440,6 +454,8 @@ describe('LumiLaboProjectMockView', () => {
             projectListRefreshState: {
                 requestedRevision: 1,
                 activeRevision: null,
+                activeNormalRequestId: null,
+                normalRequestSequence: 0,
                 successfulRevision: 0,
                 failedRefresh: { revision: 1, requestData },
             },

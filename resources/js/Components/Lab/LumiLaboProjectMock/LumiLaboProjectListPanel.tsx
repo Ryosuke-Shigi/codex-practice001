@@ -18,14 +18,17 @@ type LumiLaboProjectListPanelProps = {
     deletedProjectIds: readonly string[];
     projectListRefreshRevision: number;
     activeRefreshRevision: number | null;
+    activeNormalRequestId: number | null;
     lastSuccessfulRefreshRevision: number;
     failedRefreshRequest: LumiLaboProjectListFailedRefresh | null;
-    onProjectListRefreshStart: (revision: number) => void;
+    onProjectListRefreshStart: (revision: number) => boolean;
     onProjectListRefreshSuccess: (revision: number) => void;
     onProjectListRefreshFailure: (
         revision: number,
         requestData: LumiLaboProjectListRequestData,
     ) => void;
+    onProjectListNormalRequestStart: () => number | null;
+    onProjectListNormalRequestFinish: (requestId: number) => void;
     onOpenProjectDetail: (project: LumiLaboMockProjectListItem) => void;
     onBack: () => void;
     backTargetId: string;
@@ -70,11 +73,13 @@ export function getNextLumiLaboProjectListRefreshRevision(
     requestedRevision: number,
     lastSuccessfulRevision: number,
     activeRevision: number | null,
+    activeNormalRequestId: number | null,
     failedRevision: number | null,
 ): number | null {
     if (
         requestedRevision <= lastSuccessfulRevision ||
         activeRevision !== null ||
+        activeNormalRequestId !== null ||
         failedRevision !== null
     ) {
         return null;
@@ -164,11 +169,14 @@ export default function LumiLaboProjectListPanel({
     deletedProjectIds,
     projectListRefreshRevision,
     activeRefreshRevision,
+    activeNormalRequestId,
     lastSuccessfulRefreshRevision,
     failedRefreshRequest,
     onProjectListRefreshStart,
     onProjectListRefreshSuccess,
     onProjectListRefreshFailure,
+    onProjectListNormalRequestStart,
+    onProjectListNormalRequestFinish,
     onOpenProjectDetail,
     onBack,
     backTargetId,
@@ -183,8 +191,19 @@ export default function LumiLaboProjectListPanel({
     const deletedProjectIdsRef = useRef(deletedProjectIds);
     const projectOverridesRef = useRef(projectOverrides);
     const measuredPerPageRef = useRef<number | null>(projectList.perPage);
+    const pendingPerPageRef = useRef<number | null>(null);
+    const activeNormalRequestIdRef = useRef<number | null>(null);
+    const isMountedRef = useRef(false);
     const listRegionRef = useRef<HTMLDivElement>(null);
     const rowMeasurementRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     useEffect(() => {
         projectListRef.current = projectList;
@@ -199,27 +218,43 @@ export default function LumiLaboProjectListPanel({
     }, [projectOverrides]);
 
     const visitProjectList = useCallback(
-        (
-            requestData: LumiLaboProjectListRequestData,
-            callbacks?: LumiLaboProjectListRequestCallbacks,
-        ) => {
-            const requestCallbacks =
-                createLumiLaboProjectListRequestCallbacks(
-                    requestData,
-                    callbacks,
-                );
+        (requestData: LumiLaboProjectListRequestData): boolean => {
+            const requestId = onProjectListNormalRequestStart();
 
+            if (requestId === null) {
+                return false;
+            }
+
+            activeNormalRequestIdRef.current = requestId;
+            setIsLoading(true);
             router.get(projectListRef.current.action, requestData, {
                 only: LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
-                onStart: () => setIsLoading(true),
-                ...requestCallbacks,
-                onFinish: () => setIsLoading(false),
+                onFinish: () => {
+                    onProjectListNormalRequestFinish(requestId);
+
+                    if (
+                        activeNormalRequestIdRef.current !== requestId
+                    ) {
+                        return;
+                    }
+
+                    activeNormalRequestIdRef.current = null;
+
+                    if (isMountedRef.current) {
+                        setIsLoading(false);
+                    }
+                },
             });
+
+            return true;
         },
-        [],
+        [
+            onProjectListNormalRequestFinish,
+            onProjectListNormalRequestStart,
+        ],
     );
 
     const visitProjectListRefresh = useCallback(
@@ -237,15 +272,12 @@ export default function LumiLaboProjectListPanel({
     );
 
     const reloadProjectList = useCallback(
-        (
-            changes: Partial<LumiLaboProjectListQuery>,
-            callbacks?: LumiLaboProjectListRequestCallbacks,
-        ) => {
+        (changes: Partial<LumiLaboProjectListQuery>): boolean => {
             const current = projectListRef.current;
             const perPage = changes.perPage ?? measuredPerPageRef.current;
 
             if (perPage === null) {
-                return;
+                return false;
             }
 
             const nextQuery: LumiLaboProjectListQuery = {
@@ -255,14 +287,23 @@ export default function LumiLaboProjectListPanel({
                 perPage,
             };
 
-            visitProjectList(
+            const started = visitProjectList(
                 createLumiLaboProjectListRequestData(
                     nextQuery,
                     deletedProjectIdsRef.current,
                     projectOverridesRef.current,
                 ),
-                callbacks,
             );
+
+            if (
+                started &&
+                changes.perPage !== undefined &&
+                pendingPerPageRef.current === perPage
+            ) {
+                pendingPerPageRef.current = null;
+            }
+
+            return started;
         },
         [visitProjectList],
     );
@@ -296,6 +337,7 @@ export default function LumiLaboProjectListPanel({
         }
 
         measuredPerPageRef.current = perPage;
+        pendingPerPageRef.current = perPage;
         reloadProjectList({ perPage, page: 1 });
     }, [reloadProjectList]);
 
@@ -342,7 +384,14 @@ export default function LumiLaboProjectListPanel({
                     projectOverridesRef.current,
                 );
 
-            onProjectListRefreshStart(revision);
+            if (!onProjectListRefreshStart(revision)) {
+                return;
+            }
+
+            if (pendingPerPageRef.current === requestData.per_page) {
+                pendingPerPageRef.current = null;
+            }
+
             visitProjectListRefresh(requestData, {
                 onSuccess: () => {
                     onProjectListRefreshSuccess(revision);
@@ -369,6 +418,7 @@ export default function LumiLaboProjectListPanel({
             projectListRefreshRevision,
             lastSuccessfulRefreshRevision,
             activeRefreshRevision,
+            activeNormalRequestId,
             failedRefreshRequest?.revision ?? null,
         );
 
@@ -379,16 +429,35 @@ export default function LumiLaboProjectListPanel({
         startProjectListRefresh(nextRevision);
     }, [
         activeRefreshRevision,
+        activeNormalRequestId,
         failedRefreshRequest,
         lastSuccessfulRefreshRevision,
         projectListRefreshRevision,
         startProjectListRefresh,
     ]);
 
+    useEffect(() => {
+        const pendingPerPage = pendingPerPageRef.current;
+
+        if (pendingPerPage === null) {
+            return;
+        }
+
+        reloadProjectList({ perPage: pendingPerPage, page: 1 });
+    }, [
+        activeNormalRequestId,
+        activeRefreshRevision,
+        failedRefreshRequest,
+        lastSuccessfulRefreshRevision,
+        projectListRefreshRevision,
+        reloadProjectList,
+    ]);
+
     const retryProjectListRefresh = () => {
         if (
             failedRefreshRequest === null ||
-            activeRefreshRevision !== null
+            activeRefreshRevision !== null ||
+            activeNormalRequestId !== null
         ) {
             return;
         }
@@ -404,6 +473,7 @@ export default function LumiLaboProjectListPanel({
         !isMeasurementReady ||
         !projectList.isReady ||
         activeRefreshRevision !== null ||
+        activeNormalRequestId !== null ||
         (projectListRefreshRevision > lastSuccessfulRefreshRevision &&
             failedRefreshRequest === null);
 
