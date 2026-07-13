@@ -11,7 +11,7 @@
 
 subagentによるmodel routingはMDルーターの代替ではありません。読む範囲、変更対象、停止条件、確認コマンド、PRレビュー強度は、引き続き既存の正本docsを優先します。
 
-この文書では役割、責務、昇格、停止、安全境界を正本とします。model IDは[project設定](../../../.codex/config.toml)と[agent設定](../../../.codex/agents/)に置く現在の運用設定です。将来model名を変更する場合も、役割、停止条件、安全境界を同時に変更しません。
+この文書では役割、責務、昇格、停止、安全境界を正本とします。model ID、reasoning effort、agent固有sandbox設定は[agent設定](../../../.codex/agents/)に置き、thread数とnesting depthは[project設定](../../../.codex/config.toml)に置く現在の運用設定です。将来model名を変更する場合も、役割、停止条件、安全境界を同時に変更しません。
 
 ## MDルーターとの順序関係
 
