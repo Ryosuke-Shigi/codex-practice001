@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-10
+- Last reviewed: 2026-07-13
 
 ## 目的
 
@@ -32,6 +32,7 @@
 | Path | 役割 |
 |---|---|
 | [rules/agent-working-policy.md](rules/agent-working-policy.md) | 作業条件、Git / PR、停止条件、完了確認 |
+| [rules/model-routing-policy.md](rules/model-routing-policy.md) | subagent / model routing、並列・単一writer、昇格・停止、親の統合責務 |
 | [rules/responsibility-boundaries.md](rules/responsibility-boundaries.md) | ADR Pattern、用語、責務境界 |
 | [../architecture.md](../architecture.md) | 実装レイヤー責務の詳細 |
 | [../coding-standards.md](../coding-standards.md) | PHP / TypeScript / React / CSSの実装作法 |
