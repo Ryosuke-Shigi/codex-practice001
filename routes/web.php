@@ -12,6 +12,7 @@ use App\Http\Controllers\DanceShortsRadarController;
 use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\DesignPhilosophyController;
+use App\Http\Controllers\LumiLaboProjectMockController;
 use App\Http\Controllers\ProjectLogsController;
 use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
@@ -224,10 +225,9 @@ Route::get('/lab/lumilabo-project-idea-board', function () {
     return Inertia::render('Lab/LumiLaboProjectIdeaBoard');
 })->name('lab.lumilabo-project-idea-board');
 
-Route::get('/lab/lumilabo-project-mock', function () {
-    // LumiLabo start-flow display-only MOCK. No DB, API, or backend layer work.
-    return Inertia::render('Lab/LumiLaboProjectMock');
-})->name('lab.lumilabo-project-mock');
+// LumiLabo案件一覧MOCKの入口。固定データを扱い、DB、外部API、本番保存は行わない。
+Route::get('/lab/lumilabo-project-mock', LumiLaboProjectMockController::class)
+    ->name('lab.lumilabo-project-mock');
 
 Route::redirect('/lab/lumilabo-project-create-idea-board', '/lab/lumilabo-project-idea-board')
     ->name('lab.lumilabo-project-create-idea-board.redirect');

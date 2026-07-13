@@ -4,6 +4,30 @@ export type LumiLaboMockProjectTabId = 'top' | 'register' | 'list';
 
 export type LumiLaboMockProjectViewId = LumiLaboMockProjectTabId | 'detail';
 
+export type LumiLaboMockProjectListItem = {
+    id: string;
+    companyName: string;
+    contactName: string;
+    address: string;
+    memo: string;
+    registeredDate: string;
+};
+
+export type LumiLaboMockProjectList = {
+    items: readonly LumiLaboMockProjectListItem[];
+    keyword: string;
+    sort: 'registered_desc' | 'registered_asc';
+    perPage: number | null;
+    isReady: boolean;
+    currentPage: number;
+    hasPrevious: boolean;
+    previousPage: number | null;
+    hasNext: boolean;
+    nextPage: number | null;
+    showPagination: boolean;
+    action: string;
+};
+
 export type LumiLaboMockProjectDetailReturnTarget = {
     projectTabId: LumiLaboMockProjectTabId;
     projectViewId: LumiLaboMockProjectViewId;
@@ -53,6 +77,10 @@ export type LumiLaboMockProjectDetailDraft = Record<
     LumiLaboMockProjectDetailEditableFieldId,
     string
 >;
+
+export type LumiLaboMockProjectOverride = LumiLaboMockProjectDetailDraft & {
+    id: string;
+};
 
 export type LumiLaboMockProjectSavedPhoto = {
     id: string;
