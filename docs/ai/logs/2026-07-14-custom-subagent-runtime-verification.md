@@ -161,31 +161,72 @@ Full-history forked agents inherit the parent agent type, model, and reasoning e
 
 resolved値の根拠はsession traceの`session_meta.agent_role`と`turn_context.model` / `effort`であり、子agentの自己申告やagent TOMLではない。runtime検証中にファイル、Git、GitHubの変更はなかった。
 
+## 2026-07-14 read-only親taskでの後続再検証
+
+repo編集を行う`workspace-write` taskとは別に、Codex CLIを`read-only` sandboxで起動した親taskを使用した。子agentを起動する前に、親側session traceの`turn_context`でeffective sandboxとpermission profileを確認した。
+
+検証開始時:
+
+- parent session: `019f5c96-cf0a-7300-b61c-ae6a25044773`
+- project root: `/home/shigi/projects/codex-practice001/src`
+- branch: `chore/codex-subagent-model-routing`
+- local HEAD / remote branch: `719631b9bea2533188f86e6e247ac5fbb28988dc`
+- localとremoteの差分: `0 0`
+- working tree: clean
+- parent effective sandbox: `read-only`
+- parent permission profile: managed restricted filesystem、root全体を`read`のみ
+- approval policy: `never`
+- network: restricted
+
+親taskが`read-only`であることを確認した後、2agentを同時にせず、`fork_turns = "none"`で1体ずつ各1回起動した。1体目の完了と親側trace確認後にだけ2体目を起動した。
+
+| Agent | child session | task path | agent role | resolved model / reasoning effort | effective sandbox | permission profile |
+|---|---|---|---|---|---|---|
+| `luna_explorer` | `019f5c98-6558-7c33-97af-e03b1b740db6` | `/root/phase_a_luna` | `luna_explorer` | `gpt-5.6-luna` / `low` | `read-only` | managed restricted filesystem、root全体を`read`のみ |
+| `sol_reviewer` | `019f5c99-d4f0-7220-b5f3-78857a52bb52` | `/root/phase_a_sol_review` | `sol_reviewer` | `gpt-5.6-sol` / `high` | `read-only` | managed restricted filesystem、root全体を`read`のみ |
+
+roleは各child traceの`session_meta.agent_role`、resolved modelとreasoning effortは`turn_context.model` / `effort`、effective sandboxとpermission profileは`turn_context.sandbox_policy` / `permission_profile`で親側から確認した。子agentの自己申告、agent TOML、`inherited`表示からの推測はruntime実測値の根拠にしていない。
+
+検証前、agent間、検証後で次が不変だった。
+
+- branch: `chore/codex-subagent-model-routing`
+- HEAD: `719631b9bea2533188f86e6e247ac5fbb28988dc`
+- localとremoteの差分: `0 0`
+- working tree: clean
+- `git diff --check`: 成功
+
+既存ファイルへの書込み試験、NOOPファイル、ダミーファイル、確認用ファイルの作成は行っていない。runtime検証中のファイル変更、commit、push、PR更新も行っていない。
+
+### `workspace-write`親taskとの比較
+
+過去の親taskが`workspace-write`だった実測では、agent TOMLが`read-only`の`luna_explorer`と`sol_reviewer`もeffective sandboxが`workspace-write`だった。今回、親task自体が`read-only`の実測では、同じ2agentのeffective sandboxも`read-only`になった。
+
+この比較から、effective sandboxはagent TOMLの設定値だけでは決まらず、親taskのlive runtime sandbox / permission profileの影響を受け、その境界内で解決されることを確認した。親taskが`workspace-write`のときにchildも`workspace-write`になった事実だけでは、agent TOMLの設定不良とは断定できない。read-only agentのeffective sandboxを検証する場合は、親task自体を`read-only`で起動し、親側runtime metadataまたはsession traceで親とchildの実効値をそれぞれ確認する必要がある。
+
+これにより、`luna_explorer`と`sol_reviewer`がread-only親task下でeffective sandbox `read-only`になることと、過去の`workspace-write`実測との差異について、今回の完了条件に必要な範囲は解消済みとした。
+
 ## 現在の確認状態
 
 | Agent | role | resolved model / reasoning | effective sandbox |
 |---|---|---|---|
-| `luna_explorer` | 確認済み | `gpt-5.6-luna` / `low`を親traceで確認済み | `workspace-write`を実測。read-only未確認 |
+| `luna_explorer` | 確認済み | `gpt-5.6-luna` / `low`を親traceで確認済み | read-only親task下で`read-only`を確認済み。過去のworkspace-write親task下では`workspace-write` |
 | `terra_implementer` | 確認済み | `gpt-5.6-terra` / `medium`を親traceで確認済み | `workspace-write` |
 | `terra_docs_maintainer` | 確認済み | `gpt-5.6-terra` / `medium`を親traceで確認済み | restricted filesystem / `workspace-write`相当 |
 | `terra_verifier` | 確認済み | `gpt-5.6-terra` / `medium`を親traceで再確認済み | `workspace-write` |
 | `sol_specialist` | 確認済み | `gpt-5.6-sol` / `xhigh`を親traceで確認済み | `workspace-write` |
-| `sol_reviewer` | 確認済み | `gpt-5.6-sol` / `high`を親traceで確認済み | `workspace-write`を実測。read-only未確認 |
+| `sol_reviewer` | 確認済み | `gpt-5.6-sol` / `high`を親traceで確認済み | read-only親task下で`read-only`を確認済み。過去のworkspace-write親task下では`workspace-write` |
 
 この確認結果は、上記Windows側ユーザー設定を使った今回の環境に限定する。回避設定なし、別のCodex version、別アカウント、別環境での同一結果は保証しない。
 
-## 未確認・未解決
+## 今回の完了条件外で残る未確認
 
-- `luna_explorer`と`sol_reviewer`のeffective sandboxがread-onlyになること
-- 2agentのproject sandbox設定とruntimeの`workspace-write`が異なる原因
 - repo外のWindows側ユーザー設定なしでのmodel routing
 - 全環境、全Codex version、全アカウントでのcustom agent動作
-- agent TOMLのsandbox設定が常にeffective sandboxへ反映されること
 - metadata公開だけを有効にした試行のreserved schemaエラー全文と原因
 - `max_depth = 1`のruntimeによるnested spawn拒否
 - model利用不可時のsilent fallback防止を失敗系で確認すること
 
-未確認事項は、設定値や別taskの結果から推測して確認済みにしない。
+これらは今回解消したread-only関連事項ではなく、PR成立条件またはmerge blockerとして扱わない。未確認事項は、設定値や別taskの結果から推測して確認済みにしない。
 
 ## 変更分離
 

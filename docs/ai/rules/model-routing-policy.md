@@ -231,6 +231,10 @@ custom agent起動時は、親側に表示されるruntime metadataまたはsess
 
 agent TOMLは設定値、roleごとのmodelとreasoningは期待値として扱い、runtime実測値と混同しません。子agentの自己申告だけ、`inherited`表示からの推測、ファイルを変更しなかった事実だけでは、resolved値やread-only sandboxの成立を確認済みにしません。親側の根拠を取得できない項目は未確認として残します。
 
+read-only agentのeffective sandboxを検証する場合は、子agentを起動する前に、親task自体のeffective sandboxとpermission profileがread-onlyであることを親側runtime metadataまたはsession traceで確認します。親taskをread-onlyにできない、または親側の実効値を確認できない場合は、read-only検証を開始しません。
+
+agent TOMLの`sandbox_mode`はproject設定値、親taskのsandboxとpermission profileはlive runtime実測値として区別します。effective sandboxは起動ごとに親側runtime metadataまたはsession traceで確認し、agent TOMLだけで決まるとは扱いません。親taskが`workspace-write`の状態でread-only agentを起動し、childも`workspace-write`になった場合、それだけでagent TOMLの設定不良とは断定せず、read-only親taskを使った別taskで再検証します。
+
 Windows Codex Desktop + WSL等、一部環境ではcustom agent metadataを利用するためにrepo外のWindows側ユーザー設定が必要になる場合があります。ユーザー設定と[project設定](../../../.codex/config.toml)を分離し、Windows固有の回避設定をprojectへコピー、commit、追跡しません。
 
 日時、session ID、個別agentの実測値、失敗経緯、未確認事項は、[runtime検証履歴](../logs/2026-07-14-custom-subagent-runtime-verification.md)に集約します。正本へ個別taskの時系列を複製せず、最新の検証で未確認の項目を確認済みに置き換えません。
@@ -240,9 +244,10 @@ Windows Codex Desktop + WSL等、一部環境ではcustom agent metadataを利�
 - permission、approval、runtime overrideは親セッションの境界を越えない
 - sandbox_modeを省略したagentは親セッションから継承する
 - luna_explorerとsol_reviewerの`sandbox_mode = "read-only"`はproject設定上の既定値であり、絶対的な権限制御ではない
-- 親ターンのlive runtime overrideはsubagent起動時に再適用される場合がある
+- effective sandboxはagent TOMLの設定値だけで決まらず、親taskのlive runtime sandbox / permission profileの影響を受ける
 - explorer / reviewerは起動時にeffective sandboxを確認し、確認できない場合はread-only確認済みと記載しない
-- 親セッション側で権限が引き上げられている場合は、read-only agentの安全確認を未完了として報告する
+- read-only agentの検証では、親task自体をread-onlyで起動し、child起動前に親側のeffective sandboxとpermission profileを確認する
+- workspace-write親task下でchildもworkspace-writeになった事実だけでは、agent TOMLの設定不良と断定しない
 - `developer_instructions`に記載した編集禁止は維持するが、sandboxによる権限制御の代替とは扱わない
 - danger-full-access、approval回避、権限拡張を追加しない
 - model routingのためにapproval、network、MCP、skills、sandboxのproject全体設定を追加しない
