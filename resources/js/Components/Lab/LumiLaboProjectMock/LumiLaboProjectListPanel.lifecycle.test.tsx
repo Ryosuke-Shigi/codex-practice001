@@ -125,6 +125,7 @@ function LifecycleHarness({
     const [projectOverrides, setProjectOverrides] = useState<
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
     >({});
+    const [deletedProjectIds, setDeletedProjectIds] = useState<string[]>([]);
     const [refreshState, setRefreshState] = useState(() =>
         createInitialRefreshState(initialRefreshRevision),
     );
@@ -196,21 +197,39 @@ function LifecycleHarness({
             </button>
             <button
                 type="button"
+                data-testid="delete-project-002"
+                onClick={() => {
+                    setDeletedProjectIds(['mock-project-002']);
+                    updateRefreshState({ type: 'request' });
+                }}
+            >
+                案件002を削除
+            </button>
+            <button
+                type="button"
                 data-testid="apply-normal-result"
                 onClick={() =>
                     setProjectList((current) => ({
                         ...current,
+                        keyword: '通常取得後の検索条件',
                         sort: 'registered_asc',
+                        currentPage: 3,
                     }))
                 }
             >
                 通常取得結果を反映
             </button>
+            <output data-testid="active-normal-request">
+                {refreshState.activeNormalRequestId ?? 'none'}
+            </output>
+            <output data-testid="requested-revision">
+                {refreshState.requestedRevision}
+            </output>
             {isPanelMounted ? (
                 <LumiLaboProjectListPanel
                     projectList={projectList}
                     projectOverrides={projectOverrides}
-                    deletedProjectIds={[]}
+                    deletedProjectIds={deletedProjectIds}
                     projectListRefreshRevision={refreshState.requestedRevision}
                     activeRefreshRevision={refreshState.activeRevision}
                     activeNormalRequestId={refreshState.activeNormalRequestId}
@@ -334,6 +353,48 @@ describe('LumiLaboProjectListPanel lifecycle', () => {
         });
     }
 
+    async function clickButtonByText(text: string): Promise<void> {
+        const button = Array.from(container.querySelectorAll('button')).find(
+            (element) => element.textContent === text,
+        );
+
+        expect(button).toBeDefined();
+        await act(async () => {
+            button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+    }
+
+    async function setSearchKeyword(keyword: string): Promise<void> {
+        const input = container.querySelector<HTMLInputElement>(
+            '[role="dialog"] input',
+        );
+
+        expect(input).not.toBeNull();
+        await act(async () => {
+            const valueSetter = Object.getOwnPropertyDescriptor(
+                HTMLInputElement.prototype,
+                'value',
+            )?.set;
+
+            valueSetter?.call(input, keyword);
+            input?.dispatchEvent(new Event('input', { bubbles: true }));
+            input?.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    }
+
+    async function submitSearchDialog(): Promise<void> {
+        const submitButton = container.querySelector<HTMLButtonElement>(
+            '[role="dialog"] button[type="submit"]',
+        );
+
+        expect(submitButton).not.toBeNull();
+        await act(async () => {
+            submitButton?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
+        });
+    }
+
     it('starts a required revision once on mount, does not duplicate active or successful revisions on remount, and ignores unmounted child state', async () => {
         const consoleError = vi
             .spyOn(console, 'error')
@@ -430,5 +491,117 @@ describe('LumiLaboProjectListPanel lifecycle', () => {
         });
 
         expect(router.get).toHaveBeenCalledTimes(2);
+    });
+
+    it('finishes an unmounted normal request once before remounting one latest revision refresh', async () => {
+        const consoleError = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => undefined);
+
+        await renderHarness({});
+        await selectRegisteredAscending();
+        await clickTestButton('apply-normal-result');
+        await clickTestButton('toggle-panel');
+        await clickTestButton('save-update-b');
+        await clickTestButton('delete-project-002');
+        listHeight = 600;
+
+        expect(container.querySelector('[data-testid="active-normal-request"]')?.textContent).toBe('1');
+        expect(container.querySelector('[data-testid="requested-revision"]')?.textContent).toBe('2');
+        expect(router.get).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            getRouterOptions(0).onFinish?.();
+        });
+
+        expect(container.querySelector('[data-testid="active-normal-request"]')?.textContent).toBe('none');
+        expect(router.get).toHaveBeenCalledTimes(1);
+        expect(consoleError).not.toHaveBeenCalled();
+
+        await clickTestButton('toggle-panel');
+
+        expect(router.get).toHaveBeenCalledTimes(2);
+        expect(getRouterRequestData(1)).toEqual(
+            expect.objectContaining({
+                keyword: '通常取得後の検索条件',
+                sort: 'registered_asc',
+                page: 3,
+                per_page: 6,
+                deleted_ids: ['mock-project-002'],
+                overrides: [
+                    expect.objectContaining({
+                        id: 'mock-project-001',
+                        company_name: '保存済み会社B',
+                    }),
+                ],
+            }),
+        );
+
+        await act(async () => {
+            getRouterOptions(0).onFinish?.();
+        });
+
+        expect(container.querySelector('[data-testid="active-normal-request"]')?.textContent).toBe('none');
+        expect(router.get).toHaveBeenCalledTimes(2);
+        expect(consoleError).not.toHaveBeenCalled();
+    });
+
+    it('keeps an open search dialog locked while a revision waits, but lets the user close it', async () => {
+        await renderHarness({});
+        await clickButtonByText('検索');
+        await setSearchKeyword('入力中キーワード');
+        await selectRegisteredAscending();
+        await clickTestButton('save-update-a');
+
+        const dialog = container.querySelector<HTMLFormElement>('[role="dialog"]');
+        const submitButtons = dialog?.querySelectorAll<HTMLButtonElement>(
+            'button[type="submit"]',
+        );
+
+        expect(router.get).toHaveBeenCalledTimes(1);
+        expect(submitButtons?.length).toBe(2);
+        expect(Array.from(submitButtons ?? []).every((button) => button.disabled)).toBe(true);
+        expect(dialog?.querySelector('input')?.getAttribute('value')).toBe('入力中キーワード');
+
+        await act(async () => {
+            dialog?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        });
+
+        expect(router.get).toHaveBeenCalledTimes(1);
+        expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+        expect(container.querySelector('[role="dialog"] input')?.getAttribute('value')).toBe('入力中キーワード');
+
+        await act(async () => {
+            getRouterOptions(0).onFinish?.();
+        });
+
+        expect(router.get).toHaveBeenCalledTimes(2);
+        expect(Array.from(submitButtons ?? []).every((button) => button.disabled)).toBe(true);
+
+        await act(async () => {
+            getRouterOptions(1).onError?.();
+        });
+
+        expect(Array.from(submitButtons ?? []).every((button) => button.disabled)).toBe(true);
+        await clickButtonByText('閉じる');
+
+        expect(container.querySelector('[role="dialog"]')).toBeNull();
+
+        await clickButtonByText('再試行');
+        await act(async () => {
+            getRouterOptions(2).onSuccess?.();
+        });
+        await clickButtonByText('検索');
+        await setSearchKeyword('排他解消後の検索');
+        await submitSearchDialog();
+
+        expect(router.get).toHaveBeenCalledTimes(4);
+        expect(getRouterRequestData(3)).toMatchObject({
+            keyword: '排他解消後の検索',
+            sort: 'registered_desc',
+            page: 1,
+            per_page: 5,
+        });
+        expect(container.querySelector('[role="dialog"]')).toBeNull();
     });
 });

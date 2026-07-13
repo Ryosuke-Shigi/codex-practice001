@@ -468,14 +468,22 @@ export default function LumiLaboProjectListPanel({
         );
     };
 
+    const hasPendingProjectListRefresh =
+        projectListRefreshRevision > lastSuccessfulRefreshRevision;
+    const isProjectListRequestLocked =
+        activeRefreshRevision !== null ||
+        activeNormalRequestId !== null ||
+        failedRefreshRequest !== null ||
+        hasPendingProjectListRefresh;
     const isListLoading =
         isLoading ||
         !isMeasurementReady ||
         !projectList.isReady ||
         activeRefreshRevision !== null ||
         activeNormalRequestId !== null ||
-        (projectListRefreshRevision > lastSuccessfulRefreshRevision &&
-            failedRefreshRequest === null);
+        (hasPendingProjectListRefresh && failedRefreshRequest === null);
+    const isSearchSubmitDisabled =
+        isLoading || isProjectListRequestLocked;
 
     const openSearchDialog = () => {
         setSearchKeyword(projectList.keyword);
@@ -484,8 +492,13 @@ export default function LumiLaboProjectListPanel({
 
     const submitSearch = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        reloadProjectList({ keyword: searchKeyword, page: 1 });
-        setIsSearchDialogOpen(false);
+        const started =
+            !isSearchSubmitDisabled &&
+            reloadProjectList({ keyword: searchKeyword, page: 1 });
+
+        if (started) {
+            setIsSearchDialogOpen(false);
+        }
     };
 
     const clearSearch = () => reloadProjectList({ keyword: "", page: 1 });
@@ -695,7 +708,7 @@ export default function LumiLaboProjectListPanel({
             {isSearchDialogOpen ? (
                 <ProjectSearchDialog
                     keyword={searchKeyword}
-                    isLoading={isLoading}
+                    isSubmitDisabled={isSearchSubmitDisabled}
                     onChangeKeyword={setSearchKeyword}
                     onClose={() => setIsSearchDialogOpen(false)}
                     onSubmit={submitSearch}
@@ -707,7 +720,7 @@ export default function LumiLaboProjectListPanel({
 
 type ProjectSearchDialogProps = {
     keyword: string;
-    isLoading: boolean;
+    isSubmitDisabled: boolean;
     onChangeKeyword: (keyword: string) => void;
     onClose: () => void;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -715,7 +728,7 @@ type ProjectSearchDialogProps = {
 
 function ProjectSearchDialog({
     keyword,
-    isLoading,
+    isSubmitDisabled,
     onChangeKeyword,
     onClose,
     onSubmit,
@@ -752,14 +765,13 @@ function ProjectSearchDialog({
                     <button
                         type="submit"
                         className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500"
-                        disabled={isLoading}
+                        disabled={isSubmitDisabled}
                     >
                         検索
                     </button>
                     <button
                         type="button"
                         className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
-                        disabled={isLoading}
                         onClick={onClose}
                     >
                         閉じる
@@ -769,7 +781,6 @@ function ProjectSearchDialog({
                     <button
                         type="button"
                         className="min-h-12 rounded-md border border-neutral-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
-                        disabled={isLoading}
                         onClick={onClose}
                     >
                         閉じる
@@ -777,7 +788,7 @@ function ProjectSearchDialog({
                     <button
                         type="submit"
                         className="min-h-12 rounded-md border border-yellow-500 bg-yellow-100 px-4 text-lg font-black text-yellow-950 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-500"
-                        disabled={isLoading}
+                        disabled={isSubmitDisabled}
                     >
                         検索
                     </button>
