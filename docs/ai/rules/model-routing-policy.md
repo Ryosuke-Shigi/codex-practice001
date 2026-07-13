@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-13
+- Last reviewed: 2026-07-14
 - Canonical source: subagentの選択、役割、並列、昇格、停止、安全境界
 
 ## 目的と適用範囲
@@ -54,6 +54,12 @@ subagentによるmodel routingはMDルーターの代替ではありません。
 | agents.max_depth | 1 | root sessionから直接のsubagentだけを許可し、subagentからの再委譲を禁止 |
 
 project全体の既定model、approval、network、MCP、skills、sandboxの全体設定は、このmodel routingのために変更しません。
+
+### custom agent起動時のfork
+
+親と異なるagent role、model、reasoning effortを指定する場合は、full-history forkを使用せず、`fork_turns = "none"`で起動します。
+
+full-history forkでは親agentのtype、model、reasoning effortを継承するため、これらを同時に指定すると起動前にエラーになります。このエラーはagent設定不良やmodel routing失敗として扱いません。会話履歴が必要な場合は、対象repo、対象ファイル、編集可否、確認対象、停止条件、期待する結果形式等の必要な文脈を、子agentへのmessageへ明示します。
 
 ## 6種類のagent
 
@@ -212,6 +218,42 @@ project-scoped agent設定を成功扱いするには、projectがtrustedで、�
 - model利用不可時に別modelへ黙って置換しない
 
 Codex version、アカウント、trust、session再読込のいずれかで確認できない場合は、その項目を未確認として報告します。確認だけのためにNOOPファイル、ダミーコード、不要なcommitを作りません。
+
+### 2026-07-14 runtime検証
+
+Windows Codex Desktop + WSL環境では、Windows側ユーザー設定の`$env:USERPROFILE\.codex\config.toml`へ次の2項目を同時に追加し、`fork_turns = "none"`で起動した場合に、名前付きcustom agentのrole選択とagentごとのmodel / reasoning effort routingが動作しました。
+
+```toml
+[features.multi_agent_v2]
+hide_spawn_agent_metadata = false
+tool_namespace = "agents"
+```
+
+この設定はrepo外の検証前提です。Windows側ユーザー設定をrepoへコピー、commit、追跡せず、[project設定](../../../.codex/config.toml)へも追加しません。ユーザー設定に同名セクションが既にある場合は、セクションを重複させず既存セクションへ2項目を追加します。
+
+確認の時系列は次のとおりです。
+
+1. デフォルト状態ではcustom roleが適用されず、親設定を継承したgeneric childが起動した
+2. metadata公開だけではreserved schemaエラーが発生した
+3. Windows側ユーザー設定へ上記2項目を同時に追加した
+4. `fork_turns = "none"`で6agentを個別起動し、すべてのrole選択に成功した
+
+実測結果:
+
+| Agent | role | resolved model | resolved reasoning effort | effective sandbox |
+|---|---|---|---|---|
+| luna_explorer | 確認済み | gpt-5.6-luna | low | project root書き込み可能、`.git/`書き込み不可 |
+| terra_implementer | 確認済み | gpt-5.6-terra | medium | workspace-write |
+| terra_docs_maintainer | 確認済み | gpt-5.6-terra | medium | restricted filesystem / workspace-write相当 |
+| terra_verifier | 確認済み | `inherited`表示のため独立確認未完了 | `inherited`表示のため独立確認未完了 | workspace-write |
+| sol_specialist | 確認済み | gpt-5.6-sol | xhigh | workspace-write |
+| sol_reviewer | 確認済み | gpt-5.6-sol | high | workspace-write |
+
+この検証で確認できたのは、6agentすべてのrole選択と、terra_verifierを除く5agentの実行時model / reasoning effortです。terra_verifierの設定値は`gpt-5.6-terra` / `medium`ですが、実行時metadataが`inherited`表示だったため、resolved値の実測確認済みとは扱いません。
+
+luna_explorerとsol_reviewerはproject設定でread-onlyを意図していますが、この検証のeffective sandboxではworkspace-writeでした。read-only sandboxは未成立であり、原因は未特定です。子agentがファイルを変更しなかった事実はdeveloper instructionsへの遵守結果であり、sandboxによる書き込み禁止の証明ではありません。
+
+全検証後もworking treeはcleanで、子agentによるファイル変更、設定変更、commit、push、Pull Request操作はありませんでした。この結果から、回避設定なしでのmodel routing、全環境でのcustom agent動作、agent TOMLのsandbox設定が常にeffective sandboxへ反映されることは保証しません。
 
 ## permissionとsandbox
 
