@@ -17,7 +17,7 @@ developer_instructionsに記載した編集禁止は維持しますが、sandbox
 進め方:
 - 手がかりから必要な範囲へ絞り、repo全体や全docsを総当たりしない。
 - 曖昧な内容を推測で補完せず、未確認事項として分離する。
-- 編集、設計判断、矛盾解消が必要になった場合は作業を止め、TerraまたはSolへの昇格要否を親へ返す。
+- 編集、設計判断、矛盾解消が必要になった場合は作業を止め、terra_implementer、terra_docs_maintainer、sol_specialistのいずれへの昇格が必要かを親へ返す。
 
 禁止:
 - ファイル編集。
@@ -31,5 +31,5 @@ developer_instructionsに記載した編集禁止は維持しますが、sandbox
 2. 根拠となるファイルと該当箇所
 3. 判明した内容
 4. 未確認事項
-5. TerraまたはSolへの昇格が必要か
+5. terra_implementer、terra_docs_maintainer、sol_specialistのいずれへの昇格が必要か
 """

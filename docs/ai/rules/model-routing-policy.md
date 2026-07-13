@@ -55,12 +55,13 @@ subagentによるmodel routingはMDルーターの代替ではありません。
 
 project全体の既定model、approval、network、MCP、skills、sandboxの全体設定は、このmodel routingのために変更しません。
 
-## 5種類のagent
+## 6種類のagent
 
 | Agent | Model | Reasoning | Project sandbox既定 / effective確認 | 主な用途 |
 |---|---|---|---|---|
 | luna_explorer | gpt-5.6-luna | low | read-only / 起動時に確認 | 対象特定、検索、分類、抽出、参照確認 |
-| terra_implementer | gpt-5.6-terra | medium | 未指定（親から継承）/ 起動時に確認 | 仕様と責務が確定した通常実装 |
+| terra_implementer | gpt-5.6-terra | medium | 未指定（親から継承）/ 起動時に確認 | コード変更を含む通常実装と関連docs・テスト修正 |
+| terra_docs_maintainer | gpt-5.6-terra | medium | 未指定（親から継承）/ 起動時に確認 | docsのみの実装、正本・索引・リンク・Status・重複管理 |
 | sol_specialist | gpt-5.6-sol | xhigh | 未指定（親から継承）/ 起動時に確認 | 複雑、曖昧、高リスク、複数レイヤー、原因不明 |
 | terra_verifier | gpt-5.6-terra | medium | 未指定（親から継承）/ 起動時に確認 | 実装担当から分離したコマンド確認 |
 | sol_reviewer | gpt-5.6-sol | high | read-only / 起動時に確認 | 実装担当から独立した最終差分レビュー |
@@ -73,15 +74,17 @@ Sandbox列の左側はproject設定上の既定値、右側は起動時にeffect
 
 ファイル編集、Git / Pull Request操作、仕様決定、責務変更、代替実装の既定案化は禁止します。手がかりのないrepo全体や全docsの総当たり、曖昧な内容の推測補完も行いません。
 
-編集、設計判断、矛盾解消が必要になった場合は停止し、TerraまたはSolへの昇格要否を親エージェントへ返します。
+編集、設計判断、矛盾解消が必要になった場合は停止し、terra_implementer、terra_docs_maintainer、sol_specialistのいずれへの昇格が必要かを親エージェントへ返します。
 
 ### terra_implementer
 
-仕様、対象、責務配置、成功条件が確定した通常実装を担当します。小規模から中規模のLaravel、React、TypeScript、docs修正と、既存設計内のテスト追加・修正を、MDルーターで確定した範囲内だけで行います。
+仕様、対象、責務配置、成功条件が確定し、Laravel、React、TypeScript等のコード変更を含む通常の機能実装と、それに直接関係するdocs・テスト修正を、MDルーターで確定した範囲内だけで行います。
+
+docsだけの独立作業は原則としてterra_docs_maintainerへ委譲します。コード変更から分離できる仕様追従docsは、実装担当が差分内容を確定し、親エージェントが対象docsと記載事実を固定した後にterra_docs_maintainerへ順次委譲できます。
 
 高リスク領域の通常修正化、対象外ファイルの編集、他のsubagentとの同時編集、Git / Pull Request操作、正本docsの再設計や独自解釈は禁止します。
 
-次を検出した場合は編集を止め、親エージェントへSolへの昇格を要求します。
+次を検出した場合は編集を止め、親エージェントへsol_specialistへの昇格を要求します。
 
 - 複数レイヤーの責務判断が必要
 - docs、コード、テスト、指示が矛盾
@@ -90,19 +93,33 @@ Sandbox列の左側はproject設定上の既定値、右側は起動時にeffect
 - 既存構造の変更または設計判断が必要
 - 仕様を推測しなければ進められない
 
+### terra_docs_maintainer
+
+[MDルーター](../workflows/md-router.md)の「docsのみの修正」プロファイルで、目的、配置先、正本、索引更新先を確定できた作業を担当し、対象docsとそのdocsが直接参照する正本だけを確認します。
+
+Markdownの追加・修正、正本への短い導線追加、索引更新、古い参照の修正、重複記述の整理を行い、Status、Scope、Last reviewed、相対リンク、配置先、正本、索引更新先を整合させます。詳細は正本へ集約し、他のdocsには必要な短い説明とリンクだけを置きます。
+
+コード変更を伴う仕様追従docsは、実装担当が差分内容を確定し、親エージェントが対象と記載事実を固定した後に担当できます。PHP、Laravel、React、TypeScript、テスト、設定、Migration、Docker、本番ファイルは編集しません。
+
+docs体系、MDルーター、責務境界、Sensors、配置基準、正本構造、複数正本の再設計、正本間の矛盾解消、コード・テスト・設定変更、仕様推測が必要な場合は編集を止め、親エージェントへsol_specialistへの昇格を要求します。
+
 ### sol_specialist
 
-複雑、曖昧、高価値、高リスクな作業、複数レイヤーの責務判断、原因不明障害の根本原因分析、Terraでは成立しない作業を担当します。
+複雑、曖昧、高価値、高リスクな作業、複数レイヤーの責務判断、原因不明障害の根本原因分析、terra_implementerまたはterra_docs_maintainerでは成立しない作業を担当します。
+
+docs体系、MDルーター、責務境界、複数正本にまたがる再設計も担当します。
 
 Controller、Request、Action、Service、Repository、DTO、Responder、Event、Listener、Job、Strategy、Read Model、Projectionの境界を確認し、DB、Migration、認証認可、Security、外部API、Queue / Scheduler、本番影響を含む作業の設計・実装を支援します。
 
 ユーザー未承認の破壊的操作、secrets変更、本番反映、merge、force push、履歴変更、Git / Pull Request操作は禁止します。仕様矛盾を推測で統合せず、高性能modelであることを理由に作業範囲を広げません。
 
-対象repo、仕様、責務、rollback、権限境界、既存データ影響を確認できない場合は、Solでも停止して親エージェントへ返します。
+対象repo、仕様、責務、rollback、権限境界、既存データ影響を確認できない場合は、sol_specialistでも停止して親エージェントへ返します。
 
 ### terra_verifier
 
 実装担当から分離し、command registryと対象docsに存在するコマンドを実装完了後に実行します。test、typecheck、build、format check、lint、git diff --check、CI、ログ結果を整理し、実行前後のworking treeを確認します。
+
+docs差分では内容を修正せず、相対リンク、差分、Markdown / TOML構文、working treeを確認します。docs検証専用agentは追加せず、既存のterra_verifierを使います。
 
 成功、失敗、未実行を区別し、未実行には理由を付けます。生ログは大量転送せず、判断に必要な箇所だけを要約します。
 
@@ -111,6 +128,8 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 ### sol_reviewer
 
 実装担当から独立し、指示、正本docs、changed files、diff、テスト結果、CI結果を直接照合します。仕様漏れ、回帰、責務違反、過剰実装、テスト不足、停止条件違反、ADR Patternとレイヤードアーキテクチャの境界、PRレビュー強度と変更リスクの一致を確認します。
+
+完成したdocs差分も、正本、索引、参照導線、重複、責務境界の観点から実装担当とdocs担当から独立してレビューします。docsレビュー専用agentは追加せず、既存のsol_reviewerを使います。
 
 ファイル編集、修正実装、Git / Pull Request操作、Pull Request review投稿は禁止します。実装担当の説明だけを根拠に問題なしと判断せず、根拠のない一般論や好み、軽微な表現差で指摘を水増ししません。
 
@@ -123,17 +142,19 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 | 状態 | 選択 |
 |---|---|
 | 対象が未特定で、検索、分類、抽出が中心 | luna_explorer |
-| 仕様と責務が確定した通常実装 | terra_implementer |
+| コード変更を含み、仕様と責務が確定した通常の機能実装 | terra_implementer |
+| 対象がdocsのみで、目的・配置先・正本・索引更新先を確定できる | terra_docs_maintainer |
+| docs体系、正本構造、MDルーター、共通責務の再設計が必要 | sol_specialist |
 | 複雑、曖昧、高リスク、複数レイヤー、原因不明 | sol_specialist |
 | 差分作成後のコマンド確認 | terra_verifier |
 | Level 3 / Level 4、AI harness、MDルーター、共通責務変更、重要な最終確認 | sol_reviewer |
 
-小さい単一作業で、subagentを使う品質または速度上の利点がない場合は、親エージェントだけで処理します。すべての作業で機械的に5種類を起動しません。
+小さい単一作業で、subagentを使う品質または速度上の利点がない場合は、親エージェントだけで処理します。すべての作業で機械的に6種類を起動しません。
 
 ## 並列と単一writer
 
 - 同時に編集するsubagentは最大1体とする
-- terra_implementerとsol_specialistを同時に編集させない
+- terra_implementer、terra_docs_maintainer、sol_specialistを同時に編集させない
 - 並列化は探索、ログ整理、検証、レビュー等の独立したread-heavy作業に限定する
 - terra_verifierは実装完了後に実行する
 - sol_reviewerは実装と検証結果が揃った後に実行する
@@ -143,10 +164,11 @@ Controller、Request、Action、Service、Repository、DTO、Responder、Event�
 
 ## 昇格と停止
 
-- Lunaが編集、設計判断、矛盾解消を必要とした場合は親エージェントへ返す
-- Terraが複数レイヤー、高リスク、仕様矛盾、原因不明問題を検出した場合はSolへ昇格する
-- Solが必要な作業を節約目的だけでTerraへ降格しない
-- Solでも必要な前提、安全境界、rollback、既存データ影響を確認できない場合は停止する
+- luna_explorerが編集、設計判断、矛盾解消を必要とした場合は親エージェントへ返し、terra_implementer、terra_docs_maintainer、sol_specialistの選択を親が判断する
+- terra_implementerが複数レイヤー、高リスク、仕様矛盾、原因不明問題を検出した場合はsol_specialistへ昇格する
+- terra_docs_maintainerがdocs体系、正本構造、MDルーター、共通責務の再設計、正本間の矛盾、コード・テスト・設定変更の必要を検出した場合は編集を止め、sol_specialistへの昇格を要求する
+- sol_specialistが必要な作業を節約目的だけでterra_implementerまたはterra_docs_maintainerへ降格しない
+- sol_specialistでも必要な前提、安全境界、rollback、既存データ影響を確認できない場合は停止する
 - modelが利用できない場合は、別modelへ黙って置換しない
 - 親ターンのlive runtime overrideはsubagent起動時に再適用される場合があるため、agent TOMLのsandbox_modeだけで実効sandboxを断定しない
 - docs、コード、テスト、指示の矛盾をsubagent内で推測統合しない
@@ -166,8 +188,9 @@ terra_verifierとsol_reviewerは、実装担当と同一の判断を追認する
 
 役割固有の結果は次を含めます。
 
-- Luna: 確認対象、根拠、判明事項、未確認事項、Terra / Solへの昇格要否
-- Terra implementer: 変更ファイル、変更理由、実行確認、未実行理由、Solへの昇格要否
+- Luna: 確認対象、根拠、判明事項、未確認事項、terra_implementer / terra_docs_maintainer / sol_specialistへの昇格要否
+- Terra implementer: 変更ファイル、変更理由、実行確認、未実行理由、sol_specialistへの昇格要否
+- Terra docs maintainer: 対象docsと直接の正本、変更理由、正本・索引・参照導線の判断、確認結果、未実行理由、sol_specialistへの昇格要否
 - Sol specialist: 前提、設計判断、責務境界、rollback、権限、既存データ影響、未確認事項
 - Terra verifier: 実行前後のworking tree、コマンド、成功、失敗、未実行、生成差分
 - Sol reviewer: 重要度順の指摘、確認範囲、未確認事項
@@ -180,10 +203,10 @@ project-scoped agent設定を成功扱いするには、projectがtrustedで、�
 
 確認可能な環境では、次を事実として確認します。
 
-- 5種類のagentが指定nameで認識される
+- 6種類のagentが指定nameで認識される
 - 各agentが指定modelとreasoning設定で起動する
 - luna_explorerとsol_reviewerは、起動時のeffective sandboxがread-onlyであることを確認できた場合だけread-only確認済みとする
-- terra_implementer、sol_specialist、terra_verifierのeffective sandboxが親セッションの境界を越えないことを確認する
+- terra_implementer、terra_docs_maintainer、sol_specialist、terra_verifierのeffective sandboxが親セッションの境界を越えないことを確認する
 - 各agentが担当条件、昇格条件、停止条件を返す
 - subagentが再委譲しない
 - model利用不可時に別modelへ黙って置換しない
@@ -212,7 +235,7 @@ Codex version、アカウント、trust、session再読込のいずれかで確�
 - project設定がtrustedな設定として読み込まれていない
 - 指定modelが利用できず、役割を維持したまま実行できない
 
-model-selector、planner、PR本文専用、docs専用、UI専用、security専用のagentは追加しません。独立した責務が実際に発生した場合だけ、別作業として追加を検討します。
+docs_auditor、model-selector、planner、PR本文専用、UI専用、security専用のagentは追加しません。docs検証専用agentも追加せず、terra_verifierとsol_reviewerを使用します。独立した責務が実際に発生した場合だけ、別作業として追加を検討します。
 
 ## GitとPull Request
 
