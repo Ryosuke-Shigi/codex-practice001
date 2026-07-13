@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\LumiLabo;
 
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -37,7 +38,19 @@ class LumiLaboProjectMockIndexRequest extends FormRequest
                 'string',
                 'regex:/^mock-project-\d{3}$/',
             ],
-            'overrides.*.company_name' => ['required', 'string'],
+            'overrides.*.company_name' => [
+                'bail',
+                'required',
+                'string',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (
+                        is_string($value) &&
+                        preg_match('/[^\s　]/u', $value) !== 1
+                    ) {
+                        $fail('会社名を入力してください。');
+                    }
+                },
+            ],
             'overrides.*.contact_name' => ['present', 'nullable', 'string'],
             'overrides.*.address' => ['present', 'nullable', 'string'],
             'overrides.*.memo' => ['present', 'nullable', 'string'],

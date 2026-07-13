@@ -8,12 +8,20 @@ import {
     applyLumiLaboMockProjectSaveToSession,
     canCompleteLumiLaboMockProjectSave,
     createLumiLaboMockInitialDeletedProjectIds,
+    createLumiLaboProjectListRefreshState,
     createProjectOverrideRecord,
+    getLumiLaboMockProjectCompanyNameValidationError,
+    prepareLumiLaboMockProjectSave,
+    reduceLumiLaboProjectListRefreshState,
     removeProjectId,
+    setLumiLaboMockProjectCompanyNameValidationError,
     setLumiLaboMockProjectDroppedFileNames,
     updateLumiLaboMockProjectSession,
 } from './LumiLaboProjectMockView';
-import { createLumiLaboProjectListRequestData } from './LumiLaboProjectListPanel';
+import {
+    createLumiLaboProjectListRequestData,
+    getNextLumiLaboProjectListRefreshRevision,
+} from './LumiLaboProjectListPanel';
 import { lumiLaboProjectDetail } from './mockData';
 
 describe('LumiLaboProjectMockView project-scoped state', () => {
@@ -269,5 +277,262 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
     it('creates empty query state when the route has no initial override props', () => {
         expect(createLumiLaboMockInitialDeletedProjectIds([])).toEqual(new Set());
         expect(createProjectOverrideRecord([])).toEqual({});
+    });
+
+    it('rejects empty and whitespace-only company names before a save snapshot is created', () => {
+        for (const companyName of [
+            '',
+            '   ',
+            '　',
+            '\t',
+            '\n',
+            ' \t\n　\n ',
+        ]) {
+            const preparation = prepareLumiLaboMockProjectSave({
+                companyName,
+                contactName: lumiLaboProjectDetail.contactName,
+                address: lumiLaboProjectDetail.address,
+                memo: lumiLaboProjectDetail.memo,
+            });
+
+            expect(
+                getLumiLaboMockProjectCompanyNameValidationError(companyName),
+            ).toBe('会社名を入力してください');
+            expect(preparation).toEqual({
+                isValid: false,
+                validationError: '会社名を入力してください',
+            });
+            expect(preparation).not.toHaveProperty('savedDraft');
+        }
+    });
+
+    it('preserves a valid company name exactly when preparing a save', () => {
+        const preparation = prepareLumiLaboMockProjectSave({
+            companyName: '  有効な会社名  ',
+            contactName: '',
+            address: '',
+            memo: '',
+        });
+
+        expect(preparation).toEqual({
+            isValid: true,
+            savedDraft: {
+                companyName: '  有効な会社名  ',
+                contactName: '',
+                address: '',
+                memo: '',
+            },
+        });
+    });
+
+    it('keeps company name validation errors scoped to the invalid project and clears only that error after valid input or deletion', () => {
+        const projectAError =
+            setLumiLaboMockProjectCompanyNameValidationError(
+                {},
+                'mock-project-001',
+                '会社名を入力してください',
+            );
+        const projectErrors = setLumiLaboMockProjectCompanyNameValidationError(
+            projectAError,
+            'mock-project-002',
+            '会社名を入力してください',
+        );
+        const validProjectA =
+            setLumiLaboMockProjectCompanyNameValidationError(
+                projectErrors,
+                'mock-project-001',
+                null,
+            );
+        const deletedProjectB =
+            setLumiLaboMockProjectCompanyNameValidationError(
+                validProjectA,
+                'mock-project-002',
+                null,
+            );
+
+        expect(projectErrors).toEqual({
+            'mock-project-001': '会社名を入力してください',
+            'mock-project-002': '会社名を入力してください',
+        });
+        expect(validProjectA).toEqual({
+            'mock-project-002': '会社名を入力してください',
+        });
+        expect(deletedProjectB).toEqual({});
+    });
+
+    it('keeps a blank edit unsaved after an earlier valid save completes', () => {
+        const savedDraft = {
+            companyName: '保存開始時の会社名',
+            contactName: lumiLaboProjectDetail.contactName,
+            address: lumiLaboProjectDetail.address,
+            memo: lumiLaboProjectDetail.memo,
+        };
+        const sessionWithLatestBlankDraft = {
+            detail: lumiLaboProjectDetail,
+            draft: {
+                ...savedDraft,
+                companyName: '　',
+            },
+        };
+        const completedSave = completeLumiLaboMockProjectSave(
+            sessionWithLatestBlankDraft,
+            savedDraft,
+        );
+
+        expect(completedSave.session.detail.companyName).toBe('保存開始時の会社名');
+        expect(completedSave.session.draft.companyName).toBe('　');
+        expect(completedSave.hasUnsavedChanges).toBe(true);
+        expect(
+            prepareLumiLaboMockProjectSave(completedSave.session.draft),
+        ).toEqual({
+            isValid: false,
+            validationError: '会社名を入力してください',
+        });
+    });
+
+    it('keeps refresh lifecycle state in the parent scope across a successful panel remount', () => {
+        let parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            createLumiLaboProjectListRefreshState(),
+            { type: 'request' },
+        );
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'start', revision: 1 },
+        );
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'success', revision: 1 },
+        );
+
+        expect(parentRefreshState).toMatchObject({
+            requestedRevision: 1,
+            activeRevision: null,
+            successfulRevision: 1,
+            failedRefresh: null,
+        });
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(
+                parentRefreshState.requestedRevision,
+                parentRefreshState.successfulRevision,
+                parentRefreshState.activeRevision,
+                parentRefreshState.failedRefresh?.revision ?? null,
+            ),
+        ).toBeNull();
+    });
+
+    it('does not duplicate an active refresh and retains a failed retry request after remounting', () => {
+        const requestData = createLumiLaboProjectListRequestData(
+            {
+                keyword: '岸和田',
+                sort: 'registered_asc',
+                page: 2,
+                perPage: 5,
+            },
+            ['mock-project-001'],
+        );
+        let parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            createLumiLaboProjectListRefreshState(),
+            { type: 'request' },
+        );
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'start', revision: 1 },
+        );
+
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(
+                parentRefreshState.requestedRevision,
+                parentRefreshState.successfulRevision,
+                parentRefreshState.activeRevision,
+                parentRefreshState.failedRefresh?.revision ?? null,
+            ),
+        ).toBeNull();
+
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'failure', revision: 1, requestData },
+        );
+
+        expect(parentRefreshState.activeRevision).toBeNull();
+        expect(parentRefreshState.failedRefresh).toEqual({
+            revision: 1,
+            requestData,
+        });
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(
+                parentRefreshState.requestedRevision,
+                parentRefreshState.successfulRevision,
+                parentRefreshState.activeRevision,
+                parentRefreshState.failedRefresh?.revision ?? null,
+            ),
+        ).toBeNull();
+
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'start', revision: 1 },
+        );
+
+        expect(parentRefreshState.activeRevision).toBe(1);
+        expect(parentRefreshState.failedRefresh).toBeNull();
+    });
+
+    it('starts the latest pending revision only after the earlier refresh resolves', () => {
+        let parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            createLumiLaboProjectListRefreshState(),
+            { type: 'request' },
+        );
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'start', revision: 1 },
+        );
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'request' },
+        );
+        parentRefreshState = reduceLumiLaboProjectListRefreshState(
+            parentRefreshState,
+            { type: 'success', revision: 1 },
+        );
+
+        expect(parentRefreshState.successfulRevision).toBe(1);
+        expect(parentRefreshState.requestedRevision).toBe(2);
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(
+                parentRefreshState.requestedRevision,
+                parentRefreshState.successfulRevision,
+                parentRefreshState.activeRevision,
+                parentRefreshState.failedRefresh?.revision ?? null,
+            ),
+        ).toBe(2);
+
+        const latestSuccess = reduceLumiLaboProjectListRefreshState(
+            {
+                ...parentRefreshState,
+                activeRevision: 2,
+                successfulRevision: 2,
+            },
+            { type: 'success', revision: 1 },
+        );
+
+        expect(latestSuccess.successfulRevision).toBe(2);
+        expect(latestSuccess.activeRevision).toBe(2);
+        expect(
+            getNextLumiLaboProjectListRefreshRevision(0, 0, null, null),
+        ).toBeNull();
+    });
+
+    it('does not start another revision while a matching revision is already active', () => {
+        const activeState = {
+            ...createLumiLaboProjectListRefreshState(),
+            requestedRevision: 1,
+            activeRevision: 1,
+        };
+
+        expect(
+            reduceLumiLaboProjectListRefreshState(activeState, {
+                type: 'start',
+                revision: 1,
+            }),
+        ).toBe(activeState);
     });
 });

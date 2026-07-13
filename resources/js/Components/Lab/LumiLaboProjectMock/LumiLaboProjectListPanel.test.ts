@@ -1,4 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { router } from '@inertiajs/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@inertiajs/react', () => ({
+    router: {
+        get: vi.fn(),
+    },
+}));
 
 import {
     calculateLumiLaboProjectListPerPage,
@@ -6,11 +13,16 @@ import {
     createLumiLaboProjectListRequestData,
     getNextLumiLaboProjectListRefreshRevision,
     shouldReloadLumiLaboProjectList,
+    visitLumiLaboProjectListRefresh,
     LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
     LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
 } from "./LumiLaboProjectListPanel";
 
 describe("LumiLaboProjectListPanel measurement and partial reload contract", () => {
+    beforeEach(() => {
+        vi.mocked(router.get).mockReset();
+    });
+
     it("keeps deleted project IDs in a list reload request", () => {
         expect(
             createLumiLaboProjectListRequestData(
@@ -100,6 +112,52 @@ describe("LumiLaboProjectListPanel measurement and partial reload contract", () 
         callbacks.onSuccess();
 
         expect(completed).toEqual(["success"]);
+    });
+
+    it('sends a revision refresh with the supplied retry data and only parent lifecycle callbacks', () => {
+        const requestData = createLumiLaboProjectListRequestData(
+            {
+                keyword: '失敗時の検索条件',
+                sort: 'registered_asc',
+                page: 2,
+                perPage: 5,
+            },
+            ['mock-project-001'],
+        );
+        const onSuccess = vi.fn();
+        const onFailure = vi.fn();
+
+        visitLumiLaboProjectListRefresh(
+            '/lab/lumilabo-project-mock',
+            requestData,
+            { onSuccess, onFailure },
+        );
+
+        expect(router.get).toHaveBeenCalledTimes(1);
+        expect(router.get).toHaveBeenCalledWith(
+            '/lab/lumilabo-project-mock',
+            requestData,
+            expect.objectContaining({
+                only: ['projectList'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }),
+        );
+
+        const requestOptions = vi.mocked(router.get).mock.calls[0]?.[2];
+
+        expect(requestOptions).toBeDefined();
+        expect(requestOptions).not.toHaveProperty('onStart');
+        expect(requestOptions).not.toHaveProperty('onFinish');
+
+        requestOptions?.onSuccess?.(undefined as never);
+        requestOptions?.onError?.(undefined as never);
+        requestOptions?.onCancel?.();
+
+        expect(onSuccess).toHaveBeenCalledTimes(1);
+        expect(onFailure).toHaveBeenNthCalledWith(1, requestData);
+        expect(onFailure).toHaveBeenNthCalledWith(2, requestData);
     });
 
     it("keeps a newer refresh revision pending until the active revision succeeds", () => {

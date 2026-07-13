@@ -11,6 +11,7 @@ import type {
     LumiLaboMockProjectViewId,
     LumiLaboMockScreen,
 } from './types';
+import type { LumiLaboProjectListRefreshState } from './LumiLaboProjectMockView';
 
 type RenderMockViewOptions = {
     activeProjectViewId?: LumiLaboMockProjectViewId;
@@ -22,8 +23,9 @@ type RenderMockViewOptions = {
     projectList?: LumiLaboMockProjectList;
     projectOverrides?: Record<string, LumiLaboMockProjectDetailDraft | undefined>;
     deletedProjectIds?: ReadonlySet<string>;
+    companyNameValidationErrors?: Record<string, string | undefined>;
     isSearchDialogOpen?: boolean;
-    shouldRefreshProjectList?: boolean;
+    projectListRefreshState?: LumiLaboProjectListRefreshState;
     listIsLoading?: boolean;
     droppedFileNames?: readonly string[];
     isDeleteDialogOpen?: boolean;
@@ -80,6 +82,10 @@ async function renderMockViewMarkup(
 
             return {
                 ...actual,
+                useReducer: vi.fn((_, initialState: unknown) => [
+                    options.projectListRefreshState ?? initialState,
+                    vi.fn(),
+                ]),
                 useState: vi.fn((initialValue: unknown) => {
                     stateCall += 1;
 
@@ -144,6 +150,10 @@ async function renderMockViewMarkup(
                     }
 
                     if (stateCall === 12) {
+                        return [options.companyNameValidationErrors ?? {}, vi.fn()];
+                    }
+
+                    if (stateCall === 13) {
                         return [
                             projectDetail === null
                                 ? {}
@@ -155,16 +165,12 @@ async function renderMockViewMarkup(
                         ];
                     }
 
-                    if (stateCall === 13) {
+                    if (stateCall === 14) {
                         return [options.isDeleteDialogOpen ?? false, vi.fn()];
                     }
 
-                    if (stateCall === 14) {
-                        return [{}, vi.fn()];
-                    }
-
                     if (stateCall === 15) {
-                        return [options.shouldRefreshProjectList ?? false, vi.fn()];
+                        return [{}, vi.fn()];
                     }
 
                     if (stateCall === 16) {
@@ -387,7 +393,12 @@ describe('LumiLaboProjectMockView', () => {
         });
         const deletedMarkup = await renderMockViewMarkup('project', 'list', {
             deletedProjectIds: new Set(['mock-project-001']),
-            shouldRefreshProjectList: true,
+            projectListRefreshState: {
+                requestedRevision: 1,
+                activeRevision: 1,
+                successfulRevision: 0,
+                failedRefresh: null,
+            },
         });
 
         expect(overriddenMarkup).toContain('ルミラボ工務店 保存後');
@@ -398,6 +409,51 @@ describe('LumiLaboProjectMockView', () => {
         expect(deletedMarkup).not.toContain('表示できる案件はありません');
         expect(deletedMarkup).not.toContain('＜＜');
         expect(deletedMarkup).not.toContain('＞＞');
+    });
+
+    it('keeps successful, active, and failed refresh state when the list panel remounts', async () => {
+        const requestData = {
+            keyword: undefined,
+            sort: 'registered_desc' as const,
+            page: 1,
+            per_page: 1,
+            deleted_ids: [],
+            overrides: [],
+        };
+        const successfulMarkup = await renderMockViewMarkup('project', 'list', {
+            projectListRefreshState: {
+                requestedRevision: 1,
+                activeRevision: null,
+                successfulRevision: 1,
+                failedRefresh: null,
+            },
+        });
+        const activeMarkup = await renderMockViewMarkup('project', 'list', {
+            projectListRefreshState: {
+                requestedRevision: 1,
+                activeRevision: 1,
+                successfulRevision: 0,
+                failedRefresh: null,
+            },
+        });
+        const failedMarkup = await renderMockViewMarkup('project', 'list', {
+            projectListRefreshState: {
+                requestedRevision: 1,
+                activeRevision: null,
+                successfulRevision: 0,
+                failedRefresh: { revision: 1, requestData },
+            },
+        });
+
+        expect(successfulMarkup).toContain('ルミラボ工務店');
+        expect(successfulMarkup).not.toContain('一覧を更新しています');
+        expect(activeMarkup).toContain('一覧を更新しています');
+        expect(activeMarkup).not.toContain('ルミラボ工務店');
+        expect(failedMarkup).toContain(
+            '一覧の更新に失敗しました。もう一度お試しください。',
+        );
+        expect(failedMarkup).toContain('再試行');
+        expect(failedMarkup).not.toContain('ルミラボ工務店');
     });
 
     it('renders project detail without adding detail or back to file tags', async () => {
@@ -499,6 +555,49 @@ describe('LumiLaboProjectMockView', () => {
             'aria-label="Google Mapsで住所を確認する"',
         );
         expect(emptyAddressMarkup).not.toContain('https://www.google.com/maps');
+    });
+
+    it('marks a company name as invalid only after that project failed validation and associates its Japanese error', async () => {
+        const invalidMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                companyName: ' \n　 ',
+            },
+            companyNameValidationErrors: {
+                [lumiLaboProjectDetail.id]: '会社名を入力してください',
+            },
+        });
+        const unsubmittedMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                companyName: ' \n　 ',
+            },
+        });
+        const validMarkup = await renderMockViewMarkup('project', 'list', {
+            activeProjectViewId: 'detail',
+            detailDraft: {
+                ...createProjectDetailDraft(lumiLaboProjectDetail),
+                companyName: '  有効な会社名  ',
+            },
+        });
+
+        expect(invalidMarkup).toContain('name="companyName"');
+        expect(invalidMarkup).toContain('required=""');
+        expect(invalidMarkup).toContain('aria-invalid="true"');
+        expect(invalidMarkup).toContain(
+            'aria-describedby="lumilabo-project-detail-companyName-error"',
+        );
+        expect(invalidMarkup).toContain(
+            'id="lumilabo-project-detail-companyName-error"',
+        );
+        expect(invalidMarkup).toContain('会社名を入力してください');
+        expect(unsubmittedMarkup).not.toContain('aria-invalid="true"');
+        expect(unsubmittedMarkup).not.toContain('会社名を入力してください');
+        expect(validMarkup).toContain('value="  有効な会社名  "');
+        expect(validMarkup).not.toContain('aria-invalid="true"');
+        expect(validMarkup).not.toContain('会社名を入力してください');
     });
 
     it('shows the sticky save bar only when detail draft changed and can show save states', async () => {

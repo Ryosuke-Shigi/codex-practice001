@@ -310,6 +310,51 @@ class LumiLaboProjectMockTest extends TestCase
             );
     }
 
+    public function test_override_company_name_is_required_and_must_be_a_string(): void
+    {
+        $override = [
+            'id' => 'mock-project-001',
+            'company_name' => '新会社',
+            'contact_name' => '',
+            'address' => '',
+            'memo' => '',
+        ];
+        $overrideWithoutCompanyName = $override;
+        unset($overrideWithoutCompanyName['company_name']);
+
+        foreach ([
+            $overrideWithoutCompanyName,
+            [...$override, 'company_name' => ''],
+            [...$override, 'company_name' => ' '],
+            [...$override, 'company_name' => '　'],
+            [...$override, 'company_name' => "\t"],
+            [...$override, 'company_name' => "\n"],
+            [...$override, 'company_name' => " \t　\n "],
+            [...$override, 'company_name' => ['配列値']],
+        ] as $invalidOverride) {
+            $this
+                ->from('/lab/lumilabo-project-mock')
+                ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                    'overrides' => [$invalidOverride],
+                ]))
+                ->assertRedirect('/lab/lumilabo-project-mock')
+                ->assertSessionHasErrors('overrides.0.company_name');
+        }
+
+        $this
+            ->get('/lab/lumilabo-project-mock?'.http_build_query([
+                'per_page' => 20,
+                'overrides' => [[
+                    ...$override,
+                    'company_name' => '　有効な会社名　',
+                ]],
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('initialProjectOverrides.0.companyName', '　有効な会社名　')
+            );
+    }
+
     public function test_empty_optional_override_values_are_normalized_and_work_with_search_pagination_and_deleted_projects(): void
     {
         $this

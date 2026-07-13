@@ -16,7 +16,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
@@ -38,7 +38,10 @@ import {
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
 } from './mockData';
-import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
+import LumiLaboProjectListPanel, {
+    type LumiLaboProjectListFailedRefresh,
+    type LumiLaboProjectListRequestData,
+} from './LumiLaboProjectListPanel';
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectDetail,
@@ -98,6 +101,7 @@ type ProjectEntryPanelProps = BackActionProps & {
 type ProjectDetailPanelProps = BackActionProps & {
     projectDetail: LumiLaboMockProjectDetail;
     draft: LumiLaboMockProjectDetailDraft;
+    companyNameValidationError?: string;
     isDeleteDialogOpen: boolean;
     hasUnsavedChanges: boolean;
     isSaving: boolean;
@@ -132,6 +136,7 @@ type ProjectDetailTextFieldProps = {
     field: ProjectDetailTextFieldConfig;
     value: string;
     mapSearchUrl?: string;
+    validationError?: string;
     onChange: (
         fieldId: LumiLaboMockProjectDetailEditableFieldId,
         value: string,
@@ -279,6 +284,141 @@ export function completeLumiLaboMockProjectSave(
     };
 }
 
+export const lumiLaboProjectCompanyNameRequiredMessage =
+    '会社名を入力してください';
+
+export type LumiLaboMockProjectSavePreparation =
+    | {
+          isValid: false;
+          validationError: string;
+      }
+    | {
+          isValid: true;
+          savedDraft: LumiLaboMockProjectDetailDraft;
+      };
+
+export function getLumiLaboMockProjectCompanyNameValidationError(
+    companyName: string,
+): string | null {
+    return companyName.trim() === ''
+        ? lumiLaboProjectCompanyNameRequiredMessage
+        : null;
+}
+
+export function prepareLumiLaboMockProjectSave(
+    draft: LumiLaboMockProjectDetailDraft,
+): LumiLaboMockProjectSavePreparation {
+    const validationError = getLumiLaboMockProjectCompanyNameValidationError(
+        draft.companyName,
+    );
+
+    if (validationError !== null) {
+        return { isValid: false, validationError };
+    }
+
+    return { isValid: true, savedDraft: { ...draft } };
+}
+
+export function setLumiLaboMockProjectCompanyNameValidationError(
+    validationErrors: Record<string, string | undefined>,
+    projectId: string,
+    validationError: string | null,
+): Record<string, string | undefined> {
+    if (validationError === null) {
+        return removeProjectRecord(validationErrors, projectId);
+    }
+
+    return {
+        ...validationErrors,
+        [projectId]: validationError,
+    };
+}
+
+export type LumiLaboProjectListRefreshState = {
+    requestedRevision: number;
+    activeRevision: number | null;
+    successfulRevision: number;
+    failedRefresh: LumiLaboProjectListFailedRefresh | null;
+};
+
+export type LumiLaboProjectListRefreshAction =
+    | { type: 'request' }
+    | { type: 'start'; revision: number }
+    | { type: 'success'; revision: number }
+    | {
+          type: 'failure';
+          revision: number;
+          requestData: LumiLaboProjectListRequestData;
+      };
+
+export function createLumiLaboProjectListRefreshState(): LumiLaboProjectListRefreshState {
+    return {
+        requestedRevision: 0,
+        activeRevision: null,
+        successfulRevision: 0,
+        failedRefresh: null,
+    };
+}
+
+export function reduceLumiLaboProjectListRefreshState(
+    state: LumiLaboProjectListRefreshState,
+    action: LumiLaboProjectListRefreshAction,
+): LumiLaboProjectListRefreshState {
+    switch (action.type) {
+        case 'request':
+            return {
+                ...state,
+                requestedRevision: state.requestedRevision + 1,
+            };
+        case 'start':
+            if (state.activeRevision !== null) {
+                return state;
+            }
+
+            return {
+                ...state,
+                activeRevision: action.revision,
+                failedRefresh: null,
+            };
+        case 'success':
+            return {
+                ...state,
+                activeRevision:
+                    state.activeRevision === action.revision
+                        ? null
+                        : state.activeRevision,
+                successfulRevision: Math.max(
+                    state.successfulRevision,
+                    action.revision,
+                ),
+                failedRefresh:
+                    state.failedRefresh?.revision === action.revision
+                        ? null
+                        : state.failedRefresh,
+            };
+        case 'failure':
+            if (
+                (state.activeRevision !== null &&
+                    state.activeRevision !== action.revision) ||
+                state.successfulRevision >= action.revision
+            ) {
+                return state;
+            }
+
+            return {
+                ...state,
+                activeRevision:
+                    state.activeRevision === action.revision
+                        ? null
+                        : state.activeRevision,
+                failedRefresh: {
+                    revision: action.revision,
+                    requestData: action.requestData,
+                },
+            };
+    }
+}
+
 type LumiLaboProjectMockViewProps = {
     projectList: LumiLaboMockProjectList;
     initialDeletedProjectIds: readonly string[];
@@ -324,14 +464,37 @@ export default function LumiLaboProjectMockView({
     const [savedProjectIds, setSavedProjectIds] = useState<ReadonlySet<string>>(
         new Set(),
     );
+    const [companyNameValidationErrors, setCompanyNameValidationErrors] =
+        useState<Record<string, string | undefined>>({});
     const [droppedFileNamesByProjectId, setDroppedFileNamesByProjectId] =
         useState<Record<string, readonly string[] | undefined>>({});
     const [isProjectDeleteDialogOpen, setIsProjectDeleteDialogOpen] =
         useState(false);
     const [projectSessions, setProjectSessions] =
         useState<LumiLaboMockProjectSessionById>({});
-    const [projectListRefreshRevision, setProjectListRefreshRevision] =
-        useState(0);
+    const [projectListRefreshState, dispatchProjectListRefresh] = useReducer(
+        reduceLumiLaboProjectListRefreshState,
+        createLumiLaboProjectListRefreshState(),
+    );
+    const startProjectListRefresh = useCallback(
+        (revision: number) =>
+            dispatchProjectListRefresh({ type: 'start', revision }),
+        [],
+    );
+    const completeProjectListRefresh = useCallback(
+        (revision: number) =>
+            dispatchProjectListRefresh({ type: 'success', revision }),
+        [],
+    );
+    const failProjectListRefresh = useCallback(
+        (revision: number, requestData: LumiLaboProjectListRequestData) =>
+            dispatchProjectListRefresh({
+                type: 'failure',
+                revision,
+                requestData,
+            }),
+        [],
+    );
     const deletedProjectIdsRef = useRef<ReadonlySet<string>>(
         createLumiLaboMockInitialDeletedProjectIds(initialDeletedProjectIds),
     );
@@ -452,6 +615,18 @@ export default function LumiLaboProjectMockView({
         };
 
         setProjectDetailDraft(nextDraft);
+        if (
+            fieldId === 'companyName' &&
+            getLumiLaboMockProjectCompanyNameValidationError(value) === null
+        ) {
+            setCompanyNameValidationErrors((current) =>
+                setLumiLaboMockProjectCompanyNameValidationError(
+                    current,
+                    projectDetail.id,
+                    null,
+                ),
+            );
+        }
         updateProjectSessions((current) =>
             updateLumiLaboMockProjectSession(
                 current,
@@ -472,8 +647,24 @@ export default function LumiLaboProjectMockView({
             return;
         }
 
+        const savePreparation = prepareLumiLaboMockProjectSave(
+            projectDetailDraft,
+        );
+
+        if (!savePreparation.isValid) {
+            setCompanyNameValidationErrors((current) =>
+                setLumiLaboMockProjectCompanyNameValidationError(
+                    current,
+                    selectedProjectId,
+                    savePreparation.validationError,
+                ),
+            );
+
+            return;
+        }
+
         const savedProjectId = selectedProjectId;
-        const savedDraft = { ...projectDetailDraft };
+        const { savedDraft } = savePreparation;
 
         clearProjectTimer(saveCompleteTimerRef, savedProjectId);
         clearProjectTimer(saveMessageTimerRef, savedProjectId);
@@ -521,7 +712,7 @@ export default function LumiLaboProjectMockView({
                 ...current,
                 [savedProjectId]: savedDraft,
             }));
-            setProjectListRefreshRevision((current) => current + 1);
+            dispatchProjectListRefresh({ type: 'request' });
             setSavingProjectIds((current) =>
                 removeProjectId(current, savedProjectId),
             );
@@ -656,7 +847,14 @@ export default function LumiLaboProjectMockView({
         setSavedProjectIds((current) =>
             removeProjectId(current, deletedProjectId),
         );
-        setProjectListRefreshRevision((current) => current + 1);
+        setCompanyNameValidationErrors((current) =>
+            setLumiLaboMockProjectCompanyNameValidationError(
+                current,
+                deletedProjectId,
+                null,
+            ),
+        );
+        dispatchProjectListRefresh({ type: 'request' });
         setSelectedProjectId(null);
         setProjectDetail(null);
         setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
@@ -714,7 +912,21 @@ export default function LumiLaboProjectMockView({
                         projectList={projectList}
                         projectOverrides={projectOverrides}
                         deletedProjectIds={Array.from(deletedProjectIds)}
-                        projectListRefreshRevision={projectListRefreshRevision}
+                        projectListRefreshRevision={
+                            projectListRefreshState.requestedRevision
+                        }
+                        activeRefreshRevision={
+                            projectListRefreshState.activeRevision
+                        }
+                        lastSuccessfulRefreshRevision={
+                            projectListRefreshState.successfulRevision
+                        }
+                        failedRefreshRequest={
+                            projectListRefreshState.failedRefresh
+                        }
+                        onProjectListRefreshStart={startProjectListRefresh}
+                        onProjectListRefreshSuccess={completeProjectListRefresh}
+                        onProjectListRefreshFailure={failProjectListRefresh}
                         backTargetId="project-top"
                         onOpenProjectDetail={openProjectDetailFromList}
                         onBack={handleBackFromProjectList}
@@ -728,6 +940,9 @@ export default function LumiLaboProjectMockView({
                         projectDetail={projectDetail}
                         backTargetId="detail-return-target"
                         draft={projectDetailDraft}
+                        companyNameValidationError={
+                            companyNameValidationErrors[projectDetail.id]
+                        }
                         isDeleteDialogOpen={isProjectDeleteDialogOpen}
                         hasUnsavedChanges={hasProjectDetailChanges}
                         isSaving={isProjectDetailSaving}
@@ -887,6 +1102,7 @@ function ProjectEntryPanel({
 function ProjectDetailPanel({
     projectDetail,
     draft,
+    companyNameValidationError,
     isDeleteDialogOpen,
     hasUnsavedChanges,
     isSaving,
@@ -982,6 +1198,11 @@ function ProjectDetailPanel({
                                     mapSearchUrl={
                                         field.id === 'address'
                                             ? mapSearchUrl
+                                            : undefined
+                                    }
+                                    validationError={
+                                        field.id === 'companyName'
+                                            ? companyNameValidationError
                                             : undefined
                                     }
                                     onChange={onChangeDraftField}
@@ -1103,9 +1324,11 @@ function ProjectDetailTextField({
     field,
     value,
     mapSearchUrl,
+    validationError,
     onChange,
 }: ProjectDetailTextFieldProps) {
     const controlId = `lumilabo-project-detail-${field.id}`;
+    const validationErrorId = `${controlId}-error`;
     const handleChange = (
         event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
     ) => {
@@ -1141,10 +1364,24 @@ function ProjectDetailTextField({
                     type="text"
                     value={value}
                     autoComplete={field.autoComplete}
+                    required={field.id === 'companyName'}
+                    aria-invalid={validationError ? true : undefined}
+                    aria-describedby={
+                        validationError ? validationErrorId : undefined
+                    }
                     onChange={handleChange}
                     className={getProjectDetailControlClasses()}
                 />
             )}
+            {validationError ? (
+                <p
+                    id={validationErrorId}
+                    role="alert"
+                    className="text-base font-black text-red-700"
+                >
+                    {validationError}
+                </p>
+            ) : null}
             {mapSearchUrl ? <MapPreview href={mapSearchUrl} /> : null}
         </div>
     );

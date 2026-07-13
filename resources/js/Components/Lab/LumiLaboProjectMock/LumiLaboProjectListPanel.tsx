@@ -17,6 +17,15 @@ type LumiLaboProjectListPanelProps = {
     >;
     deletedProjectIds: readonly string[];
     projectListRefreshRevision: number;
+    activeRefreshRevision: number | null;
+    lastSuccessfulRefreshRevision: number;
+    failedRefreshRequest: LumiLaboProjectListFailedRefresh | null;
+    onProjectListRefreshStart: (revision: number) => void;
+    onProjectListRefreshSuccess: (revision: number) => void;
+    onProjectListRefreshFailure: (
+        revision: number,
+        requestData: LumiLaboProjectListRequestData,
+    ) => void;
     onOpenProjectDetail: (project: LumiLaboMockProjectListItem) => void;
     onBack: () => void;
     backTargetId: string;
@@ -115,6 +124,20 @@ export function createLumiLaboProjectListRequestData(
     };
 }
 
+export function visitLumiLaboProjectListRefresh(
+    action: string,
+    requestData: LumiLaboProjectListRequestData,
+    callbacks: LumiLaboProjectListRequestCallbacks,
+): void {
+    router.get(action, requestData, {
+        only: LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        ...createLumiLaboProjectListRequestCallbacks(requestData, callbacks),
+    });
+}
+
 
 export function calculateLumiLaboProjectListPerPage(
     listHeight: number,
@@ -140,6 +163,12 @@ export default function LumiLaboProjectListPanel({
     projectOverrides,
     deletedProjectIds,
     projectListRefreshRevision,
+    activeRefreshRevision,
+    lastSuccessfulRefreshRevision,
+    failedRefreshRequest,
+    onProjectListRefreshStart,
+    onProjectListRefreshSuccess,
+    onProjectListRefreshFailure,
     onOpenProjectDetail,
     onBack,
     backTargetId,
@@ -156,13 +185,6 @@ export default function LumiLaboProjectListPanel({
     const measuredPerPageRef = useRef<number | null>(projectList.perPage);
     const listRegionRef = useRef<HTMLDivElement>(null);
     const rowMeasurementRef = useRef<HTMLDivElement>(null);
-    const [failedRefreshRequest, setFailedRefreshRequest] =
-        useState<LumiLaboProjectListFailedRefresh | null>(null);
-    const [activeRefreshRevision, setActiveRefreshRevision] = useState<
-        number | null
-    >(null);
-    const [lastSuccessfulRefreshRevision, setLastSuccessfulRefreshRevision] =
-        useState(0);
 
     useEffect(() => {
         projectListRef.current = projectList;
@@ -196,6 +218,20 @@ export default function LumiLaboProjectListPanel({
                 ...requestCallbacks,
                 onFinish: () => setIsLoading(false),
             });
+        },
+        [],
+    );
+
+    const visitProjectListRefresh = useCallback(
+        (
+            requestData: LumiLaboProjectListRequestData,
+            callbacks: LumiLaboProjectListRequestCallbacks,
+        ) => {
+            visitLumiLaboProjectListRefresh(
+                projectListRef.current.action,
+                requestData,
+                callbacks,
+            );
         },
         [],
     );
@@ -306,22 +342,22 @@ export default function LumiLaboProjectListPanel({
                     projectOverridesRef.current,
                 );
 
-            setActiveRefreshRevision(revision);
-            visitProjectList(requestData, {
+            onProjectListRefreshStart(revision);
+            visitProjectListRefresh(requestData, {
                 onSuccess: () => {
-                    setActiveRefreshRevision(null);
-                    setFailedRefreshRequest(null);
-                    setLastSuccessfulRefreshRevision((currentRevision) =>
-                        Math.max(currentRevision, revision),
-                    );
+                    onProjectListRefreshSuccess(revision);
                 },
                 onFailure: () => {
-                    setActiveRefreshRevision(null);
-                    setFailedRefreshRequest({ revision, requestData });
+                    onProjectListRefreshFailure(revision, requestData);
                 },
             });
         },
-        [visitProjectList],
+        [
+            onProjectListRefreshFailure,
+            onProjectListRefreshStart,
+            onProjectListRefreshSuccess,
+            visitProjectListRefresh,
+        ],
     );
 
     useEffect(() => {
@@ -350,11 +386,13 @@ export default function LumiLaboProjectListPanel({
     ]);
 
     const retryProjectListRefresh = () => {
-        if (failedRefreshRequest === null) {
+        if (
+            failedRefreshRequest === null ||
+            activeRefreshRevision !== null
+        ) {
             return;
         }
 
-        setFailedRefreshRequest(null);
         startProjectListRefresh(
             failedRefreshRequest.revision,
             failedRefreshRequest.requestData,
@@ -475,7 +513,9 @@ export default function LumiLaboProjectListPanel({
                             <button
                                 type="button"
                                 className="inline-flex min-h-12 w-fit items-center justify-center rounded-md border border-red-700 bg-white px-4 text-base font-black text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:border-neutral-300 disabled:text-neutral-500"
-                                disabled={isLoading}
+                                disabled={
+                                    isLoading || activeRefreshRevision !== null
+                                }
                                 onClick={retryProjectListRefresh}
                             >
                                 再試行
