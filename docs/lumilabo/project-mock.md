@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: LumiLabo / 案件システム MOCK
-- Last reviewed: 2026-07-12
+- Last reviewed: 2026-07-14
 - Canonical source: `/lab/lumilabo-project-mock` の初期導線と画面範囲
 
 ## 目的
@@ -128,11 +128,11 @@ TOPへ戻るはMOCK内のUI状態をTOPへ戻すだけで、DB保存、API通信
 
 ## 一覧
 
-一覧は案件内の画面選択として扱う。Laravel側は固定20件を readonly item DTO、ListDTO、Query Action、Responder の順に初回 `projectList.items` propsへ渡すだけである。DB、外部API、S3、本番CRUDには接続しない。
+一覧は案件内の画面選択として扱う。ControllerがQuery Actionを実行し、Query ActionがLaravel側の固定20件からreadonly item DTO群を生成してListDTOへ格納し、Controllerへ返す。ControllerはListDTOをResponderへ渡し、Responderが初回GETのInertia Props `projectList.items`へ固定20件すべてを変換する。DB、外部API、S3、本番CRUDには接続しない。
 
-`projectList` は20件の `items` だけを持つ。検索条件、並び順、ページ、表示件数、削除済みID、保存済み基本情報override、再取得URLはpropsに含めない。Reactは初回itemsへID別の保存overrideを反映し、削除済みIDを除外してから一覧を導出する。
+`projectList` は20件の `items` だけを持つ。検索条件、並び順、ページ、表示件数、削除済みID、保存済み基本情報override、再取得URLはpropsに含めない。検索、登録日順、Pagination、表示件数計測、保存override、削除除外はReact内で完結し、初回itemsから一覧を導出する。
 
-登録日は初期表示で新しい順（`registered_desc`）とし、古い順（`registered_asc`）へ切り替えられる。同じ登録日の案件は固定データの定義順を維持する。検索、登録日順、ページ切替、表示件数変更はすべてReact state内で完結し、Inertia Partial Reloadや通信は行わない。
+登録日は初期表示で新しい順（`registered_desc`）とし、古い順（`registered_asc`）へ切り替えられる。同じ登録日の案件は固定データの定義順を維持する。検索、登録日順、ページ切替、表示件数変更はすべてReact state内で完結し、一覧操作によるInertia Partial Reloadや追加通信は行わない。
 
 検索対象は会社名、担当者名、住所、メモである。半角・全角スペースで分割した複数語をAND条件として扱い、検索ボタンを押した時だけ適用する。入力中は通信しない。適用中の検索条件だけを表示し、解除時は登録日順を維持して1ページ目へ戻る。
 
