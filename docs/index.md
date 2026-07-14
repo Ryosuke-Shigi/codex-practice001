@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-10
+- Last reviewed: 2026-07-14
 
 ## このドキュメントの目的
 
@@ -25,6 +25,7 @@
 | 作業種別ごとの参照範囲 | `docs/ai/workflows/md-router.md` |
 | docs全体の索引、配置基準、Status | この文書 |
 | Git / branch / commit / PR | `docs/ai/rules/agent-working-policy.md` |
+| Subagent / model routing / runtime確認 | `docs/ai/rules/model-routing-policy.md` |
 | コマンド実行、root / `src/` Git境界 | `docs/operations/command-registry.md` |
 | ADR Pattern、用語、責務境界 | `docs/ai/rules/responsibility-boundaries.md`、`docs/architecture.md` |
 | Product Design / IDEA BOARD / MOCK / Coding境界 | `docs/product-design/index.md` |
@@ -58,6 +59,7 @@ feature docsは共通ルールを上書きしません。コード、テスト�
 |---|---|
 | `docs/ai/index.md` | AI作業用docsの補助索引 |
 | `docs/ai/rules/agent-working-policy.md` | 作業条件、Git / PR、停止条件、完了確認 |
+| `docs/ai/rules/model-routing-policy.md` | 17役の選択、model / reasoning、権限、単一writer、runtime確認 |
 | `docs/ai/rules/responsibility-boundaries.md` | ADR Pattern、用語、責務境界 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとの読む・読まない範囲、停止条件 |
 | `docs/ai/workflows/md-router-cases.md` | MDルーターの実戦ケース集 |

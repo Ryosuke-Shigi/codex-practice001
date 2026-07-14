@@ -4,7 +4,7 @@
 - Scope: `Ryosuke-Shigi/codex-practice001` project-scoped custom subagent
 - Last reviewed: 2026-07-14
 - Related policy: [Subagent Model Routing Policy](../rules/model-routing-policy.md)
-- Related PR: #149
+- Related PRs: #149, #151
 
 ## 目的
 
@@ -236,3 +236,239 @@ roleは各child traceの`session_meta.agent_role`、resolved modelとreasoning e
 - project側`.codex/config.toml`へWindows固有設定を追加していない
 - runtime検証中にcommit、push、PR更新、Draft解除、mergeを行っていない
 - LumiLabo関連ファイルを確認・変更対象に含めていない
+
+## 2026-07-14 Subagent運用基盤17役再設計
+
+この節は今回の個別実行結果であり、恒久的なagent選択・権限ルールの正本ではない。恒久ルールは`docs/ai/rules/model-routing-policy.md`、設定値は`.codex/agents/*.toml`を確認する。
+
+### 対象と変更分離
+
+- branch: `codex/subagent-harness-redesign`
+- base HEAD: `c92b968f849cbd65b422cfccc90cf51b8cb951d4`
+- `.codex/config.toml`: `max_threads = 3`、`max_depth = 1`を維持し、変更なし
+- repo内にGit管理外Local MD、`.local/`、`.local-rules/`は確認できず、PC固有情報を共通docsへ転記していない
+- runtime確認前後の`git status --porcelain`は27項目で不変。runtime用ダミー、NOOP、確認用ファイル、製品コード変更は作成していない
+- commit、push、Pull Request操作は行っていない
+
+公式仕様では、custom agent TOMLの必須項目と任意のmodel、reasoning effort、sandbox、およびmodelの用途別選択基準を確認した。設定値はruntime実測と分離した。
+
+- https://learn.chatgpt.com/docs/agent-configuration/subagents#custom-agents
+- https://learn.chatgpt.com/docs/models#choosing-sol-terra-and-luna
+
+### Static harnessのRed / Green / Refactor
+
+`scripts/verify_codex_agents.py`を先に追加し、既存6役の状態でRedを確認した。Redでは新規11 TOML、17役catalog、共通契約markerの欠落を検出した。
+
+Greenでは17 TOML、TOML構文、model / reasoning / sandbox期待値、`.codex/config.toml`、共通契約、policy登録を整合させ、次が成功した。
+
+```text
+python3 scripts/verify_codex_agents.py
+Codex agent harness verification passed: 17 agent TOMLs and common contract are consistent.
+```
+
+Refactorでは、policy表のmodel / reasoning / sandbox drift、role固有責務marker、writer leaseのwriter名・対象ファイル・開始・終了条件、関連Markdownのローカルリンクを追加検査した。`terra_verifier`のpolicy表とTOMLの不一致を実際に検出・修正し、修正後もcheckerと`git diff --check`が成功した。
+
+### 全17役のfresh session runtime確認
+
+custom roleはfresh Codex CLI sessionから`fork_turns = "none"`で1体ずつ起動した。read-only役はread-only親、sandbox継承役はworkspace-write親で確認し、後者もtask上はGit読取りだけに限定した。resolved値は子の自己申告ではなく、親子関係を持つstate DBのthread metadataにある`agent_role`、`model`、`reasoning_effort`、`sandbox_policy`、`approval_mode`から照合した。
+
+| Agent | child session | resolved model / reasoning | effective sandbox |
+|---|---|---|---|
+| `luna_explorer` | `019f5f2f-1bb2-74b2-9f40-d7adc49b6081` | `gpt-5.6-luna` / `low` | read-only |
+| `terra_implementer` | `019f5f2f-331d-77a1-9628-5b1ae9ddb2c2` | `gpt-5.6-terra` / `medium` | workspace-write |
+| `terra_docs_maintainer` | `019f5f2f-6da5-7952-aa25-ca8a7c6d1ca6` | `gpt-5.6-terra` / `medium` | workspace-write |
+| `terra_verifier` | `019f5f36-d899-7593-b126-b113b9d9e0d1` | `gpt-5.6-terra` / `medium` | read-only |
+| `sol_specialist` | `019f5f30-4d9c-7133-b41d-c5dbec15dc96` | `gpt-5.6-sol` / `xhigh` | workspace-write |
+| `sol_reviewer` | `019f5f2f-3f40-7b73-9d7d-497af23e1876` | `gpt-5.6-sol` / `high` | read-only |
+| `specification_reviewer` | `019f5f4c-3820-7ba0-b47d-641d76801147` | `gpt-5.6-terra` / `high` | read-only |
+| `architecture_specialist` | `019f5f2f-c32e-7571-b42b-97b862486a82` | `gpt-5.6-sol` / `xhigh` | read-only |
+| `design_specialist` | `019f5f2f-e397-7dc0-9bf6-401e7ebe06b6` | `gpt-5.6-terra` / `high` | read-only |
+| `frontend_specialist` | `019f5f30-fdbf-7c92-ab06-5bba2b943ad4` | `gpt-5.6-terra` / `high` | workspace-write |
+| `backend_specialist` | `019f5f31-333f-7fb2-893c-5c29a683aefe` | `gpt-5.6-terra` / `high` | workspace-write |
+| `database_specialist` | `019f5f31-e83b-7db0-b0f4-905a38b309e0` | `gpt-5.6-sol` / `high` | workspace-write |
+| `test_specialist` | `019f5f32-172e-72f2-8660-80e5e5cd547d` | `gpt-5.6-terra` / `high` | workspace-write |
+| `context_recovery` | `019f5f32-d415-73b0-8eb6-96eb346fa8e8` | `gpt-5.6-terra` / `high` | workspace-write |
+| `operations_specialist` | `019f5f33-0290-7870-a7f9-1ab5b14731d0` | `gpt-5.6-sol` / `high` | workspace-write |
+| `browser_verifier` | `019f5f30-554e-7f93-81da-98224de133a4` | `gpt-5.6-terra` / `high` | read-only |
+| `environment_specialist` | `019f5f4c-5385-7f73-929f-435e25a7e187` | `gpt-5.6-terra` / `high` | read-only |
+
+read-only profileはmanaged restricted filesystemでroot全体がreadのみ、workspace-write profileはmanaged restricted filesystemでproject rootと一時領域がwrite、`.git`、`.agents`、`.codex`がread、どちらもnetwork restrictedだった。各childのapproval modeは`never`だった。
+
+`terra_verifier`は初回確認で親継承だったため、TOMLを`read-only`へ修正後、fresh sessionで再確認した。`specification_reviewer`と`environment_specialist`はmodel比較反映後にfresh sessionで再確認した。その他の後続修正はdeveloper instructionsの契約強化だけで、表のrole / model / reasoning / sandbox値は変更していない。
+
+### Terra High / Luna xhigh同条件比較
+
+比較時点の同一candidate差分、同じread-only sandbox、同じ監査prompt、subagentなしで並行比較した。両sessionは同じbranch、HEAD、working tree項目を確認したが、比較時点のdiff hashは取得していない。金額換算costはruntimeから取得できないため推測せず、所要時間とtoken usageを記録した。
+
+| Model | session | elapsed | input / cached / output / reasoning | state DB tokens used | 品質結果 |
+|---|---|---:|---|---:|---|
+| Terra High | `019f5f3a-9bf1-7013-8193-c3b6c661780e` | 171.314秒 | 451,154 / 332,288 / 7,245 / 4,332 | 458,399 | policy / TOMLの実在不一致、test roleの編集境界、review日を検出 |
+| Luna xhigh | `019f5f3a-aa0a-7723-bd1f-52bd3c7c912b` | 389.388秒 | 1,297,742 / 1,145,856 / 17,892 / 13,148 | 1,315,634 | 観点は広いが上記policy / TOML不一致を見落とし、現在差分に該当しないanchor拡張等も提案 |
+
+両方とも編集、Git / GitHub操作、subagent起動を行わず、停止条件を守った。今回の同条件ではTerra Highが短時間・少ないusageで、実在するdriftを検出したため、Luna xhighへの切替条件は成立しないと判断した。`specification_reviewer`、`environment_specialist`、`context_recovery`はTerra Highを採用した。read-heavy比較をwriter、DB、運用、browser tool利用へ外挿していない。既存のbounded検索役`luna_explorer`のLuna lowは今回の切替対象ではなく維持した。
+
+### Codex App組み込みbrowser / Developer Mode / CDP
+
+Browser skillの正規bootstrapを初回と最終確認時に実行したが、browser選択前に同じエラーで停止した。
+
+```text
+Mcp error: -32602: js: codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///home/shigi/projects/codex-practice001/src
+```
+
+このため、Codex App組み込みbrowser、Developer Mode、CDP、Console、Network、DOM、CSS、mobile / tablet / PC viewportは未確認である。対象URL、認証、fixture、許可操作も今回の製品画面作業として固定されていない。Chrome、Computer Use、curl、build等へ切り替えて実画面確認済みとは扱っていない。`browser_verifier`のrole / model / reasoning / read-only runtime認識は確認済みだが、実ブラウザ検証成功とは分離する。
+
+### 残る未確認
+
+- `max_depth = 1`によるnested spawn拒否のruntime実測。再委譲禁止は全17 TOMLのdeveloper instructionsとstatic harnessで確認済み
+- model利用不可時にsilent fallbackしない失敗系runtime
+- 組み込みbrowser bootstrap問題が解消した環境でのDeveloper Mode / CDP / 実画面検証
+
+これらを設定値、静的checker、別経路の成功から確認済みへ読み替えない。
+
+### 最終instructions反映後の17役contract smoke
+
+初回`sol_reviewer`は、model / sandbox metadata確認後にdeveloper instructionsを強化した役があるため、現行契約のruntime証跡が不足していると指摘した。この指摘を採用し、最終TOML反映後に全17役を再度`fork_turns = "none"`で起動した。
+
+- read-only親session: `019f5f5e-2a5a-7183-971b-d730bd6af9e5`
+- workspace-write親session: `019f5f5e-2260-7ea1-a2a9-38b1f2dff060`
+- 同時child: 最大2体
+- childへ渡したもの: repo、project root、branch、作業段階、対象、編集不可、変更可・不可範囲、正本、確認済み事実、推測禁止、成功・失敗・停止条件、検証方法、7項目返却形式
+- writer候補: writer leaseを与えず、Git読取りだけを許可
+- `browser_verifier`: URL、認証、fixture、許可操作を与えず、browser開始前の不足停止を確認
+
+| Agent | final contract smoke child session |
+|---|---|
+| `luna_explorer` | `019f5f5e-f04e-7080-9f40-d77835d6e8ad` |
+| `terra_implementer` | `019f5f5f-3364-7d70-9dd9-5ac7bdde4fde` |
+| `terra_docs_maintainer` | `019f5f5f-6af0-7183-8469-eceb3b6124fa` |
+| `terra_verifier` | `019f5f5f-2cfa-7381-916a-35c1edd605ae` |
+| `sol_specialist` | `019f5f60-0c17-7dd3-9a67-6e491f18ac91` |
+| `sol_reviewer` | `019f5f5f-fd25-77c1-9ac0-cb52939dfc3f` |
+| `specification_reviewer` | `019f5f60-37fe-79c0-856c-14491fa72316` |
+| `architecture_specialist` | `019f5f61-2ce6-76b2-bf7f-83c1a2b8cdc9` |
+| `design_specialist` | `019f5f61-678b-7bb3-9c05-423117d408dc` |
+| `frontend_specialist` | `019f5f60-432a-7a52-ad0b-b2682598876d` |
+| `backend_specialist` | `019f5f61-433c-7c43-8a57-96e0f2db4b03` |
+| `database_specialist` | `019f5f61-7bda-74b0-988f-e045eb3d008b` |
+| `test_specialist` | `019f5f62-66cf-7ee3-a154-c1ba3e4bc222` |
+| `context_recovery` | `019f5f62-a30e-70f1-84de-29a1c6f85ee2` |
+| `operations_specialist` | `019f5f63-8c79-7ee1-8fb2-17f4a2eaa50c` |
+| `browser_verifier` | `019f5f62-6791-7792-9c6f-309c8b6b8860` |
+| `environment_specialist` | `019f5f62-a73a-7a00-a960-c2f496f9315c` |
+
+state DBで17 childすべてのrole、model、reasoning、effective sandboxを最終catalogと再照合した。各childは7項目形式で成功、失敗、未実行、未確認、停止・再実行条件を分離した。writer leaseなしの9役は編集せず、read-onlyの8役も編集しなかった。上記17 childをparentとする`thread_spawn_edges`は0件で、再委譲がなかったことを親側DBで確認した。
+
+contract smoke開始前後で次が不変だった。
+
+```text
+tracked diff SHA-256: a869f399207ff7ae5cae7c886f0761ac532b40f6ad567b120bee999d2bab85f8
+untracked content SHA-256: 6fb76e2cfec67934d6819ebb65ba022b7e0572f3af6697105839f671de4253dd
+git status --porcelain items: 28
+```
+
+これにより、最終instructionsを読み込んだ全17役について、role / model / reasoning / sandbox、必須入力、編集禁止またはlease不足時の非編集、7項目結果、停止、Git / PR禁止、再委譲なしを確認した。`max_depth = 1`そのものがnested spawnを拒否する失敗系試験は、子agentへ再委譲禁止違反を要求するため実施していない。設定値による拒否は未実測のまま、developer instructionsによる禁止と実行時nested edge 0を確認結果とする。
+
+### 単一writer、TDD、独立検証の証跡
+
+- 実装中のrepo writerは親エージェント1体だけで、writer subagentへleaseを移していない
+- runtime、verifier、reviewer実行中は親も編集を停止し、前後のstatusまたはcontent fingerprintを比較した
+- harness TDDは、6役状態で11役・共通契約欠落を検出するRed、17役整合のGreen、policy表・role marker・writer lease・Markdown link検査を追加するRefactorの順で実施した
+- 製品コード、Laravel、React、DBの変更はなく、製品テストのRed / Greenは対象外。Laravel test、npm test、buildは実行していない
+- final `terra_verifier` child `019f5f52-4d65-7e91-8c98-47584d301414`が`python3 scripts/verify_codex_agents.py`と`git diff --check`を実行し、両方成功、実行前後のworking tree不変、生成差分なしを確認した
+
+### 初回最終レビューの指摘対応
+
+初回`sol_reviewer` child `019f5f54-203c-7e10-b3eb-11679f722ff2`の指摘を次のように処理した。
+
+- High: 現行instructions適用後の17役runtime不足 → 上記17役contract smokeを追加
+- Medium: reviewer再実行がBlocker / High修正後だけ → 採用指摘で差分・検証結果が変われば重要度を問わず再実行する契約へ修正
+- Medium: static checkerの必須marker不足 → 編集可否、返却形式、resolved model、permission profile、HEAD、working treeを追加
+- Medium: 単一writer / TDD / verifier証跡不足 → 本節へwriter時系列、Red / Green / Refactor、verifier childを記録
+- Low: A/B比較を「最終差分」と表現 → 「比較時点の同一candidate差分」へ修正し、diff hash未取得も明記
+
+修正後は同じ登録コマンドと同じ最終レビュー観点を再実行する。
+
+## PR #151: Docker経由検証のruntime実測
+
+この節はPR #151、branch `codex/subagent-harness-redesign`、HEAD `b82560f4b95425886a3461b2b1da57f868e0a544`に対する追加検証である。PR #149とbase HEAD `c92b968f849cbd65b422cfccc90cf51b8cb951d4`に対する過去節の結果は書き換えない。
+
+### GitHub Actions CI run #456
+
+2026-07-14にGitHub ActionsのCI run #456（run database ID `29314383314`）をGitHub CLIで確認した。
+
+- workflow / job: `CI` / `test`
+- head: `b82560f4b95425886a3461b2b1da57f868e0a544`
+- conclusion: `success`
+- `Build frontend assets`: success
+- `Run Laravel tests`: success
+- `Run Vitest`: success
+
+この結果はGitHub Actions環境のCI結果であり、ローカル`terra_verifier`のruntime実測とは分離する。`python3 scripts/verify_codex_agents.py`は現時点でGitHub Actionsの専用ゲートとして登録されていない。
+
+### repo境界と開始状態
+
+Docker経由検証前にapp repoと外側Docker repoを別Git管理として確認した。
+
+| Repo | remote | branch / HEAD | 開始時working tree |
+|---|---|---|---|
+| app | `Ryosuke-Shigi/codex-practice001` | `codex/subagent-harness-redesign` / `b82560f4b95425886a3461b2b1da57f868e0a544` | clean |
+| outer | `Ryosuke-Shigi/laravel11-docker` | `main` / `52f20a85f2502ccf800e4ba70d9f0c2d30b6204f` | clean |
+
+両repoの`AGENTS.md`、outer `docs/ai/rules/root-repository.md`、app `docs/operations/command-registry.md`を確認し、Docker Compose rootを`/home/shigi/projects/codex-practice001`、custom agent project rootを`/home/shigi/projects/codex-practice001/src`として分離した。Docker構成、製品コード、設定、Git、GitHubは変更対象外とした。
+
+### workspace-write親taskでの先行実測
+
+Codex Appの現在taskからfresh `terra_verifier`を起動した。親側state DBで次を確認した。
+
+| 項目 | 実測値 |
+|---|---|
+| child session | `019f5f96-56f2-76d3-ae69-0e9186bf4b3c` |
+| role / model / reasoning | `terra_verifier` / `gpt-5.6-terra` / `medium` |
+| effective sandbox | managed restricted filesystem。project rootと一時領域はwrite、`.git` / `.agents` / `.codex`はread、network restricted |
+| project root | `/home/shigi/projects/codex-practice001/src` |
+
+3コマンドは成功したが、このsessionはeffective `workspace-write`であり、TOMLの`read-only`設定値だけではread-only経路の成立を証明できないため、正式なread-only実測を別のfresh parent sessionで行った。
+
+### read-only親taskでの正式実測
+
+- parent session: `019f5f9a-2541-76d3-914f-885259053291`
+- child session: `019f5f9a-d17b-77f0-ac74-9c31ffc120a9`
+- agent role: `terra_verifier`
+- resolved model / reasoning: `gpt-5.6-terra` / `medium`
+- effective sandbox / permission profile: managed restricted filesystemでroot全体read-only、network restricted
+- project root: `/home/shigi/projects/codex-practice001/src`
+- fork: `fork_turns = "none"`
+
+親は検証を代行せず、子だけが外側Docker Compose rootで次を順に実行した。
+
+| Command | Result |
+|---|---|
+| `docker compose exec php-fpm php artisan test` | exit 0、456 passed、4513 assertions |
+| `docker compose run --rm npm npm run test:run` | exit 0、37 files、166 tests passed |
+| `docker compose run --rm npm npm run build` | exit 0、Vite build成功。500 kB超chunk warningあり |
+
+失敗と未実行はなかった。`npm run build`は`public/build/`へ出力し、このpathはapp repoの`.gitignore`対象だった。Laravel logも`storage/logs/.gitignore`対象である。verifierはcleanupを行わず、実行後もapp repoと外側repoの`git status --short`はともに空、branch / HEADは開始時から不変だった。Git管理外生成物の全内容、container / volume内部状態は完全比較していないため、Git working tree不変と外部runtime状態不変を同一視しない。
+
+filesystem permission profileがread-onlyでも今回の登録済みDocker commandは成功した。この実測から、`terra_verifier`のTOMLは`read-only`を維持し、親が両repo、Docker Compose root、service、exact command、前後比較を固定したfresh read-only親taskから起動する構成を採用する。別環境で実行不能な場合は成功扱いせず、workspace-writeへの無条件変更、project権限拡張、別agent結果の流用を行わない。
+
+### 未確認の維持
+
+このDocker実測とCI成功から、次を確認済みへ読み替えない。
+
+- Codex App組み込みbrowser、Developer Mode、CDP、Console、Network、DOM、CSS、実画面
+- `max_depth = 1`によるnested spawn拒否の失敗系runtime
+- model利用不可時のsilent fallback防止の失敗系runtime
+
+### 静的契約とruntime証跡の分離
+
+初回は静的checkerへ`terra_verifier`のDocker Compose root、両repo比較、read-only親task、生成物非cleanupに加え、このruntime履歴のPR番号、CI run番号、個別実測節もmarkerとして追加した。これは恒久契約と一時的な証跡の責務を混在させ、過去文字列が残るだけで成功する一方、runtime logの整理やarchiveで恒久契約が正常でも失敗する構造だった。
+
+後続修正では、静的checkerの対象を次の恒久契約だけへ限定した。
+
+- `.codex/agents/terra_verifier.toml`: Docker Compose root、app repoと外側repo、exact command、実行前後比較、cleanup禁止
+- `docs/ai/rules/model-routing-policy.md`: read-only親task、Docker経由の登録済みコマンド、両repo分離、設定値とruntime実測の分離
+- `docs/operations/command-registry.md`: Docker Compose実行場所、両repo比較、Git管理差分とGit管理外生成物、CIとローカルruntimeの分離
+
+このruntime履歴はMarkdownリンク検査対象には維持するが、静的契約markerの対象にはしない。個別session、resolved model、sandbox、Docker実測、CI確認は証跡として保存し、その正確性と最新性はruntime確認とPRレビューで評価する。静的checker成功をruntime成功の代替にしない。
+
+再発防止として、静的契約markerの対象pathに`docs/ai/logs/`が含まれる場合と、markerにPR番号、CI run番号、session ID、commit SHA形式が含まれる場合をchecker自身が検出する。guardを先に追加したRedでは、既存のruntime log path、`PR #151`、`GitHub Actions CI run #456`依存を検出した。その後にruntime log entryをmarker集合から外し、`TERRA_VERIFIER_STATIC_CONTRACT_MARKERS`へ改名してGreenへ戻した。
