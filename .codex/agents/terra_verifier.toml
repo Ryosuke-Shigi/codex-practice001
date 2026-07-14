@@ -12,10 +12,13 @@ developer_instructions = """
 
 責務:
 - command registryと対象docsに登録されたtest、typecheck、build、format check、lint、構文、リンク、git diff --checkだけを実行する。
+- Docker経由の登録済みコマンドでは、親からapp repo、外側repo、Docker Compose root、対象service、exact commandを受け取り、Docker Compose rootからだけ実行する。
+- app repoと外側repoのbranch、HEAD、working treeを実行前後で比較する。read-onlyの設定値だけでDocker実行可否や生成物の有無を断定しない。
 - 実行前後のworking treeを比較し、成功、失敗、未実行、生成差分を分ける。
 
 非責務:
 - 失敗原因の修正、未登録コマンドの標準化、生成差分のcleanup、テスト設計を行わない。
+- build、cache、coverage、log、container等の生成物を検出してもcleanupせず、Git管理差分とGit管理外の生成物を分けて親へ返す。
 - TDDのRedをGreenへ変える実装を行わない。
 
 安全・ループ:

@@ -13,6 +13,8 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[1]
 AGENTS_DIR = ROOT / ".codex" / "agents"
 POLICY = ROOT / "docs" / "ai" / "rules" / "model-routing-policy.md"
+COMMAND_REGISTRY = ROOT / "docs" / "operations" / "command-registry.md"
+RUNTIME_LOG = ROOT / "docs" / "ai" / "logs" / "2026-07-14-custom-subagent-runtime-verification.md"
 MARKDOWN_DOCS = (
     ROOT / "docs" / "index.md",
     ROOT / "docs" / "ai" / "index.md",
@@ -21,10 +23,10 @@ MARKDOWN_DOCS = (
     ROOT / "docs" / "ai" / "workflows" / "md-router-cases.md",
     ROOT / "docs" / "ai" / "workflows" / "loop-engineering.md",
     ROOT / "docs" / "ai" / "workflows" / "work-result-feedback-loop.md",
-    ROOT / "docs" / "operations" / "command-registry.md",
+    COMMAND_REGISTRY,
     ROOT / "docs" / "operations" / "sensors.md",
     ROOT / "docs" / "testing.md",
-    ROOT / "docs" / "ai" / "logs" / "2026-07-14-custom-subagent-runtime-verification.md",
+    RUNTIME_LOG,
 )
 MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 
@@ -112,6 +114,13 @@ COMMON_CONTRACT_MARKERS = (
     "working tree",
 )
 
+TERRA_VERIFIER_DOCKER_MARKERS = {
+    AGENTS_DIR / "terra_verifier.toml": ("Docker Compose root", "app repoと外側repo", "生成差分"),
+    POLICY: ("read-only親task", "Docker経由の登録済みコマンド", "app repoと外側Docker repo"),
+    COMMAND_REGISTRY: ("`terra_verifier`によるDocker経由検証", "read-only親task", "app repoと外側repo"),
+    RUNTIME_LOG: ("PR #151", "Docker経由検証のruntime実測", "GitHub Actions CI run #456"),
+}
+
 
 def load_toml(path: Path) -> dict:
     with path.open("rb") as handle:
@@ -158,6 +167,14 @@ def main() -> int:
 
     for markdown_path in MARKDOWN_DOCS:
         errors.extend(validate_local_markdown_links(markdown_path))
+
+    for contract_path, markers in TERRA_VERIFIER_DOCKER_MARKERS.items():
+        contract_text = contract_path.read_text(encoding="utf-8")
+        for marker in markers:
+            if marker not in contract_text:
+                errors.append(
+                    f"{contract_path.relative_to(ROOT)}: terra_verifier Docker contract marker missing: {marker}"
+                )
 
     for name, (model, effort, sandbox) in EXPECTED_AGENTS.items():
         path = actual_files.get(name)

@@ -130,6 +130,19 @@ projectには次の17種類のagentを登録します。Model、Reasoning、Sand
 
 test成功だけでbrowser確認済み、browser確認だけでtest成功、verifier成功だけで最終review完了とは扱いません。
 
+#### `terra_verifier`のDocker検証経路
+
+`terra_verifier`は`read-only`設定を維持します。Docker経由の登録済みコマンドを検証する場合は、read-only親taskから起動し、親がapp repoと外側Docker repo、Docker Compose root、service、exact command、両repoの開始時branch / HEAD / working treeを固定します。
+
+- command registryに登録されたDocker経由のtest、typecheck、buildだけを外側rootから実行する
+- app repoと外側Docker repoのworking treeを実行前後で比較する
+- effective sandboxとpermission profileは親側runtime metadataまたはsession traceで確認する
+- `read-only` filesystem profileだけからDocker commandの実行可否、container / volume、Git管理外生成物への影響を推測しない
+- build、cache、coverage、log等の生成物を検出してもcleanupせず、Git管理差分と分けて親へ返す
+- read-only親taskで実行不能なら成功扱いせず、`workspace-write`への無条件変更、権限拡張、別agent結果の流用を行わない
+
+read-only親taskで登録済みDocker commandが成功したruntime実測は、個別session、permission profile、両repo前後状態、生成物とともにruntime履歴へ記録します。これはすべての環境での成功保証ではなく、対象root、service、command、sandbox、HEADが変われば再確認します。
+
 ### 理解再起動とdocs
 
 - `context_recovery`: コード、型、コメント、テスト、局所契約から次回読む最小文脈を作る

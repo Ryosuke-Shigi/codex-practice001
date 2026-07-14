@@ -4,7 +4,7 @@
 - Scope: `Ryosuke-Shigi/codex-practice001` project-scoped custom subagent
 - Last reviewed: 2026-07-14
 - Related policy: [Subagent Model Routing Policy](../rules/model-routing-policy.md)
-- Related PR: #149
+- Related PRs: #149, #151
 
 ## 目的
 
@@ -387,3 +387,78 @@ git status --porcelain items: 28
 - Low: A/B比較を「最終差分」と表現 → 「比較時点の同一candidate差分」へ修正し、diff hash未取得も明記
 
 修正後は同じ登録コマンドと同じ最終レビュー観点を再実行する。
+
+## PR #151: Docker経由検証のruntime実測
+
+この節はPR #151、branch `codex/subagent-harness-redesign`、HEAD `b82560f4b95425886a3461b2b1da57f868e0a544`に対する追加検証である。PR #149とbase HEAD `c92b968f849cbd65b422cfccc90cf51b8cb951d4`に対する過去節の結果は書き換えない。
+
+### GitHub Actions CI run #456
+
+2026-07-14にGitHub ActionsのCI run #456（run database ID `29314383314`）をGitHub CLIで確認した。
+
+- workflow / job: `CI` / `test`
+- head: `b82560f4b95425886a3461b2b1da57f868e0a544`
+- conclusion: `success`
+- `Build frontend assets`: success
+- `Run Laravel tests`: success
+- `Run Vitest`: success
+
+この結果はGitHub Actions環境のCI結果であり、ローカル`terra_verifier`のruntime実測とは分離する。`python3 scripts/verify_codex_agents.py`は現時点でGitHub Actionsの専用ゲートとして登録されていない。
+
+### repo境界と開始状態
+
+Docker経由検証前にapp repoと外側Docker repoを別Git管理として確認した。
+
+| Repo | remote | branch / HEAD | 開始時working tree |
+|---|---|---|---|
+| app | `Ryosuke-Shigi/codex-practice001` | `codex/subagent-harness-redesign` / `b82560f4b95425886a3461b2b1da57f868e0a544` | clean |
+| outer | `Ryosuke-Shigi/laravel11-docker` | `main` / `52f20a85f2502ccf800e4ba70d9f0c2d30b6204f` | clean |
+
+両repoの`AGENTS.md`、outer `docs/ai/rules/root-repository.md`、app `docs/operations/command-registry.md`を確認し、Docker Compose rootを`/home/shigi/projects/codex-practice001`、custom agent project rootを`/home/shigi/projects/codex-practice001/src`として分離した。Docker構成、製品コード、設定、Git、GitHubは変更対象外とした。
+
+### workspace-write親taskでの先行実測
+
+Codex Appの現在taskからfresh `terra_verifier`を起動した。親側state DBで次を確認した。
+
+| 項目 | 実測値 |
+|---|---|
+| child session | `019f5f96-56f2-76d3-ae69-0e9186bf4b3c` |
+| role / model / reasoning | `terra_verifier` / `gpt-5.6-terra` / `medium` |
+| effective sandbox | managed restricted filesystem。project rootと一時領域はwrite、`.git` / `.agents` / `.codex`はread、network restricted |
+| project root | `/home/shigi/projects/codex-practice001/src` |
+
+3コマンドは成功したが、このsessionはeffective `workspace-write`であり、TOMLの`read-only`設定値だけではread-only経路の成立を証明できないため、正式なread-only実測を別のfresh parent sessionで行った。
+
+### read-only親taskでの正式実測
+
+- parent session: `019f5f9a-2541-76d3-914f-885259053291`
+- child session: `019f5f9a-d17b-77f0-ac74-9c31ffc120a9`
+- agent role: `terra_verifier`
+- resolved model / reasoning: `gpt-5.6-terra` / `medium`
+- effective sandbox / permission profile: managed restricted filesystemでroot全体read-only、network restricted
+- project root: `/home/shigi/projects/codex-practice001/src`
+- fork: `fork_turns = "none"`
+
+親は検証を代行せず、子だけが外側Docker Compose rootで次を順に実行した。
+
+| Command | Result |
+|---|---|
+| `docker compose exec php-fpm php artisan test` | exit 0、456 passed、4513 assertions |
+| `docker compose run --rm npm npm run test:run` | exit 0、37 files、166 tests passed |
+| `docker compose run --rm npm npm run build` | exit 0、Vite build成功。500 kB超chunk warningあり |
+
+失敗と未実行はなかった。`npm run build`は`public/build/`へ出力し、このpathはapp repoの`.gitignore`対象だった。Laravel logも`storage/logs/.gitignore`対象である。verifierはcleanupを行わず、実行後もapp repoと外側repoの`git status --short`はともに空、branch / HEADは開始時から不変だった。Git管理外生成物の全内容、container / volume内部状態は完全比較していないため、Git working tree不変と外部runtime状態不変を同一視しない。
+
+filesystem permission profileがread-onlyでも今回の登録済みDocker commandは成功した。この実測から、`terra_verifier`のTOMLは`read-only`を維持し、親が両repo、Docker Compose root、service、exact command、前後比較を固定したfresh read-only親taskから起動する構成を採用する。別環境で実行不能な場合は成功扱いせず、workspace-writeへの無条件変更、project権限拡張、別agent結果の流用を行わない。
+
+### 未確認の維持
+
+このDocker実測とCI成功から、次を確認済みへ読み替えない。
+
+- Codex App組み込みbrowser、Developer Mode、CDP、Console、Network、DOM、CSS、実画面
+- `max_depth = 1`によるnested spawn拒否の失敗系runtime
+- model利用不可時のsilent fallback防止の失敗系runtime
+
+### Docker契約checkerのRed / Green
+
+静的checkerへ`terra_verifier`のDocker Compose root、両repo比較、read-only親task、生成物非cleanup、CIとローカル実測の分離markerを先に追加した。既存状態ではTOML、policy、command registry、runtime履歴のmarker欠落を検出してRedになった。上記4か所を実測事実へ揃え、Markdown見出しのbacktick差をchecker側でRefactorした後、同じcheckerをGreenへ戻した。`python3 scripts/verify_codex_agents.py`と`git diff --check`はともに成功した。
