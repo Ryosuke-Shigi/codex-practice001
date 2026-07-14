@@ -295,34 +295,34 @@ rg -n "TODO|TBD|FIXME|未定|あとで" docs README.md AGENTS.md
 
 docsのみ変更でアプリテストを実行しない場合は、PR本文や作業報告で「docsのみのため未実行」と明記します。
 
-## Subagent / custom agent設定変更時の確認
+## Project AI harness変更時の確認
 
-`.codex/config.toml`、`.codex/agents/*.toml`、またはSubagent運用docsを変更した場合は、Python 3.11以上の標準ライブラリ`tomllib`を使う静的ハーネスと差分形式を確認します。
+`.codex/config.toml`、Subagent運用docs、または公開project用checkerを変更した場合は、Python 3.11以上の標準ライブラリ`tomllib`を使う静的ハーネスと差分形式を確認します。
 
 ```bash
 cd /var/www/api-discovery-hub/src
-python3 scripts/verify_codex_agents.py
+python3 scripts/verify_project_ai_harness.py
 git diff --check
 ```
 
-静的ハーネスの成功は、17役のファイル構成、TOML構文、model / reasoning / sandbox設定値、共通契約、正本docsとの整合を確認するものです。実行中sessionでのrole認識、resolved model、reasoning effort、effective sandbox、permission profileを確認したruntime結果の代わりにはなりません。新規・変更agentのruntime確認は設定を再読込したfresh sessionで行い、親側のruntime metadataまたはsession traceを根拠に記録します。
+静的ハーネスは、公開repoの入口、project設定、MDルーター、model routing、Command Registry、Sensors、Testing、Markdown linkが単体で成立し、個人用agent catalogやruntime履歴を必須依存にしていないことを確認します。実行中sessionでのrole認識、resolved model、reasoning effort、effective sandbox、permission profileを確認したruntime結果の代わりにはなりません。
 
-`browser_verifier`の静的設定が通っても、Codex App内蔵ブラウザ、Developer Mode、CDP、対象URL、認証、fixtureの利用可否は別途確認します。利用できない経路をダミー、NOOPファイル、別ブラウザで成功扱いにせず、失敗地点と未確認範囲を残します。
+browser検証担当の利用可否にかかわらず、Codex App内蔵ブラウザ、Developer Mode、CDP、対象URL、認証、fixtureは別途確認します。利用できない経路をダミー、NOOPファイル、別ブラウザで成功扱いにせず、失敗地点と未確認範囲を残します。
 
-### `terra_verifier`によるDocker経由検証
+### 独立verifierによるDocker経由検証
 
-`terra_verifier`がDocker経由のtest、typecheck、buildを実行する場合は、read-only親taskから起動し、app repoと外側repoを混同しないよう次を開始契約へ含めます。
+利用可能な独立verifierがDocker経由のtest、typecheck、buildを実行する場合は、read-only親taskから起動し、app repoと外側repoを混同しないよう次を開始契約へ含めます。Subagentが利用できない場合は、親が同じ前提と前後比較を固定して順番に実行します。
 
 - app repoと外側repoそれぞれのremote、branch、HEAD、working tree
 - Docker Compose root、対象service、登録済みexact command
 - 実行前後の両repo比較、生成差分とGit管理外生成物の分離
 - cleanup、設定変更、権限拡張、Git / GitHub操作の禁止
 
-Docker commandは必ず外側rootで実行します。read-only filesystem profileでもDocker経由コマンドが実行できる場合がありますが、設定値だけで成功または失敗を決めず、fresh sessionの親側runtime metadataでeffective sandboxとpermission profileを確認します。実行不能な場合は`terra_verifier`を無条件にworkspace-writeへ変えず、失敗、未実行、停止条件を返します。
+Docker commandは必ず外側rootで実行します。read-only filesystem profileでもDocker経由コマンドが実行できる場合がありますが、設定値だけで成功または失敗を決めず、fresh sessionの親側runtime metadataでeffective sandboxとpermission profileを確認します。実行不能な場合は権限を無条件に拡張せず、失敗、未実行、停止条件を返します。
 
-build、cache、coverage、log、container等の生成物が出た場合、`terra_verifier`はcleanupしません。親が両repoのGit管理差分、Git管理外生成物、外部runtime状態を分けて扱います。
+build、cache、coverage、log、container等の生成物が出た場合、verifierはcleanupしません。親が両repoのGit管理差分、Git管理外生成物、外部runtime状態を分けて扱います。
 
-この静的Subagent checkerは現在GitHub Actionsの専用ゲートとして登録していません。GitHub ActionsのFrontend build、Laravel tests、Vitest等の結果と、ローカルの静的checkerおよび`terra_verifier` runtime実測をPR本文で分けます。
+このproject checkerは現在GitHub Actionsの専用ゲートとして登録していません。GitHub ActionsのFrontend build、Laravel tests、Vitest等の結果と、ローカルの静的checkerおよびverifier runtime実測をPR本文で分けます。
 
 ## PHP / Laravel変更時の確認
 

@@ -71,7 +71,7 @@
 
 - 機能固有の作業索引は [projects/index.md](projects/index.md) から対象feature docsへ進みます
 - 失敗改善、再発防止、理解再起動の索引は [logs/index.md](logs/index.md) を使います
-- custom subagentの個別runtime実測は [runtime検証履歴](logs/2026-07-14-custom-subagent-runtime-verification.md) を参照します
+- 個人環境のcustom agent catalogや生のruntime履歴は公開docsへ置かず、projectへ還元すべき恒久ルールだけをrules / workflows / Sensorsへ反映します
 - 一時的なローカル情報はGit管理外の `.local/` に分離し、この索引へ内容を複製しません
 
 ## 配置ルール

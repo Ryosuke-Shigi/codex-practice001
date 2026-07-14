@@ -34,7 +34,7 @@ docs更新を目的化せず、次回の理解再起動に役立つ検証済み�
 - 検出可能な漏れや再発しやすい確認漏れがあったか
 - テスト観点が増えたか
 - agentの役割、model / reasoning、権限、単一writer、TDD / harness / loop契約が変わったか
-- agent TOMLの設定値とfresh sessionのresolved runtimeを分けて記録したか
+- 設定値を根拠にruntime実測済みとせず、runtime確認を行った場合はfresh sessionのresolved値と分けて記録したか
 - Codex App内蔵ブラウザ、Developer Mode、CDPを実際に確認したか、または利用不能地点と未確認範囲を残したか
 - secrets / env / 本番接続 / 破壊的操作に触れたか
 - AGENTS.md、docs/index.md、MDルーター、operations docs、feature docs、Sensors、PR Summary のどこへ戻すべきか
@@ -64,8 +64,8 @@ docs更新を目的化せず、次回の理解再起動に役立つ検証済み�
 | コメント、PHPDoc、JSDoc、型アノテーション、props契約説明の整合 | ../../commenting.md / 対象コード / ../../operations/sensors.md |
 | UI工程や MOCK / PROTOTYPE / PRODUCT 契約 | `../../ui-development-flow.md` / `../../prototype-policy.md` / 対象feature docs |
 | テスト観点 | `../../testing.md` または対象feature docs |
-| Subagentの役割、model / reasoning、権限、単一writer | `../rules/model-routing-policy.md` と `.codex/agents/*.toml` |
-| custom agentのresolved runtime、比較結果、ブラウザ検証可否 | `../logs/*` |
+| Subagent利用、親の統合、作業段階、単一writer | `../rules/model-routing-policy.md` |
+| 個別custom agentのresolved runtime、比較結果、ブラウザ検証可否 | Git管理外のLocal記録または作業報告。再利用可能な恒久ルールだけを該当するrules / workflows / Sensorsへ反映 |
 | コマンド実行場所 | `../../operations/command-registry.md` |
 | PR確認観点 | `../../operations/pr-review-strength.md` |
 | 検出可能な漏れ、再発しやすい確認漏れ | `../../operations/sensors.md` |
@@ -89,7 +89,7 @@ docs更新を目的化せず、次回の理解再起動に役立つ検証済み�
 | 実装、テスト、docsの間にズレがある | docs更新ループ | 正本docs、対象feature docs、コメント、型、テストのどこへ戻すか |
 | 同じミスが再発しそう、または検出可能な漏れが見つかった | 失敗再発防止ループ | logs候補、Sensors候補、MD Router候補、pr-review-strength候補 |
 | 次回作業の現在地、未完了、注意点が分からなくなる | 理解再起動ループ | context-management、次スレッド引き継ぎまとめ、feature docsへ残すべきか |
-| agent設定とruntimeが一致しない、複数writer、TDDやbrowser検証の証跡が不足する | model routing / harness改善 / 検証・レビュー / escalation・停止ループ | model-routing-policy、agent TOML、runtime trace、SENS-019、未確認範囲 |
+| 利用可能な実行設定とruntime実測が一致しない、複数writer、TDDやbrowser検証の証跡が不足する | model routing / harness改善 / 検証・レビュー / escalation・停止ループ | model-routing-policy、Git管理外のLocal記録または作業報告、SENS-019、未確認範囲 |
 
 Loop Engineeringの詳細をこのMDへ複製しません。ここでは作業後の戻し先だけを判断します。
 
