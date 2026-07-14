@@ -59,7 +59,7 @@ feature docsは共通ルールを上書きしません。コード、テスト�
 |---|---|
 | `docs/ai/index.md` | AI作業用docsの補助索引 |
 | `docs/ai/rules/agent-working-policy.md` | 作業条件、Git / PR、停止条件、完了確認 |
-| `docs/ai/rules/model-routing-policy.md` | 17役の選択、model / reasoning、権限、単一writer、runtime確認 |
+| `docs/ai/rules/model-routing-policy.md` | 任意のSubagent利用、作業段階、単一writer、親の統合、runtime確認境界 |
 | `docs/ai/rules/responsibility-boundaries.md` | ADR Pattern、用語、責務境界 |
 | `docs/ai/workflows/md-router.md` | 作業種別ごとの読む・読まない範囲、停止条件 |
 | `docs/ai/workflows/md-router-cases.md` | MDルーターの実戦ケース集 |

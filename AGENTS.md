@@ -8,7 +8,7 @@ Laravel / React / app docs / tests はこのリポジトリで扱い、外側wor
 1. 作業対象repoの remote / branch / status を確認する
 2. [docs/ai/workflows/md-router.md](docs/ai/workflows/md-router.md) で該当する作業プロファイルを選ぶ
 3. プロファイルで指定された範囲と条件に従い、必要な共通docs・feature / project docs・対象コードだけを確認する
-4. 作業範囲を確定した後、独立した探索・実装・検証・レビューへ分割する効果がある場合だけ [model-routing-policy.md](docs/ai/rules/model-routing-policy.md) に従ってsubagentへ委譲し、親が結果を統合する
+4. 作業範囲を確定した後、独立した探索・実装・検証・レビューへ分割する効果がある場合だけ [model-routing-policy.md](docs/ai/rules/model-routing-policy.md) に従って利用可能なSubagentへ委譲し、親agentが結果を統合する。Subagentが利用できない場合は、親agentが同じ工程を順番に実行する
 
 [docs/index.md](docs/index.md) はdocs全体の総合索引です。通常作業で毎回読むものではなく、次の場合に確認します。
 

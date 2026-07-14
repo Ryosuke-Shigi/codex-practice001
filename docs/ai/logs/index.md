@@ -14,7 +14,6 @@
 | [../../context-management.md](../../context-management.md) | 文脈読込、探索範囲制限、理解再起動 |
 | [../../logging.md](../../logging.md) | アプリケーションログの分類、保存、記録責務 |
 | [2026-06-20-jst-production-verification.md](2026-06-20-jst-production-verification.md) | UTC to JST統一後の本番画面・ログ表示・502再発有無の確認記録 |
-| [2026-07-14-custom-subagent-runtime-verification.md](2026-07-14-custom-subagent-runtime-verification.md) | project-scoped custom subagentのruntime実測、失敗経緯、未確認事項の記録 |
 
 ## 配置ルール
 

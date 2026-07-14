@@ -321,17 +321,17 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 将来の自動化候補: PR Summaryの確認コマンドに `docker compose run --rm npm` が含まれるか、ホストnpm由来の失敗ログを未解決のまま成功扱いしていないかの照合
 - 備考: ホストOS側で `UNC paths are not supported`、`vitest is not recognized`、`Cannot find module @rollup/rollup-...`、Nodeバージョン不一致が出た場合は、ホストNode調査を続けずDocker npmで再実行する。
 
-### SENS-019: Subagent契約 / runtime / 単一writerチェック
+### SENS-019: Project AI harness / runtime / 単一writerチェック
 
 - ID: SENS-019
-- 名前: Subagent契約 / runtime / 単一writerチェック
+- 名前: Project AI harness / runtime / 単一writerチェック
 - 種別: Script / AI Review / Manual
 - 実行タイプ: Both
-- 実行タイミング: `.codex/config.toml`、`.codex/agents/*.toml`、Subagent運用docs変更時 / agent選択時 / runtime確認時 / PR前
-- 検出したい問題: 17役カタログとTOMLの不一致、必須契約欠落、設定値とresolved runtimeの混同、親を含む複数writer、Redを観測しないGreen、検証・レビュー中の書込み、ブラウザ利用不能を代替経路で成功扱いする状態、許可されていないGit / GitHub操作やsubagent再委譲
-- 参照docs: `docs/ai/rules/model-routing-policy.md` / `docs/ai/workflows/loop-engineering.md` / `docs/testing.md` / `docs/operations/command-registry.md` / `docs/ai/logs/2026-07-14-custom-subagent-runtime-verification.md`
+- 実行タイミング: `.codex/config.toml`、Subagent運用docs、project checker変更時 / agent選択時 / runtime確認時 / PR前
+- 検出したい問題: 公開repoが個人用agent catalogを必須依存にする状態、親だけの代替導線欠落、設定値とresolved runtimeの混同、親を含む複数writer、Redを観測しないGreen、検証・レビュー中の書込み、ブラウザ利用不能を代替経路で成功扱いする状態、許可されていないGit / GitHub操作やsubagent再委譲
+- 参照docs: `docs/ai/rules/model-routing-policy.md` / `docs/ai/workflows/loop-engineering.md` / `docs/testing.md` / `docs/operations/command-registry.md`
 - 現在のLevel: Level 1
-- 将来の自動化候補: `python3 scripts/verify_codex_agents.py`の静的部分をCIへ登録する。resolved model、effective sandbox、単一writer、ブラウザ実行可否などruntime・意味判断を要する部分は、自動化可能な証跡が揃うまでAI Review / Manualを維持する
+- 将来の自動化候補: `python3 scripts/verify_project_ai_harness.py`をCIへ登録する。resolved model、effective sandbox、単一writer、ブラウザ実行可否などruntime・意味判断を要する部分は、自動化可能な証跡が揃うまでAI Review / Manualを維持する
 - 備考: 静的ハーネス成功をruntime成功へ読み替えない。fresh sessionで認識されていないagent、親側metadataで確認できない実効値、利用不能なCodex App内蔵ブラウザは未確認として記録する。現在のLevel 1はCI fail化の導入段階であり、危険度を表さない。Git / PR操作、再委譲、複数writerなどの安全境界違反を検出した場合はpolicyに従い即時停止する。
 
 ## PR Summaryへ残す項目
@@ -387,7 +387,7 @@ Level 2またはLevel 3としてCI fail候補にする前に、次を確認し�
 | `docs/ai/workflows/md-router.md` | 作業開始時に読むdocs、読まないdocs、停止条件を固定する入口 |
 | `docs/ai/workflows/md-router-cases.md` | MDルーターの実戦ケース集 |
 | `docs/ai/workflows/work-result-feedback-loop.md` | 作業後にどのdocs、型、コメント、テストへ戻すかの判定 |
-| `docs/ai/rules/model-routing-policy.md` | 17役の選択、権限、単一writer、runtime確認の正本 |
+| `docs/ai/rules/model-routing-policy.md` | 任意のSubagent利用、親の統合、単一writer、runtime確認境界の正本 |
 | `docs/templates/pr-summary.md` | PR本文の実装後事実整理 |
 | `docs/templates/feature-doc-template.md` | 新規Feature docsの型 |
 | `docs/operations/pr-review-strength.md` | PR差分の危険度に応じたレビュー強度 |

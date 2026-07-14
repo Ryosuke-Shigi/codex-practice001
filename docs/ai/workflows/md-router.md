@@ -149,13 +149,13 @@
 
 ### Subagent / custom agent / AI harness
 
-- 読む: [model-routing-policy.md](../rules/model-routing-policy.md)、`.codex/config.toml`、`.codex/agents/*.toml`、[loop-engineering.md](loop-engineering.md)、[command-registry.md](../../operations/command-registry.md)、[sensors.md](../../operations/sensors.md)、存在するruntime検証履歴
+- 読む: [model-routing-policy.md](../rules/model-routing-policy.md)、`.codex/config.toml`、[loop-engineering.md](loop-engineering.md)、[command-registry.md](../../operations/command-registry.md)、[sensors.md](../../operations/sensors.md)、公開project用checker
 - 条件付きで読む: TDD契約を変える場合は `docs/testing.md`、責務境界を変える場合は [responsibility-boundaries.md](../rules/responsibility-boundaries.md) と `docs/architecture.md`、入口や戻し先を変える場合はこのMDと [work-result-feedback-loop.md](work-result-feedback-loop.md)、正本・索引を変える場合は [docs/index.md](../../index.md)、browser導線を扱う場合は現在利用可能なbrowser skill / connectorの正規手順
 - 読まない: 無関係feature docs、アプリのLaravel / React実装、Migration、製品固有UI、本番データ、外側Docker repoの変更対象外ファイル
-- 編集してよい: `.codex/agents/*.toml`、必要な場合だけ `.codex/config.toml`、Subagent運用に直接関係するAI / testing / operations docs、実在設定を検証するharness script
+- 編集してよい: 必要な場合だけ `.codex/config.toml`、Subagent運用に直接関係するAI / testing / operations docs、公開project単体の導線を検証するharness script
 - 編集しない: Local MD、repo外ユーザー設定、secrets、製品コード、runtime確認用ダミー / NOOPファイル
-- 停止条件: 既存agent参照元、model / reasoning / TOML項目、単一writer、sandboxとruntime実測の区別を確定できない、Local情報の共通docs化やproject全体の権限拡張が必要、fresh session / reloadが必要なruntime項目を現在sessionだけで成功扱いしようとしている
-- 確認コマンド: [command-registry.md](../../operations/command-registry.md) のSubagent設定確認、`git diff --check`、必要なリンク・参照確認。runtime実測とbrowser確認は利用条件が成立する場合だけ実施し、未確認を成功扱いしない
+- 停止条件: 親とchildの責務、単一writer、sandbox設定値とruntime実測の区別を確定できない、個人用catalogやLocal情報の公開docs化、project全体の権限拡張が必要、fresh session / reloadが必要なruntime項目を現在sessionだけで成功扱いしようとしている
+- 確認コマンド: [command-registry.md](../../operations/command-registry.md) のproject AI harness確認、`git diff --check`、必要なリンク・参照確認。runtime実測とbrowser確認は利用条件が成立する場合だけ実施し、未確認を成功扱いしない
 - PRレビュー強度: 原則Level 3。project全体のsandbox、approval、network、MCP、CIへ影響する場合はLevel 4
 
 ### PRレビュー Level 1〜4
