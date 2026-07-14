@@ -459,6 +459,16 @@ filesystem permission profileがread-onlyでも今回の登録済みDocker comma
 - `max_depth = 1`によるnested spawn拒否の失敗系runtime
 - model利用不可時のsilent fallback防止の失敗系runtime
 
-### Docker契約checkerのRed / Green
+### 静的契約とruntime証跡の分離
 
-静的checkerへ`terra_verifier`のDocker Compose root、両repo比較、read-only親task、生成物非cleanup、CIとローカル実測の分離markerを先に追加した。既存状態ではTOML、policy、command registry、runtime履歴のmarker欠落を検出してRedになった。上記4か所を実測事実へ揃え、Markdown見出しのbacktick差をchecker側でRefactorした後、同じcheckerをGreenへ戻した。`python3 scripts/verify_codex_agents.py`と`git diff --check`はともに成功した。
+初回は静的checkerへ`terra_verifier`のDocker Compose root、両repo比較、read-only親task、生成物非cleanupに加え、このruntime履歴のPR番号、CI run番号、個別実測節もmarkerとして追加した。これは恒久契約と一時的な証跡の責務を混在させ、過去文字列が残るだけで成功する一方、runtime logの整理やarchiveで恒久契約が正常でも失敗する構造だった。
+
+後続修正では、静的checkerの対象を次の恒久契約だけへ限定した。
+
+- `.codex/agents/terra_verifier.toml`: Docker Compose root、app repoと外側repo、exact command、実行前後比較、cleanup禁止
+- `docs/ai/rules/model-routing-policy.md`: read-only親task、Docker経由の登録済みコマンド、両repo分離、設定値とruntime実測の分離
+- `docs/operations/command-registry.md`: Docker Compose実行場所、両repo比較、Git管理差分とGit管理外生成物、CIとローカルruntimeの分離
+
+このruntime履歴はMarkdownリンク検査対象には維持するが、静的契約markerの対象にはしない。個別session、resolved model、sandbox、Docker実測、CI確認は証跡として保存し、その正確性と最新性はruntime確認とPRレビューで評価する。静的checker成功をruntime成功の代替にしない。
+
+再発防止として、静的契約markerの対象pathに`docs/ai/logs/`が含まれる場合と、markerにPR番号、CI run番号、session ID、commit SHA形式が含まれる場合をchecker自身が検出する。guardを先に追加したRedでは、既存のruntime log path、`PR #151`、`GitHub Actions CI run #456`依存を検出した。その後にruntime log entryをmarker集合から外し、`TERRA_VERIFIER_STATIC_CONTRACT_MARKERS`へ改名してGreenへ戻した。

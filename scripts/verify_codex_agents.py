@@ -29,6 +29,12 @@ MARKDOWN_DOCS = (
     RUNTIME_LOG,
 )
 MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+TRANSIENT_STATIC_MARKER_PATTERNS = (
+    ("PR number", re.compile(r"\bPR\s*#\d+\b", re.IGNORECASE)),
+    ("CI run number", re.compile(r"\bCI\s+run\s*#\d+\b", re.IGNORECASE)),
+    ("session ID", re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b", re.IGNORECASE)),
+    ("commit SHA", re.compile(r"(?<![0-9a-f-])[0-9a-f]{7,40}(?![0-9a-f-])", re.IGNORECASE)),
+)
 
 EXPECTED_AGENTS = {
     "luna_explorer": ("gpt-5.6-luna", "low", "read-only"),
@@ -114,11 +120,28 @@ COMMON_CONTRACT_MARKERS = (
     "working tree",
 )
 
-TERRA_VERIFIER_DOCKER_MARKERS = {
-    AGENTS_DIR / "terra_verifier.toml": ("Docker Compose root", "app repoと外側repo", "生成差分"),
-    POLICY: ("read-only親task", "Docker経由の登録済みコマンド", "app repoと外側Docker repo"),
-    COMMAND_REGISTRY: ("`terra_verifier`によるDocker経由検証", "read-only親task", "app repoと外側repo"),
-    RUNTIME_LOG: ("PR #151", "Docker経由検証のruntime実測", "GitHub Actions CI run #456"),
+TERRA_VERIFIER_STATIC_CONTRACT_MARKERS = {
+    AGENTS_DIR / "terra_verifier.toml": (
+        "Docker Compose root",
+        "app repoと外側repo",
+        "exact command",
+        "実行前後",
+        "cleanup",
+    ),
+    POLICY: (
+        "read-only親task",
+        "Docker経由の登録済みコマンド",
+        "app repoと外側Docker repo",
+        "filesystem profileだけ",
+        "cleanup",
+    ),
+    COMMAND_REGISTRY: (
+        "`terra_verifier`によるDocker経由検証",
+        "Docker Compose root",
+        "app repoと外側repo",
+        "Git管理外生成物",
+        "GitHub Actions",
+    ),
 }
 
 
@@ -140,6 +163,23 @@ def validate_local_markdown_links(path: Path) -> list[str]:
         resolved = (ROOT / target.lstrip("/")) if target.startswith("/") else (path.parent / target)
         if not resolved.exists():
             errors.append(f"{path.relative_to(ROOT)}: missing local Markdown link target: {raw_target}")
+    return errors
+
+
+def validate_static_contract_marker_config(marker_sets: dict[Path, tuple[str, ...]]) -> list[str]:
+    errors: list[str] = []
+    for contract_path, markers in marker_sets.items():
+        relative_path = contract_path.relative_to(ROOT)
+        if relative_path.parts[:3] == ("docs", "ai", "logs"):
+            errors.append(
+                f"{relative_path}: runtime log must not be a static contract marker target"
+            )
+        for marker in markers:
+            for label, pattern in TRANSIENT_STATIC_MARKER_PATTERNS:
+                if pattern.search(marker):
+                    errors.append(
+                        f"{relative_path}: static contract marker must not contain {label}: {marker}"
+                    )
     return errors
 
 
@@ -168,7 +208,9 @@ def main() -> int:
     for markdown_path in MARKDOWN_DOCS:
         errors.extend(validate_local_markdown_links(markdown_path))
 
-    for contract_path, markers in TERRA_VERIFIER_DOCKER_MARKERS.items():
+    errors.extend(validate_static_contract_marker_config(TERRA_VERIFIER_STATIC_CONTRACT_MARKERS))
+
+    for contract_path, markers in TERRA_VERIFIER_STATIC_CONTRACT_MARKERS.items():
         contract_text = contract_path.read_text(encoding="utf-8")
         for marker in markers:
             if marker not in contract_text:
