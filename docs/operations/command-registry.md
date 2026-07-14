@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-09
+- Last reviewed: 2026-07-14
 
 ## このドキュメントの目的
 
@@ -294,6 +294,20 @@ rg -n "TODO|TBD|FIXME|未定|あとで" docs README.md AGENTS.md
 ```
 
 docsのみ変更でアプリテストを実行しない場合は、PR本文や作業報告で「docsのみのため未実行」と明記します。
+
+## Subagent / custom agent設定変更時の確認
+
+`.codex/config.toml`、`.codex/agents/*.toml`、またはSubagent運用docsを変更した場合は、Python 3.11以上の標準ライブラリ`tomllib`を使う静的ハーネスと差分形式を確認します。
+
+```bash
+cd /var/www/api-discovery-hub/src
+python3 scripts/verify_codex_agents.py
+git diff --check
+```
+
+静的ハーネスの成功は、17役のファイル構成、TOML構文、model / reasoning / sandbox設定値、共通契約、正本docsとの整合を確認するものです。実行中sessionでのrole認識、resolved model、reasoning effort、effective sandbox、permission profileを確認したruntime結果の代わりにはなりません。新規・変更agentのruntime確認は設定を再読込したfresh sessionで行い、親側のruntime metadataまたはsession traceを根拠に記録します。
+
+`browser_verifier`の静的設定が通っても、Codex App内蔵ブラウザ、Developer Mode、CDP、対象URL、認証、fixtureの利用可否は別途確認します。利用できない経路をダミー、NOOPファイル、別ブラウザで成功扱いにせず、失敗地点と未確認範囲を残します。
 
 ## PHP / Laravel変更時の確認
 

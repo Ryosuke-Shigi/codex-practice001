@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-10
+- Last reviewed: 2026-07-14
 
 ## このドキュメントの目的
 
@@ -38,6 +38,7 @@
 |---|---|---|---|---|---|---|---|
 | docsのみ変更 | 対象docsを既存の正本と整合させる | 対象docs / 対象docsが直接参照する正本。docs体系・配置・正本・Statusを変える場合だけ `../../index.md`、文脈読込・理解再起動方針を変える場合だけ `../../context-management.md`、作業入口・プロファイルを変える場合だけ `md-router.md`、作業後の戻し先を変える場合だけ `work-result-feedback-loop.md` | 無関係feature docs / アプリコード / Docker・本番運用docs / 無関係な共通docs | 対象docs / 必要な索引・入口 | docs正本が分散する、アプリコード変更が必要になる | `git diff --check` | docsのみ変更、条件付きで読んだ正本、Laravel test / npm build未実行理由 |
 | docs運用最適化 | AGENTS / docs索引 / MDルーターの導線を整理する | ../../../AGENTS.md / ../../index.md / md-router.md / ../../context-management.md / work-result-feedback-loop.md。AI docsの索引を変える場合だけ ../index.md、実例を変える場合だけ md-router-cases.md、Git / 責務 / PR強度の正本を変える場合だけ各正本 | 無関係feature docs / アプリコード / Docker構成 / CI設定 / ローカル環境固有情報の内容 | AGENTS.md / docs索引 / docs/ai/workflows | ローカル環境固有情報がGit差分に入る、正本を判断できない、アプリコード変更が必要になる | git diff --check / git diff --name-only | 変更した入口、条件付き参照、docs以外を触っていないこと |
+| Subagent運用基盤変更 | project agent設定、routing、TDD / Harness / Loop接続を整合させる | `../rules/model-routing-policy.md` / `../../../.codex/config.toml` / `../../../.codex/agents/*.toml` / `loop-engineering.md` / `../../testing.md` / `../../operations/command-registry.md` / `../../operations/sensors.md` / runtime履歴 | 無関係feature docs / 製品コード / Local MDの内容 / 外側repo | `.codex` / Subagent関連docs / 実在設定checker | model・TOML項目・単一writer・runtime境界を確定できない、権限拡張やダミー変更が必要 | `python3 scripts/verify_codex_agents.py` / `git diff --check` / 参照確認 | 設定値とruntime実測、未確認、model比較、browser利用可否、SENS-019 |
 | Product Design Guide追加・修正 | IDEA BOARD / MOCK / Coding の境界とCoding前ゲートを整理する | ../../product-design/index.md / ../../index.md / md-router.md / ../../development-flow.md / ../../ui-development-flow.md / ../../templates/idea-board-and-mock-template-policy.md | 無関係feature docs / アプリコード / Backend責務docsの全文 / ローカル環境固有情報の内容 | docs/product-design / docs索引 / MDルーター / 必要なテンプレ導線 | Product Design GuideがADR Pattern、レイヤード、UI責務を上書きする、毎回全文読む運用に戻る、MOCK未確認範囲をCodingで補完してよい内容になる | git diff --check / git diff --name-only | 追加・更新したMD、読むタイミング、読まないタイミング、docs-onlyであること |
 | Frontend画面種別選定 | UI作成前に System UI / Graphic Web UI / Graphic Builder UI のどれとして扱うか決める | `../../guides/frontend-screen-types.md` / `../../frontend.md` / `../../ui.md` | 無関係feature docs / Repository / Migration / Docker構成 | docs / Page / Component / hooks / type | 画面種別を決められない、Builder UI実装が必要になる、D&Dで直接JSXや業務データを変更する前提になる | `git diff --check` / UI変更時は作業種別に応じる | 画面種別、責務境界、Builder UIやD&Dを実装しない場合の対象外理由 |
 | Sensors台帳追加・修正 | PR前確認、AIレビュー、スクリプト、CI fail候補として育てる検出項目を追加・更新する | `../../index.md` / `../../operations/sensors.md` / `md-router.md` / `md-router-cases.md` / `work-result-feedback-loop.md` / `../../templates/pr-summary.md` | 無関係feature docs / アプリコード / CI実装 / Docker構成 | docs/operations / docs/ai/workflows | CI実装やアプリコード変更が必要になる、既存docsの全文複製になる | `git diff --check` | 追加・修正したSensor、CI fail化しない範囲、Laravel test / npm build未実行理由 |
