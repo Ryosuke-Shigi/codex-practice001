@@ -15,17 +15,6 @@ export type LumiLaboMockProjectListItem = {
 
 export type LumiLaboMockProjectList = {
     items: readonly LumiLaboMockProjectListItem[];
-    keyword: string;
-    sort: 'registered_desc' | 'registered_asc';
-    perPage: number | null;
-    isReady: boolean;
-    currentPage: number;
-    hasPrevious: boolean;
-    previousPage: number | null;
-    hasNext: boolean;
-    nextPage: number | null;
-    showPagination: boolean;
-    action: string;
 };
 
 export type LumiLaboMockProjectDetailReturnTarget = {
@@ -77,10 +66,6 @@ export type LumiLaboMockProjectDetailDraft = Record<
     LumiLaboMockProjectDetailEditableFieldId,
     string
 >;
-
-export type LumiLaboMockProjectOverride = LumiLaboMockProjectDetailDraft & {
-    id: string;
-};
 
 export type LumiLaboMockProjectSavedPhoto = {
     id: string;

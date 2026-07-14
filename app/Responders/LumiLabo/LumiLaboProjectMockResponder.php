@@ -2,6 +2,8 @@
 
 namespace App\Responders\LumiLabo;
 
+use App\DTO\LumiLabo\LumiLaboProjectMockItemDTO;
+use App\DTO\LumiLabo\LumiLaboProjectMockListDTO;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -10,46 +12,18 @@ use Inertia\Response;
  */
 final readonly class LumiLaboProjectMockResponder
 {
-    /**
-     * @param  array{
-     *     items: array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string}>,
-     *     keyword: string,
-     *     sort: string,
-     *     perPage: ?int,
-     *     isReady: bool,
-     *     currentPage: int,
-     *     hasPrevious: bool,
-     *     previousPage: ?int,
-     *     hasNext: bool,
-     *     nextPage: ?int,
-     *     showPagination: bool,
-     *     initialDeletedProjectIds: array<int, string>,
-     *     initialProjectOverrides: array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string}>
-     * }  $projectList
-     */
-    public function index(array $projectList): Response
+    public function index(LumiLaboProjectMockListDTO $projectList): Response
     {
-        $initialDeletedProjectIds = $projectList['initialDeletedProjectIds'];
-        $initialProjectOverrides = $projectList['initialProjectOverrides'];
-        unset(
-            $projectList['initialDeletedProjectIds'],
-            $projectList['initialProjectOverrides'],
-        );
-
         return Inertia::render('Lab/LumiLaboProjectMock', [
             'projectList' => [
-                ...$projectList,
                 'items' => array_map(
-                    fn (array $project): array => [
-                        ...$project,
-                        'registeredDate' => str_replace('-', '/', $project['registeredDate']),
+                    fn (LumiLaboProjectMockItemDTO $project): array => [
+                        ...$project->toArray(),
+                        'registeredDate' => str_replace('-', '/', $project->registeredDate),
                     ],
-                    $projectList['items'],
+                    $projectList->items,
                 ),
-                'action' => route('lab.lumilabo-project-mock'),
             ],
-            'initialDeletedProjectIds' => $initialDeletedProjectIds,
-            'initialProjectOverrides' => $initialProjectOverrides,
         ]);
     }
 }

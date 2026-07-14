@@ -16,7 +16,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
     lumiLaboGlobalTabs,
@@ -38,10 +38,7 @@ import {
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
 } from './mockData';
-import LumiLaboProjectListPanel, {
-    type LumiLaboProjectListFailedRefresh,
-    type LumiLaboProjectListRequestData,
-} from './LumiLaboProjectListPanel';
+import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectDetail,
@@ -50,7 +47,6 @@ import type {
     LumiLaboMockProjectDetailReturnTarget,
     LumiLaboMockProjectList,
     LumiLaboMockProjectListItem,
-    LumiLaboMockProjectOverride,
     LumiLaboMockProjectRegisterField,
     LumiLaboMockProjectTabId,
     LumiLaboMockProjectViewId,
@@ -224,12 +220,6 @@ export function canCompleteLumiLaboMockProjectSave(
     return !deletedProjectIds.has(projectId);
 }
 
-export function createLumiLaboMockInitialDeletedProjectIds(
-    projectIds: readonly string[],
-): ReadonlySet<string> {
-    return new Set(projectIds);
-}
-
 export function applyLumiLaboMockProjectSaveToCurrentDetail(
     currentProjectDetail: LumiLaboMockProjectDetail | null,
     savedProjectId: string,
@@ -334,136 +324,12 @@ export function setLumiLaboMockProjectCompanyNameValidationError(
     };
 }
 
-export type LumiLaboProjectListRefreshState = {
-    requestedRevision: number;
-    activeRevision: number | null;
-    activeNormalRequestId: number | null;
-    normalRequestSequence: number;
-    successfulRevision: number;
-    failedRefresh: LumiLaboProjectListFailedRefresh | null;
-};
-
-export type LumiLaboProjectListRefreshAction =
-    | { type: 'request' }
-    | { type: 'start'; revision: number }
-    | { type: 'success'; revision: number }
-    | { type: 'start-normal' }
-    | { type: 'finish-normal'; requestId: number }
-    | {
-          type: 'failure';
-          revision: number;
-          requestData: LumiLaboProjectListRequestData;
-      };
-
-export function createLumiLaboProjectListRefreshState(): LumiLaboProjectListRefreshState {
-    return {
-        requestedRevision: 0,
-        activeRevision: null,
-        activeNormalRequestId: null,
-        normalRequestSequence: 0,
-        successfulRevision: 0,
-        failedRefresh: null,
-    };
-}
-
-export function reduceLumiLaboProjectListRefreshState(
-    state: LumiLaboProjectListRefreshState,
-    action: LumiLaboProjectListRefreshAction,
-): LumiLaboProjectListRefreshState {
-    switch (action.type) {
-        case 'request':
-            return {
-                ...state,
-                requestedRevision: state.requestedRevision + 1,
-            };
-        case 'start':
-            if (
-                state.activeRevision !== null ||
-                state.activeNormalRequestId !== null ||
-                action.revision <= state.successfulRevision ||
-                (state.failedRefresh === null &&
-                    action.revision !== state.requestedRevision) ||
-                (state.failedRefresh !== null &&
-                    action.revision !== state.failedRefresh.revision)
-            ) {
-                return state;
-            }
-
-            return {
-                ...state,
-                activeRevision: action.revision,
-                failedRefresh: null,
-            };
-        case 'success':
-            if (state.activeRevision !== action.revision) {
-                return state;
-            }
-
-            return {
-                ...state,
-                activeRevision: null,
-                successfulRevision: Math.max(
-                    state.successfulRevision,
-                    action.revision,
-                ),
-                failedRefresh:
-                    state.failedRefresh?.revision === action.revision
-                        ? null
-                        : state.failedRefresh,
-            };
-        case 'start-normal':
-            if (
-                state.activeRevision !== null ||
-                state.activeNormalRequestId !== null ||
-                state.failedRefresh !== null ||
-                state.requestedRevision > state.successfulRevision
-            ) {
-                return state;
-            }
-
-            return {
-                ...state,
-                activeNormalRequestId: state.normalRequestSequence + 1,
-                normalRequestSequence: state.normalRequestSequence + 1,
-            };
-        case 'finish-normal':
-            if (state.activeNormalRequestId !== action.requestId) {
-                return state;
-            }
-
-            return {
-                ...state,
-                activeNormalRequestId: null,
-            };
-        case 'failure':
-            if (
-                state.activeRevision !== action.revision ||
-                state.successfulRevision >= action.revision
-            ) {
-                return state;
-            }
-
-            return {
-                ...state,
-                activeRevision: null,
-                failedRefresh: {
-                    revision: action.revision,
-                    requestData: action.requestData,
-                },
-            };
-    }
-}
-
 type LumiLaboProjectMockViewProps = {
     projectList: LumiLaboMockProjectList;
-    initialDeletedProjectIds: readonly string[];
-    initialProjectOverrides: readonly LumiLaboMockProjectOverride[];
 };
 
 export default function LumiLaboProjectMockView({
     projectList,
-    initialDeletedProjectIds,
-    initialProjectOverrides,
 }: LumiLaboProjectMockViewProps) {
     const [activeScreen, setActiveScreen] =
         useState<LumiLaboMockScreen>('top');
@@ -486,13 +352,9 @@ export default function LumiLaboProjectMockView({
         );
     const [projectOverrides, setProjectOverrides] = useState<
         Record<string, LumiLaboMockProjectDetailDraft | undefined>
-    >(() => createProjectOverrideRecord(initialProjectOverrides));
+    >({});
     const [deletedProjectIds, setDeletedProjectIds] =
-        useState<ReadonlySet<string>>(() =>
-            createLumiLaboMockInitialDeletedProjectIds(
-                initialDeletedProjectIds,
-            ),
-        );
+        useState<ReadonlySet<string>>(new Set());
     const [savingProjectIds, setSavingProjectIds] = useState<ReadonlySet<string>>(
         new Set(),
     );
@@ -507,69 +369,7 @@ export default function LumiLaboProjectMockView({
         useState(false);
     const [projectSessions, setProjectSessions] =
         useState<LumiLaboMockProjectSessionById>({});
-    const [projectListRefreshState, setProjectListRefreshState] = useState(
-        createLumiLaboProjectListRefreshState,
-    );
-    const projectListRefreshStateRef = useRef(projectListRefreshState);
-    const updateProjectListRefreshState = useCallback(
-        (action: LumiLaboProjectListRefreshAction) => {
-            const current = projectListRefreshStateRef.current;
-            const next = reduceLumiLaboProjectListRefreshState(
-                current,
-                action,
-            );
-
-            if (next !== current) {
-                projectListRefreshStateRef.current = next;
-                setProjectListRefreshState(next);
-            }
-
-            return next;
-        },
-        [],
-    );
-    const startProjectListRefresh = useCallback(
-        (revision: number) => {
-            const current = projectListRefreshStateRef.current;
-
-            return (
-                updateProjectListRefreshState({ type: 'start', revision }) !==
-                current
-            );
-        },
-        [updateProjectListRefreshState],
-    );
-    const completeProjectListRefresh = useCallback(
-        (revision: number) =>
-            updateProjectListRefreshState({ type: 'success', revision }),
-        [updateProjectListRefreshState],
-    );
-    const failProjectListRefresh = useCallback(
-        (revision: number, requestData: LumiLaboProjectListRequestData) =>
-            updateProjectListRefreshState({
-                type: 'failure',
-                revision,
-                requestData,
-            }),
-        [updateProjectListRefreshState],
-    );
-    const startProjectListNormalRequest = useCallback(() => {
-        const current = projectListRefreshStateRef.current;
-        const next = updateProjectListRefreshState({ type: 'start-normal' });
-
-        return next === current ? null : next.activeNormalRequestId;
-    }, [updateProjectListRefreshState]);
-    const finishProjectListNormalRequest = useCallback(
-        (requestId: number) =>
-            updateProjectListRefreshState({
-                type: 'finish-normal',
-                requestId,
-            }),
-        [updateProjectListRefreshState],
-    );
-    const deletedProjectIdsRef = useRef<ReadonlySet<string>>(
-        createLumiLaboMockInitialDeletedProjectIds(initialDeletedProjectIds),
-    );
+    const deletedProjectIdsRef = useRef<ReadonlySet<string>>(new Set());
     const projectSessionsRef = useRef<LumiLaboMockProjectSessionById>({});
     const saveCompleteTimerRef = useRef<
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
@@ -784,7 +584,6 @@ export default function LumiLaboProjectMockView({
                 ...current,
                 [savedProjectId]: savedDraft,
             }));
-            updateProjectListRefreshState({ type: 'request' });
             setSavingProjectIds((current) =>
                 removeProjectId(current, savedProjectId),
             );
@@ -926,7 +725,6 @@ export default function LumiLaboProjectMockView({
                 null,
             ),
         );
-        updateProjectListRefreshState({ type: 'request' });
         setSelectedProjectId(null);
         setProjectDetail(null);
         setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
@@ -979,39 +777,25 @@ export default function LumiLaboProjectMockView({
                     />
                 ) : null}
 
-                {activeScreen === 'project' && activeProjectViewId === 'list' ? (
-                    <LumiLaboProjectListPanel
-                        projectList={projectList}
-                        projectOverrides={projectOverrides}
-                        deletedProjectIds={Array.from(deletedProjectIds)}
-                        projectListRefreshRevision={
-                            projectListRefreshState.requestedRevision
+                {activeScreen === 'project' &&
+                activeProjectTabId === 'list' ? (
+                    <div
+                        className={
+                            activeProjectViewId === 'list'
+                                ? 'h-full min-h-0'
+                                : 'hidden'
                         }
-                        activeRefreshRevision={
-                            projectListRefreshState.activeRevision
-                        }
-                        activeNormalRequestId={
-                            projectListRefreshState.activeNormalRequestId
-                        }
-                        lastSuccessfulRefreshRevision={
-                            projectListRefreshState.successfulRevision
-                        }
-                        failedRefreshRequest={
-                            projectListRefreshState.failedRefresh
-                        }
-                        onProjectListRefreshStart={startProjectListRefresh}
-                        onProjectListRefreshSuccess={completeProjectListRefresh}
-                        onProjectListRefreshFailure={failProjectListRefresh}
-                        onProjectListNormalRequestStart={
-                            startProjectListNormalRequest
-                        }
-                        onProjectListNormalRequestFinish={
-                            finishProjectListNormalRequest
-                        }
-                        backTargetId="project-top"
-                        onOpenProjectDetail={openProjectDetailFromList}
-                        onBack={handleBackFromProjectList}
-                    />
+                        hidden={activeProjectViewId !== 'list'}
+                    >
+                        <LumiLaboProjectListPanel
+                            projectList={projectList}
+                            projectOverrides={projectOverrides}
+                            deletedProjectIds={Array.from(deletedProjectIds)}
+                            backTargetId="project-top"
+                            onOpenProjectDetail={openProjectDetailFromList}
+                            onBack={handleBackFromProjectList}
+                        />
+                    </div>
                 ) : null}
 
                 {activeScreen === 'project' &&
@@ -1783,17 +1567,6 @@ function createProjectDetailDraft(
         address: projectDetail.address,
         memo: projectDetail.memo,
     };
-}
-
-export function createProjectOverrideRecord(
-    projectOverrides: readonly LumiLaboMockProjectOverride[],
-): Record<string, LumiLaboMockProjectDetailDraft | undefined> {
-    return Object.fromEntries(
-        projectOverrides.map(({ id, ...projectOverride }) => [
-            id,
-            projectOverride,
-        ]),
-    );
 }
 
 function hasProjectDetailDraftChanged(

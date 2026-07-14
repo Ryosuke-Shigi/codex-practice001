@@ -1,219 +1,138 @@
-import { router } from '@inertiajs/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('@inertiajs/react', () => ({
-    router: {
-        get: vi.fn(),
-    },
-}));
+import { describe, expect, it } from 'vitest';
 
 import {
-    calculateLumiLaboProjectListPerPage,
-    createLumiLaboProjectListRequestCallbacks,
-    createLumiLaboProjectListRequestData,
-    getNextLumiLaboProjectListRefreshRevision,
-    shouldReloadLumiLaboProjectList,
-    visitLumiLaboProjectListRefresh,
-    LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
-    LUMILABO_PROJECT_LIST_PARTIAL_PROPS,
-} from "./LumiLaboProjectListPanel";
+    filterAndSortLumiLaboProjects,
+    paginateLumiLaboProjects,
+} from './LumiLaboProjectListPanel';
+import type { LumiLaboMockProjectListItem } from './types';
 
-describe("LumiLaboProjectListPanel measurement and partial reload contract", () => {
-    beforeEach(() => {
-        vi.mocked(router.get).mockReset();
-    });
+const items = [
+    {
+        id: 'one',
+        companyName: '会社A',
+        contactName: '田中',
+        address: '大阪',
+        memo: '初回',
+        registeredDate: '2026/07/12',
+    },
+    {
+        id: 'two',
+        companyName: '会社B',
+        contactName: '佐藤',
+        address: '岸和田',
+        memo: '確認',
+        registeredDate: '2026/07/12',
+    },
+    {
+        id: 'three',
+        companyName: '会社C',
+        contactName: '山田',
+        address: '大阪',
+        memo: '初回',
+        registeredDate: '2026/07/01',
+    },
+] satisfies readonly LumiLaboMockProjectListItem[];
 
-    it("keeps deleted project IDs in a list reload request", () => {
-        expect(
-            createLumiLaboProjectListRequestData(
-                {
-                    keyword: "",
-                    sort: "registered_desc",
-                    page: 2,
-                    perPage: 7,
-                },
-                ["mock-project-001", "mock-project-004"],
-                {
-                    "mock-project-002": {
-                        companyName: "保存後の会社名",
-                        contactName: "保存後の担当者名",
-                        address: "保存後の住所",
-                        memo: "保存後のメモ",
-                    },
-                },
-            ),
-        ).toEqual({
-            keyword: undefined,
-            sort: "registered_desc",
-            page: 2,
-            per_page: 7,
-            deleted_ids: ["mock-project-001", "mock-project-004"],
-            overrides: [
-                {
-                    id: "mock-project-002",
-                    company_name: "保存後の会社名",
-                    contact_name: "保存後の担当者名",
-                    address: "保存後の住所",
-                    memo: "保存後のメモ",
-                },
-            ],
-        });
-    });
-    it("calculates a whole-row page size from the list region and row height", () => {
-        expect(calculateLumiLaboProjectListPerPage(701, 100)).toBe(7);
-        expect(calculateLumiLaboProjectListPerPage(99, 100)).toBe(1);
-        expect(calculateLumiLaboProjectListPerPage(2100, 100)).toBe(
-            LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
+function projectIds(projects: readonly LumiLaboMockProjectListItem[]) {
+    return projects.map((project) => project.id);
+}
+
+describe('LumiLaboProjectListPanel client list', () => {
+    it.each([
+        ['会社A', 'one'],
+        ['佐藤', 'two'],
+        ['岸和田', 'two'],
+        ['確認', 'two'],
+    ])('searches the four fields with %s', (keyword, expectedId) => {
+        const projects = filterAndSortLumiLaboProjects(
+            items,
+            {},
+            [],
+            keyword,
+            'registered_desc',
         );
+
+        expect(projectIds(projects)).toEqual([expectedId]);
     });
 
-    it("waits for measurable list and row dimensions", () => {
-        expect(calculateLumiLaboProjectListPerPage(0, 100)).toBeNull();
-        expect(calculateLumiLaboProjectListPerPage(701, 0)).toBeNull();
+    it('uses AND matching for terms split by half-width or full-width spaces', () => {
+        const search = (keyword: string) =>
+            projectIds(
+                filterAndSortLumiLaboProjects(
+                    items,
+                    {},
+                    [],
+                    keyword,
+                    'registered_desc',
+                ),
+            );
+
+        expect(search('大阪 初回')).toEqual(['one', 'three']);
+        expect(search('大阪　初回')).toEqual(['one', 'three']);
     });
 
-    it("reloads only when the measured page size changes", () => {
-        expect(shouldReloadLumiLaboProjectList(null, 3)).toBe(true);
-        expect(shouldReloadLumiLaboProjectList(3, 3)).toBe(false);
-        expect(shouldReloadLumiLaboProjectList(3, 4)).toBe(true);
+    it('sorts by date in both directions and keeps definition order for equal dates', () => {
+        const sort = (direction: 'registered_desc' | 'registered_asc') =>
+            projectIds(
+                filterAndSortLumiLaboProjects(
+                    items,
+                    {},
+                    [],
+                    '',
+                    direction,
+                ),
+            );
+
+        expect(sort('registered_desc')).toEqual(['one', 'two', 'three']);
+        expect(sort('registered_asc')).toEqual(['three', 'one', 'two']);
     });
 
-    it("reloads only the server-owned project list props", () => {
-        expect(LUMILABO_PROJECT_LIST_PARTIAL_PROPS).toEqual(["projectList"]);
-    });
-
-    it("treats only a successful refresh as complete and preserves the failed request for retry", () => {
-        const requestData = createLumiLaboProjectListRequestData(
+    it('applies saved overrides before searching and excludes deleted projects', () => {
+        const projects = filterAndSortLumiLaboProjects(
+            items,
             {
-                keyword: "岸和田",
-                sort: "registered_asc",
-                page: 2,
-                perPage: 5,
-            },
-            ["mock-project-001"],
-        );
-        const completed: string[] = [];
-        const failedRequests: unknown[] = [];
-        const callbacks = createLumiLaboProjectListRequestCallbacks(
-            requestData,
-            {
-                onSuccess: () => completed.push("success"),
-                onFailure: (failedRequest) =>
-                    failedRequests.push(failedRequest),
-            },
-        );
-
-        callbacks.onError();
-        callbacks.onCancel();
-
-        expect(completed).toEqual([]);
-        expect(failedRequests).toEqual([requestData, requestData]);
-
-        callbacks.onSuccess();
-
-        expect(completed).toEqual(["success"]);
-    });
-
-    it('sends a revision refresh with the supplied retry data and only parent lifecycle callbacks', () => {
-        const requestData = createLumiLaboProjectListRequestData(
-            {
-                keyword: '失敗時の検索条件',
-                sort: 'registered_asc',
-                page: 2,
-                perPage: 5,
-            },
-            ['mock-project-001'],
-        );
-        const onSuccess = vi.fn();
-        const onFailure = vi.fn();
-
-        visitLumiLaboProjectListRefresh(
-            '/lab/lumilabo-project-mock',
-            requestData,
-            { onSuccess, onFailure },
-        );
-
-        expect(router.get).toHaveBeenCalledTimes(1);
-        expect(router.get).toHaveBeenCalledWith(
-            '/lab/lumilabo-project-mock',
-            requestData,
-            expect.objectContaining({
-                only: ['projectList'],
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            }),
-        );
-
-        const requestOptions = vi.mocked(router.get).mock.calls[0]?.[2];
-
-        expect(requestOptions).toBeDefined();
-        expect(requestOptions).not.toHaveProperty('onStart');
-        expect(requestOptions).not.toHaveProperty('onFinish');
-
-        requestOptions?.onSuccess?.(undefined as never);
-        requestOptions?.onError?.(undefined as never);
-        requestOptions?.onCancel?.();
-
-        expect(onSuccess).toHaveBeenCalledTimes(1);
-        expect(onFailure).toHaveBeenNthCalledWith(1, requestData);
-        expect(onFailure).toHaveBeenNthCalledWith(2, requestData);
-    });
-
-    it("keeps a newer refresh revision pending until the active revision succeeds", () => {
-        expect(
-            getNextLumiLaboProjectListRefreshRevision(1, 0, null, null, null),
-        ).toBe(1);
-        expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 0, 1, null, null),
-        ).toBeNull();
-        expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null, null),
-        ).toBe(2);
-    });
-
-    it("does not complete a pending refresh from an older successful revision", () => {
-        expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null, null),
-        ).toBe(2);
-        expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 1, null, null, 1),
-        ).toBeNull();
-        expect(
-            getNextLumiLaboProjectListRefreshRevision(2, 2, null, null, null),
-        ).toBeNull();
-    });
-
-    it("builds a later revision with the latest save and deletion state", () => {
-        expect(
-            createLumiLaboProjectListRequestData(
-                {
-                    keyword: "",
-                    sort: "registered_desc",
-                    page: 1,
-                    perPage: 5,
+                two: {
+                    companyName: '保存後会社',
+                    contactName: '新担当者',
+                    address: '新住所',
+                    memo: '新メモ',
                 },
-                ["mock-project-004"],
-                {
-                    "mock-project-002": {
-                        companyName: "案件Bの保存後会社名",
-                        contactName: "",
-                        address: "大阪府堺市",
-                        memo: "",
-                    },
-                },
-            ),
-        ).toMatchObject({
-            deleted_ids: ["mock-project-004"],
-            overrides: [
-                {
-                    id: "mock-project-002",
-                    company_name: "案件Bの保存後会社名",
-                    contact_name: "",
-                    address: "大阪府堺市",
-                    memo: "",
-                },
-            ],
+            },
+            ['one'],
+            '保存後会社 新担当者',
+            'registered_asc',
+        );
+
+        expect(projectIds(projects)).toEqual(['two']);
+        expect(projects[0]?.companyName).toBe('保存後会社');
+    });
+
+    it('moves between client pages and clamps an out-of-range page', () => {
+        const firstPage = paginateLumiLaboProjects(items, 1, 2);
+        const nextPage = paginateLumiLaboProjects(items, 2, 2);
+        const clampedPage = paginateLumiLaboProjects(items.slice(0, 2), 2, 2);
+
+        expect(projectIds(firstPage.items)).toEqual(['one', 'two']);
+        expect(firstPage).toMatchObject({ currentPage: 1, totalPages: 2 });
+        expect(projectIds(nextPage.items)).toEqual(['three']);
+        expect(nextPage).toMatchObject({ currentPage: 2, totalPages: 2 });
+        expect(projectIds(clampedPage.items)).toEqual(['one', 'two']);
+        expect(clampedPage).toMatchObject({ currentPage: 1, totalPages: 1 });
+    });
+
+    it('returns an empty first page after every project is deleted', () => {
+        const remaining = filterAndSortLumiLaboProjects(
+            items,
+            {},
+            items.map((project) => project.id),
+            '',
+            'registered_desc',
+        );
+
+        expect(paginateLumiLaboProjects(remaining, 4, 2)).toEqual({
+            currentPage: 1,
+            totalPages: 1,
+            items: [],
         });
     });
 });
