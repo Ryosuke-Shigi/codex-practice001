@@ -1,4 +1,9 @@
-import type { ChangeEvent, DragEvent, MutableRefObject } from 'react';
+import type {
+    ChangeEvent,
+    DragEvent,
+    MutableRefObject,
+    RefObject,
+} from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowLeft,
@@ -39,6 +44,7 @@ import {
     lumiLaboTopReturnLabel,
 } from './mockData';
 import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
+import ProjectPhotoCaptureFeature from './ProjectPhotoCapture/ProjectPhotoCaptureFeature';
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectDetail,
@@ -103,12 +109,14 @@ type ProjectDetailPanelProps = BackActionProps & {
     isSaving: boolean;
     saveMessageVisible: boolean;
     droppedFileNames: readonly string[];
+    fileInputRef: RefObject<HTMLInputElement | null>;
     onChangeDraftField: (
         fieldId: LumiLaboMockProjectDetailEditableFieldId,
         value: string,
     ) => void;
     onSave: () => void;
     onDropFiles: (files: FileList | null) => void;
+    onOpenPhotoCapture: () => void;
     onRemoveSavedPhoto: (photoId: string) => void;
     onRemoveSavedFile: (fileId: string) => void;
     onRequestDeleteProject: () => void;
@@ -367,9 +375,11 @@ export default function LumiLaboProjectMockView({
         useState<Record<string, readonly string[] | undefined>>({});
     const [isProjectDeleteDialogOpen, setIsProjectDeleteDialogOpen] =
         useState(false);
+    const [isPhotoCaptureOpen, setIsPhotoCaptureOpen] = useState(false);
     const [projectSessions, setProjectSessions] =
         useState<LumiLaboMockProjectSessionById>({});
     const deletedProjectIdsRef = useRef<ReadonlySet<string>>(new Set());
+    const projectDetailFileInputRef = useRef<HTMLInputElement>(null);
     const projectSessionsRef = useRef<LumiLaboMockProjectSessionById>({});
     const saveCompleteTimerRef = useRef<
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
@@ -471,6 +481,11 @@ export default function LumiLaboProjectMockView({
         setIsProjectDeleteDialogOpen(false);
         setActiveProjectTabId(projectDetailReturnTarget.projectTabId);
         setActiveProjectViewId(projectDetailReturnTarget.projectViewId);
+    };
+
+    const useFileSelectionFromPhotoCapture = () => {
+        projectDetailFileInputRef.current?.click();
+        setIsPhotoCaptureOpen(false);
     };
 
     const updateProjectDetailDraft = (
@@ -813,9 +828,11 @@ export default function LumiLaboProjectMockView({
                         isSaving={isProjectDetailSaving}
                         saveMessageVisible={projectDetailSavedVisible}
                         droppedFileNames={droppedFileNames}
+                        fileInputRef={projectDetailFileInputRef}
                         onChangeDraftField={updateProjectDetailDraft}
                         onSave={saveProjectDetail}
                         onDropFiles={updateDroppedFiles}
+                        onOpenPhotoCapture={() => setIsPhotoCaptureOpen(true)}
                         onRemoveSavedPhoto={removeSavedPhoto}
                         onRemoveSavedFile={removeSavedFile}
                         onRequestDeleteProject={requestProjectDelete}
@@ -825,6 +842,12 @@ export default function LumiLaboProjectMockView({
                     />
                 ) : null}
             </main>
+            {isPhotoCaptureOpen ? (
+                <ProjectPhotoCaptureFeature
+                    onClose={() => setIsPhotoCaptureOpen(false)}
+                    onUseFileSelection={useFileSelectionFromPhotoCapture}
+                />
+            ) : null}
         </article>
     );
 }
@@ -973,9 +996,11 @@ function ProjectDetailPanel({
     isSaving,
     saveMessageVisible,
     droppedFileNames,
+    fileInputRef,
     onChangeDraftField,
     onSave,
     onDropFiles,
+    onOpenPhotoCapture,
     onRemoveSavedPhoto,
     onRemoveSavedFile,
     onRequestDeleteProject,
@@ -1093,6 +1118,7 @@ function ProjectDetailPanel({
                             <button
                                 type="button"
                                 className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
+                                onClick={onOpenPhotoCapture}
                             >
                                 <Camera className="h-5 w-5" aria-hidden />
                                 <span>写真を撮影する</span>
@@ -1107,6 +1133,7 @@ function ProjectDetailPanel({
                             <FileDropZone
                                 droppedFileNames={droppedFileNames}
                                 onDropFiles={onDropFiles}
+                                inputRef={fileInputRef}
                             />
                             <SavedFilePreview
                                 projectDetail={projectDetail}
@@ -1278,9 +1305,11 @@ function MapPreview({ href }: { href: string }) {
 function FileDropZone({
     droppedFileNames,
     onDropFiles,
+    inputRef,
 }: {
     droppedFileNames: readonly string[];
     onDropFiles: (files: FileList | null) => void;
+    inputRef: RefObject<HTMLInputElement | null>;
 }) {
     const inputId = 'lumilabo-project-detail-files';
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1308,6 +1337,7 @@ function FileDropZone({
                     ファイルを選択、またはまとめてドラッグ＆ドロップ
                 </span>
                 <input
+                    ref={inputRef}
                     id={inputId}
                     type="file"
                     multiple

@@ -465,4 +465,88 @@ describe('LumiLaboProjectMock client interactions', () => {
             '[@media(orientation:landscape)_and_(max-height:480px)]:min-h-10',
         );
     });
+
+    it('opens and closes the camera feature without replacing the existing file input or making a request', async () => {
+        const track = { stop: vi.fn() };
+        const stream = {
+            getTracks: () => [track],
+        } as unknown as MediaStream;
+        const getUserMedia = vi.fn().mockResolvedValue(stream);
+        const fetchRequest = vi.fn();
+        vi.stubGlobal('navigator', {
+            mediaDevices: {
+                getUserMedia,
+                enumerateDevices: vi.fn().mockResolvedValue([
+                    { kind: 'videoinput', deviceId: 'rear-camera' },
+                ]),
+            },
+        });
+        vi.stubGlobal('fetch', fetchRequest);
+        openProjectList();
+        clickProject('会社A');
+
+        const fileInput = container.querySelector<HTMLInputElement>(
+            'input[aria-label="ファイルをまとめて選択"]',
+        );
+
+        expect(fileInput?.type).toBe('file');
+        expect(fileInput?.multiple).toBe(true);
+
+        await act(async () => {
+            findButton('写真を撮影する').click();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(getUserMedia).toHaveBeenCalledWith({
+            audio: false,
+            video: { facingMode: { ideal: 'environment' } },
+        });
+        expect(container.textContent).toContain('案件写真を撮影');
+        expect(fetchRequest).not.toHaveBeenCalled();
+
+        clickButton('閉じる');
+
+        expect(track.stop).toHaveBeenCalledTimes(1);
+        expect(container.textContent).not.toContain('案件写真を撮影');
+        expect(
+            container.querySelector('input[aria-label="ファイルをまとめて選択"]'),
+        ).toBe(fileInput);
+    });
+
+    it('returns to the existing file picker when camera permission is denied', async () => {
+        const getUserMedia = vi
+            .fn()
+            .mockRejectedValue(
+                new DOMException('permission denied', 'NotAllowedError'),
+            );
+        vi.stubGlobal('navigator', {
+            mediaDevices: {
+                getUserMedia,
+                enumerateDevices: vi.fn().mockResolvedValue([]),
+            },
+        });
+        openProjectList();
+        clickProject('会社A');
+        const fileInput = container.querySelector<HTMLInputElement>(
+            'input[aria-label="ファイルをまとめて選択"]',
+        );
+
+        expect(fileInput).toBeInstanceOf(HTMLInputElement);
+        const inputClick = vi.spyOn(fileInput as HTMLInputElement, 'click');
+
+        await act(async () => {
+            findButton('写真を撮影する').click();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        expect(container.textContent).toContain(
+            'カメラの利用が許可されませんでした。',
+        );
+        clickButton('ファイルを選択する');
+
+        expect(inputClick).toHaveBeenCalledTimes(1);
+        expect(container.textContent).not.toContain('案件写真を撮影');
+    });
 });
