@@ -604,14 +604,21 @@ describe('LumiLaboProjectMock client interactions', () => {
         clickButton('写真を撮影する');
         clickButton('完了');
 
-        expect(container.textContent).not.toContain('今回撮影した写真');
+        expect(
+            container.querySelector('img[alt^="撮影写真"]'),
+        ).toBeNull();
         clickButton('案件一覧へ戻る');
         clickProject('会社A');
-        expect(container.textContent).toContain('今回撮影した写真');
+        expect(container.textContent).not.toContain('今回撮影した写真');
+        expect(
+            Array.from(container.querySelectorAll('h3')).filter(
+                (heading) => heading.textContent === '保存済み写真',
+            ),
+        ).toHaveLength(1);
         expect(
             Array.from(
                 container.querySelectorAll<HTMLImageElement>(
-                    'img[alt^="今回撮影した写真"]',
+                    'img[alt^="撮影写真"]',
                 ),
             ).map((image) => image.src),
         ).toEqual(['blob:photo-1', 'blob:photo-2']);
@@ -621,15 +628,19 @@ describe('LumiLaboProjectMock client interactions', () => {
 
         clickButton('案件一覧へ戻る');
         clickProject('会社B');
-        expect(container.textContent).not.toContain('今回撮影した写真');
+        expect(
+            container.querySelector('img[alt^="撮影写真"]'),
+        ).toBeNull();
         clickButton('案件一覧へ戻る');
         clickProject('会社A');
-        expect(container.textContent).toContain('今回撮影した写真');
+        expect(
+            container.querySelector('img[alt^="撮影写真"]'),
+        ).not.toBeNull();
 
         act(() => {
             container
                 .querySelector<HTMLButtonElement>(
-                    'button[aria-label="今回撮影した写真 1を削除"]',
+                    'button[aria-label="撮影写真 1を削除"]',
                 )
                 ?.click();
         });

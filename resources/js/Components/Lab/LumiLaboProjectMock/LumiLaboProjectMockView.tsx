@@ -1246,12 +1246,14 @@ function ProjectDetailPanel({
                                 <Camera className="h-5 w-5" aria-hidden />
                                 <span>写真を撮影する</span>
                             </button>
-                            <TemporaryCapturedPhotoPreview
-                                photos={temporaryCapturedPhotos}
-                                onRemovePhoto={onRemoveTemporaryCapturedPhoto}
-                            />
                             <SavedPhotoPreview
                                 projectDetail={projectDetail}
+                                temporaryCapturedPhotos={
+                                    temporaryCapturedPhotos
+                                }
+                                onRemoveTemporaryCapturedPhoto={
+                                    onRemoveTemporaryCapturedPhoto
+                                }
                                 onRemoveSavedPhoto={onRemoveSavedPhoto}
                             />
                         </section>
@@ -1525,57 +1527,21 @@ function ProjectDeleteConfirmDialog({
     );
 }
 
-function TemporaryCapturedPhotoPreview({
-    photos,
-    onRemovePhoto,
-}: {
-    photos: readonly ProjectCapturedPhoto[];
-    onRemovePhoto: (photoId: string) => void;
-}) {
-    if (photos.length === 0) {
-        return null;
-    }
-
-    return (
-        <section className="mt-4 grid gap-3 rounded-[4px] border border-yellow-300 bg-yellow-50/80 p-3">
-            <h3 className="text-xl font-black text-black">
-                今回撮影した写真
-            </h3>
-            <div className="flex flex-wrap gap-3">
-                {photos.map((photo, index) => {
-                    const label = `今回撮影した写真 ${index + 1}`;
-
-                    return (
-                        <div key={photo.id} className="relative h-24 w-32">
-                            <img
-                                src={photo.objectUrl}
-                                alt={label}
-                                className="h-full w-full rounded-[4px] border border-stone-300 object-cover"
-                            />
-                            <button
-                                type="button"
-                                aria-label={`${label}を削除`}
-                                className="absolute right-1 top-1 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
-                                onClick={() => onRemovePhoto(photo.id)}
-                            >
-                                <X className="h-5 w-5" aria-hidden />
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
-        </section>
-    );
-}
-
 function SavedPhotoPreview({
     projectDetail,
+    temporaryCapturedPhotos,
+    onRemoveTemporaryCapturedPhoto,
     onRemoveSavedPhoto,
 }: {
     projectDetail: LumiLaboMockProjectDetail;
+    temporaryCapturedPhotos: readonly ProjectCapturedPhoto[];
+    onRemoveTemporaryCapturedPhoto: (photoId: string) => void;
     onRemoveSavedPhoto: (photoId: string) => void;
 }) {
-    if (projectDetail.savedPhotos.length === 0) {
+    if (
+        projectDetail.savedPhotos.length === 0 &&
+        temporaryCapturedPhotos.length === 0
+    ) {
         return null;
     }
 
@@ -1607,6 +1573,29 @@ function SavedPhotoPreview({
                         </button>
                     </div>
                 ))}
+                {temporaryCapturedPhotos.map((photo, index) => {
+                    const label = `撮影写真 ${index + 1}`;
+
+                    return (
+                        <div key={photo.id} className="relative h-24 w-32">
+                            <img
+                                src={photo.objectUrl}
+                                alt={label}
+                                className="h-full w-full rounded-[4px] border border-stone-300 object-cover"
+                            />
+                            <button
+                                type="button"
+                                aria-label={`${label}を削除`}
+                                className="absolute right-1 top-1 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                                onClick={() =>
+                                    onRemoveTemporaryCapturedPhoto(photo.id)
+                                }
+                            >
+                                <X className="h-5 w-5" aria-hidden />
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
         </section>
     );
