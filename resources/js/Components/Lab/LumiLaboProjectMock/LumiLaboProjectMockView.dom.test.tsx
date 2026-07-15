@@ -578,6 +578,13 @@ describe('LumiLaboProjectMock client interactions', () => {
         clickButton('案件');
         clickButton('一覧');
         clickProject('会社A');
+        expect(
+            Array.from(
+                container.querySelectorAll(
+                    '[role="img"][aria-label^="保存済み現場写真"]',
+                ),
+            ).map((photo) => photo.textContent?.trim()),
+        ).toEqual(['', '', '']);
         clickButton('写真を撮影する');
         await act(async () => {
             await Promise.resolve();

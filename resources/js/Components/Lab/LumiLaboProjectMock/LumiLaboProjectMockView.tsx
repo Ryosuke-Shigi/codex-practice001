@@ -1556,9 +1556,6 @@ function SavedPhotoPreview({
                             aria-label={photo.alt}
                             className="relative h-full w-full overflow-hidden rounded-[4px] border border-stone-300 bg-sky-100"
                         >
-                            <span className="absolute left-2 top-2 inline-flex h-7 min-w-9 items-center justify-center rounded-[4px] bg-white px-2 text-base font-black text-black">
-                                {photo.label}
-                            </span>
                             <span className="absolute right-3 top-[50%] h-5 w-5 rounded-full bg-yellow-200" />
                             <span className="absolute bottom-3 left-2 h-0 w-0 border-b-[32px] border-l-[52px] border-r-[30px] border-b-green-600 border-l-transparent border-r-transparent" />
                             <span className="absolute bottom-3 left-9 h-0 w-0 border-b-[26px] border-l-[38px] border-r-[38px] border-b-green-700 border-l-transparent border-r-transparent" />

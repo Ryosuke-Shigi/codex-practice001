@@ -69,7 +69,6 @@ export type LumiLaboMockProjectDetailDraft = Record<
 
 export type LumiLaboMockProjectSavedPhoto = {
     id: string;
-    label: string;
     alt: string;
 };
 
