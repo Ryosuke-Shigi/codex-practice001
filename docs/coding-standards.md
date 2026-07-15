@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-12
+- Last reviewed: 2026-07-15
 
 ## このドキュメントの目的
 
@@ -67,6 +67,12 @@ PHPDocには必要に応じて `@param`、`@return`、`@throws` を使います�
 ただし、PHPの型宣言と完全に重複するだけのPHPDocは追加しません。
 
 Action PHPDocにはユースケース、呼び出すService、成功条件を中心に書きます。Service PHPDocには業務判断、入力、出力、置かない責務を書きます。業務仕様は `docs/features/`、実行可能な仕様固定はTestへ置き、PHPDocへ細かい期待値を詰め込みません。
+
+### Dependency Injection
+
+DI方針の正本は `docs/architecture.md` です。協調オブジェクトはconstructor injectionを基本とし、Framework / Containerがmethod parameterを解決する入口だけで必要な依存はmethod injectionを使います。Listenerの協調依存はconstructor injectionで受けます。Action / Service / Repositoryなどの内部で `app()`、`resolve()`、Container直接参照により依存を探索せず、協調Service、Repository、外部Clientを処理内部で直接 `new` しません。
+
+DTO、ListDTO、Value Object、Event、Exceptionなどのデータ・値の生成は協調依存の生成と区別し、DTOへServiceやRepositoryを注入しません。interfaceとbindingを機械的に増やさず、JobのconstructorへServiceやRepositoryなどの実行依存を保持させません。Jobの実行依存は必要に応じて `handle()` で注入し、singletonは必要性とlifecycleを確認してから選びます。
 
 ### DTO / ListDTO
 

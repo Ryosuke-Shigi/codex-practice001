@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-15
 
 ## このドキュメントの目的
 
@@ -363,6 +363,8 @@ UI契約が壊れていないか確認
 - 壊してはいけない表示仕様
 
 ## Fixture / Fake / Mock
+
+Fake実装への差し替えは、テスト境界のContainer bindingなどで行います。単体テストではconstructor経由の差し替えも使いますが、本番コードからContainerを探索しません。Mock作成だけを理由に不要なinterfaceを追加せず、Infrastructure境界のFakeとServiceの業務判断テストを混同しません。具象依存を差し替えにくい場合は、無条件にinterfaceを増やす前に責務と依存方向を確認します。
 
 テスト本体へ長いXML・JSON・巨大payload・複雑な匿名クラスを書きすぎません。
 
