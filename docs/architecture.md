@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-06-28
+- Last reviewed: 2026-07-15
 
 ## このドキュメントの目的
 
@@ -507,6 +507,48 @@ ResponderはHTTP、Inertia、JSON、CSV、PDF、Download等の出力整形が必
 
 呼び出し方向を逆転させ、Common ComponentやDTOからRepositoryを呼ぶような構成にしません。
 
+## Dependency Injection / Service Container
+
+DIはレイヤー間の責務を曖昧にするためではなく、依存方向と差し替え境界を明示するために使います。
+
+### 基本原則
+
+- 継続的に利用する協調オブジェクトは、原則としてconstructor injectionで受け取る
+- Controller、Action、Service、Repository実装、Responder、Strategy、Factoryなどの依存関係をconstructorで明示する
+- 依存解決はLaravel Service Containerと既存の適切なServiceProviderで行う
+- ActionやServiceなどの内部で `app()`、`resolve()`、Container直接参照により依存を探索しない
+- 協調するService、Repository、外部Clientなどを処理内部で直接 `new` しない
+- hidden dependency、循環依存、Service Locator化を許可しない
+
+### 値の生成
+
+Service Containerから解決する協調オブジェクトと、処理中に生成するデータ・値を区別します。DTO、ListDTO、Input DTO、ResultDTO、Value Object、Eventとして渡す事実データ、Exception、副作用を持たない単純な値オブジェクトは `new` で生成してよく、Container管理のServiceとして扱いません。
+
+DTO / ListDTO / Request / EventへService、Repository、Containerなどを注入して責務を移動しません。
+
+### interfaceを使う条件
+
+interfaceまたは契約境界を設けるのは、主に複数実装の切替、外部API・Storage・通知・永続化などのInfrastructure境界、環境・設定による実装切替、Framework・SDK・外部Clientの具象からの分離、設計上必要なFake、または依存方向を内側へ保つ必要がある場合です。
+
+実装が1つで差し替え境界がなく、Laravelの具象クラスautowiringで責務とテスト可能性を維持できる場合は、不要なinterfaceを追加しません。「Mockしやすい」だけを理由に全クラスをinterface化しません。
+
+interfaceの配置は、契約を必要とする側の責務に従います。存在しないディレクトリ構成や命名規則を推測で追加しません。
+
+### Laravel入口ごとの注入方法
+
+- Controller、Action、Serviceなどの通常依存はconstructor injectionを基本とする
+- JobのconstructorにはQueueへ安全にシリアライズできるpayloadを置き、ServiceやRepositoryなどの実行依存は必要に応じて `handle()` のmethod injectionで受け取る
+- Listenerの協調依存はconstructor injectionで受け、`handle()` にはDispatcherから渡されるEventを受け取る
+- Jobの `handle()`、Artisan Commandの `handle()`、Controller methodなど、Framework / Containerがmethod parameterを解決する入口の単一処理だけに必要な依存はmethod injectionを使用できる
+- method injectionを依存関係を隠すために乱用しない
+- Eventは発生した事実を表すデータに限定し、Service、Repository、Containerを保持しない
+
+### bindingとFactory
+
+interfaceと実装のbindingは既存の適切なServiceProviderへ置き、binding、実装選択、環境分岐、生成条件をActionやServiceへ置きません。Laravelが自動解決できる具象クラスまで機械的にbindingせず、通常binding、singleton、scopedを目的なく混同しません。singletonは状態、lifecycle、副作用、request間共有の安全性を確認してから使います。環境別bindingでは、環境差分とテスト方法を確認可能にします。
+
+既存Factoryが実装クラスを選択する場合、その役割は注入済み候補からの実行時選択です。Container探索や依存グラフ構築は担いません。
+
 ## 機能固有仕様の配置
 
 次は共通docsではなく `docs/features/` に置きます。
@@ -561,5 +603,8 @@ ResponderはHTTP、Inertia、JSON、CSV、PDF、Download等の出力整形が必
 - ComponentへLaravel側の業務ルールが入っていないか
 - 主要なPHPDoc、JSDoc、コメント、型が意図・制約・変更時の注意を回収できる状態か
 - 不要なFactory / Strategy / Eventを増やしていないか
+- 協調依存がconstructorまたはLaravel入口のmethod injectionで明示され、Service Locator化していないか
+- DTO / ListDTO / Request / EventへServiceやRepositoryを注入していないか
+- interface、binding、singletonを差し替え境界やlifecycleの確認なしに増やしていないか
 - 機能固有仕様を共通docsへ混ぜていないか
 - 必要なテストが追加・更新されているか
