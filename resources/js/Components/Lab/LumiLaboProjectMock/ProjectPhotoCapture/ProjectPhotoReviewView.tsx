@@ -25,7 +25,7 @@ export default function ProjectPhotoReviewView({
     }
 
     return (
-        <div className="flex h-[100dvh] min-h-0 flex-col bg-neutral-950 text-white">
+        <div className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-neutral-950 text-white [@media(min-width:768px)_and_(min-height:600px)]:h-[min(90dvh,56rem)] [@media(min-width:768px)_and_(min-height:600px)]:max-h-[calc(100dvh-3rem)] [@media(min-width:768px)_and_(min-height:600px)]:max-w-4xl [@media(min-width:768px)_and_(min-height:600px)]:rounded-2xl [@media(min-width:768px)_and_(min-height:600px)]:border [@media(min-width:768px)_and_(min-height:600px)]:border-white/15 [@media(min-width:768px)_and_(min-height:600px)]:shadow-2xl">
             <header className="grid min-h-16 grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-center border-b border-white/10 px-2 pt-[env(safe-area-inset-top)] sm:px-4">
                 <button
                     type="button"

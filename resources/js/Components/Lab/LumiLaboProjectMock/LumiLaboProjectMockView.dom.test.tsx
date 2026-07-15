@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, type ReactNode } from 'react';
+import { act, type ReactNode, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -466,7 +466,7 @@ describe('LumiLaboProjectMock client interactions', () => {
         );
     });
 
-    it('opens and closes the camera feature without replacing the existing file input or making a request', async () => {
+    it('opens and completes the camera feature without replacing the existing file input or making a request', async () => {
         const track = { stop: vi.fn() };
         const stream = {
             getTracks: () => [track],
@@ -505,13 +505,204 @@ describe('LumiLaboProjectMock client interactions', () => {
         expect(container.textContent).toContain('案件写真を撮影');
         expect(fetchRequest).not.toHaveBeenCalled();
 
-        clickButton('閉じる');
+        expect(
+            container.querySelector('button[aria-label="閉じる"]'),
+        ).toBeNull();
+        clickButton('完了');
 
         expect(track.stop).toHaveBeenCalledTimes(1);
         expect(container.textContent).not.toContain('案件写真を撮影');
         expect(
             container.querySelector('input[aria-label="ファイルをまとめて選択"]'),
         ).toBe(fileInput);
+    });
+
+    it('keeps completed photos per project and releases their object URLs from the detail owner', async () => {
+        const track = { stop: vi.fn() };
+        const stream = {
+            getTracks: () => [track],
+        } as unknown as MediaStream;
+        const getUserMedia = vi.fn().mockResolvedValue(stream);
+        const fetchRequest = vi.fn();
+        const createObjectUrl = vi
+            .fn()
+            .mockReturnValueOnce('blob:photo-1')
+            .mockReturnValueOnce('blob:photo-2');
+        const revokeObjectUrl = vi.fn();
+        vi.stubGlobal('navigator', {
+            mediaDevices: {
+                getUserMedia,
+                enumerateDevices: vi.fn().mockResolvedValue([
+                    { kind: 'videoinput', deviceId: 'rear-camera' },
+                ]),
+            },
+        });
+        vi.stubGlobal('fetch', fetchRequest);
+        vi.stubGlobal('URL', {
+            createObjectURL: createObjectUrl,
+            revokeObjectURL: revokeObjectUrl,
+        });
+        Object.defineProperties(HTMLVideoElement.prototype, {
+            clientHeight: { configurable: true, get: () => 844 },
+            clientWidth: { configurable: true, get: () => 390 },
+            videoHeight: { configurable: true, get: () => 720 },
+            videoWidth: { configurable: true, get: () => 1280 },
+        });
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+            drawImage: vi.fn(),
+        } as unknown as CanvasRenderingContext2D);
+        Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+            configurable: true,
+            value: vi.fn((callback: BlobCallback) => {
+                callback(new Blob(['photo'], { type: 'image/jpeg' }));
+            }),
+        });
+
+        function Host() {
+            const [isPageMounted, setIsPageMounted] = useState(true);
+
+            return isPageMounted ? (
+                <>
+                    <LumiLaboProjectMockView projectList={projectList} />
+                    <button type="button" onClick={() => setIsPageMounted(false)}>
+                        ページを破棄
+                    </button>
+                </>
+            ) : (
+                <p>ページを破棄しました</p>
+            );
+        }
+
+        render(<Host />);
+        clickButton('Start');
+        clickButton('案件');
+        clickButton('一覧');
+        clickProject('会社A');
+        clickButton('写真を撮影する');
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        const shutter = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="写真を撮影"]',
+        );
+        expect(shutter).toBeInstanceOf(HTMLButtonElement);
+        await act(async () => {
+            shutter?.click();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        await act(async () => {
+            shutter?.click();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        clickButton('案件一覧へ戻る');
+        clickProject('会社B');
+        clickButton('写真を撮影する');
+        clickButton('完了');
+
+        expect(container.textContent).not.toContain('今回撮影した写真');
+        clickButton('案件一覧へ戻る');
+        clickProject('会社A');
+        expect(container.textContent).toContain('今回撮影した写真');
+        expect(
+            Array.from(
+                container.querySelectorAll<HTMLImageElement>(
+                    'img[alt^="今回撮影した写真"]',
+                ),
+            ).map((image) => image.src),
+        ).toEqual(['blob:photo-1', 'blob:photo-2']);
+        expect(revokeObjectUrl).not.toHaveBeenCalled();
+        expect(track.stop).toHaveBeenCalledTimes(1);
+        expect(fetchRequest).not.toHaveBeenCalled();
+
+        clickButton('案件一覧へ戻る');
+        clickProject('会社B');
+        expect(container.textContent).not.toContain('今回撮影した写真');
+        clickButton('案件一覧へ戻る');
+        clickProject('会社A');
+        expect(container.textContent).toContain('今回撮影した写真');
+
+        act(() => {
+            container
+                .querySelector<HTMLButtonElement>(
+                    'button[aria-label="今回撮影した写真 1を削除"]',
+                )
+                ?.click();
+        });
+        expect(revokeObjectUrl).toHaveBeenCalledTimes(1);
+        expect(revokeObjectUrl).toHaveBeenCalledWith('blob:photo-1');
+
+        clickButton('ページを破棄');
+        expect(container.textContent).toContain('ページを破棄しました');
+        expect(revokeObjectUrl).toHaveBeenCalledTimes(2);
+        expect(revokeObjectUrl).toHaveBeenLastCalledWith('blob:photo-2');
+    });
+
+    it('releases captured photos when their originating project is deleted before completion', async () => {
+        const track = { stop: vi.fn() };
+        const stream = {
+            getTracks: () => [track],
+        } as unknown as MediaStream;
+        vi.stubGlobal('navigator', {
+            mediaDevices: {
+                getUserMedia: vi.fn().mockResolvedValue(stream),
+                enumerateDevices: vi.fn().mockResolvedValue([
+                    { kind: 'videoinput', deviceId: 'rear-camera' },
+                ]),
+            },
+        });
+        const revokeObjectUrl = vi.fn();
+        vi.stubGlobal('URL', {
+            createObjectURL: vi.fn().mockReturnValue('blob:deleted-project-photo'),
+            revokeObjectURL: revokeObjectUrl,
+        });
+        Object.defineProperties(HTMLVideoElement.prototype, {
+            clientHeight: { configurable: true, get: () => 844 },
+            clientWidth: { configurable: true, get: () => 390 },
+            videoHeight: { configurable: true, get: () => 720 },
+            videoWidth: { configurable: true, get: () => 1280 },
+        });
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+            drawImage: vi.fn(),
+        } as unknown as CanvasRenderingContext2D);
+        Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+            configurable: true,
+            value: vi.fn((callback: BlobCallback) => {
+                callback(new Blob(['photo'], { type: 'image/jpeg' }));
+            }),
+        });
+
+        openProjectList();
+        clickProject('会社A');
+        clickButton('写真を撮影する');
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+        await act(async () => {
+            container
+                .querySelector<HTMLButtonElement>(
+                    'button[aria-label="写真を撮影"]',
+                )
+                ?.click();
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        clickButton('案件を削除する');
+        clickButton('はい');
+        clickButton('完了');
+
+        expect(revokeObjectUrl).toHaveBeenCalledTimes(1);
+        expect(revokeObjectUrl).toHaveBeenCalledWith(
+            'blob:deleted-project-photo',
+        );
+        expect(track.stop).toHaveBeenCalledTimes(1);
+        expect(container.textContent).not.toContain('案件写真を撮影');
     });
 
     it('returns to the existing file picker when camera permission is denied', async () => {

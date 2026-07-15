@@ -5,43 +5,43 @@ import ProjectPhotoCaptureView from './ProjectPhotoCaptureView';
 import ProjectPhotoReviewView from './ProjectPhotoReviewView';
 import type {
     ProjectCapturedPhoto,
-    ProjectPhotoCaptureViewId,
+    ProjectPhotoCaptureScreen,
 } from './types';
 import useCameraStream from './useCameraStream';
 
 type ProjectPhotoCaptureFeatureProps = {
-    onClose: () => void;
+    onComplete: (photos: readonly ProjectCapturedPhoto[]) => void;
     onUseFileSelection: () => void;
 };
 
 export default function ProjectPhotoCaptureFeature({
-    onClose,
+    onComplete,
     onUseFileSelection,
 }: ProjectPhotoCaptureFeatureProps) {
     const camera = useCameraStream();
     const videoRef = useRef<HTMLVideoElement>(null);
     const photosRef = useRef<readonly ProjectCapturedPhoto[]>([]);
+    const ownsPhotosRef = useRef(true);
     const isMountedRef = useRef(true);
     const nextPhotoIdRef = useRef(1);
-    const [viewId, setViewId] =
-        useState<ProjectPhotoCaptureViewId>('capture');
+    const [screen, setScreen] = useState<ProjectPhotoCaptureScreen>({
+        id: 'capture',
+    });
     const [photos, setPhotos] = useState<readonly ProjectCapturedPhoto[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isCapturing, setIsCapturing] = useState(false);
     const [captureError, setCaptureError] = useState<string | null>(null);
 
     useEffect(() => {
-        photosRef.current = photos;
-    }, [photos]);
-
-    useEffect(() => {
         isMountedRef.current = true;
 
         return () => {
             isMountedRef.current = false;
-            photosRef.current.forEach((photo) => {
-                URL.revokeObjectURL(photo.objectUrl);
-            });
+            if (ownsPhotosRef.current) {
+                photosRef.current.forEach((photo) => {
+                    URL.revokeObjectURL(photo.objectUrl);
+                });
+            }
         };
     }, []);
 
@@ -71,7 +71,13 @@ export default function ProjectPhotoCaptureFeature({
             };
 
             nextPhotoIdRef.current += 1;
-            setPhotos((current) => [...current, nextPhoto]);
+            setPhotos((current) => {
+                const nextPhotos = [...current, nextPhoto];
+
+                photosRef.current = nextPhotos;
+
+                return nextPhotos;
+            });
         } catch {
             if (isMountedRef.current) {
                 setCaptureError(
@@ -91,15 +97,7 @@ export default function ProjectPhotoCaptureFeature({
         }
 
         setSelectedIndex(index);
-        setViewId('review');
-    };
-
-    const finishCapture = () => {
-        if (photos.length === 0) {
-            return;
-        }
-
-        openReview(photos.length - 1);
+        setScreen({ id: 'review' });
     };
 
     const deleteSelectedPhoto = () => {
@@ -112,11 +110,12 @@ export default function ProjectPhotoCaptureFeature({
         URL.revokeObjectURL(selectedPhoto.objectUrl);
         const nextPhotos = photos.filter((photo) => photo.id !== selectedPhoto.id);
 
+        photosRef.current = nextPhotos;
         setPhotos(nextPhotos);
 
         if (nextPhotos.length === 0) {
             setSelectedIndex(0);
-            setViewId('capture');
+            setScreen({ id: 'capture' });
 
             return;
         }
@@ -124,14 +123,19 @@ export default function ProjectPhotoCaptureFeature({
         setSelectedIndex(Math.min(selectedIndex, nextPhotos.length - 1));
     };
 
+    const completeCapture = () => {
+        ownsPhotosRef.current = false;
+        onComplete([...photosRef.current]);
+    };
+
     return (
         <div
             role="dialog"
             aria-modal="true"
             aria-label="案件写真の連続撮影"
-            className="fixed inset-0 z-[80] bg-neutral-950"
+            className="fixed inset-0 z-[80] bg-neutral-950 [@media(min-width:768px)_and_(min-height:600px)]:grid [@media(min-width:768px)_and_(min-height:600px)]:place-items-center [@media(min-width:768px)_and_(min-height:600px)]:bg-neutral-950/80 [@media(min-width:768px)_and_(min-height:600px)]:p-6"
         >
-            {viewId === 'capture' ? (
+            {screen.id === 'capture' ? (
                 <ProjectPhotoCaptureView
                     stream={camera.stream}
                     error={camera.error}
@@ -141,12 +145,11 @@ export default function ProjectPhotoCaptureFeature({
                     captureError={captureError}
                     photos={photos}
                     videoRef={videoRef}
-                    onClose={onClose}
+                    onComplete={completeCapture}
                     onRetry={camera.retry}
                     onSwitchCamera={camera.switchCamera}
                     onCapture={() => void capturePhoto()}
                     onReviewPhoto={openReview}
-                    onFinish={finishCapture}
                     onUseFileSelection={onUseFileSelection}
                 />
             ) : (
@@ -154,7 +157,7 @@ export default function ProjectPhotoCaptureFeature({
                     photos={photos}
                     selectedIndex={selectedIndex}
                     onSelectPhoto={setSelectedIndex}
-                    onBack={() => setViewId('capture')}
+                    onBack={() => setScreen({ id: 'capture' })}
                     onDelete={deleteSelectedPhoto}
                 />
             )}

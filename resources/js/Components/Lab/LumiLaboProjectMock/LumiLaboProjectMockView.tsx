@@ -45,6 +45,7 @@ import {
 } from './mockData';
 import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
 import ProjectPhotoCaptureFeature from './ProjectPhotoCapture/ProjectPhotoCaptureFeature';
+import type { ProjectCapturedPhoto } from './ProjectPhotoCapture/types';
 import type {
     LumiLaboMockGlobalTabId,
     LumiLaboMockProjectDetail,
@@ -78,6 +79,11 @@ const lumiLaboProjectListReturnTarget = {
 
 type ProjectActionTabId = Exclude<LumiLaboMockProjectTabId, 'top'>;
 
+type LumiLaboTemporaryCapturedPhotosByProjectId = Record<
+    string,
+    readonly ProjectCapturedPhoto[] | undefined
+>;
+
 type ProjectBackTargetId = 'select' | 'project-top' | 'detail-return-target';
 
 type FileTagBarProps<TId extends string> = {
@@ -109,6 +115,7 @@ type ProjectDetailPanelProps = BackActionProps & {
     isSaving: boolean;
     saveMessageVisible: boolean;
     droppedFileNames: readonly string[];
+    temporaryCapturedPhotos: readonly ProjectCapturedPhoto[];
     fileInputRef: RefObject<HTMLInputElement | null>;
     onChangeDraftField: (
         fieldId: LumiLaboMockProjectDetailEditableFieldId,
@@ -117,6 +124,7 @@ type ProjectDetailPanelProps = BackActionProps & {
     onSave: () => void;
     onDropFiles: (files: FileList | null) => void;
     onOpenPhotoCapture: () => void;
+    onRemoveTemporaryCapturedPhoto: (photoId: string) => void;
     onRemoveSavedPhoto: (photoId: string) => void;
     onRemoveSavedFile: (fileId: string) => void;
     onRequestDeleteProject: () => void;
@@ -373,14 +381,20 @@ export default function LumiLaboProjectMockView({
         useState<Record<string, string | undefined>>({});
     const [droppedFileNamesByProjectId, setDroppedFileNamesByProjectId] =
         useState<Record<string, readonly string[] | undefined>>({});
+    const [temporaryCapturedPhotosByProjectId, setTemporaryCapturedPhotosByProjectId] =
+        useState<LumiLaboTemporaryCapturedPhotosByProjectId>({});
     const [isProjectDeleteDialogOpen, setIsProjectDeleteDialogOpen] =
         useState(false);
     const [isPhotoCaptureOpen, setIsPhotoCaptureOpen] = useState(false);
     const [projectSessions, setProjectSessions] =
         useState<LumiLaboMockProjectSessionById>({});
     const deletedProjectIdsRef = useRef<ReadonlySet<string>>(new Set());
+    const photoCaptureProjectIdRef = useRef<string | null>(null);
     const projectDetailFileInputRef = useRef<HTMLInputElement>(null);
     const projectSessionsRef = useRef<LumiLaboMockProjectSessionById>({});
+    const temporaryCapturedPhotosByProjectIdRef =
+        useRef<LumiLaboTemporaryCapturedPhotosByProjectId>({});
+    const nextTemporaryCapturedPhotoIdRef = useRef(1);
     const saveCompleteTimerRef = useRef<
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
     >({});
@@ -398,6 +412,10 @@ export default function LumiLaboProjectMockView({
         projectDetail === null
             ? []
             : (droppedFileNamesByProjectId[projectDetail.id] ?? []);
+    const temporaryCapturedPhotos =
+        projectDetail === null
+            ? []
+            : (temporaryCapturedPhotosByProjectId[projectDetail.id] ?? []);
 
     const hasProjectDetailChanges = hasProjectDetailDraftChanged(
         projectDetailDraft,
@@ -408,6 +426,11 @@ export default function LumiLaboProjectMockView({
         return () => {
             clearProjectTimers(saveCompleteTimerRef);
             clearProjectTimers(saveMessageTimerRef);
+            Object.values(
+                temporaryCapturedPhotosByProjectIdRef.current,
+            ).forEach((photos) => {
+                revokeProjectCapturedPhotos(photos ?? []);
+            });
         };
     }, []);
 
@@ -485,7 +508,87 @@ export default function LumiLaboProjectMockView({
 
     const useFileSelectionFromPhotoCapture = () => {
         projectDetailFileInputRef.current?.click();
+        photoCaptureProjectIdRef.current = null;
         setIsPhotoCaptureOpen(false);
+    };
+
+    const openPhotoCapture = () => {
+        if (
+            projectDetail === null ||
+            photoCaptureProjectIdRef.current !== null
+        ) {
+            return;
+        }
+
+        photoCaptureProjectIdRef.current = projectDetail.id;
+        setIsPhotoCaptureOpen(true);
+    };
+
+    const completePhotoCapture = (
+        completedPhotos: readonly ProjectCapturedPhoto[],
+    ) => {
+        const projectId = photoCaptureProjectIdRef.current;
+
+        photoCaptureProjectIdRef.current = null;
+        if (
+            projectId === null ||
+            deletedProjectIdsRef.current.has(projectId)
+        ) {
+            revokeProjectCapturedPhotos(completedPhotos);
+            setIsPhotoCaptureOpen(false);
+
+            return;
+        }
+
+        const transferredPhotos = completedPhotos.map((photo) => ({
+            ...photo,
+            id: `temporary-capture-${nextTemporaryCapturedPhotoIdRef.current++}`,
+        }));
+        const nextPhotos = [
+            ...(temporaryCapturedPhotosByProjectIdRef.current[projectId] ?? []),
+            ...transferredPhotos,
+        ];
+        const nextPhotosByProjectId = {
+            ...temporaryCapturedPhotosByProjectIdRef.current,
+            [projectId]: nextPhotos,
+        };
+
+        temporaryCapturedPhotosByProjectIdRef.current = nextPhotosByProjectId;
+        setTemporaryCapturedPhotosByProjectId(nextPhotosByProjectId);
+        setIsPhotoCaptureOpen(false);
+    };
+
+    const removeTemporaryCapturedPhoto = (photoId: string) => {
+        if (projectDetail === null) {
+            return;
+        }
+
+        const projectId = projectDetail.id;
+        const currentPhotos =
+            temporaryCapturedPhotosByProjectIdRef.current[projectId] ?? [];
+        const removedPhoto = currentPhotos.find((photo) => photo.id === photoId);
+
+        if (removedPhoto === undefined) {
+            return;
+        }
+
+        URL.revokeObjectURL(removedPhoto.objectUrl);
+        const remainingPhotos = currentPhotos.filter(
+            (photo) => photo.id !== photoId,
+        );
+        const nextPhotosByProjectId =
+            remainingPhotos.length === 0
+                ? removeProjectRecord(
+                      temporaryCapturedPhotosByProjectIdRef.current,
+                      projectId,
+                  )
+                : {
+                      ...temporaryCapturedPhotosByProjectIdRef.current,
+                      [projectId]: remainingPhotos,
+                  };
+
+        temporaryCapturedPhotosByProjectIdRef.current = nextPhotosByProjectId;
+        setTemporaryCapturedPhotosByProjectId(nextPhotosByProjectId);
     };
 
     const updateProjectDetailDraft = (
@@ -713,6 +816,20 @@ export default function LumiLaboProjectMockView({
 
         clearProjectTimer(saveCompleteTimerRef, deletedProjectId);
         clearProjectTimer(saveMessageTimerRef, deletedProjectId);
+        revokeProjectCapturedPhotos(
+            temporaryCapturedPhotosByProjectIdRef.current[deletedProjectId] ??
+                [],
+        );
+        const nextTemporaryCapturedPhotosByProjectId = removeProjectRecord(
+            temporaryCapturedPhotosByProjectIdRef.current,
+            deletedProjectId,
+        );
+
+        temporaryCapturedPhotosByProjectIdRef.current =
+            nextTemporaryCapturedPhotosByProjectId;
+        setTemporaryCapturedPhotosByProjectId(
+            nextTemporaryCapturedPhotosByProjectId,
+        );
         const nextDeletedProjectIds = addProjectId(
             deletedProjectIdsRef.current,
             deletedProjectId,
@@ -828,11 +945,15 @@ export default function LumiLaboProjectMockView({
                         isSaving={isProjectDetailSaving}
                         saveMessageVisible={projectDetailSavedVisible}
                         droppedFileNames={droppedFileNames}
+                        temporaryCapturedPhotos={temporaryCapturedPhotos}
                         fileInputRef={projectDetailFileInputRef}
                         onChangeDraftField={updateProjectDetailDraft}
                         onSave={saveProjectDetail}
                         onDropFiles={updateDroppedFiles}
-                        onOpenPhotoCapture={() => setIsPhotoCaptureOpen(true)}
+                        onOpenPhotoCapture={openPhotoCapture}
+                        onRemoveTemporaryCapturedPhoto={
+                            removeTemporaryCapturedPhoto
+                        }
                         onRemoveSavedPhoto={removeSavedPhoto}
                         onRemoveSavedFile={removeSavedFile}
                         onRequestDeleteProject={requestProjectDelete}
@@ -844,7 +965,7 @@ export default function LumiLaboProjectMockView({
             </main>
             {isPhotoCaptureOpen ? (
                 <ProjectPhotoCaptureFeature
-                    onClose={() => setIsPhotoCaptureOpen(false)}
+                    onComplete={completePhotoCapture}
                     onUseFileSelection={useFileSelectionFromPhotoCapture}
                 />
             ) : null}
@@ -996,11 +1117,13 @@ function ProjectDetailPanel({
     isSaving,
     saveMessageVisible,
     droppedFileNames,
+    temporaryCapturedPhotos,
     fileInputRef,
     onChangeDraftField,
     onSave,
     onDropFiles,
     onOpenPhotoCapture,
+    onRemoveTemporaryCapturedPhoto,
     onRemoveSavedPhoto,
     onRemoveSavedFile,
     onRequestDeleteProject,
@@ -1123,6 +1246,10 @@ function ProjectDetailPanel({
                                 <Camera className="h-5 w-5" aria-hidden />
                                 <span>写真を撮影する</span>
                             </button>
+                            <TemporaryCapturedPhotoPreview
+                                photos={temporaryCapturedPhotos}
+                                onRemovePhoto={onRemoveTemporaryCapturedPhoto}
+                            />
                             <SavedPhotoPreview
                                 projectDetail={projectDetail}
                                 onRemoveSavedPhoto={onRemoveSavedPhoto}
@@ -1398,6 +1525,49 @@ function ProjectDeleteConfirmDialog({
     );
 }
 
+function TemporaryCapturedPhotoPreview({
+    photos,
+    onRemovePhoto,
+}: {
+    photos: readonly ProjectCapturedPhoto[];
+    onRemovePhoto: (photoId: string) => void;
+}) {
+    if (photos.length === 0) {
+        return null;
+    }
+
+    return (
+        <section className="mt-4 grid gap-3 rounded-[4px] border border-yellow-300 bg-yellow-50/80 p-3">
+            <h3 className="text-xl font-black text-black">
+                今回撮影した写真
+            </h3>
+            <div className="flex flex-wrap gap-3">
+                {photos.map((photo, index) => {
+                    const label = `今回撮影した写真 ${index + 1}`;
+
+                    return (
+                        <div key={photo.id} className="relative h-24 w-32">
+                            <img
+                                src={photo.objectUrl}
+                                alt={label}
+                                className="h-full w-full rounded-[4px] border border-stone-300 object-cover"
+                            />
+                            <button
+                                type="button"
+                                aria-label={`${label}を削除`}
+                                className="absolute right-1 top-1 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stone-300 bg-white text-black shadow-sm transition hover:border-red-500 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
+                                onClick={() => onRemovePhoto(photo.id)}
+                            >
+                                <X className="h-5 w-5" aria-hidden />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
 function SavedPhotoPreview({
     projectDetail,
     onRemoveSavedPhoto,
@@ -1625,6 +1795,14 @@ export function removeProjectId(
     nextProjectIds.delete(projectId);
 
     return nextProjectIds;
+}
+
+function revokeProjectCapturedPhotos(
+    photos: readonly ProjectCapturedPhoto[],
+) {
+    photos.forEach((photo) => {
+        URL.revokeObjectURL(photo.objectUrl);
+    });
 }
 
 function removeProjectRecord<T>(

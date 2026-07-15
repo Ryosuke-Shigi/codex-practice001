@@ -42,6 +42,8 @@ beforeEach(() => {
         revokeObjectURL: revokeObjectUrl,
     });
     Object.defineProperties(HTMLVideoElement.prototype, {
+        clientHeight: { configurable: true, get: () => 844 },
+        clientWidth: { configurable: true, get: () => 390 },
         videoHeight: { configurable: true, get: () => 720 },
         videoWidth: { configurable: true, get: () => 1280 },
     });
@@ -148,7 +150,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -172,7 +174,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -196,7 +198,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -222,7 +224,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -254,6 +256,136 @@ describe('ProjectPhotoCaptureFeature', () => {
             container.querySelector<HTMLImageElement>('img[alt="撮影写真 2"]')
                 ?.src,
         ).toContain('blob:photo-2');
+        expect(container.textContent).not.toContain('撮影を完了');
+    });
+
+    it('keeps the camera stage dimensions independent from the overlay controls and thumbnails', async () => {
+        const { stream } = createMockStream('rear');
+        getMediaDevices(vi.fn().mockResolvedValue(stream));
+        createObjectUrl.mockReturnValue('blob:photo');
+
+        render(
+            <ProjectPhotoCaptureFeature
+                onComplete={vi.fn()}
+                onUseFileSelection={vi.fn()}
+            />,
+        );
+        await flushCameraStart();
+
+        const stage = container.querySelector(
+            '[data-project-photo-capture-stage]',
+        );
+        const topOverlay = container.querySelector(
+            '[data-project-photo-capture-top-overlay]',
+        );
+        const bottomOverlay = container.querySelector(
+            '[data-project-photo-capture-bottom-overlay]',
+        );
+        const dialog = container.querySelector('[role="dialog"]');
+        const actions = container.querySelector(
+            '[data-project-photo-capture-actions]',
+        );
+        const guideOverlay = container.querySelector(
+            '[data-camera-preview-layer] + [aria-hidden]',
+        );
+
+        expect(stage).not.toBeNull();
+        expect(stage?.contains(container.querySelector('video'))).toBe(true);
+        expect(stage?.contains(topOverlay)).toBe(true);
+        expect(stage?.contains(bottomOverlay)).toBe(true);
+        expect(topOverlay?.className).toContain('absolute');
+        expect(bottomOverlay?.className).toContain('absolute');
+        expect(
+            container.querySelector('[data-project-photo-thumbnail-strip]'),
+        ).toBeNull();
+        expect(container.textContent).not.toContain(
+            '撮影した写真がここに表示されます',
+        );
+        expect(actions?.className).toContain('justify-center');
+        expect(
+            container.querySelector('button[aria-label="閉じる"]'),
+        ).toBeNull();
+        expect(findButton('完了').disabled).toBe(false);
+        expect(guideOverlay?.querySelectorAll('span')).toHaveLength(0);
+        expect(dialog?.className).toContain(
+            '[@media(min-width:768px)_and_(min-height:600px)]:grid',
+        );
+        expect(stage?.className).toContain(
+            '[@media(min-width:768px)_and_(min-height:600px)]:max-w-4xl',
+        );
+
+        await click(
+            container.querySelector<HTMLButtonElement>(
+                'button[aria-label="写真を撮影"]',
+            ) as HTMLButtonElement,
+        );
+
+        expect(
+            container.querySelector('[data-project-photo-capture-stage]'),
+        ).toBe(stage);
+        const thumbnailStrip = container.querySelector(
+            '[data-project-photo-thumbnail-strip]',
+        );
+        expect(bottomOverlay?.contains(thumbnailStrip)).toBe(true);
+        expect(thumbnailStrip?.className).toContain('overflow-x-auto');
+        expect(thumbnailStrip?.className).toContain('overflow-y-hidden');
+    });
+
+    it('uses thumbnail review only for an individual photo and completes directly from the top action', async () => {
+        const { stream, track } = createMockStream('rear');
+        const getUserMedia = vi.fn().mockResolvedValue(stream);
+        const onComplete = vi.fn();
+        getMediaDevices(getUserMedia);
+        createObjectUrl
+            .mockReturnValueOnce('blob:photo-1')
+            .mockReturnValueOnce('blob:photo-2');
+
+        function Host() {
+            const [isOpen, setIsOpen] = useState(true);
+
+            return isOpen ? (
+                <ProjectPhotoCaptureFeature
+                    onComplete={(photos) => {
+                        onComplete(photos);
+                        setIsOpen(false);
+                    }}
+                    onUseFileSelection={vi.fn()}
+                />
+            ) : (
+                <p>案件詳細へ戻りました</p>
+            );
+        }
+
+        render(<Host />);
+        await flushCameraStart();
+        const shutter = container.querySelector<HTMLButtonElement>(
+            'button[aria-label="写真を撮影"]',
+        );
+        await click(shutter as HTMLButtonElement);
+        await click(shutter as HTMLButtonElement);
+
+        await click(
+            container.querySelector<HTMLButtonElement>(
+                'button[aria-label="1枚目の写真を確認"]',
+            ) as HTMLButtonElement,
+        );
+        expect(container.textContent).toContain('写真を確認');
+        expect(container.textContent).not.toContain('撮影を完了');
+        await click(findButton('戻る'));
+
+        expect(container.textContent).not.toContain('撮影結果を確認');
+        expect(container.textContent).not.toContain('撮影を続ける');
+        await click(findButton('完了'));
+
+        expect(container.textContent).toContain('案件詳細へ戻りました');
+        expect(onComplete).toHaveBeenCalledTimes(1);
+        expect(
+            onComplete.mock.calls[0]?.[0].map(
+                (photo: { objectUrl: string }) => photo.objectUrl,
+            ),
+        ).toEqual(['blob:photo-1', 'blob:photo-2']);
+        expect(revokeObjectUrl).not.toHaveBeenCalled();
+        expect(track.stop).toHaveBeenCalledTimes(1);
     });
 
     it('switches photos, deletes only the selected photo, and returns after the last deletion', async () => {
@@ -265,7 +397,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -275,7 +407,11 @@ describe('ProjectPhotoCaptureFeature', () => {
         );
         await click(shutter as HTMLButtonElement);
         await click(shutter as HTMLButtonElement);
-        await click(findButton('撮影を終了して確認'));
+        await click(
+            container.querySelector<HTMLButtonElement>(
+                'button[aria-label="2枚目の写真を確認"]',
+            ) as HTMLButtonElement,
+        );
 
         expect(container.textContent).toContain('2 / 2');
         const firstThumbnail = container.querySelector<HTMLButtonElement>(
@@ -305,7 +441,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -315,7 +451,11 @@ describe('ProjectPhotoCaptureFeature', () => {
                 'button[aria-label="写真を撮影"]',
             ) as HTMLButtonElement,
         );
-        await click(findButton('撮影を終了して確認'));
+        await click(
+            container.querySelector<HTMLButtonElement>(
+                'button[aria-label="1枚目の写真を確認"]',
+            ) as HTMLButtonElement,
+        );
         await click(findButton('戻る'));
 
         expect(container.textContent).toContain('案件写真を撮影');
@@ -334,7 +474,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
@@ -349,7 +489,7 @@ describe('ProjectPhotoCaptureFeature', () => {
         expect(front.track.stop).not.toHaveBeenCalled();
     });
 
-    it('stops the stream and revokes remaining object URLs when closed', async () => {
+    it('stops the stream and revokes remaining object URLs when abandoned', async () => {
         const { stream, track } = createMockStream('rear');
         getMediaDevices(vi.fn().mockResolvedValue(stream));
         createObjectUrl.mockReturnValue('blob:photo');
@@ -358,10 +498,15 @@ describe('ProjectPhotoCaptureFeature', () => {
             const [isOpen, setIsOpen] = useState(true);
 
             return isOpen ? (
-                <ProjectPhotoCaptureFeature
-                    onClose={() => setIsOpen(false)}
-                    onUseFileSelection={vi.fn()}
-                />
+                <>
+                    <ProjectPhotoCaptureFeature
+                        onComplete={vi.fn()}
+                        onUseFileSelection={vi.fn()}
+                    />
+                    <button type="button" onClick={() => setIsOpen(false)}>
+                        撮影Featureを破棄
+                    </button>
+                </>
             ) : (
                 <p>撮影画面を閉じました</p>
             );
@@ -374,7 +519,7 @@ describe('ProjectPhotoCaptureFeature', () => {
                 'button[aria-label="写真を撮影"]',
             ) as HTMLButtonElement,
         );
-        await click(findButton('閉じる'));
+        await click(findButton('撮影Featureを破棄'));
 
         expect(container.textContent).toContain('撮影画面を閉じました');
         expect(track.stop).toHaveBeenCalledTimes(1);
@@ -397,10 +542,15 @@ describe('ProjectPhotoCaptureFeature', () => {
             const [isOpen, setIsOpen] = useState(true);
 
             return isOpen ? (
-                <ProjectPhotoCaptureFeature
-                    onClose={() => setIsOpen(false)}
-                    onUseFileSelection={vi.fn()}
-                />
+                <>
+                    <ProjectPhotoCaptureFeature
+                        onComplete={vi.fn()}
+                        onUseFileSelection={vi.fn()}
+                    />
+                    <button type="button" onClick={() => setIsOpen(false)}>
+                        撮影Featureを破棄
+                    </button>
+                </>
             ) : (
                 <p>撮影画面を閉じました</p>
             );
@@ -415,7 +565,7 @@ describe('ProjectPhotoCaptureFeature', () => {
                 )
                 ?.click();
         });
-        await click(findButton('閉じる'));
+        await click(findButton('撮影Featureを破棄'));
         await act(async () => {
             finishBlob?.(new Blob(['late-photo'], { type: 'image/jpeg' }));
             await Promise.resolve();
@@ -435,7 +585,7 @@ describe('ProjectPhotoCaptureFeature', () => {
 
         render(
             <ProjectPhotoCaptureFeature
-                onClose={vi.fn()}
+                onComplete={vi.fn()}
                 onUseFileSelection={vi.fn()}
             />,
         );
