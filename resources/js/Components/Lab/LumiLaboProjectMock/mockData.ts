@@ -84,9 +84,9 @@ export const lumiLaboProjectDetail = {
     memo: '初回訪問予定。現場確認後に写真と資料を追加する。',
     registeredDate: '2026/07/07',
     savedPhotos: [
-        { id: 'site-photo-1', label: '1', alt: '保存済み現場写真 1' },
-        { id: 'site-photo-2', label: '2', alt: '保存済み現場写真 2' },
-        { id: 'site-photo-3', label: '3', alt: '保存済み現場写真 3' },
+        { id: 'site-photo-1', alt: '保存済み現場写真 1' },
+        { id: 'site-photo-2', alt: '保存済み現場写真 2' },
+        { id: 'site-photo-3', alt: '保存済み現場写真 3' },
     ],
     savedFiles: [
         { id: 'site-file-1', fileName: '現場確認資料.pdf', fileTypeLabel: 'PDF' },

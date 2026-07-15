@@ -19,4 +19,6 @@ export type ProjectCapturedPhoto = {
     objectUrl: string;
 };
 
-export type ProjectPhotoCaptureViewId = 'capture' | 'review';
+export type ProjectPhotoCaptureScreen =
+    | { id: 'capture' }
+    | { id: 'review' };
