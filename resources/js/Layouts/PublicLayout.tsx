@@ -17,6 +17,7 @@ type PublicLayoutProps = PropsWithChildren<{
     className?: string;
     effect?: EffectName;
     effectIntensity?: EffectIntensity;
+    withEffect?: boolean;
 }>;
 
 /*
@@ -29,6 +30,7 @@ export default function PublicLayout({
     className = '',
     effect,
     effectIntensity = 'subtle',
+    withEffect = true,
 }: PublicLayoutProps) {
     /*
      * 保存済み effect は mount 時に一度だけ読みます。
@@ -51,7 +53,9 @@ export default function PublicLayout({
                 Welcome や入口ページは水面を強めにし、内容が多いページは同じ方向性のまま控えめにできます。
                 effect を省略したページでは、直近の Welcome 選択を再利用します。
             */}
-            <EffectLayer effect={resolvedEffect} effectIntensity={effectIntensity} />
+            {withEffect && (
+                <EffectLayer effect={resolvedEffect} effectIntensity={effectIntensity} />
+            )}
 
             {/*
                 z-30 により、リンク、ボタン、カードをすべての背景 layer より上に置きます。

@@ -14,12 +14,13 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
         $sections = app(GetDesignPhilosophySectionsAction::class)->execute();
 
         $this->assertSame([
-            'overview',
-            'responsibility-boundaries',
-            'staged-development',
-            'feedback-controls',
-            'human-led-ai',
-            'verifiable-ai-loop',
+            'hero',
+            'principles',
+            'architecture',
+            'development-stages',
+            'human-ai-flow',
+            'subagents',
+            'engineering-loop',
             'understanding-reboot',
             'closing',
         ], array_map(
@@ -59,11 +60,10 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
             'key' => $key,
             'sort_order' => $sortOrder,
             'enabled' => $enabled,
+            'eyebrow' => 'Section',
             'title' => "{$key} title",
             'lead' => "{$key} lead",
             'body' => "{$key} body",
-            'proof_label' => "{$key} proof",
-            'proof_text' => "{$key} proof text",
         ];
     }
 }

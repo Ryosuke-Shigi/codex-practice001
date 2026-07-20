@@ -15,32 +15,20 @@ class DesignPhilosophyPageTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DesignPhilosophy/Index', false)
-                ->has('sections', 8)
-                ->where('sections.0.key', 'overview')
-                ->where('sections.0.title', '設計思想')
-                ->where('sections.0.eyebrow', 'Design Philosophy')
-                ->where('sections.0.visualType', 'hero')
-                ->where('sections.0.icon', 'Compass')
-                ->has('sections.0.items', 4)
-                ->where('sections.1.key', 'responsibility-boundaries')
-                ->where('sections.1.visualType', 'flow')
-                ->where('sections.2.key', 'staged-development')
-                ->where('sections.2.items.0.label', 'IDEA BOARD')
-                ->where('sections.3.key', 'feedback-controls')
-                ->where('sections.3.icon', 'Radar')
-                ->where('sections.4.key', 'human-led-ai')
-                ->where('sections.4.visualType', 'split')
-                ->where('sections.4.leftLabel', '人間')
-                ->where('sections.4.rightLabel', 'AI')
-                ->has('sections.4.leftItems', 4)
-                ->where('sections.5.key', 'verifiable-ai-loop')
-                ->where('sections.5.title', '検証可能なAI開発ループ')
-                ->where('sections.5.visualType', 'steps')
-                ->has('sections.5.items', 4)
-                ->where('sections.6.key', 'understanding-reboot')
-                ->where('sections.6.visualType', 'sources')
-                ->where('sections.7.key', 'closing')
-                ->where('sections.7.visualType', 'closing')
+                ->has('sections', 9)
+                ->where('sections.0.key', 'hero')
+                ->where('sections.0.title', '責務でつなぐ AI駆動開発')
+                ->where('sections.0.eyebrow', 'ポートフォリオ／設計思想')
+                ->where('sections.1.key', 'principles')
+                ->where('sections.2.key', 'architecture')
+                ->where('sections.2.title', 'コードの責務を、変更理由で分ける。')
+                ->where('sections.3.key', 'development-stages')
+                ->where('sections.4.key', 'human-ai-flow')
+                ->where('sections.5.key', 'subagents')
+                ->where('sections.5.title', '必要な役だけを選ぶ。')
+                ->where('sections.6.key', 'engineering-loop')
+                ->where('sections.7.key', 'understanding-reboot')
+                ->where('sections.8.key', 'closing')
             );
     }
 
@@ -61,12 +49,9 @@ class DesignPhilosophyPageTest extends TestCase
                 ->where('sections.0.key', 'first')
                 ->where('sections.0.sortOrder', 20)
                 ->where('sections.0.title', 'First title')
-                ->where('sections.0.visualType', 'statement')
-                ->where('sections.0.icon', 'Compass')
-                ->where('sections.0.proofLabel', 'Proof')
-                ->where('sections.0.proofText', 'Proof text')
-                ->has('sections.0.items', 0)
-                ->where('sections.0.leftLabel', null)
+                ->where('sections.0.eyebrow', 'Section')
+                ->where('sections.0.lead', 'Lead')
+                ->where('sections.0.body', 'Body')
                 ->where('sections.1.key', 'later')
                 ->where('sections.1.sortOrder', 30)
             );
@@ -81,11 +66,10 @@ class DesignPhilosophyPageTest extends TestCase
             'key' => $key,
             'sort_order' => $sortOrder,
             'enabled' => $enabled,
+            'eyebrow' => 'Section',
             'title' => $title,
             'lead' => 'Lead',
             'body' => 'Body',
-            'proof_label' => 'Proof',
-            'proof_text' => 'Proof text',
         ];
     }
 }
