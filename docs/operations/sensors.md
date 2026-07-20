@@ -119,9 +119,7 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 実行タイプ: Both
 - 実行タイミング: 作業中 / Draft PR作成前 / PR本文更新後 / 完了報告前
 - 検出したい問題:
-  - 作業中に判明した重要な実施事実がタスク内一時事実メモへ回収されず、PR本文の再照合対象から落ちている
-  - 最後に記憶だけからPR本文を作成している
-  - 一時事実メモと最新diff、コマンド結果、CI、Sensors、確認範囲の照合が行われていない
+  - 正本に定めたタスク内一時事実メモの開始・更新・最新状態との照合が行われず、作業中の重要事実が再照合対象から落ちる、または最後に記憶だけからPR本文を作成している
   - 実際に行った重要な作業、検証、照合がPR本文へ記載されていない
   - 実行コマンドの完全な形、実行root、Docker Compose経由のCompose root・service・実行経路が不足している
   - 完全なコマンドをMarkdown表へ入れ、実行した文字列と表示内容が一致していない
@@ -131,7 +129,10 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
   - 人間の確認範囲とCodex Browser、Console、Network、DOM、CSSの確認範囲が混同されている
   - 未実施または未確認の内容を、実施済みまたは確認済みと断定している
   - PR本文が実際のdiff、検証結果、CIと一致していない
-- 参照docs: `docs/templates/pr-summary.md` / `docs/operations/pr-review-strength.md`
+- 参照docs:
+  - `docs/templates/pr-summary.md`: 記録項目とPR本文・コマンド形式
+  - `docs/ai/workflows/work-result-feedback-loop.md`: タスク内一時事実メモのライフサイクルと照合順序
+  - `docs/operations/pr-review-strength.md`: PR確認の強度
 - 現在のLevel: Level 1
 - 将来の自動化候補: PR本文の見出しや機械的に照合できる項目の有無チェック
 - 備考: PR本文の事実性と記載漏れを検出するSensorであり、コード・設計レビュー、製品コード修正、CI fail化は所有しない。意味判断を要する照合を無理にCI failへ押し込まず、機械化できる範囲だけを将来のLevel 2候補とする。
