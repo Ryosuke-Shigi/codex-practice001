@@ -35,9 +35,9 @@ class DesignPhilosophyPageTest extends TestCase
     public function test_design_philosophy_page_renders_sorted_enabled_sections(): void
     {
         Config::set('design_philosophy.sections', [
-            $this->section('later', 30, true, 'Later title'),
-            $this->section('hidden', 10, false, 'Hidden title'),
-            $this->section('first', 20, true, 'First title'),
+            $this->section('architecture', 30, true, 'Architecture title'),
+            $this->section('hero', 10, false, 'Hero title'),
+            $this->section('principles', 20, true, 'Principles title'),
         ]);
 
         $this
@@ -46,13 +46,13 @@ class DesignPhilosophyPageTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('DesignPhilosophy/Index', false)
                 ->has('sections', 2)
-                ->where('sections.0.key', 'first')
+                ->where('sections.0.key', 'principles')
                 ->where('sections.0.sortOrder', 20)
-                ->where('sections.0.title', 'First title')
+                ->where('sections.0.title', 'Principles title')
                 ->where('sections.0.eyebrow', 'Section')
                 ->where('sections.0.lead', 'Lead')
                 ->where('sections.0.body', 'Body')
-                ->where('sections.1.key', 'later')
+                ->where('sections.1.key', 'architecture')
                 ->where('sections.1.sortOrder', 30)
             );
     }

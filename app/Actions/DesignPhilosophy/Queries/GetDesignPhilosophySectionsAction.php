@@ -12,12 +12,9 @@ final readonly class GetDesignPhilosophySectionsAction
     public function execute(): array
     {
         /*
-         * Design Philosophy LP は DB や CMS を持たない紹介ページです。
-         * そのため、本文データの唯一の入口を config に固定します。
-         *
-         * React 側へ固定配列を置くと、Laravel の Feature テストで
-         * enabled / sort_order / props 形状を守りにくくなるため、
-         * ここで config を読んで DTO に変換してから Responder へ渡します。
+         * 固定9章のメタデータを config から取得し、enabled で表示対象を選び、
+         * sort_order 順の DTO へ変換して Responder へ渡します。
+         * 章内のカードや一覧は、Frontend表示契約に閉じた型付き固定データとして React 側が持ちます。
          */
         $sections = config('design_philosophy.sections', []);
 

@@ -100,6 +100,8 @@ describe('DesignPhilosophyView', () => {
         expectedSubagentNames.forEach((name) => {
             expect(container.textContent).toContain(name);
         });
+        expect(container.textContent).toContain('read-onlyのOperations Security監査');
+        expect(container.textContent).toContain('architecture監査後の複雑・高リスク・複数レイヤー実装');
     });
 
     it('Subagentを表示状態だけで分類絞り込みできる', () => {
