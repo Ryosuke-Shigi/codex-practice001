@@ -22,7 +22,8 @@ type PublicLayoutProps = PropsWithChildren<{
 
 /*
  * PublicLayout は Welcome や Lab など、ログイン不要の公開ページ専用レイアウトです。
- * 描画順は「固定背景の EffectLayer」->「実ページ内容の children」に固定します。
+ * 通常は「固定背景の EffectLayer」->「実ページ内容の children」の順で描画し、
+ * ページが withEffect=false を指定した場合だけ共通背景を省略します。
  * 背景実験とページ本体を分けることで、各ページは通常の React / Inertia UI に集中できます。
  */
 export default function PublicLayout({
@@ -49,7 +50,7 @@ export default function PublicLayout({
          */
         <div className="relative min-h-dvh overflow-x-hidden text-white">
             {/*
-                effect と effectIntensity は通常の React props として扱います。
+                effect、effectIntensity、withEffect は通常の React props として扱います。
                 Welcome や入口ページは水面を強めにし、内容が多いページは同じ方向性のまま控えめにできます。
                 effect を省略したページでは、直近の Welcome 選択を再利用します。
             */}

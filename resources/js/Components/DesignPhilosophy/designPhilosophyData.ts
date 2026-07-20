@@ -44,22 +44,32 @@ export const architectureLayers: ArchitectureLayer[] = [
     {
         key: 'Action',
         title: '入口と手順',
-        description: 'HTTPやCLIの入力を1ユースケースの手順へ接続し、業務判断や永続化を持ちません。',
-        responsibilities: ['FormRequest / Request', 'Controller', 'Action / Query', 'Application Authentication'],
+        description: '入力DTOを受け取り、1ユースケースの開始から完了までの処理順序を制御します。',
+        responsibilities: ['Command Action / Query Action', 'Service / Repositoryの呼び出し', 'ResultDTOへの集約', 'Transaction境界の調整'],
     },
     {
         key: 'Domain',
         title: '判断と契約',
         description: '業務判断、データ契約、永続化境界、副作用境界を分離します。',
-        responsibilities: ['Service / Strategy / Factory', 'DTO / Value Object', 'Repository Port / Adapter', 'Event / Listener / Job'],
+        responsibilities: ['Service / Strategy / Factory', 'Repository', 'DTO / ListDTO / Value Object', 'Event / Listener'],
     },
     {
         key: 'Responder',
         title: '利用者へ返す',
         description: '業務結果を、利用者向けの表示・API・参照形式へ変換します。',
-        responsibilities: ['Responder / Presenter', 'Inertia Props / JSON', 'Read Model / Projection', 'React Page / Component'],
+        responsibilities: ['Responder / Presenter', 'Inertia Props / JSON', 'CSV / Excel / PDF', 'StreamDownload / 表示用整形'],
     },
 ];
+
+export const architectureEntryPoints = [
+    { label: 'HTTP入口', component: 'Controller / Request' },
+    { label: 'Queue入口', component: 'Job' },
+] as const;
+
+export const architectureOutput = {
+    label: '表示',
+    component: 'React Page / Component',
+} as const;
 
 export const developmentStages: DevelopmentStage[] = [
     { key: 'IDEA BOARD', label: '構想', description: '利用者と解決する問題を整理します。', details: ['利用者', '解決する問題', '価値', '機能候補', 'フロー', '図や説明'], optional: false },
@@ -88,7 +98,7 @@ export const subagents: SubagentDefinition[] = [
     { name: 'specification_reviewer', group: 'discover', groupLabel: '探索・仕様・設計・環境確認', roleLabel: '仕様監査', description: '指示、正本、コード、Testの矛盾と受入条件を実装前に確認します。' },
     { name: 'architecture_specialist', group: 'discover', groupLabel: '探索・仕様・設計・環境確認', roleLabel: '設計監査', description: 'ADR Pattern、依存方向、DTO境界、DI、テスト可能性を監査します。' },
     { name: 'design_specialist', group: 'discover', groupLabel: '探索・仕様・設計・環境確認', roleLabel: 'UI設計', description: '情報階層、幅別の構成、状態、操作、アクセシビリティを実装前に確認します。' },
-    { name: 'environment_specialist', group: 'discover', groupLabel: '探索・仕様・設計・環境確認', roleLabel: '環境確認', description: 'repo、branch、working tree、runtime、sandbox、実行導線を読み取りで確認します。' },
+    { name: 'environment_specialist', group: 'discover', groupLabel: '探索・仕様・設計・環境確認', roleLabel: '環境確認', description: 'repo、branch、working tree、実行環境、権限境界、実行導線を読み取りで確認します。' },
     { name: 'terra_implementer', group: 'implement', groupLabel: '実装・修正', roleLabel: '横断実装', description: '契約が確定した低リスクな機械的横断変更を、単一writerで実装します。' },
     { name: 'frontend_specialist', group: 'implement', groupLabel: '実装・修正', roleLabel: 'Frontend', description: '確定したUI契約に従い、React・Inertia・TypeScriptと画面状態を実装します。' },
     { name: 'backend_specialist', group: 'implement', groupLabel: '実装・修正', roleLabel: 'Backend', description: '確定した責務配置に従い、LaravelのHTTP・Application・Domain層を実装します。' },

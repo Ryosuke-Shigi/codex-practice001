@@ -2,14 +2,28 @@
 
 namespace App\DTO\DesignPhilosophy\Sections;
 
+use InvalidArgumentException;
+
 final readonly class DesignPhilosophySectionDTO
 {
+    private const SECTION_KEYS = [
+        'hero',
+        'principles',
+        'architecture',
+        'development-stages',
+        'human-ai-flow',
+        'subagents',
+        'engineering-loop',
+        'understanding-reboot',
+        'closing',
+    ];
+
     /*
      * この DTO は LP の1セクション分を運ぶデータキャリアです。
      * DB 取得、表示可否判断、Inertia レスポンス生成は持たせず、
      * config 由来の値を React が受け取りやすい camelCase の props へ写すところまでに限定します。
      */
-    public function __construct(
+    private function __construct(
         public string $key,
         public int $sortOrder,
         public string $eyebrow,
@@ -24,14 +38,20 @@ final readonly class DesignPhilosophySectionDTO
     public static function fromConfig(array $section): self
     {
         /*
-         * config ファイル側は Laravel の慣例に合わせて snake_case を使います。
+         * 固定9章の key だけを受け入れ、config ファイル側は Laravel の慣例に合わせて snake_case を使います。
          * React props 側では camelCase を使いたいので、この生成境界で名前を写し替えます。
          *
          * enabled は Action が表示対象を選ぶための制御値であり、
          * 画面表示に必要な値ではないため DTO には保持しません。
          */
+        $key = $section['key'] ?? null;
+
+        if (! self::supportsKey($key)) {
+            throw new InvalidArgumentException('Unsupported design philosophy section key.');
+        }
+
         return new self(
-            key: (string) $section['key'],
+            key: $key,
             sortOrder: (int) $section['sort_order'],
             eyebrow: (string) ($section['eyebrow'] ?? ''),
             title: (string) $section['title'],
@@ -40,9 +60,14 @@ final readonly class DesignPhilosophySectionDTO
         );
     }
 
+    public static function supportsKey(mixed $key): bool
+    {
+        return is_string($key) && in_array($key, self::SECTION_KEYS, true);
+    }
+
     /**
      * @return array{
-     *     key: string,
+     *     key: 'hero'|'principles'|'architecture'|'development-stages'|'human-ai-flow'|'subagents'|'engineering-loop'|'understanding-reboot'|'closing',
      *     sortOrder: int,
      *     eyebrow: string,
      *     title: string,

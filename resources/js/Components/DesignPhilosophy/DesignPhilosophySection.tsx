@@ -9,6 +9,10 @@ import SubagentCatalog from '@/Components/DesignPhilosophy/SubagentCatalog';
 import UnderstandingReboot from '@/Components/DesignPhilosophy/UnderstandingReboot';
 import type { DesignPhilosophySection as DesignPhilosophySectionData } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
+function assertNever(key: never): never {
+    throw new Error(`Unsupported design philosophy section key: ${key}`);
+}
+
 export default function DesignPhilosophySection({
     section,
 }: {
@@ -34,6 +38,6 @@ export default function DesignPhilosophySection({
         case 'closing':
             return <ClosingStatement section={section} />;
         default:
-            return null;
+            return assertNever(section.key);
     }
 }

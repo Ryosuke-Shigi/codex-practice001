@@ -1,5 +1,9 @@
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
-import { architectureLayers } from '@/Components/DesignPhilosophy/designPhilosophyData';
+import {
+    architectureEntryPoints,
+    architectureLayers,
+    architectureOutput,
+} from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
 export default function ArchitectureMap({
@@ -24,6 +28,31 @@ export default function ArchitectureMap({
                     <span aria-hidden="true">=</span>
                     <span>Action - Domain - Responder</span>
                 </p>
+
+                <div
+                    aria-label="Actionへの実行入口"
+                    className="mt-8 grid min-w-0 gap-3 rounded-[1.35rem] border border-white/15 bg-white/[0.035] p-5 sm:grid-cols-2 sm:p-6"
+                >
+                    {architectureEntryPoints.map((entry) => (
+                        <div
+                            key={entry.label}
+                            className="grid min-w-0 gap-3 rounded-xl bg-white/[0.055] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                        >
+                            <div className="min-w-0">
+                                <p className="text-xs font-black tracking-[0.12em] text-[#f2df3a]">
+                                    {entry.label}
+                                </p>
+                                <p className="mt-1 break-words text-sm font-bold text-[#efefe9] [overflow-wrap:anywhere]">
+                                    {entry.component}
+                                </p>
+                            </div>
+                            <p className="text-sm font-black text-[#f2df3a]">
+                                <span aria-hidden="true">→ </span>
+                                Action
+                            </p>
+                        </div>
+                    ))}
+                </div>
 
                 <div
                     aria-label="Action Domain Responderの責務図"
@@ -62,6 +91,26 @@ export default function ArchitectureMap({
                             </article>
                         </div>
                     ))}
+                </div>
+
+                <div
+                    aria-label="Responderから表示への接続"
+                    className="mt-4 flex min-w-0 flex-wrap items-center justify-end gap-3 rounded-[1.35rem] border border-white/15 bg-white/[0.035] p-5 sm:p-6"
+                >
+                    <span className="text-sm font-black text-[#f2df3a]">
+                        Responder
+                    </span>
+                    <span aria-hidden="true" className="text-xl text-[#f2df3a]">
+                        →
+                    </span>
+                    <div className="min-w-0 rounded-xl bg-white/[0.055] px-4 py-3">
+                        <p className="text-xs font-black tracking-[0.12em] text-[#f2df3a]">
+                            {architectureOutput.label}
+                        </p>
+                        <p className="mt-1 break-words text-sm font-bold text-[#efefe9] [overflow-wrap:anywhere]">
+                            {architectureOutput.component}
+                        </p>
+                    </div>
                 </div>
 
                 <aside className="mt-6 grid min-w-0 gap-5 rounded-[1.35rem] border border-[#f2df3a]/35 bg-[#f2df3a]/10 p-6 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">

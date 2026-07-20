@@ -35,6 +35,7 @@ describe('Welcome entrypoint', () => {
         const markup = renderToStaticMarkup(<Welcome />);
 
         expect(markup).toContain('href="/projects"');
+        expect(markup).toContain('href="/design-philosophy"');
         expect(markup).not.toContain('href="/lab"');
     });
 });

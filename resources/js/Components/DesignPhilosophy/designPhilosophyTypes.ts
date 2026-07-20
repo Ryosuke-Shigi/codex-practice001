@@ -1,5 +1,16 @@
+export type DesignPhilosophySectionKey =
+    | 'hero'
+    | 'principles'
+    | 'architecture'
+    | 'development-stages'
+    | 'human-ai-flow'
+    | 'subagents'
+    | 'engineering-loop'
+    | 'understanding-reboot'
+    | 'closing';
+
 export type DesignPhilosophySection = {
-    key: string;
+    key: DesignPhilosophySectionKey;
     sortOrder: number;
     eyebrow: string;
     title: string;

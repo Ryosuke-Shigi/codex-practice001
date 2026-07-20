@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import DesignPhilosophyView from '@/Components/DesignPhilosophy/DesignPhilosophyView';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
-const sections: DesignPhilosophySection[] = [
+const sections: DesignPhilosophySection[] = ([
     ['hero', 'ポートフォリオ／設計思想', '責務でつなぐ AI駆動開発'],
     ['principles', '01 / PRINCIPLES', '速さを、腐敗の理由にしない。'],
     ['architecture', '02 / ARCHITECTURE', 'コードの責務を、変更理由で分ける。'],
@@ -17,14 +17,14 @@ const sections: DesignPhilosophySection[] = [
     ['engineering-loop', '06 / LOOP ENGINEERING', '一度で正解にせず、ズレを検出して戻す。'],
     ['understanding-reboot', '07 / UNDERSTANDING REBOOT', '会話が消えても、開発を再開できる。'],
     ['closing', 'DESIGN PHILOSOPHY', 'レイヤードアーキテクチャによるコードの責務分離と、SubagentによるAIの責務分離を、同じ原則で設計する。'],
-].map(([key, eyebrow, title], index) => ({
+] as const).map(([key, eyebrow, title], index) => ({
     key,
     sortOrder: (index + 1) * 10,
     eyebrow,
     title,
     lead: `${title}の説明`,
     body: `${title}の本文`,
-})) as DesignPhilosophySection[];
+}));
 
 const expectedSubagentNames = [
     'luna_explorer',
@@ -91,8 +91,63 @@ describe('DesignPhilosophyView', () => {
         );
         expect(container.textContent).toContain('人間が目的と境界を設計する');
         expect(container.textContent).toContain('Action - Domain - Responder');
-        expect(container.textContent).toContain('PROTOTYPE');
-        expect(container.textContent).toContain('任意工程');
+        const architectureSection = container.querySelector(
+            '[aria-labelledby="design-philosophy-architecture"]',
+        );
+        ['HTTP入口', 'Controller / Request', 'Queue入口', 'Job', '表示', 'React Page / Component'].forEach(
+            (connection) =>
+                expect(architectureSection?.textContent).toContain(connection),
+        );
+        const architectureCards = architectureSection?.querySelectorAll(
+            '[aria-label="Action Domain Responderの責務図"] article',
+        );
+        expect(architectureCards).toHaveLength(3);
+        expect(architectureCards?.[0]?.textContent).toContain(
+            'Command Action / Query Action',
+        );
+        expect(architectureCards?.[0]?.textContent).not.toContain('Controller');
+        expect(architectureCards?.[1]?.textContent).not.toContain('Job');
+        expect(architectureCards?.[2]?.textContent).not.toContain('React Page');
+        expect(architectureSection?.textContent).not.toContain(
+            'Application Authentication',
+        );
+        expect(architectureSection?.textContent).not.toContain(
+            'Read Model / Projection',
+        );
+        const principleSection = container.querySelector(
+            '[aria-labelledby="design-philosophy-principles"]',
+        );
+        expect(principleSection?.querySelectorAll('article')).toHaveLength(4);
+        ['責務を分ける', '契約を固定する', '段階を混ぜない', '理解を再起動できる状態を残す'].forEach(
+            (principle) => expect(principleSection?.textContent).toContain(principle),
+        );
+
+        const developmentSection = container.querySelector(
+            '[aria-labelledby="design-philosophy-development-stages"]',
+        );
+        ['IDEA BOARD', 'MOCK', 'PROTOTYPE', 'PRODUCT'].forEach((stage) =>
+            expect(developmentSection?.textContent).toContain(stage),
+        );
+        expect(developmentSection?.textContent).toContain('任意工程');
+        expect(developmentSection?.textContent).toContain(
+            'MOCKから引き継ぐのはコードではなく',
+        );
+
+        const humanAiSection = container.querySelector(
+            '[aria-labelledby="design-philosophy-human-ai-flow"]',
+        );
+        expect(humanAiSection?.querySelectorAll('article')).toHaveLength(3);
+        ['人間', 'ChatGPT', 'Codex親Agent', '書込み操作の許可', '仕様整理', '単一writer管理'].forEach(
+            (contract) => expect(humanAiSection?.textContent).toContain(contract),
+        );
+
+        const engineeringLoop = container.querySelector(
+            '[aria-labelledby="design-philosophy-engineering-loop"]',
+        );
+        expect(engineeringLoop?.querySelectorAll('ol > li')).toHaveLength(5);
+        ['仕様', '設計', '実装', '検証', '再確認'].forEach((step) =>
+            expect(engineeringLoop?.textContent).toContain(step),
+        );
         expect(container.textContent).toContain('会話が消えても、開発を再開できる。');
         expect(
             container.querySelectorAll('[data-subagent-card]:not([hidden])'),
@@ -102,6 +157,7 @@ describe('DesignPhilosophyView', () => {
         });
         expect(container.textContent).toContain('read-onlyのOperations Security監査');
         expect(container.textContent).toContain('architecture監査後の複雑・高リスク・複数レイヤー実装');
+        expect(container.textContent).not.toContain('sandbox');
     });
 
     it('Subagentを表示状態だけで分類絞り込みできる', () => {
