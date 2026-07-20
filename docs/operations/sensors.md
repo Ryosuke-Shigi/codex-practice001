@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001` / docs operations / feedback controls
-- Last reviewed: 2026-07-14
+- Last reviewed: 2026-07-20
 
 ## このドキュメントの目的
 
@@ -115,14 +115,21 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 
 - ID: SENS-003
 - 名前: PR Summary必須項目チェック
-- 種別: Manual / Script
-- 実行タイプ: Computational
-- 実行タイミング: PR前
-- 検出したい問題: PR Summaryに目的、変更内容、影響範囲、確認コマンド、未実行理由、docs更新要否、レビュー強度がない状態
+- 種別: Manual / AI Review / Script
+- 実行タイプ: Both
+- 実行タイミング: Draft PR作成前 / PR本文更新後 / 完了報告前
+- 検出したい問題:
+  - 実際に行った重要な作業、検証、照合がPR本文へ記載されていない
+  - 実行コマンドの完全な形、実行root、Docker Compose経由のCompose root・service・実行経路が不足している
+  - 該当Sensorsの判定と確認根拠、または記載した非該当Sensorの理由が不足している
+  - 確認済み範囲と未確認範囲が分離されていない
+  - 人間の確認範囲とCodex Browser、Console、Network、DOM、CSSの確認範囲が混同されている
+  - 未実施または未確認の内容を、実施済みまたは確認済みと断定している
+  - PR本文が実際のdiff、検証結果、CIと一致していない
 - 参照docs: `docs/templates/pr-summary.md` / `docs/operations/pr-review-strength.md`
 - 現在のLevel: Level 1
-- 将来の自動化候補: PR本文の見出し有無チェック
-- 備考: 将来のLevel 2候補。
+- 将来の自動化候補: PR本文の見出しや機械的に照合できる項目の有無チェック
+- 備考: PR本文の事実性と記載漏れを検出するSensorであり、コード・設計レビューそのものは所有しない。意味判断を要する照合を無理にCI failへ押し込まず、機械化できる範囲だけを将来のLevel 2候補とする。
 
 ### SENS-004: feature docsテンプレ準拠チェック
 
@@ -341,11 +348,12 @@ Sensorsに関係するPRでは、`docs/templates/pr-summary.md` に従い、少�
 - 目的
 - 変更内容
 - 影響範囲
-- 確認コマンドと結果
+- 完全な確認コマンド、実行root、実行経路と結果
 - 未実行コマンドと理由
 - README / docs更新要否
 - レビュー強度
-- 該当したSensor、または該当なしの理由
+- 該当したSensorの判定と根拠、または非該当理由
+- 確認済み範囲と未確認範囲。画面確認がある場合は人間確認とCodex Browser確認の区別
 - branch運用とcommit粒度の確認結果
 - CI fail化していない場合は、その理由
 
