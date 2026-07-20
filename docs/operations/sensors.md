@@ -117,10 +117,15 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 名前: PR Summary必須項目チェック
 - 種別: Manual / AI Review / Script
 - 実行タイプ: Both
-- 実行タイミング: Draft PR作成前 / PR本文更新後 / 完了報告前
+- 実行タイミング: 作業中 / Draft PR作成前 / PR本文更新後 / 完了報告前
 - 検出したい問題:
+  - 作業中に判明した重要な実施事実がタスク内一時事実メモへ回収されず、PR本文の再照合対象から落ちている
+  - 最後に記憶だけからPR本文を作成している
+  - 一時事実メモと最新diff、コマンド結果、CI、Sensors、確認範囲の照合が行われていない
   - 実際に行った重要な作業、検証、照合がPR本文へ記載されていない
   - 実行コマンドの完全な形、実行root、Docker Compose経由のCompose root・service・実行経路が不足している
+  - 完全なコマンドをMarkdown表へ入れ、実行した文字列と表示内容が一致していない
+  - pipe、引用符、複数行等を含むコマンドの記載が壊れている
   - 該当Sensorsの判定と確認根拠、または記載した非該当Sensorの理由が不足している
   - 確認済み範囲と未確認範囲が分離されていない
   - 人間の確認範囲とCodex Browser、Console、Network、DOM、CSSの確認範囲が混同されている
@@ -129,7 +134,7 @@ Sensors / feedback controls は、作業中または作業後にズレ、漏れ�
 - 参照docs: `docs/templates/pr-summary.md` / `docs/operations/pr-review-strength.md`
 - 現在のLevel: Level 1
 - 将来の自動化候補: PR本文の見出しや機械的に照合できる項目の有無チェック
-- 備考: PR本文の事実性と記載漏れを検出するSensorであり、コード・設計レビューそのものは所有しない。意味判断を要する照合を無理にCI failへ押し込まず、機械化できる範囲だけを将来のLevel 2候補とする。
+- 備考: PR本文の事実性と記載漏れを検出するSensorであり、コード・設計レビュー、製品コード修正、CI fail化は所有しない。意味判断を要する照合を無理にCI failへ押し込まず、機械化できる範囲だけを将来のLevel 2候補とする。
 
 ### SENS-004: feature docsテンプレ準拠チェック
 
@@ -348,7 +353,7 @@ Sensorsに関係するPRでは、`docs/templates/pr-summary.md` に従い、少�
 - 目的
 - 変更内容
 - 影響範囲
-- 完全な確認コマンド、実行root、実行経路と結果
+- bashコードブロックへ記載した完全な確認コマンド、実行root、実行経路と結果
 - 未実行コマンドと理由
 - README / docs更新要否
 - レビュー強度
