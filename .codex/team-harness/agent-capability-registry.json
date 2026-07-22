@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "registry_kind": "project_neutral_agent_capabilities",
+  "agents": [
+    {
+      "id": "backend",
+      "roles": ["specialist", "writer"],
+      "domains": ["api", "backend"],
+      "capabilities": ["dto", "php", "repository", "service", "validation"],
+      "path_scopes": ["app/**", "routes/**"],
+      "risk_triggers": ["high", "critical"],
+      "model_profile": "backend_profile"
+    },
+    {
+      "id": "frontend",
+      "roles": ["specialist", "writer"],
+      "domains": ["frontend", "ui"],
+      "capabilities": ["props", "react", "typescript"],
+      "path_scopes": ["resources/js/**"],
+      "risk_triggers": ["high"],
+      "model_profile": "frontend_profile"
+    },
+    {
+      "id": "architecture",
+      "roles": ["specialist"],
+      "domains": ["architecture"],
+      "capabilities": ["adr", "boundary", "design-decision", "strategy"],
+      "path_scopes": ["app/**", "docs/**", "resources/js/**"],
+      "risk_triggers": ["high", "critical"],
+      "model_profile": "architecture_profile"
+    },
+    {
+      "id": "security",
+      "roles": ["specialist"],
+      "domains": ["security"],
+      "capabilities": ["authentication", "authorization", "threat-model"],
+      "path_scopes": ["app/**", "routes/**"],
+      "risk_triggers": ["critical"],
+      "model_profile": "security_profile"
+    },
+    {
+      "id": "operations",
+      "roles": ["specialist"],
+      "domains": ["operations"],
+      "capabilities": ["migration", "queue", "scheduler"],
+      "path_scopes": ["app/**", "database/**"],
+      "risk_triggers": ["high", "critical"],
+      "model_profile": "operations_profile"
+    },
+    {
+      "id": "reviewer",
+      "roles": ["reviewer"],
+      "domains": ["quality"],
+      "capabilities": ["architecture-review", "review"],
+      "path_scopes": ["**"],
+      "risk_triggers": [],
+      "model_profile": "reviewer_profile"
+    },
+    {
+      "id": "verifier",
+      "roles": ["verifier"],
+      "domains": ["quality"],
+      "capabilities": ["test", "verification"],
+      "path_scopes": ["**"],
+      "risk_triggers": [],
+      "model_profile": "verifier_profile"
+    }
+  ]
+}

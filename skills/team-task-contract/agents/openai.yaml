@@ -1,0 +1,4 @@
+interface:
+  display_name: "Team Task Contract"
+  short_description: "Build complete validated team task contracts"
+  default_prompt: "Use $team-task-contract to scope this request as a complete validated Task Contract and readable execution brief."

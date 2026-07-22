@@ -1,0 +1,1512 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:project:team-harness:1.0",
+  "title": "Dynamic Specialist Team Harness Documents",
+  "schema_version": "1.0",
+  "anyOf": [
+    {"$ref": "#/$defs/canonicalInputEnvelope"},
+    {"$ref": "#/$defs/agentRegistry"},
+    {"$ref": "#/$defs/executionPolicy"},
+    {"$ref": "#/$defs/acceptanceManifest"},
+    {"$ref": "#/$defs/taskContract"},
+    {"$ref": "#/$defs/runState"},
+    {"$ref": "#/$defs/artifactManifest"},
+    {"$ref": "#/$defs/commitManifest"},
+    {"$ref": "#/$defs/commitAnchor"}
+  ],
+  "$defs": {
+    "version": {"const": "1.0"},
+    "policyArtifactVersion": {"const": "2026-07-22.2"},
+    "policyArtifactDigest": {"const": "sha256:7f4ef1d056f121e9c7ff67f2360fbf394bb60e5baa81d21d3e4190b10093157b"},
+    "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "nullableString": {"type": ["string", "null"]},
+    "nullableInteger": {"type": ["integer", "null"]},
+    "nullableDigest": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]},
+    "digestList": {"type": "array", "items": {"$ref": "#/$defs/digest"}, "uniqueItems": true},
+    "stringList": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "nonEmptyStringList": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1, "uniqueItems": true},
+    "projectPath": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(^|/)\\.\\.(/|$)).+$"},
+    "policyBinding": {
+      "type": "object",
+      "required": ["version", "digest"],
+      "properties": {
+        "version": {"$ref": "#/$defs/policyArtifactVersion"},
+        "digest": {"$ref": "#/$defs/policyArtifactDigest"}
+      },
+      "additionalProperties": false
+    },
+    "scopeInput": {
+      "type": "object",
+      "required": ["include"],
+      "properties": {
+        "include": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "exclude": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "teamAssignmentInput": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["dynamic", "fixed"]},
+        "legacy_requested_agent": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "writeOwnershipInput": {
+      "type": "object",
+      "required": ["owner", "paths"],
+      "properties": {
+        "owner": {"type": "string", "minLength": 1},
+        "paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "informationSourceSyncInput": {
+      "type": "object",
+      "required": ["required", "manual_activation"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "manual_activation": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "taskContractInput": {
+      "type": "object",
+      "required": [
+        "task_id", "title", "goal", "background", "current_state", "desired_state", "scope",
+        "non_goals", "acceptance_criteria", "constraints", "source_of_truth", "allowed_paths",
+        "forbidden_paths", "affected_domains", "risk_level", "required_capabilities",
+        "team_assignment", "primary_writer", "consulting_specialists", "reviewer", "verifier",
+        "write_ownership", "required_checks", "stop_conditions", "retry_conditions",
+        "approval_boundaries", "required_deliverables", "information_source_sync",
+        "completion_conditions"
+      ],
+      "properties": {
+        "task_id": {"$ref": "#/$defs/nonEmptyString"},
+        "title": {"$ref": "#/$defs/nonEmptyString"},
+        "goal": {"$ref": "#/$defs/nonEmptyString"},
+        "background": {"$ref": "#/$defs/nonEmptyString"},
+        "current_state": {"$ref": "#/$defs/nonEmptyString"},
+        "desired_state": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/scopeInput"},
+        "non_goals": {"$ref": "#/$defs/nonEmptyStringList"},
+        "acceptance_criteria": {"$ref": "#/$defs/nonEmptyStringList"},
+        "constraints": {"$ref": "#/$defs/nonEmptyStringList"},
+        "source_of_truth": {"$ref": "#/$defs/nonEmptyStringList"},
+        "allowed_paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "forbidden_paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "affected_domains": {"$ref": "#/$defs/nonEmptyStringList"},
+        "risk_level": {"enum": ["low", "medium", "high", "critical"]},
+        "required_capabilities": {"$ref": "#/$defs/stringList"},
+        "team_assignment": {"$ref": "#/$defs/teamAssignmentInput"},
+        "primary_writer": {"$ref": "#/$defs/nonEmptyString"},
+        "consulting_specialists": {"$ref": "#/$defs/stringList"},
+        "reviewer": {"$ref": "#/$defs/nonEmptyString"},
+        "verifier": {"$ref": "#/$defs/nonEmptyString"},
+        "write_ownership": {"type": "array", "items": {"$ref": "#/$defs/writeOwnershipInput"}, "minItems": 1},
+        "required_checks": {"$ref": "#/$defs/nonEmptyStringList"},
+        "stop_conditions": {"$ref": "#/$defs/nonEmptyStringList"},
+        "retry_conditions": {"$ref": "#/$defs/nonEmptyStringList"},
+        "approval_boundaries": {"$ref": "#/$defs/nonEmptyStringList"},
+        "required_deliverables": {"$ref": "#/$defs/nonEmptyStringList"},
+        "information_source_sync": {"$ref": "#/$defs/informationSourceSyncInput"},
+        "completion_conditions": {"$ref": "#/$defs/nonEmptyStringList"}
+      },
+      "additionalProperties": false
+    },
+    "taskContract": {
+      "type": "object",
+      "required": [
+        "schema_version", "task_id", "title", "goal", "background", "current_state", "desired_state", "scope",
+        "non_goals", "acceptance_criteria", "constraints", "source_of_truth", "allowed_paths",
+        "forbidden_paths", "affected_domains", "risk_level", "required_capabilities",
+        "team_assignment", "primary_writer", "consulting_specialists", "reviewer", "verifier",
+        "write_ownership", "required_checks", "stop_conditions", "retry_conditions",
+        "approval_boundaries", "required_deliverables", "information_source_sync",
+        "completion_conditions", "digest"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "task_id": {"$ref": "#/$defs/nonEmptyString"},
+        "title": {"$ref": "#/$defs/nonEmptyString"},
+        "goal": {"$ref": "#/$defs/nonEmptyString"},
+        "background": {"$ref": "#/$defs/nonEmptyString"},
+        "current_state": {"$ref": "#/$defs/nonEmptyString"},
+        "desired_state": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/scopeInput"},
+        "non_goals": {"$ref": "#/$defs/nonEmptyStringList"},
+        "acceptance_criteria": {"$ref": "#/$defs/nonEmptyStringList"},
+        "constraints": {"$ref": "#/$defs/nonEmptyStringList"},
+        "source_of_truth": {"$ref": "#/$defs/nonEmptyStringList"},
+        "allowed_paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "forbidden_paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "affected_domains": {"$ref": "#/$defs/nonEmptyStringList"},
+        "risk_level": {"enum": ["low", "medium", "high", "critical"]},
+        "required_capabilities": {"$ref": "#/$defs/stringList"},
+        "team_assignment": {"$ref": "#/$defs/teamAssignmentInput"},
+        "primary_writer": {"$ref": "#/$defs/nonEmptyString"},
+        "consulting_specialists": {"$ref": "#/$defs/stringList"},
+        "reviewer": {"$ref": "#/$defs/nonEmptyString"},
+        "verifier": {"$ref": "#/$defs/nonEmptyString"},
+        "write_ownership": {"type": "array", "items": {"$ref": "#/$defs/writeOwnershipInput"}, "minItems": 1},
+        "required_checks": {"$ref": "#/$defs/nonEmptyStringList"},
+        "stop_conditions": {"$ref": "#/$defs/nonEmptyStringList"},
+        "retry_conditions": {"$ref": "#/$defs/nonEmptyStringList"},
+        "approval_boundaries": {"$ref": "#/$defs/nonEmptyStringList"},
+        "required_deliverables": {"$ref": "#/$defs/nonEmptyStringList"},
+        "information_source_sync": {"$ref": "#/$defs/informationSourceSyncInput"},
+        "completion_conditions": {"$ref": "#/$defs/nonEmptyStringList"},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "canonicalInputEnvelope": {
+      "type": "object",
+      "required": ["schema_version", "idempotency_key", "task_contract"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "idempotency_key": {"$ref": "#/$defs/nonEmptyString"},
+        "policy_binding": {"$ref": "#/$defs/policyBinding"},
+        "task_contract": {"$ref": "#/$defs/taskContractInput"},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/runtimeEvent"}},
+        "role_assignments": {"$ref": "#/$defs/roleAssignments"},
+        "worktree_request": {"type": "object"},
+        "write_request": {"type": "object"},
+        "source_sync_request": {"$ref": "#/$defs/sourceSyncRequest"}
+      },
+      "additionalProperties": false
+    },
+    "writeAuthorityGrant": {
+      "type": "object",
+      "required": ["grant_id", "grant_digest", "kind", "run_id", "agent", "epoch", "expires_at", "ownership_revision", "paths", "issued_revision", "issued_by", "runtime_authenticity_verified", "runtime_authenticity_status"],
+      "properties": {
+        "grant_id": {"$ref": "#/$defs/nonEmptyString"},
+        "grant_digest": {"$ref": "#/$defs/digest"},
+        "kind": {"const": "write"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "agent": {"$ref": "#/$defs/nonEmptyString"},
+        "epoch": {"type": "integer", "minimum": 1},
+        "expires_at": {"$ref": "#/$defs/nonEmptyString"},
+        "ownership_revision": {"type": "integer", "minimum": 1},
+        "paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "issued_revision": {"type": "integer", "minimum": 1},
+        "issued_by": {"const": "team_harness"},
+        "runtime_authenticity_verified": {"const": false},
+        "runtime_authenticity_status": {"const": "unverified"}
+      },
+      "additionalProperties": false
+    },
+    "roleAssignments": {
+      "type": "object",
+      "required": ["writer", "reviewer", "verifier"],
+      "properties": {
+        "writer": {"$ref": "#/$defs/nonEmptyString"},
+        "reviewer": {"$ref": "#/$defs/nonEmptyString"},
+        "verifier": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "qualityAuthorityGrant": {
+      "type": "object",
+      "required": ["grant_id", "grant_digest", "kind", "run_id", "actor", "role", "phase", "attempt", "plan_revision", "artifact_revision", "artifact_digest", "issued_revision", "expires_at", "issued_by", "runtime_authenticity_verified", "runtime_authenticity_status"],
+      "properties": {
+        "grant_id": {"$ref": "#/$defs/nonEmptyString"},
+        "grant_digest": {"$ref": "#/$defs/digest"},
+        "kind": {"const": "quality"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "role": {"enum": ["reviewer", "verifier"]},
+        "phase": {"enum": ["initial", "final"]},
+        "attempt": {"type": "integer", "minimum": 1},
+        "plan_revision": {"type": "integer", "minimum": 1},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "issued_revision": {"type": "integer", "minimum": 1},
+        "expires_at": {"$ref": "#/$defs/nonEmptyString"},
+        "issued_by": {"const": "team_harness"},
+        "runtime_authenticity_verified": {"const": false},
+        "runtime_authenticity_status": {"const": "unverified"}
+      },
+      "additionalProperties": false
+    },
+    "reportProvenance": {
+      "type": "object",
+      "required": ["producer", "run_id", "contract_digest"],
+      "properties": {
+        "producer": {"$ref": "#/$defs/nonEmptyString"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "artifactReceiptProvenance": {
+      "type": "object",
+      "required": ["producer", "run_id"],
+      "properties": {
+        "producer": {"$ref": "#/$defs/nonEmptyString"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "plan_revision": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "fixArtifactReceipt": {
+      "type": "object",
+      "required": [
+        "receipt_id", "kind", "path", "ref", "digest", "raw_content_persisted",
+        "authority_grant_digest", "issued_by", "issue_ids", "check_ids",
+        "deliverable_ids", "provenance"
+      ],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"const": "artifact_receipt"},
+        "path": {"$ref": "#/$defs/projectPath"},
+        "ref": {"$ref": "#/$defs/projectPath"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "raw_content_persisted": {"const": true},
+        "authority_grant_digest": {"$ref": "#/$defs/digest"},
+        "issued_by": {"const": "team_harness"},
+        "issue_ids": {"$ref": "#/$defs/stringList"},
+        "check_ids": {"$ref": "#/$defs/stringList"},
+        "deliverable_ids": {"$ref": "#/$defs/stringList"},
+        "provenance": {"$ref": "#/$defs/artifactReceiptProvenance"}
+      },
+      "additionalProperties": false
+    },
+    "fixArtifactReceiptInput": {
+      "type": "object",
+      "required": ["digest", "provenance"],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"const": "artifact_receipt"},
+        "path": {"$ref": "#/$defs/projectPath"},
+        "ref": {"$ref": "#/$defs/projectPath"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "raw_content_persisted": {"type": "boolean"},
+        "authority_grant_digest": {"$ref": "#/$defs/digest"},
+        "issued_by": {"const": "team_harness"},
+        "issue_ids": {"$ref": "#/$defs/stringList"},
+        "check_ids": {"$ref": "#/$defs/stringList"},
+        "deliverable_ids": {"$ref": "#/$defs/stringList"},
+        "provenance": {"$ref": "#/$defs/artifactReceiptProvenance"}
+      },
+      "additionalProperties": false
+    },
+    "artifactReceiptReference": {
+      "type": "object",
+      "required": ["receipt_id", "ref", "digest", "authority_grant_digest"],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/nonEmptyString"},
+        "ref": {"$ref": "#/$defs/projectPath"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "authority_grant_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "findingResolutionReceipt": {
+      "type": "object",
+      "required": [
+        "receipt_id", "kind", "sequence", "status", "issue_id", "clause",
+        "location", "source", "finding_identity", "finding_digest", "fix_receipt_id", "fix_artifact_digest",
+        "failed_report_digest", "attempt", "cause", "cause_fingerprint",
+        "provenance", "digest"
+      ],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"const": "finding_resolution_receipt"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "status": {"const": "resolved"},
+        "issue_id": {"$ref": "#/$defs/nonEmptyString"},
+        "clause": {"$ref": "#/$defs/nonEmptyString"},
+        "location": {"$ref": "#/$defs/nonEmptyString"},
+        "source": {"$ref": "#/$defs/nonEmptyString"},
+        "finding_identity": {"$ref": "#/$defs/findingIdentity"},
+        "finding_digest": {"$ref": "#/$defs/digest"},
+        "fix_receipt_id": {"$ref": "#/$defs/nonEmptyString"},
+        "fix_artifact_digest": {"$ref": "#/$defs/digest"},
+        "failed_report_digest": {"$ref": "#/$defs/digest"},
+        "attempt": {"type": "integer", "minimum": 2},
+        "cause": {"type": "string"},
+        "cause_fingerprint": {"$ref": "#/$defs/digest"},
+        "provenance": {"$ref": "#/$defs/artifactReceiptProvenance"},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "fixAppliedLogEntry": {
+      "type": "object",
+      "required": [
+        "kind", "attempt", "cause", "failed_report_digest", "cause_fingerprint",
+        "fix_receipt_id", "fix_artifact_digest", "input_fingerprint", "diff_digest"
+      ],
+      "properties": {
+        "kind": {"const": "fix_applied"},
+        "attempt": {"type": "integer", "minimum": 2},
+        "cause": {"type": "string"},
+        "failed_report_digest": {"$ref": "#/$defs/digest"},
+        "cause_fingerprint": {"$ref": "#/$defs/digest"},
+        "fix_receipt_id": {"$ref": "#/$defs/nonEmptyString"},
+        "fix_artifact_digest": {"$ref": "#/$defs/digest"},
+        "input_fingerprint": {"$ref": "#/$defs/digest"},
+        "diff_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "implementationLogEntry": {
+      "oneOf": [
+        {"$ref": "#/$defs/fixArtifactReceipt"},
+        {"$ref": "#/$defs/findingResolutionReceipt"},
+        {"$ref": "#/$defs/fixAppliedLogEntry"}
+      ]
+    },
+    "resumeInputEnvelope": {
+      "type": "object",
+      "required": ["schema_version", "resume_run_id", "expected_revision", "contract_digest"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "resume_run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "expected_revision": {"type": "integer", "minimum": 1},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/runtimeEvent"}},
+        "worktree_request": {"type": "object"},
+        "write_request": {"type": "object"},
+        "source_sync_request": {"$ref": "#/$defs/sourceSyncRequest"}
+      },
+      "additionalProperties": false
+    },
+    "writeAuthorizationRequest": {
+      "type": "object",
+      "required": ["schema_version", "run_id", "agent", "paths", "lease", "expected_revision"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "agent": {"$ref": "#/$defs/nonEmptyString"},
+        "paths": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "minItems": 1, "uniqueItems": true},
+        "lease": {"$ref": "#/$defs/writeAuthorityGrant"},
+        "expected_revision": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "sourceTargetIdentity": {
+      "type": "object",
+      "required": ["system", "catalog"],
+      "properties": {
+        "system": {"$ref": "#/$defs/nonEmptyString"},
+        "catalog": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "sourceSyncRequest": {
+      "type": "object",
+      "required": ["schema_version", "artifact_revision", "artifact_digest", "payload", "source_baseline_digest", "target_identity", "activate"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "payload": {},
+        "source_baseline_digest": {"$ref": "#/$defs/digest"},
+        "target_identity": {"$ref": "#/$defs/sourceTargetIdentity"},
+        "activate": {"type": "boolean"},
+        "external_connected": {"type": "boolean"},
+        "external_connection_evidence": {"$ref": "#/$defs/digest"},
+        "existing_target": {"type": "boolean"},
+        "target": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "artifactEvent": {
+      "type": "object",
+      "required": ["type", "actor", "path", "content", "authority_grant"],
+      "properties": {
+        "type": {"const": "artifact"},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "path": {"$ref": "#/$defs/projectPath"},
+        "content": {},
+        "authority_grant": {"$ref": "#/$defs/writeAuthorityGrant"}
+      },
+      "additionalProperties": false
+    },
+    "findingEvent": {
+      "type": "object",
+      "required": ["type", "actor", "source", "issue_id", "clause", "location", "kind", "message", "status"],
+      "properties": {
+        "type": {"const": "finding"},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "source": {"$ref": "#/$defs/nonEmptyString"},
+        "issue_id": {"$ref": "#/$defs/nonEmptyString"},
+        "clause": {"$ref": "#/$defs/nonEmptyString"},
+        "location": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"$ref": "#/$defs/nonEmptyString"},
+        "message": {"type": "string"},
+        "severity": {"$ref": "#/$defs/nonEmptyString"},
+        "position": {"$ref": "#/$defs/nullableString"},
+        "status": {"const": "open"}
+      },
+      "additionalProperties": false
+    },
+    "qualityReportEvent": {
+      "type": "object",
+      "required": [
+        "type", "phase", "status", "actor", "authority_grant", "checks", "attempt",
+        "plan_revision", "artifact_revision", "artifact_digest", "diff_digest",
+        "input_fingerprint", "environment_fingerprint", "provenance", "report_digest"
+      ],
+      "properties": {
+        "type": {"enum": ["verification_report", "review_report"]},
+        "phase": {"enum": ["initial", "final"]},
+        "status": {"enum": ["passed", "failed", "blocked"]},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "authority_grant": {"$ref": "#/$defs/qualityAuthorityGrant"},
+        "checks": {"$ref": "#/$defs/stringList"},
+        "attempt": {"type": "integer", "minimum": 1},
+        "plan_revision": {"type": "integer", "minimum": 1},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "diff_digest": {"$ref": "#/$defs/digest"},
+        "input_fingerprint": {"$ref": "#/$defs/digest"},
+        "environment_fingerprint": {"$ref": "#/$defs/digest"},
+        "staging_artifact_digest": {"$ref": "#/$defs/digest"},
+        "source_manifest_digest": {"$ref": "#/$defs/digest"},
+        "provenance": {"$ref": "#/$defs/reportProvenance"},
+        "cause": {"type": "string"},
+        "report_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "genericRuntimeEvent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["fix_applied", "plan_revised", "ownership_revised", "work_submission", "interrupt", "resume", "implementation_approved", "failure_observed", "improvement_proposed", "transition"]},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "cause": {"type": "string"},
+        "issue_ids": {"$ref": "#/$defs/stringList"},
+        "attempt": {"type": "integer", "minimum": 1},
+        "plan_revision": {"type": "integer", "minimum": 1},
+        "failed_report_digest": {"$ref": "#/$defs/digest"},
+        "cause_fingerprint": {"$ref": "#/$defs/digest"},
+        "changed_input_fingerprint": {"$ref": "#/$defs/digest"},
+        "changed_diff_digest": {"$ref": "#/$defs/digest"},
+        "environment_fingerprint": {"$ref": "#/$defs/digest"},
+        "fix_artifact": {"$ref": "#/$defs/fixArtifactReceiptInput"},
+        "change": {"type": "string"},
+        "write_ownership": {"type": "array", "items": {"$ref": "#/$defs/writeOwnershipInput"}, "minItems": 1},
+        "from": {"$ref": "#/$defs/nonEmptyString"},
+        "to": {"$ref": "#/$defs/nonEmptyString"},
+        "category": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"$ref": "#/$defs/nonEmptyString"},
+        "requested_scope": {}
+      },
+      "additionalProperties": false
+    },
+    "cancelEvent": {
+      "type": "object",
+      "required": ["type", "actor", "reason"],
+      "properties": {
+        "type": {"const": "cancel"},
+        "actor": {"const": "orchestrator"},
+        "reason": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "runtimeEvent": {
+      "oneOf": [
+        {"$ref": "#/$defs/artifactEvent"},
+        {"$ref": "#/$defs/findingEvent"},
+        {"$ref": "#/$defs/qualityReportEvent"},
+        {"$ref": "#/$defs/cancelEvent"},
+        {"$ref": "#/$defs/genericRuntimeEvent"}
+      ]
+    },
+    "agent": {
+      "type": "object",
+      "required": ["id", "roles", "domains", "capabilities", "path_scopes", "risk_triggers", "model_profile"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "roles": {"type": "array", "items": {"enum": ["specialist", "writer", "reviewer", "verifier"]}, "minItems": 1, "uniqueItems": true},
+        "domains": {"$ref": "#/$defs/stringList"},
+        "capabilities": {"$ref": "#/$defs/stringList"},
+        "path_scopes": {"$ref": "#/$defs/nonEmptyStringList"},
+        "risk_triggers": {"$ref": "#/$defs/stringList"},
+        "model_profile": {"$ref": "#/$defs/nonEmptyString"},
+        "runtime_profile": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "agentRegistry": {
+      "type": "object",
+      "required": ["schema_version", "registry_kind", "agents"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "registry_kind": {"$ref": "#/$defs/nonEmptyString"},
+        "agents": {"type": "array", "items": {"$ref": "#/$defs/agent"}, "minItems": 1}
+      },
+      "additionalProperties": false
+    },
+    "retentionPolicy": {
+      "type": "object",
+      "required": ["days", "automatic_deletion"],
+      "properties": {"days": {"type": "integer", "minimum": 1}, "automatic_deletion": {"type": "boolean"}},
+      "additionalProperties": false
+    },
+    "writeAuthorizationPolicy": {
+      "type": "object",
+      "required": ["fail_closed", "requires_parent_lease", "reviewer_write", "verifier_write", "allowed_states", "parallel_write_requires"],
+      "properties": {
+        "fail_closed": {"type": "boolean"},
+        "requires_parent_lease": {"type": "boolean"},
+        "reviewer_write": {"type": "boolean"},
+        "verifier_write": {"type": "boolean"},
+        "allowed_states": {"$ref": "#/$defs/nonEmptyStringList"},
+        "parallel_write_requires": {"$ref": "#/$defs/nonEmptyStringList"}
+      },
+      "additionalProperties": false
+    },
+    "sourceSyncPolicy": {
+      "type": "object",
+      "required": ["minimum_state", "manual_activation", "no_overwrite", "external_disconnected_status"],
+      "properties": {
+        "minimum_state": {"$ref": "#/$defs/nonEmptyString"},
+        "manual_activation": {"type": "boolean"},
+        "no_overwrite": {"type": "boolean"},
+        "external_disconnected_status": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "legacyAdapterPolicy": {
+      "type": "object",
+      "required": ["enabled", "entrypoint"],
+      "properties": {"enabled": {"type": "boolean"}, "entrypoint": {"$ref": "#/$defs/nonEmptyString"}},
+      "additionalProperties": false
+    },
+    "evidenceGatePolicy": {
+      "type": "object",
+      "required": ["artifact_requires_exact_committed_write_grant", "quality_requires_prior_committed_grant", "retry_exit_requires_verified_fix", "final_review_retry_limit_state"],
+      "properties": {
+        "artifact_requires_exact_committed_write_grant": {"const": true},
+        "quality_requires_prior_committed_grant": {"const": true},
+        "retry_exit_requires_verified_fix": {"const": true},
+        "final_review_retry_limit_state": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "executionPolicy": {
+      "type": "object",
+      "required": [
+        "schema_version", "policy_version", "policy_digest", "mode", "max_threads", "max_depth", "single_writer", "unavailable_specialist",
+        "same_cause_retry_limit", "retention", "write_authorization", "source_sync", "legacy_adapter", "evidence_gates",
+        "states", "terminal_states", "reserved_states", "allowed_transitions"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "policy_version": {"$ref": "#/$defs/policyArtifactVersion"},
+        "policy_digest": {"$ref": "#/$defs/policyArtifactDigest"},
+        "mode": {"$ref": "#/$defs/nonEmptyString"},
+        "max_threads": {"type": "integer", "minimum": 1},
+        "max_depth": {"type": "integer", "minimum": 0},
+        "single_writer": {"type": "boolean"},
+        "unavailable_specialist": {"enum": ["sequential_fallback", "block"]},
+        "same_cause_retry_limit": {"type": "integer", "minimum": 0},
+        "retention": {"$ref": "#/$defs/retentionPolicy"},
+        "write_authorization": {"$ref": "#/$defs/writeAuthorizationPolicy"},
+        "source_sync": {"$ref": "#/$defs/sourceSyncPolicy"},
+        "legacy_adapter": {"$ref": "#/$defs/legacyAdapterPolicy"},
+        "evidence_gates": {"$ref": "#/$defs/evidenceGatePolicy"},
+        "states": {"$ref": "#/$defs/nonEmptyStringList"},
+        "terminal_states": {"$ref": "#/$defs/nonEmptyStringList"},
+        "reserved_states": {"$ref": "#/$defs/nonEmptyStringList"},
+        "allowed_transitions": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/stringList"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "acceptanceScenario": {
+      "type": "object",
+      "required": ["id", "name", "test"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "name": {"$ref": "#/$defs/nonEmptyString"},
+        "test": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "acceptanceManifest": {
+      "type": "object",
+      "required": ["schema_version", "manifest_kind", "scenarios"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "manifest_kind": {"const": "acceptance_scenarios"},
+        "scenarios": {"type": "array", "items": {"$ref": "#/$defs/acceptanceScenario"}, "minItems": 1}
+      },
+      "additionalProperties": false
+    },
+    "problem": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {"$ref": "#/$defs/nonEmptyString"},
+        "message": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "additionalProperties": false
+    },
+    "inputProblemProjection": {
+      "type": "object",
+      "required": [
+        "schema_version", "input_kind", "top_level_fields",
+        "task_contract_fields", "redacted", "blockers", "rejections", "digest"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "input_kind": {"enum": ["canonical", "legacy"]},
+        "top_level_fields": {"$ref": "#/$defs/stringList"},
+        "task_contract_fields": {"$ref": "#/$defs/stringList"},
+        "redacted": {"type": "boolean"},
+        "blockers": {"type": "array", "items": {"$ref": "#/$defs/problem"}},
+        "rejections": {"type": "array", "items": {"$ref": "#/$defs/problem"}},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "orchestratorState": {
+      "type": "object",
+      "required": ["id", "role"],
+      "properties": {
+        "id": {"const": "team_harness"},
+        "role": {"const": "orchestrator"}
+      },
+      "additionalProperties": false
+    },
+    "teamMember": {
+      "type": "object",
+      "required": [
+        "id", "role", "registry_roles", "domains", "capabilities", "model_profile",
+        "path_scopes", "risk_triggers", "registry_agent_digest", "selection_reasons"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "role": {"enum": ["writer", "specialist", "reviewer", "verifier"]},
+        "registry_roles": {"$ref": "#/$defs/nonEmptyStringList"},
+        "domains": {"$ref": "#/$defs/stringList"},
+        "capabilities": {"$ref": "#/$defs/stringList"},
+        "model_profile": {"$ref": "#/$defs/nonEmptyString"},
+        "path_scopes": {"$ref": "#/$defs/nonEmptyStringList"},
+        "risk_triggers": {"$ref": "#/$defs/stringList"},
+        "registry_agent_digest": {"$ref": "#/$defs/digest"},
+        "selection_reasons": {"$ref": "#/$defs/nonEmptyStringList"}
+      },
+      "additionalProperties": false
+    },
+    "registryBinding": {
+      "type": "object",
+      "required": ["schema_version", "registry_kind", "registry_digest"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "registry_kind": {"$ref": "#/$defs/nonEmptyString"},
+        "registry_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "startRequestSnapshot": {
+      "type": "object",
+      "required": [
+        "schema_version", "idempotency_key", "task_contract", "role_assignments",
+        "legacy_converted", "registry_binding", "policy_binding", "input_problem_projection"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "idempotency_key": {"$ref": "#/$defs/nonEmptyString"},
+        "task_contract": {"$ref": "#/$defs/taskContract"},
+        "role_assignments": {"anyOf": [{"const": {}}, {"$ref": "#/$defs/roleAssignments"}]},
+        "legacy_converted": {"type": "boolean"},
+        "registry_binding": {"$ref": "#/$defs/registryBinding"},
+        "policy_binding": {"$ref": "#/$defs/policyBinding"},
+        "input_problem_projection": {"$ref": "#/$defs/inputProblemProjection"}
+      },
+      "additionalProperties": false
+    },
+    "selectionState": {
+      "type": "object",
+      "required": ["writer", "fallback", "eligible_writers"],
+      "properties": {
+        "writer": {"$ref": "#/$defs/nullableString"},
+        "fallback": {"$ref": "#/$defs/nullableString"},
+        "eligible_writers": {"$ref": "#/$defs/stringList"}
+      },
+      "additionalProperties": false
+    },
+    "runtimeState": {
+      "type": "object",
+      "required": ["profiles", "runtime_verified"],
+      "properties": {
+        "profiles": {"type": "object", "additionalProperties": {"$ref": "#/$defs/nonEmptyString"}},
+        "runtime_verified": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "qualityGrantSet": {
+      "anyOf": [
+        {"const": {}},
+        {
+          "type": "object",
+          "required": ["reviewer"],
+          "properties": {
+            "reviewer": {"$ref": "#/$defs/qualityAuthorityGrant"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["verifier"],
+          "properties": {
+            "verifier": {"$ref": "#/$defs/qualityAuthorityGrant"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["reviewer", "verifier"],
+          "properties": {
+            "reviewer": {"$ref": "#/$defs/qualityAuthorityGrant"},
+            "verifier": {"$ref": "#/$defs/qualityAuthorityGrant"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "qualityGrantPhases": {
+      "type": "object",
+      "required": ["initial", "final"],
+      "properties": {
+        "initial": {"$ref": "#/$defs/qualityGrantSet"},
+        "final": {"$ref": "#/$defs/qualityGrantSet"}
+      },
+      "additionalProperties": false
+    },
+    "authorityGrantState": {
+      "type": "object",
+      "required": ["write", "quality"],
+      "properties": {
+        "write": {"type": "object", "additionalProperties": {"$ref": "#/$defs/writeAuthorityGrant"}},
+        "quality": {"$ref": "#/$defs/qualityGrantPhases"}
+      },
+      "additionalProperties": false
+    },
+    "findingCatalogEntry": {
+      "type": "object",
+      "required": [
+        "issue_id", "clause", "location", "first_finding_digest", "status",
+        "resolution_receipt_digest"
+      ],
+      "properties": {
+        "issue_id": {"$ref": "#/$defs/nonEmptyString"},
+        "clause": {"$ref": "#/$defs/nonEmptyString"},
+        "location": {"$ref": "#/$defs/nonEmptyString"},
+        "first_finding_digest": {"$ref": "#/$defs/digest"},
+        "status": {"enum": ["open", "resolved"]},
+        "resolution_receipt_digest": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "findingConflict": {
+      "type": "object",
+      "required": ["issue_id", "clause", "location", "positions"],
+      "properties": {
+        "issue_id": {"$ref": "#/$defs/nonEmptyString"},
+        "clause": {"$ref": "#/$defs/nonEmptyString"},
+        "location": {"$ref": "#/$defs/nonEmptyString"},
+        "positions": {"$ref": "#/$defs/nonEmptyStringList"}
+      },
+      "additionalProperties": false
+    },
+    "planWave": {
+      "type": "object",
+      "required": ["wave", "agents"],
+      "properties": {
+        "wave": {"type": "integer", "minimum": 1, "maximum": 3},
+        "agents": {"$ref": "#/$defs/nonEmptyStringList"}
+      },
+      "additionalProperties": false
+    },
+    "verificationSummary": {
+      "type": "object",
+      "required": ["status", "phase", "checks", "cause", "report_digest"],
+      "properties": {
+        "status": {"enum": ["not_run", "passed", "failed", "blocked"]},
+        "phase": {"anyOf": [{"type": "null"}, {"enum": ["initial", "final"]}]},
+        "checks": {"$ref": "#/$defs/stringList"},
+        "cause": {"$ref": "#/$defs/nullableString"},
+        "report_digest": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "reviewSummary": {
+      "type": "object",
+      "required": ["status", "phase", "checks", "findings", "cause", "report_digest"],
+      "properties": {
+        "status": {"enum": ["not_run", "passed", "failed", "blocked"]},
+        "phase": {"anyOf": [{"type": "null"}, {"enum": ["initial", "final"]}]},
+        "checks": {"$ref": "#/$defs/stringList"},
+        "findings": {"type": "array", "items": {"type": "string"}},
+        "cause": {"$ref": "#/$defs/nullableString"},
+        "report_digest": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "implementationApprovalState": {
+      "type": "object",
+      "required": ["source", "approved"],
+      "properties": {
+        "source": {"enum": ["none", "derived"]},
+        "approved": {"type": "boolean"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "verification_report_digest": {"$ref": "#/$defs/digest"},
+        "review_report_digest": {"$ref": "#/$defs/digest"},
+        "required_deliverables": {"$ref": "#/$defs/nonEmptyStringList"},
+        "approval_boundaries": {"$ref": "#/$defs/nonEmptyStringList"}
+      },
+      "additionalProperties": false
+    },
+    "findingIdentity": {
+      "type": "object",
+      "required": ["issue_id", "clause", "location", "source", "finding_digest"],
+      "properties": {
+        "issue_id": {"$ref": "#/$defs/nonEmptyString"},
+        "clause": {"$ref": "#/$defs/nonEmptyString"},
+        "location": {"$ref": "#/$defs/nonEmptyString"},
+        "source": {"$ref": "#/$defs/nonEmptyString"},
+        "finding_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "failureHistoryEntry": {
+      "type": "object",
+      "required": [
+        "report_digest", "attempt", "cause", "cause_fingerprint", "issue_ids",
+        "finding_identities", "report_generation_ref", "report_generation_revision",
+        "report", "phase", "report_snapshot"
+      ],
+      "properties": {
+        "report_digest": {"$ref": "#/$defs/digest"},
+        "attempt": {"type": "integer", "minimum": 1},
+        "cause": {"type": "string"},
+        "cause_fingerprint": {"$ref": "#/$defs/digest"},
+        "issue_ids": {"$ref": "#/$defs/stringList"},
+        "finding_identities": {"type": "array", "items": {"$ref": "#/$defs/findingIdentity"}},
+        "report_generation_ref": {"$ref": "#/$defs/projectPath"},
+        "report_generation_revision": {"type": "integer", "minimum": 1},
+        "report": {"enum": ["verification", "review"]},
+        "phase": {"enum": ["initial", "final"]},
+        "report_snapshot": {"$ref": "#/$defs/qualityReport"}
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": ["sequence", "source", "actor", "issue_id", "clause", "location", "kind", "message", "severity", "position", "status", "digest"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "source": {"$ref": "#/$defs/nonEmptyString"},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "issue_id": {"$ref": "#/$defs/nonEmptyString"},
+        "clause": {"$ref": "#/$defs/nonEmptyString"},
+        "location": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"$ref": "#/$defs/nonEmptyString"},
+        "message": {"type": "string"},
+        "severity": {"$ref": "#/$defs/nonEmptyString"},
+        "position": {"$ref": "#/$defs/nullableString"},
+        "status": {"const": "open"},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "findingCollection": {
+      "type": "object",
+      "required": ["schema_version", "receipts", "catalog", "conflicts"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "receipts": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "catalog": {"type": "array", "items": {"$ref": "#/$defs/findingCatalogEntry"}},
+        "conflicts": {"type": "array", "items": {"$ref": "#/$defs/findingConflict"}}
+      },
+      "additionalProperties": false
+    },
+    "sharedPlan": {
+      "type": "object",
+      "required": ["schema_version", "revision", "steps", "waves", "fallback"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "revision": {"type": "integer", "minimum": 1},
+        "steps": {"type": "array", "items": {"type": "string"}},
+        "waves": {"type": "array", "items": {"type": "object"}},
+        "fallback": {"$ref": "#/$defs/nullableString"}
+      },
+      "additionalProperties": false
+    },
+    "teamAssignment": {
+      "type": "object",
+      "required": ["schema_version", "orchestrator", "team", "selection", "write_ownership"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "orchestrator": {"type": "object"},
+        "team": {"type": "array", "items": {"$ref": "#/$defs/teamMember"}},
+        "selection": {"$ref": "#/$defs/selectionState"},
+        "write_ownership": {"type": "array", "items": {"$ref": "#/$defs/writeOwnershipInput"}}
+      },
+      "additionalProperties": false
+    },
+    "implementationLog": {
+      "type": "object",
+      "required": ["schema_version", "entries", "metrics"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "entries": {"type": "array", "items": {"$ref": "#/$defs/implementationLogEntry"}},
+        "metrics": {"$ref": "#/$defs/metricsState"}
+      },
+      "additionalProperties": false
+    },
+    "stateTransition": {
+      "type": "object",
+      "required": ["sequence", "from", "state", "actor", "reason", "evidence_digest"],
+      "properties": {
+        "sequence": {"type": "integer", "minimum": 1},
+        "from": {"$ref": "#/$defs/nullableString"},
+        "state": {"$ref": "#/$defs/nonEmptyString"},
+        "actor": {"$ref": "#/$defs/nonEmptyString"},
+        "reason": {"type": "string"},
+        "evidence_digest": {"$ref": "#/$defs/digest"},
+        "reserved_evidence": {"$ref": "#/$defs/reservedEvidence"}
+      },
+      "additionalProperties": false
+    },
+    "reservedReportDigests": {
+      "type": "object",
+      "required": [
+        "initial_verification", "initial_review", "final_verification", "final_review"
+      ],
+      "properties": {
+        "initial_verification": {"$ref": "#/$defs/nullableDigest"},
+        "initial_review": {"$ref": "#/$defs/nullableDigest"},
+        "final_verification": {"$ref": "#/$defs/nullableDigest"},
+        "final_review": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "reservedEvidence": {
+      "type": "object",
+      "required": [
+        "schema_version", "run_id", "generation_revision", "transition_sequence",
+        "transition_from", "transition_state", "contract_digest", "artifact_revision",
+        "artifact_digest", "report_digests", "staging_artifact_digest",
+        "source_manifest_digest", "completion_report_digest", "transition_evidence",
+        "state_digest"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "generation_revision": {"type": "integer", "minimum": 1},
+        "transition_sequence": {"type": "integer", "minimum": 1},
+        "transition_from": {"$ref": "#/$defs/nullableString"},
+        "transition_state": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "report_digests": {"$ref": "#/$defs/reservedReportDigests"},
+        "staging_artifact_digest": {"$ref": "#/$defs/nullableDigest"},
+        "source_manifest_digest": {"$ref": "#/$defs/nullableDigest"},
+        "completion_report_digest": {"$ref": "#/$defs/nullableDigest"},
+        "transition_evidence": {"$ref": "#/$defs/reservedTransitionEvidence"},
+        "state_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "reservedTransitionEvidence": {
+      "type": "object",
+      "required": [
+        "transition_actor", "transition_reason", "cause_digests",
+        "introduced_report_digests", "introduced_finding_digests",
+        "introduced_receipt_digests", "introduced_failure_digests",
+        "introduced_rejection_digests", "introduced_blocker_digests",
+        "introduced_conflict_digests", "target_causality", "cancellation_digest"
+      ],
+      "properties": {
+        "transition_actor": {"$ref": "#/$defs/nonEmptyString"},
+        "transition_reason": {"$ref": "#/$defs/nonEmptyString"},
+        "cause_digests": {"type": "array", "items": {"$ref": "#/$defs/digest"}, "minItems": 1, "uniqueItems": true},
+        "introduced_report_digests": {"$ref": "#/$defs/digestList"},
+        "introduced_finding_digests": {"$ref": "#/$defs/digestList"},
+        "introduced_receipt_digests": {"$ref": "#/$defs/digestList"},
+        "introduced_failure_digests": {"$ref": "#/$defs/digestList"},
+        "introduced_rejection_digests": {"$ref": "#/$defs/digestList"},
+        "introduced_blocker_digests": {"$ref": "#/$defs/digestList"},
+        "introduced_conflict_digests": {"$ref": "#/$defs/digestList"},
+        "target_causality": {"$ref": "#/$defs/reservedTargetCausality"},
+        "cancellation_digest": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "reservedCausalReport": {
+      "type": "object",
+      "required": ["phase", "report", "status", "report_digest", "cause_digest"],
+      "properties": {
+        "phase": {"enum": ["initial", "final"]},
+        "report": {"enum": ["verification", "review"]},
+        "status": {"enum": ["not_run", "passed", "failed", "blocked"]},
+        "report_digest": {"$ref": "#/$defs/digest"},
+        "cause_digest": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "reservedTargetCausality": {
+      "type": "object",
+      "required": [
+        "kind", "transition_reason_digest", "cause_digests", "report_bindings",
+        "finding_identities", "receipt_digests", "failure_digests",
+        "rejection_codes", "blocker_codes", "conflict_digests"
+      ],
+      "properties": {
+        "kind": {"$ref": "#/$defs/nonEmptyString"},
+        "transition_reason_digest": {"$ref": "#/$defs/digest"},
+        "cause_digests": {"$ref": "#/$defs/digestList"},
+        "report_bindings": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/reservedCausalReport"},
+          "uniqueItems": true
+        },
+        "finding_identities": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/findingIdentity"},
+          "uniqueItems": true
+        },
+        "receipt_digests": {"$ref": "#/$defs/digestList"},
+        "failure_digests": {"$ref": "#/$defs/digestList"},
+        "rejection_codes": {"$ref": "#/$defs/stringList"},
+        "blocker_codes": {"$ref": "#/$defs/stringList"},
+        "conflict_digests": {"$ref": "#/$defs/digestList"}
+      },
+      "additionalProperties": false
+    },
+    "stateTransitionLog": {"type": "array", "items": {"$ref": "#/$defs/stateTransition"}},
+    "qualityReport": {
+      "type": "object",
+      "required": [
+        "schema_version", "report", "phase", "status", "actor", "attempt", "plan_revision",
+        "artifact_revision", "artifact_digest", "diff_digest", "input_fingerprint",
+        "environment_fingerprint", "report_digest", "provenance", "cause", "checks",
+        "authority_grant", "staging_artifact_digest", "source_manifest_digest", "source_revision"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "report": {"enum": ["verification", "review"]},
+        "type": {"enum": ["verification_report", "review_report"]},
+        "phase": {"enum": ["initial", "final"]},
+        "status": {"enum": ["not_run", "passed", "failed", "blocked"]},
+        "actor": {"$ref": "#/$defs/nullableString"},
+        "attempt": {"$ref": "#/$defs/nullableInteger"},
+        "plan_revision": {"$ref": "#/$defs/nullableInteger"},
+        "artifact_revision": {"$ref": "#/$defs/nullableInteger"},
+        "artifact_digest": {"$ref": "#/$defs/nullableDigest"},
+        "diff_digest": {"$ref": "#/$defs/nullableDigest"},
+        "input_fingerprint": {"$ref": "#/$defs/nullableDigest"},
+        "environment_fingerprint": {"$ref": "#/$defs/nullableDigest"},
+        "report_digest": {"$ref": "#/$defs/nullableDigest"},
+        "provenance": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/reportProvenance"}]},
+        "cause": {"$ref": "#/$defs/nullableString"},
+        "checks": {"$ref": "#/$defs/stringList"},
+        "authority_grant": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/qualityAuthorityGrant"}]},
+        "staging_artifact_digest": {"$ref": "#/$defs/nullableDigest"},
+        "source_manifest_digest": {"$ref": "#/$defs/nullableDigest"},
+        "source_revision": {"$ref": "#/$defs/nullableInteger"}
+      },
+      "additionalProperties": false
+    },
+    "initialVerificationReport": {"$ref": "#/$defs/qualityReport"},
+    "finalVerificationReport": {"$ref": "#/$defs/qualityReport"},
+    "initialReviewReport": {"$ref": "#/$defs/qualityReport"},
+    "finalReviewReport": {"$ref": "#/$defs/qualityReport"},
+    "verificationReportArtifact": {
+      "type": "object",
+      "required": ["schema_version", "initial", "final"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "initial": {"$ref": "#/$defs/initialVerificationReport"},
+        "final": {"$ref": "#/$defs/finalVerificationReport"}
+      },
+      "additionalProperties": false
+    },
+    "reviewReportArtifact": {
+      "type": "object",
+      "required": ["schema_version", "initial", "final"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "initial": {"$ref": "#/$defs/initialReviewReport"},
+        "final": {"$ref": "#/$defs/finalReviewReport"}
+      },
+      "additionalProperties": false
+    },
+    "stagingArtifact": {
+      "type": "object",
+      "required": ["payload", "ref", "source_baseline_digest", "target_identity", "provenance", "manual_handoff", "digest"],
+      "properties": {
+        "payload": {},
+        "ref": {"$ref": "#/$defs/projectPath"},
+        "source_baseline_digest": {"$ref": "#/$defs/digest"},
+        "target_identity": {"$ref": "#/$defs/sourceTargetIdentity"},
+        "provenance": {"$ref": "#/$defs/stagingProvenance"},
+        "manual_handoff": {"type": "boolean"},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "stagingProvenance": {
+      "type": "object",
+      "required": [
+        "producer", "run_id", "contract_digest", "artifact_revision", "artifact_digest"
+      ],
+      "properties": {
+        "producer": {"const": "team_harness.orchestrator"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "sourceManifest": {
+      "type": "object",
+      "required": ["schema_version", "run_id", "contract_digest", "artifact_revision", "accepted", "status", "staged", "overwrote", "source_artifact_digest", "staging_artifact", "manifest_digest", "connection_status", "external_connection_verified", "committed_revision"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "accepted": {"type": "boolean"},
+        "status": {"$ref": "#/$defs/nonEmptyString"},
+        "staged": {"type": "boolean"},
+        "overwrote": {"const": false},
+        "source_artifact_digest": {"$ref": "#/$defs/nullableString"},
+        "staging_artifact": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/stagingArtifact"}]},
+        "manifest_digest": {"$ref": "#/$defs/nullableString"},
+        "connection_status": {"enum": ["unverified", "verified"]},
+        "external_connection_verified": {"type": "boolean"},
+        "committed_revision": {"$ref": "#/$defs/nullableInteger"}
+      },
+      "additionalProperties": false
+    },
+    "completion": {
+      "type": "object",
+      "required": [
+        "schema_version", "run_id", "contract_digest", "generation_revision",
+        "artifact_revision", "artifact_digest", "source_artifact_digest",
+        "source_manifest_digest", "staging_artifact_digest",
+        "initial_verification_report_digest", "initial_review_report_digest",
+        "final_verification_report_digest", "final_review_report_digest",
+        "reasons", "gate", "complete"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "generation_revision": {"$ref": "#/$defs/nullableInteger"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "artifact_digest": {"$ref": "#/$defs/digest"},
+        "source_artifact_digest": {"$ref": "#/$defs/nullableDigest"},
+        "source_manifest_digest": {"$ref": "#/$defs/nullableDigest"},
+        "staging_artifact_digest": {"$ref": "#/$defs/nullableDigest"},
+        "initial_verification_report_digest": {"$ref": "#/$defs/nullableDigest"},
+        "initial_review_report_digest": {"$ref": "#/$defs/nullableDigest"},
+        "final_verification_report_digest": {"$ref": "#/$defs/nullableDigest"},
+        "final_review_report_digest": {"$ref": "#/$defs/nullableDigest"},
+        "reasons": {"type": "array", "items": {"type": "string"}},
+        "gate": {"enum": ["not_evaluated", "passed"]},
+        "complete": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "improvement": {
+      "type": "object",
+      "required": ["id", "kind", "approval_class", "manual_approval_required", "requested_scope", "metrics_digest", "artifact_refs", "applied"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {"$ref": "#/$defs/nonEmptyString"},
+        "approval_class": {"enum": ["review_required", "human_required"]},
+        "manual_approval_required": {"type": "boolean"},
+        "requested_scope": {},
+        "metrics_digest": {"$ref": "#/$defs/digest"},
+        "artifact_refs": {"type": "array", "items": {"type": "object"}, "minItems": 1},
+        "applied": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "improvements": {"type": "array", "items": {"$ref": "#/$defs/improvement"}},
+    "baselineInventory": {
+      "type": "object",
+      "required": ["schema_version", "registry_digest", "policy_digest", "input_fingerprint", "environment_fingerprint", "runtime_verified"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "registry_digest": {"$ref": "#/$defs/digest"},
+        "policy_digest": {"$ref": "#/$defs/digest"},
+        "input_fingerprint": {"$ref": "#/$defs/digest"},
+        "environment_fingerprint": {"$ref": "#/$defs/digest"},
+        "runtime_verified": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "artifactReference": {
+      "type": "object",
+      "required": ["name", "path", "digest", "provenance"],
+      "properties": {
+        "name": {"$ref": "#/$defs/nonEmptyString"},
+        "path": {"$ref": "#/$defs/projectPath"},
+        "digest": {"$ref": "#/$defs/digest"},
+        "provenance": {"$ref": "#/$defs/artifactReferenceProvenance"}
+      },
+      "additionalProperties": false
+    },
+    "artifactReferenceProvenance": {
+      "type": "object",
+      "required": ["producer", "run_id", "contract_digest", "revision"],
+      "properties": {
+        "producer": {"const": "team_harness.orchestrator"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "revision": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "metricsState": {
+      "type": "object",
+      "required": [
+        "task_id", "task_type", "affected_domains", "risk_level", "selected_agents",
+        "selection_reasons", "team_size", "wave_count", "primary_writer", "model_profiles", "state_transitions",
+        "changed_files", "commands_executed", "test_results", "static_analysis_results",
+        "retry_count", "failure_categories", "review_findings", "verification_failures",
+        "review_failures", "architecture_violations", "human_interventions",
+        "approval_requests", "source_updates", "final_status", "completed", "blocked", "elapsed_time",
+        "token_usage", "cost", "digest"
+      ],
+      "properties": {
+        "task_id": {"type": "string"},
+        "task_type": {"type": "string"},
+        "affected_domains": {"$ref": "#/$defs/stringList"},
+        "risk_level": {"enum": ["low", "medium", "high", "critical"]},
+        "selected_agents": {"$ref": "#/$defs/stringList"},
+        "selection_reasons": {"type": "object", "additionalProperties": {"$ref": "#/$defs/nonEmptyStringList"}},
+        "team_size": {"type": "integer", "minimum": 0},
+        "wave_count": {"type": "integer", "minimum": 0, "maximum": 3},
+        "primary_writer": {"$ref": "#/$defs/nullableString"},
+        "model_profiles": {"type": "object", "additionalProperties": {"$ref": "#/$defs/nonEmptyString"}},
+        "state_transitions": {"type": "integer", "minimum": 1},
+        "changed_files": {"type": "array", "items": {"$ref": "#/$defs/projectPath"}, "uniqueItems": true},
+        "commands_executed": {"$ref": "#/$defs/stringList"},
+        "test_results": {"$ref": "#/$defs/verificationSummary"},
+        "static_analysis_results": {"type": "string"},
+        "retry_count": {"type": "integer", "minimum": 0},
+        "failure_categories": {"type": "array", "items": {"$ref": "#/$defs/digest"}, "uniqueItems": true},
+        "review_findings": {"type": "integer", "minimum": 0},
+        "verification_failures": {"type": "integer", "minimum": 0},
+        "review_failures": {"type": "integer", "minimum": 0},
+        "architecture_violations": {"type": "integer", "minimum": 0},
+        "human_interventions": {"type": "integer", "minimum": 0},
+        "approval_requests": {"type": "integer", "minimum": 0},
+        "source_updates": {"type": "integer", "minimum": 0},
+        "final_status": {"$ref": "#/$defs/nonEmptyString"},
+        "completed": {"type": "boolean"},
+        "blocked": {"type": "boolean"},
+        "elapsed_time": {"type": "string"},
+        "token_usage": {"type": "string"},
+        "cost": {"type": "string"},
+        "digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "artifactManifest": {
+      "type": "object",
+      "required": ["schema_version", "artifacts"],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifactReference"}, "minItems": 12}
+      },
+      "additionalProperties": false
+    },
+    "commitManifest": {
+      "type": "object",
+      "required": [
+        "schema_version", "run_id", "revision", "generation_ref",
+        "parent_generation_ref", "parent_manifest_digest", "parent_state_ref",
+        "parent_state_digest", "parent_artifact_refs", "state_ref", "state_digest",
+        "trace_digest", "artifact_digests", "receipt_artifacts", "staging_artifact",
+        "provenance", "manifest_digest"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "revision": {"type": "integer", "minimum": 1},
+        "generation_ref": {"$ref": "#/$defs/projectPath"},
+        "parent_generation_ref": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/projectPath"}]},
+        "parent_manifest_digest": {"$ref": "#/$defs/nullableDigest"},
+        "parent_state_ref": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/projectPath"}]},
+        "parent_state_digest": {"$ref": "#/$defs/nullableDigest"},
+        "parent_artifact_refs": {
+          "anyOf": [
+            {"type": "null"},
+            {"type": "array", "items": {"$ref": "#/$defs/artifactReference"}}
+          ]
+        },
+        "state_ref": {"$ref": "#/$defs/projectPath"},
+        "state_digest": {"$ref": "#/$defs/digest"},
+        "trace_digest": {"$ref": "#/$defs/digest"},
+        "artifact_digests": {"type": "object"},
+        "receipt_artifacts": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifactReceiptReference"}
+        },
+        "staging_artifact": {
+          "anyOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "required": ["ref", "digest"],
+              "properties": {
+                "ref": {"$ref": "#/$defs/projectPath"},
+                "digest": {"$ref": "#/$defs/digest"}
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "provenance": {"type": "object"},
+        "manifest_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "commitAnchorEntry": {
+      "type": "object",
+      "required": [
+        "revision", "generation_ref", "manifest_digest", "parent_manifest_digest"
+      ],
+      "properties": {
+        "revision": {"type": "integer", "minimum": 1},
+        "generation_ref": {"$ref": "#/$defs/projectPath"},
+        "manifest_digest": {"$ref": "#/$defs/digest"},
+        "parent_manifest_digest": {"$ref": "#/$defs/nullableDigest"}
+      },
+      "additionalProperties": false
+    },
+    "commitAnchor": {
+      "type": "object",
+      "required": [
+        "schema_version", "run_id", "entries", "high_revision",
+        "high_generation_ref", "high_manifest_digest", "anchor_digest"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "entries": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/commitAnchorEntry"},
+          "minItems": 1
+        },
+        "high_revision": {"type": "integer", "minimum": 1},
+        "high_generation_ref": {"$ref": "#/$defs/projectPath"},
+        "high_manifest_digest": {"$ref": "#/$defs/digest"},
+        "anchor_digest": {"$ref": "#/$defs/digest"}
+      },
+      "additionalProperties": false
+    },
+    "runState": {
+      "type": "object",
+      "required": [
+        "architecture_decisions", "artifact_revision", "artifacts", "attempt_count",
+        "authority_grants", "blockers", "boundaries", "catalog_projection",
+        "completion_report", "conflicts", "contract_digest", "current_artifact_digest",
+        "diff_digest", "environment_fingerprint", "execution_policy", "registry_binding", "role_assignments",
+        "role_assignments_digest", "start_request", "start_request_digest", "failure_history",
+        "final_review_report", "final_verification_report", "finding_catalog", "findings",
+        "fix_evidence_attempt", "human_summary", "idempotency_key", "implementation_approval",
+        "implementation_log", "improvement_proposals", "initial_review_report",
+        "initial_verification_report", "input_fingerprint", "integration_owner",
+        "integrity_status", "interface_contracts", "lease_epoch", "legacy_converted",
+        "max_depth_used", "metrics", "orchestrator", "ownership_revision",
+        "parallel_write_approved", "parallel_write_candidate", "post_integration_reverification",
+        "rejections", "retry_causes", "review_report", "revision", "run_id", "runtime",
+        "schema_version", "security_checks", "selection", "shared_plan", "source_sync",
+        "state", "state_trace", "task_contract", "team", "thread_count",
+        "verification_report", "write_authorized", "write_ownership"
+      ],
+      "properties": {
+        "schema_version": {"$ref": "#/$defs/version"},
+        "run_id": {"$ref": "#/$defs/nonEmptyString"},
+        "revision": {"type": "integer", "minimum": 0},
+        "idempotency_key": {"$ref": "#/$defs/nonEmptyString"},
+        "contract_digest": {"$ref": "#/$defs/digest"},
+        "task_contract": {"$ref": "#/$defs/taskContract"},
+        "legacy_converted": {"type": "boolean"},
+        "orchestrator": {"$ref": "#/$defs/orchestratorState"},
+        "execution_policy": {"$ref": "#/$defs/executionPolicy"},
+        "registry_binding": {"$ref": "#/$defs/registryBinding"},
+        "role_assignments": {"anyOf": [{"const": {}}, {"$ref": "#/$defs/roleAssignments"}]},
+        "role_assignments_digest": {"$ref": "#/$defs/digest"},
+        "start_request": {"$ref": "#/$defs/startRequestSnapshot"},
+        "start_request_digest": {"$ref": "#/$defs/digest"},
+        "team": {"type": "array", "items": {"$ref": "#/$defs/teamMember"}},
+        "selection": {"$ref": "#/$defs/selectionState"},
+        "thread_count": {"type": "integer", "minimum": 0, "maximum": 3},
+        "max_depth_used": {"type": "integer", "minimum": 0, "maximum": 1},
+        "runtime": {"$ref": "#/$defs/runtimeState"},
+        "blockers": {"type": "array", "items": {"$ref": "#/$defs/problem"}},
+        "rejections": {"type": "array", "items": {"$ref": "#/$defs/problem"}},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "finding_catalog": {"type": "array", "items": {"$ref": "#/$defs/findingCatalogEntry"}},
+        "conflicts": {"type": "array", "items": {"$ref": "#/$defs/findingConflict"}},
+        "interface_contracts": {"type": "array"},
+        "boundaries": {"type": "object"},
+        "architecture_decisions": {"type": "array"},
+        "security_checks": {"type": "array"},
+        "write_ownership": {"type": "array", "items": {"$ref": "#/$defs/writeOwnershipInput"}},
+        "ownership_revision": {"type": "integer", "minimum": 1},
+        "lease_epoch": {"type": "integer", "minimum": 1},
+        "write_authorized": {"type": "boolean"},
+        "parallel_write_candidate": {"type": "boolean"},
+        "parallel_write_approved": {"type": "boolean"},
+        "integration_owner": {"$ref": "#/$defs/nullableString"},
+        "post_integration_reverification": {"type": "object"},
+        "shared_plan": {"$ref": "#/$defs/sharedPlan"},
+        "attempt_count": {"type": "integer", "minimum": 1},
+        "retry_causes": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}},
+        "fix_evidence_attempt": {"type": "integer", "minimum": 0},
+        "implementation_log": {"type": "array", "items": {"$ref": "#/$defs/implementationLogEntry"}},
+        "input_fingerprint": {"$ref": "#/$defs/digest"},
+        "environment_fingerprint": {"$ref": "#/$defs/digest"},
+        "diff_digest": {"$ref": "#/$defs/digest"},
+        "artifact_revision": {"type": "integer", "minimum": 1},
+        "current_artifact_digest": {"$ref": "#/$defs/digest"},
+        "initial_verification_report": {"$ref": "#/$defs/initialVerificationReport"},
+        "final_verification_report": {"$ref": "#/$defs/finalVerificationReport"},
+        "initial_review_report": {"$ref": "#/$defs/initialReviewReport"},
+        "final_review_report": {"$ref": "#/$defs/finalReviewReport"},
+        "verification_report": {"$ref": "#/$defs/verificationSummary"},
+        "review_report": {"$ref": "#/$defs/reviewSummary"},
+        "implementation_approval": {"$ref": "#/$defs/implementationApprovalState"},
+        "source_sync": {"$ref": "#/$defs/sourceManifest"},
+        "improvement_proposals": {"$ref": "#/$defs/improvements"},
+        "completion_report": {"$ref": "#/$defs/completion"},
+        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifactReference"}},
+        "human_summary": {"type": "string"},
+        "catalog_projection": {"type": "array", "items": {"type": "object"}},
+        "authority_grants": {"$ref": "#/$defs/authorityGrantState"},
+        "failure_history": {"type": "array", "items": {"$ref": "#/$defs/failureHistoryEntry"}},
+        "metrics": {"$ref": "#/$defs/metricsState"},
+        "integrity_status": {"enum": ["verified", "failed"]},
+        "integrity_errors": {"type": "array", "items": {"type": "string"}},
+        "state": {"$ref": "#/$defs/nonEmptyString"},
+        "state_trace": {"type": "array", "items": {"$ref": "#/$defs/stateTransition"}, "minItems": 1}
+      },
+      "additionalProperties": false
+    }
+  }
+}

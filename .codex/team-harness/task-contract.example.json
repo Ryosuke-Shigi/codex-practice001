@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "example-backend-change",
+  "policy_binding": {
+    "version": "2026-07-22.2",
+    "digest": "sha256:7f4ef1d056f121e9c7ff67f2360fbf394bb60e5baa81d21d3e4190b10093157b"
+  },
+  "role_assignments": {
+    "writer": "backend",
+    "reviewer": "reviewer",
+    "verifier": "verifier"
+  },
+  "task_contract": {
+    "task_id": "task-example-backend-change",
+    "title": "Add a validated backend endpoint",
+    "goal": "Deliver the endpoint with independent verification and review",
+    "background": "Canonical project-neutral Task Contract example",
+    "current_state": "The endpoint is not implemented",
+    "desired_state": "The endpoint is implemented and independently accepted",
+    "scope": {
+      "include": ["app/Http/Controllers/ExampleController.php"]
+    },
+    "non_goals": ["Do not expand privileges or edit outside declared ownership"],
+    "acceptance_criteria": ["All required checks and independent gates pass"],
+    "constraints": [
+      "Task Contract is immutable",
+      "Fail closed on incomplete evidence",
+      "Artifact and quality evidence must use exact grants from a committed generation",
+      "Failures must use canonical quality reports and persisted checks",
+      "Persist the canonical start request and role assignment digests",
+      "Persist only a sanitized input problem projection and bind its digest with the canonical start authority to the immutable run identity, use one schema-valid value-independent safe rejected Task Contract for every schema-invalid Task Contract while retaining canonical problem codes, preserve valid contracts rejected only by envelope or capability problems, and retain neither raw invalid values nor a redacted input's original idempotency key",
+      "Validate the parent generation chain and derive artifacts and metrics from Run State",
+      "Allow exactly one final-state reserved transition at the end of a generation-new trace suffix and bind only transition-specific generation-new evidence",
+      "Commit final-review failure evidence and its direct retry or stop transition in one request, one generation, and one save",
+      "Authorize blocked, failed, and human-approval reserved targets only from their target-specific same-generation cause projection",
+      "Require each reserved target kind's exact causal subset and reject unrelated same-generation evidence mixed with a valid cause",
+      "Derive each reserved target kind from its typed exact reason, report phase, kind, status, cause, failure, Finding conflict identity and positions, or canonical input problems",
+      "Resolve failure history per issue without hiding unresolved sibling failures",
+      "Append a new Finding digest when a resolved identity recurs and reopen the catalog until that new Finding is resolved",
+      "Validate each receipt path against its prior write-enabled generation, exact historical grant, Task Contract scope, ownership, provenance, and current Registry scope",
+      "Bind source introduction to its exact committed generation, closed target identity, artifact, and provenance, then require exact carry until disappearance",
+      "Keep the approved initial reports, implementation approval, Task Contract, and artifact source basis immutable across the accepted source chain",
+      "After an artifact-changing verified fix, reset current source, completion, approval, and all reports to canonical inactive evidence for the new artifact revision while preserving historical staging and requiring fresh source introduction",
+      "Use one pure canonical inactive source projection and require its exact run, contract, artifact, status, null source bindings, no-overwrite, and shadow connection fields in every inactive historical generation",
+      "Bind completion to the verified source, Task Contract, artifact, all four report digests, and completed generation",
+      "Accept cancellation only through the orchestrator-owned dedicated cancel event and keep interrupt mapped to blocked",
+      "Detect one-sided root or anchor rewind and local integrity mismatches",
+      "Treat a coherent coordinated root-and-anchor rewind by an equally privileged actor as out of scope",
+      "Validate Run State schema before semantic replay"
+    ],
+    "source_of_truth": ["task_contract", "execution_policy"],
+    "allowed_paths": ["app/Http/Controllers/ExampleController.php"],
+    "forbidden_paths": [".env*", ".git/**"],
+    "affected_domains": ["backend"],
+    "risk_level": "low",
+    "required_capabilities": ["php", "validation"],
+    "team_assignment": {"mode": "dynamic"},
+    "primary_writer": "dynamic",
+    "consulting_specialists": [],
+    "reviewer": "dynamic",
+    "verifier": "dynamic",
+    "write_ownership": [
+      {
+        "owner": "dynamic",
+        "paths": ["app/Http/Controllers/ExampleController.php"]
+      }
+    ],
+    "required_checks": ["unit", "contract"],
+    "stop_conditions": ["specification conflict", "unverifiable evidence"],
+    "retry_conditions": ["changed input, diff, or environment evidence"],
+    "approval_boundaries": ["privilege expansion", "source activation"],
+    "required_deliverables": ["implementation", "verification report", "review report"],
+    "information_source_sync": {"required": false, "manual_activation": true},
+    "completion_conditions": ["initial and final verification/review pass"]
+  }
+}

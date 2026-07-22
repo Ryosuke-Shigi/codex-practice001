@@ -1,3 +1,12 @@
 [agents]
 max_threads = 3
 max_depth = 1
+
+[team_harness]
+registry_path = ".codex/team-harness/agent-capability-registry.json"
+execution_policy_path = ".codex/team-harness/execution-policy.json"
+execution_policy_version = "2026-07-22.2"
+execution_policy_digest = "sha256:7f4ef1d056f121e9c7ff67f2360fbf394bb60e5baa81d21d3e4190b10093157b"
+schema_path = ".codex/team-harness/team-harness.schema.json"
+acceptance_manifest_path = ".codex/team-harness/acceptance-scenarios.json"
+runs_path = ".codex/runs"

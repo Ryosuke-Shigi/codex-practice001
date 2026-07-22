@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "legacy-fixture-001",
+  "legacy_single_agent": {
+    "agent": "backend",
+    "task": "Add a validated endpoint",
+    "paths": [
+      "app/Http/Controllers/ExampleController.php"
+    ]
+  }
+}

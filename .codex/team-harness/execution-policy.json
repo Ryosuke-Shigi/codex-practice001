@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "policy_version": "2026-07-22.2",
+  "policy_digest": "sha256:7f4ef1d056f121e9c7ff67f2360fbf394bb60e5baa81d21d3e4190b10093157b",
+  "mode": "shadow",
+  "max_threads": 3,
+  "max_depth": 1,
+  "single_writer": true,
+  "unavailable_specialist": "sequential_fallback",
+  "same_cause_retry_limit": 2,
+  "retention": {
+    "days": 30,
+    "automatic_deletion": false
+  },
+  "write_authorization": {
+    "fail_closed": true,
+    "requires_parent_lease": true,
+    "reviewer_write": false,
+    "verifier_write": false,
+    "allowed_states": ["implementing", "retrying"],
+    "parallel_write_requires": [
+      "disjoint_path_ownership",
+      "distinct_worktrees",
+      "integration_owner",
+      "post_integration_reverification"
+    ]
+  },
+  "source_sync": {
+    "minimum_state": "implementation_approved",
+    "manual_activation": true,
+    "no_overwrite": true,
+    "external_disconnected_status": "prepared_for_human_application"
+  },
+  "legacy_adapter": {
+    "enabled": true,
+    "entrypoint": "team_harness.orchestrator:TeamHarness"
+  },
+  "evidence_gates": {
+    "artifact_requires_exact_committed_write_grant": true,
+    "quality_requires_prior_committed_grant": true,
+    "retry_exit_requires_verified_fix": true,
+    "final_review_retry_limit_state": "needs_human_approval"
+  },
+  "states": [
+    "received",
+    "discovering",
+    "contracted",
+    "team_formed",
+    "planning",
+    "implementing",
+    "specialist_check",
+    "verifying",
+    "reviewing",
+    "retrying",
+    "implementation_approved",
+    "source_sync",
+    "final_verification",
+    "final_review",
+    "completed",
+    "blocked",
+    "failed",
+    "needs_human_approval",
+    "cancelled"
+  ],
+  "terminal_states": ["completed", "failed", "blocked", "cancelled"],
+  "reserved_states": [
+    "implementation_approved",
+    "source_sync",
+    "final_verification",
+    "final_review",
+    "completed",
+    "blocked",
+    "failed",
+    "needs_human_approval",
+    "cancelled"
+  ],
+  "allowed_transitions": {
+    "received": ["discovering", "blocked", "cancelled"],
+    "discovering": ["contracted", "blocked", "needs_human_approval"],
+    "contracted": ["team_formed", "blocked", "needs_human_approval"],
+    "team_formed": ["planning", "blocked"],
+    "planning": ["implementing", "blocked", "cancelled"],
+    "implementing": ["specialist_check", "verifying", "reviewing", "blocked", "needs_human_approval", "cancelled"],
+    "specialist_check": ["implementing", "verifying", "blocked", "needs_human_approval"],
+    "verifying": ["reviewing", "retrying", "failed", "blocked"],
+    "reviewing": ["implementation_approved", "retrying", "failed", "blocked", "needs_human_approval"],
+    "retrying": ["implementing", "verifying", "reviewing", "blocked", "failed"],
+    "implementation_approved": ["source_sync", "retrying", "final_verification", "final_review", "completed", "blocked"],
+    "source_sync": ["final_verification", "final_review", "retrying", "failed", "blocked"],
+    "final_verification": ["final_review", "retrying", "failed", "blocked", "needs_human_approval"],
+    "final_review": ["completed", "retrying", "blocked", "needs_human_approval"],
+    "blocked": [],
+    "failed": [],
+    "needs_human_approval": ["received", "blocked", "cancelled"],
+    "cancelled": [],
+    "completed": []
+  }
+}

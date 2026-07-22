@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "manifest_kind": "acceptance_scenarios",
+  "scenarios": [
+    {"id": "01", "name": "backend-only selection", "test": "test_scenario_01_backend_only_selection"},
+    {"id": "02", "name": "frontend-backend contract", "test": "test_scenario_02_frontend_backend_contract"},
+    {"id": "03", "name": "DTO/Repository/Service/Strategy boundary", "test": "test_scenario_03_dto_repository_service_strategy_boundary"},
+    {"id": "04", "name": "architecture decision", "test": "test_scenario_04_architecture_decision"},
+    {"id": "05", "name": "security auth", "test": "test_scenario_05_security_auth"},
+    {"id": "06", "name": "operations queue/scheduler/migration", "test": "test_scenario_06_operations_queue_scheduler_migration"},
+    {"id": "07", "name": "agreeing findings", "test": "test_scenario_07_agreeing_findings"},
+    {"id": "08", "name": "conflicting findings", "test": "test_scenario_08_conflicting_findings"},
+    {"id": "09", "name": "missing spec blocked", "test": "test_scenario_09_missing_spec_blocked"},
+    {"id": "10", "name": "verifier fail retry", "test": "test_scenario_10_verifier_fail_retry"},
+    {"id": "11", "name": "reviewer design violation", "test": "test_scenario_11_reviewer_design_violation"},
+    {"id": "12", "name": "re-review/re-verify after fix", "test": "test_scenario_12_re_review_re_verify_after_fix"},
+    {"id": "13", "name": "multi-writer request blocked", "test": "test_scenario_13_multi_writer_request_blocked"},
+    {"id": "14", "name": "same-file conflict reject", "test": "test_scenario_14_same_file_conflict_reject"},
+    {"id": "15", "name": "forbidden path edit reject", "test": "test_scenario_15_forbidden_path_edit_reject"},
+    {"id": "16", "name": "interrupt/resume", "test": "test_scenario_16_interrupt_resume"},
+    {"id": "17", "name": "rerun idempotency", "test": "test_scenario_17_rerun_idempotency"},
+    {"id": "18", "name": "pre-approval source sync reject", "test": "test_scenario_18_pre_approval_source_sync_reject"},
+    {"id": "19", "name": "approved source sync", "test": "test_scenario_19_approved_source_sync"},
+    {"id": "20", "name": "final review detects drift", "test": "test_scenario_20_final_review_detects_drift"},
+    {"id": "21", "name": "improvement proposal generation", "test": "test_scenario_21_improvement_proposal_generation"},
+    {"id": "22", "name": "privilege expansion not auto-apply", "test": "test_scenario_22_privilege_expansion_not_auto_apply"},
+    {"id": "23", "name": "legacy single-agent through common core", "test": "test_scenario_23_legacy_single_agent_through_common_core"},
+    {"id": "24", "name": "writer/reviewer/verifier role collision reject", "test": "test_scenario_24_writer_reviewer_verifier_role_collision_reject"},
+    {"id": "25", "name": "no unnecessary specialists", "test": "test_scenario_25_no_unnecessary_specialists"}
+  ]
+}
