@@ -9,12 +9,12 @@ final readonly class DesignPhilosophySectionDTO
     private const SECTION_KEYS = [
         'hero',
         'principles',
+        'human-ai-roles',
+        'ai-development-flow',
         'architecture',
         'development-stages',
-        'human-ai-flow',
-        'subagents',
-        'engineering-loop',
-        'understanding-reboot',
+        'quality-gates',
+        'improvement-loop',
         'closing',
     ];
 
@@ -67,7 +67,7 @@ final readonly class DesignPhilosophySectionDTO
 
     /**
      * @return array{
-     *     key: 'hero'|'principles'|'architecture'|'development-stages'|'human-ai-flow'|'subagents'|'engineering-loop'|'understanding-reboot'|'closing',
+     *     key: 'hero'|'principles'|'human-ai-roles'|'ai-development-flow'|'architecture'|'development-stages'|'quality-gates'|'improvement-loop'|'closing',
      *     sortOrder: int,
      *     eyebrow: string,
      *     title: string,

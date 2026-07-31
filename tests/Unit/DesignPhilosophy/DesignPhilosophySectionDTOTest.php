@@ -11,22 +11,22 @@ class DesignPhilosophySectionDTOTest extends TestCase
     public function test_from_config_maps_config_section_to_component_props_array(): void
     {
         $dto = DesignPhilosophySectionDTO::fromConfig([
-            'key' => 'human-ai-flow',
-            'sort_order' => 50,
+            'key' => 'ai-development-flow',
+            'sort_order' => 40,
             'enabled' => true,
-            'eyebrow' => '04 / HUMAN + AI',
-            'title' => 'コードだけでなく、AIにも責務を分ける。',
-            'lead' => '人間、ChatGPT、Codex親Agentの判断と作業を混ぜない。',
-            'body' => '同じ正本と停止条件から、必要な役だけを選びます。',
+            'eyebrow' => '03 / CONTROLLED FLOW',
+            'title' => '速さではなく、制御できる流れをつくる。',
+            'lead' => '探索、設計、実装、検証、レビューを混在させません。',
+            'body' => '各工程の責務を分け、確認不能な状態では安全に停止します。',
         ]);
 
         $this->assertSame([
-            'key' => 'human-ai-flow',
-            'sortOrder' => 50,
-            'eyebrow' => '04 / HUMAN + AI',
-            'title' => 'コードだけでなく、AIにも責務を分ける。',
-            'lead' => '人間、ChatGPT、Codex親Agentの判断と作業を混ぜない。',
-            'body' => '同じ正本と停止条件から、必要な役だけを選びます。',
+            'key' => 'ai-development-flow',
+            'sortOrder' => 40,
+            'eyebrow' => '03 / CONTROLLED FLOW',
+            'title' => '速さではなく、制御できる流れをつくる。',
+            'lead' => '探索、設計、実装、検証、レビューを混在させません。',
+            'body' => '各工程の責務を分け、確認不能な状態では安全に停止します。',
         ], $dto->toArray());
     }
 

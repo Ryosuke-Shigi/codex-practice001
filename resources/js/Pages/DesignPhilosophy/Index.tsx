@@ -14,14 +14,19 @@ export default function DesignPhilosophyIndex({
 }: DesignPhilosophyIndexProps) {
     return (
         <PublicLayout
-            className="bg-[#f6f4ed] text-[#11120f]"
+            className="design-philosophy-theme bg-[#050814] text-[#eef8ff]"
             withEffect={false}
         >
-            <Head title="設計思想｜責務でつなぐAI駆動開発">
+            <Head title="人間主導のAI開発設計思想">
                 <meta
                     head-key="description"
                     name="description"
-                    content="責務分離・段階的開発・AI協働を一つの原則で設計する、ポートフォリオの設計思想。"
+                    content="人間主導でAI開発の契約、責務、品質ゲート、改善ループを設計するポートフォリオの設計思想。"
+                />
+                <meta
+                    head-key="theme-color"
+                    name="theme-color"
+                    content="#050814"
                 />
             </Head>
 

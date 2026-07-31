@@ -1,12 +1,12 @@
 export type DesignPhilosophySectionKey =
     | 'hero'
     | 'principles'
+    | 'human-ai-roles'
+    | 'ai-development-flow'
     | 'architecture'
     | 'development-stages'
-    | 'human-ai-flow'
-    | 'subagents'
-    | 'engineering-loop'
-    | 'understanding-reboot'
+    | 'quality-gates'
+    | 'improvement-loop'
     | 'closing';
 
 export type DesignPhilosophySection = {
@@ -21,43 +21,60 @@ export type DesignPhilosophySection = {
 export type Principle = {
     title: string;
     description: string;
-    details: string[];
+    signal: string;
+};
+
+export type PublicRole = {
+    label: string;
+    title: string;
+    description: string;
+    responsibility: string;
+};
+
+export type AiDevelopmentStep = {
+    step: number;
+    title: string;
+    description: string;
+    owner: string;
 };
 
 export type ArchitectureLayer = {
     key: 'Action' | 'Domain' | 'Responder';
     title: string;
     description: string;
-    responsibilities: string[];
+};
+
+export type ArchitectureResponsibility = {
+    value: string;
+    technicalLabel: string;
+    description: string;
+    category:
+        | 'entry'
+        | 'application'
+        | 'domain'
+        | 'infrastructure'
+        | 'output';
 };
 
 export type DevelopmentStage = {
     key: 'IDEA BOARD' | 'MOCK' | 'PROTOTYPE' | 'PRODUCT';
     label: string;
-    description: string;
-    details: string[];
+    purpose: string;
+    includes: string[];
+    excludes: string[];
+    deliverable: string;
+    completion: string;
     optional: boolean;
 };
 
-export type HumanAiActor = {
-    label: string;
+export type QualityGate = {
     title: string;
     description: string;
-    responsibilities: string[];
-    primary: boolean;
+    check: string;
 };
 
-export type SubagentFilterKey = 'all' | 'discover' | 'implement' | 'verify';
-
-export type SubagentDefinition = {
-    name: string;
-    group: Exclude<SubagentFilterKey, 'all'>;
-    groupLabel: string;
-    roleLabel: string;
-    description: string;
-};
-
-export type EngineeringLoopStep = {
+export type ImprovementStep = {
+    step: number;
     title: string;
     description: string;
 };

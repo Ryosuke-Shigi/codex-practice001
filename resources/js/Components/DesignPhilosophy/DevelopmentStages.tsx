@@ -1,6 +1,10 @@
+import { CircleCheck, FlaskConical, Layers3, Lightbulb } from 'lucide-react';
+
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
 import { developmentStages } from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+
+const stageIcons = [Lightbulb, Layers3, FlaskConical, CircleCheck];
 
 export default function DevelopmentStages({
     section,
@@ -9,54 +13,121 @@ export default function DevelopmentStages({
 }) {
     return (
         <section
+            id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
-            className="px-5 py-20 sm:px-8 sm:py-24 lg:px-10 lg:py-28"
+            className="dp-section dp-section--stages"
         >
-            <div className="mx-auto w-full max-w-7xl min-w-0">
+            <div className="dp-shell">
                 <SectionHeading section={section} />
 
-                <ol className="mt-12 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    {developmentStages.map((stage, index) => (
-                        <li
-                            key={stage.key}
-                            className={`relative min-w-0 overflow-hidden rounded-[1.35rem] border p-6 shadow-[0_12px_32px_rgba(36,37,30,0.06)] ${
-                                stage.optional
-                                    ? 'border-dashed border-[#b5a000] bg-gradient-to-b from-[#f2df3a]/15 to-white'
-                                    : 'border-black/10 bg-white'
-                            }`}
-                        >
-                            <span
-                                aria-hidden="true"
-                                className="absolute -bottom-10 right-0 text-[8rem] font-black leading-none text-black/[0.035]"
-                            >
-                                {index + 1}
-                            </span>
-                            <p className="relative inline-flex min-h-8 items-center rounded-full bg-[#f2df3a]/25 px-3 py-1 text-xs font-black tracking-[0.08em] text-[#3d3e38]">
-                                {stage.label}
-                            </p>
-                            <h3 className="relative mt-6 break-words text-2xl font-black tracking-[-0.03em] [overflow-wrap:anywhere]">
-                                {stage.key}
-                            </h3>
-                            <p className="relative mt-3 text-base leading-8 text-[#62635d]">
-                                {stage.description}
-                            </p>
-                            <ul className="relative mt-5 grid gap-2 text-sm font-bold text-[#3d3e38]">
-                                {stage.details.map((detail) => (
-                                    <li key={detail} className="flex gap-2">
-                                        <span aria-hidden="true" className="text-[#a28f00]">
-                                            •
-                                        </span>
-                                        <span>{detail}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </li>
-                    ))}
-                </ol>
+                <div className="dp-stage-grid" data-stage-cards>
+                    {developmentStages.map((stage, index) => {
+                        const Icon = stageIcons[index];
 
-                <p className="mt-7 border-l-[6px] border-[#d8c100] bg-[#f2df3a]/15 px-5 py-5 text-lg font-black leading-8 text-[#2d2e29] sm:px-6">
-                    MOCKから引き継ぐのはコードではなく、確定したUI・導線・状態・入出力の契約。
-                </p>
+                        return (
+                            <article
+                                key={stage.key}
+                                className="dp-card dp-stage-card dp-reveal"
+                                data-tilt
+                            >
+                                <div className="dp-stage-card__top">
+                                    <span>
+                                        {String(index + 1).padStart(2, '0')}
+                                    </span>
+                                    <Icon aria-hidden="true" />
+                                </div>
+                                <p>{stage.key}</p>
+                                <h3>{stage.label}</h3>
+                                <strong>
+                                    {stage.optional ? '必要時に選択' : '基本工程'}
+                                </strong>
+                                <dl className="dp-stage-card__comparison">
+                                    <div>
+                                        <dt>目的</dt>
+                                        <dd>{stage.purpose}</dd>
+                                    </div>
+                                    <div>
+                                        <dt>扱うもの</dt>
+                                        <dd>
+                                            <ul>
+                                                {stage.includes.map((item) => (
+                                                    <li key={item}>{item}</li>
+                                                ))}
+                                            </ul>
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt>扱わないもの</dt>
+                                        <dd>
+                                            <ul>
+                                                {stage.excludes.map((item) => (
+                                                    <li key={item}>{item}</li>
+                                                ))}
+                                            </ul>
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt>成果</dt>
+                                        <dd>{stage.deliverable}</dd>
+                                    </div>
+                                    <div>
+                                        <dt>完了条件</dt>
+                                        <dd>{stage.completion}</dd>
+                                    </div>
+                                </dl>
+                            </article>
+                        );
+                    })}
+                </div>
+
+                <div className="dp-stage-table-wrap dp-reveal">
+                    <table data-stage-table>
+                        <caption>
+                            4つの開発段階における目的、扱うもの、扱わないもの、成果、完了条件
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">段階</th>
+                                <th scope="col">目的</th>
+                                <th scope="col">扱うもの</th>
+                                <th scope="col">扱わないもの</th>
+                                <th scope="col">成果</th>
+                                <th scope="col">完了条件</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {developmentStages.map((stage) => (
+                                <tr key={stage.key}>
+                                    <th scope="row">
+                                        <span>{stage.key}</span>
+                                        <small>{stage.label}</small>
+                                    </th>
+                                    <td data-label="目的">{stage.purpose}</td>
+                                    <td data-label="扱うもの">
+                                        <ul>
+                                            {stage.includes.map((item) => (
+                                                <li key={item}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    </td>
+                                    <td data-label="扱わないもの">
+                                        <ul>
+                                            {stage.excludes.map((item) => (
+                                                <li key={item}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    </td>
+                                    <td data-label="成果">
+                                        {stage.deliverable}
+                                    </td>
+                                    <td data-label="完了条件">
+                                        {stage.completion}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     );
