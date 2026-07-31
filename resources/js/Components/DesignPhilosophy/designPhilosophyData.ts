@@ -10,10 +10,12 @@ import type {
 } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
 export const heroSignals = [
-    'HUMAN-LED',
-    'CONTRACT-DRIVEN',
-    'TRACEABLE',
-    'REVERSIBLE',
+    '人間主導',
+    '契約駆動',
+    '単一編集',
+    '独立検証',
+    '安全停止',
+    '継続改善',
 ] as const;
 
 export const principles: Principle[] = [

@@ -4,10 +4,25 @@
 import { readFileSync } from 'node:fs';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import DesignPhilosophyView from '@/Components/DesignPhilosophy/DesignPhilosophyView';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+
+vi.mock('@inertiajs/react', () => ({
+    Link: ({
+        children,
+        href,
+        ...props
+    }: {
+        children?: ReactNode;
+        href: string;
+    }) => (
+        <a {...props} data-inertia-link="true" href={href}>
+            {children}
+        </a>
+    ),
+}));
 
 const sections: DesignPhilosophySection[] = ([
     ['hero', 'ポートフォリオ／設計思想', '人間主導のAI開発設計思想'],
@@ -107,6 +122,22 @@ describe('DesignPhilosophyView', () => {
         expect(container.querySelector('h1')?.textContent).toBe(
             '人間主導のAI開発設計思想',
         );
+        const heroSection = container.querySelector('.dp-hero');
+        const heroSignals = heroSection?.querySelectorAll(
+            '[aria-label="設計思想の特性"] li',
+        );
+        expect(
+            Array.from(heroSignals ?? []).map((signal) => signal.textContent),
+        ).toEqual([
+            '人間主導',
+            '契約駆動',
+            '単一編集',
+            '独立検証',
+            '安全停止',
+            '継続改善',
+        ]);
+        expect(heroSection?.textContent).not.toContain('TRACEABLE');
+        expect(heroSection?.textContent).not.toContain('REVERSIBLE');
         expect(
             container.querySelector('a[href="#ai-development-flow"]'),
         ).not.toBeNull();
@@ -283,6 +314,21 @@ describe('DesignPhilosophyView', () => {
         expect(
             architectureSection?.querySelector('[data-architecture-stack]'),
         ).not.toBeNull();
+
+        const closingSection = container.querySelector(
+            '[aria-labelledby="design-philosophy-closing"]',
+        );
+        expect(
+            closingSection
+                ?.querySelector('a[href="/projects"]')
+                ?.getAttribute('data-inertia-link'),
+        ).toBe('true');
+        ['#architecture', '#improvement-loop'].forEach((href) => {
+            const anchor = closingSection?.querySelector(`a[href="${href}"]`);
+
+            expect(anchor).not.toBeNull();
+            expect(anchor?.hasAttribute('data-inertia-link')).toBe(false);
+        });
     });
 
     it('内部情報と制作事情を公開DOMへ出さない', () => {
