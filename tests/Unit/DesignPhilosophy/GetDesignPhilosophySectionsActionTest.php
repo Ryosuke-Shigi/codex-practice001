@@ -16,12 +16,12 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
         $this->assertSame([
             'hero',
             'principles',
+            'human-ai-roles',
+            'ai-development-flow',
             'architecture',
             'development-stages',
-            'human-ai-flow',
-            'subagents',
-            'engineering-loop',
-            'understanding-reboot',
+            'quality-gates',
+            'improvement-loop',
             'closing',
         ], array_map(
             fn (DesignPhilosophySectionDTO $section): string => $section->key,

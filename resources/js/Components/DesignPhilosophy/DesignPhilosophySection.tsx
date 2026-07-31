@@ -1,43 +1,43 @@
+import {
+    createElement,
+    type ComponentType,
+} from 'react';
+
+import AiDevelopmentFlow from '@/Components/DesignPhilosophy/AiDevelopmentFlow';
 import ArchitectureMap from '@/Components/DesignPhilosophy/ArchitectureMap';
 import ClosingStatement from '@/Components/DesignPhilosophy/ClosingStatement';
 import DevelopmentStages from '@/Components/DesignPhilosophy/DevelopmentStages';
-import EngineeringLoop from '@/Components/DesignPhilosophy/EngineeringLoop';
 import Hero from '@/Components/DesignPhilosophy/Hero';
-import HumanAiFlow from '@/Components/DesignPhilosophy/HumanAiFlow';
+import HumanAiRoles from '@/Components/DesignPhilosophy/HumanAiRoles';
+import ImprovementLoop from '@/Components/DesignPhilosophy/ImprovementLoop';
 import Principles from '@/Components/DesignPhilosophy/Principles';
-import SubagentCatalog from '@/Components/DesignPhilosophy/SubagentCatalog';
-import UnderstandingReboot from '@/Components/DesignPhilosophy/UnderstandingReboot';
-import type { DesignPhilosophySection as DesignPhilosophySectionData } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+import QualityGates from '@/Components/DesignPhilosophy/QualityGates';
+import type {
+    DesignPhilosophySection as DesignPhilosophySectionData,
+    DesignPhilosophySectionKey,
+} from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
-function assertNever(key: never): never {
-    throw new Error(`Unsupported design philosophy section key: ${key}`);
-}
+type SectionRendererProps = {
+    section: DesignPhilosophySectionData;
+};
+
+const sectionRegistry: Record<
+    DesignPhilosophySectionKey,
+    ComponentType<SectionRendererProps>
+> = {
+    hero: Hero,
+    principles: Principles,
+    'human-ai-roles': HumanAiRoles,
+    'ai-development-flow': AiDevelopmentFlow,
+    architecture: ArchitectureMap,
+    'development-stages': DevelopmentStages,
+    'quality-gates': QualityGates,
+    'improvement-loop': ImprovementLoop,
+    closing: ClosingStatement,
+};
 
 export default function DesignPhilosophySection({
     section,
-}: {
-    section: DesignPhilosophySectionData;
-}) {
-    switch (section.key) {
-        case 'hero':
-            return <Hero section={section} />;
-        case 'principles':
-            return <Principles section={section} />;
-        case 'architecture':
-            return <ArchitectureMap section={section} />;
-        case 'development-stages':
-            return <DevelopmentStages section={section} />;
-        case 'human-ai-flow':
-            return <HumanAiFlow section={section} />;
-        case 'subagents':
-            return <SubagentCatalog section={section} />;
-        case 'engineering-loop':
-            return <EngineeringLoop section={section} />;
-        case 'understanding-reboot':
-            return <UnderstandingReboot section={section} />;
-        case 'closing':
-            return <ClosingStatement section={section} />;
-        default:
-            return assertNever(section.key);
-    }
+}: SectionRendererProps) {
+    return createElement(sectionRegistry[section.key], { section });
 }

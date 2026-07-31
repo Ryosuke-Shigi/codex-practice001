@@ -1,3 +1,6 @@
+import { Link } from '@inertiajs/react';
+import { ArrowRight, Layers3, RotateCcw } from 'lucide-react';
+
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
 export default function ClosingStatement({
@@ -7,22 +10,54 @@ export default function ClosingStatement({
 }) {
     return (
         <footer
+            id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
-            className="px-5 pb-20 pt-8 sm:px-8 sm:pb-24 lg:px-10 lg:pb-28"
+            className="dp-closing"
         >
-            <div className="mx-auto w-full max-w-7xl min-w-0 rounded-[1.75rem] border border-black/10 bg-white/80 p-7 text-center shadow-[0_18px_60px_rgba(38,38,27,0.10)] sm:p-10 lg:p-14">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#52534d]">
-                    {section.eyebrow}
-                </p>
-                <h2
-                    id={`design-philosophy-${section.key}`}
-                    className="mx-auto mt-5 max-w-5xl break-words text-[clamp(2rem,6vw,3.75rem)] font-black leading-[1.3] tracking-[-0.045em] text-[#11120f] [overflow-wrap:anywhere]"
-                >
-                    {section.title}
-                </h2>
-                <p className="mx-auto mt-7 max-w-3xl text-base leading-8 text-[#62635d] sm:text-lg">
-                    {section.body}
-                </p>
+            <div className="dp-shell">
+                <div className="dp-closing__panel dp-reveal">
+                    <div className="dp-closing__signal">
+                        <span />
+                        <span />
+                        <span />
+                    </div>
+                    <p className="dp-eyebrow">
+                        <span aria-hidden="true" />
+                        {section.eyebrow}
+                    </p>
+                    <h2 id={`design-philosophy-${section.key}`}>
+                        {section.title}
+                    </h2>
+                    <p className="dp-closing__lead">{section.lead}</p>
+                    <p className="dp-closing__body">{section.body}</p>
+
+                    <nav
+                        aria-label="設計思想からの次の導線"
+                        className="dp-closing__links"
+                    >
+                        <Link
+                            className="dp-button dp-button--primary"
+                            href="/projects"
+                        >
+                            プロジェクトへ戻る
+                            <ArrowRight aria-hidden="true" />
+                        </Link>
+                        <a
+                            className="dp-button dp-button--secondary"
+                            href="#architecture"
+                        >
+                            <Layers3 aria-hidden="true" />
+                            責務設計を再確認
+                        </a>
+                        <a
+                            className="dp-button dp-button--secondary"
+                            href="#improvement-loop"
+                        >
+                            <RotateCcw aria-hidden="true" />
+                            改善ループを見る
+                        </a>
+                    </nav>
+                </div>
             </div>
         </footer>
     );
