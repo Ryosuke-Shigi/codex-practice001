@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 import BackgroundTraceEffect from '@/Components/Effects/BackgroundTraceEffect/BackgroundTraceEffect';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 import CardsField, {
     type DanceShortsAnalyzerCardSort,
@@ -21,6 +22,9 @@ type DanceShortsAnalyzerIndexProps = {
 };
 
 const maxSelectedVideos = 5;
+const danceShortsAnalyzerReturn = getStageProjectReturnLink(
+    'dance-shorts-analyzer',
+);
 
 /**
  * DanceShortsAnalyzer検索画面の Page Component です。
@@ -220,10 +224,12 @@ export default function DanceShortsAnalyzerIndex({
                         </div>
                         <div className="flex min-h-10 shrink-0 items-center gap-2">
                             <Link
-                                href="/projects/dance-shorts"
+                                href={danceShortsAnalyzerReturn.href}
+                                aria-label={danceShortsAnalyzerReturn.ariaLabel}
+                                title={danceShortsAnalyzerReturn.title}
                                 className="inline-flex min-h-10 max-w-[34vw] shrink-0 items-center justify-center rounded-lg border border-blue-100/35 bg-white/10 px-3 text-center text-xs font-bold leading-4 text-blue-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
                             >
-                                Hubへ戻る
+                                {danceShortsAnalyzerReturn.label}
                             </Link>
                             {selectedVideoIds.length > 0 && (
                                 <Link

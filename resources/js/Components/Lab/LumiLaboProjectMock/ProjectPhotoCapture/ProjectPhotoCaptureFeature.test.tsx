@@ -371,7 +371,16 @@ describe('ProjectPhotoCaptureFeature', () => {
         );
         expect(container.textContent).toContain('写真を確認');
         expect(container.textContent).not.toContain('撮影を完了');
-        await click(findButton('戻る'));
+        const reviewBackButtons = Array.from(
+            container.querySelectorAll<HTMLButtonElement>(
+                'button[aria-label="撮影画面へ戻る"]',
+            ),
+        );
+        expect(reviewBackButtons).toHaveLength(2);
+        expect(
+            reviewBackButtons.map((button) => button.textContent?.trim()),
+        ).toEqual(['戻る', '戻る']);
+        await click(reviewBackButtons[0] as HTMLButtonElement);
 
         expect(container.textContent).not.toContain('撮影結果を確認');
         expect(container.textContent).not.toContain('撮影を続ける');

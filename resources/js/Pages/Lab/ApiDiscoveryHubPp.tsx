@@ -12,7 +12,10 @@ import PortfolioLpLinkButtons, {
 } from '@/Components/Lab/PortfolioLpLinkButtons';
 import PortfolioLpTechSection from '@/Components/Lab/PortfolioLpTechSection';
 import PortfolioLpTestSection from '@/Components/Lab/PortfolioLpTestSection';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const apiDiscoveryHubReturn = getStageProjectReturnLink('api-discovery-hub');
 
 /*
  * このページは API Discovery Hub 本体の仕様詳細ページではなく、ポートフォリオ用の紹介LPです。
@@ -207,7 +210,10 @@ export default function ApiDiscoveryHubPp() {
             */}
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
-                    backHref="/projects/api-discovery-hub"
+                    backHref={apiDiscoveryHubReturn.href}
+                    backLabel={apiDiscoveryHubReturn.label}
+                    backAriaLabel={apiDiscoveryHubReturn.ariaLabel}
+                    backTitle={apiDiscoveryHubReturn.title}
                     eyebrow="Idea Board"
                     title="API Discovery Hub"
                     lead="公開APIカタログを取得・検索・保存・調査できるポートフォリオ機能"

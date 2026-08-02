@@ -49,6 +49,11 @@ describe('ProjectWorkDetailPanel', () => {
     it('renders product card handling and the product card list screen', () => {
         const markup = renderPanel('product');
 
+        expect(markup).toContain('aria-label="案件詳細へ戻る"');
+        expect(markup).toContain('title="案件詳細へ戻る"');
+        expect(markup).toMatch(
+            /aria-label="案件詳細へ戻る"[^>]*>[\s\S]*?<span>戻る<\/span><\/button>/,
+        );
         expect(markup).toContain('商品取扱');
         expect(markup).not.toContain('商品カード取扱');
         expect(markup).toContain('あり');

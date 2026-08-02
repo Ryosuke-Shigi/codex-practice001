@@ -3,7 +3,7 @@
 namespace App\DTO\ApplicationLog;
 
 /**
- * Project Hub の logs 表示に必要な API連携 / エラーログ一覧をまとめる DTO です。
+ * アプリログ専用ページに必要な API連携 / エラーログ一覧をまとめる DTO です。
  */
 final readonly class ApplicationLogsPageDTO
 {

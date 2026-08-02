@@ -39,8 +39,7 @@ class ApplicationLogsPageTest extends TestCase
             ->get('/projects/logs?tab=error')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'logs')
+                ->component('Projects/Logs', false)
                 ->where('applicationLogs.activeTab', 'error')
                 ->where('applicationLogs.resolveConfirmationKeyword', 'resolve')
                 ->where('applicationLogs.tabs.0.label', 'API連携')
@@ -58,7 +57,7 @@ class ApplicationLogsPageTest extends TestCase
             );
     }
 
-    public function test_project_select_and_logs_project_hub_entry_are_available(): void
+    public function test_project_select_and_dedicated_logs_entry_are_available(): void
     {
         $this
             ->get('/projects')
@@ -71,8 +70,7 @@ class ApplicationLogsPageTest extends TestCase
             ->get('/projects/logs')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'logs')
+                ->component('Projects/Logs', false)
                 ->where('applicationLogs.tabs.0.label', 'API連携')
                 ->where('applicationLogs.tabs.1.label', 'エラー')
             );

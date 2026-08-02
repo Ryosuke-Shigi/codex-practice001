@@ -13,6 +13,7 @@ import RegionTabs from '@/Components/Lab/DanceShortsRadar/RegionTabs';
 import RisingCandidatesSection from '@/Components/Lab/DanceShortsRadar/RisingCandidatesSection';
 import SnapshotObservationNavigation from '@/Components/Lab/DanceShortsRadar/SnapshotObservationNavigation';
 import SnapshotObservationTable from '@/Components/Lab/DanceShortsRadar/SnapshotObservationTable';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import { risingCandidateMockData } from '@/Components/Lab/DanceShortsRadar/risingCandidatesMockData';
 import {
     firstSnapshotObservationMockData,
@@ -28,6 +29,10 @@ import type {
     DanceShortsTab,
     DanceShortsTabCode,
 } from '@/Components/Lab/DanceShortsRadar/types';
+
+const danceShortsRadarReturn = getStageProjectReturnLink(
+    'dance-shorts-radar',
+);
 import PublicLayout from '@/Layouts/PublicLayout';
 
 type DanceShortsRadarPageProps = {
@@ -213,10 +218,12 @@ export default function DanceShortsRadarPage({
                             モックデータ
                         </span>
                         <Link
-                            href="/projects/dance-shorts"
+                            href={danceShortsRadarReturn.href}
+                            aria-label={danceShortsRadarReturn.ariaLabel}
+                            title={danceShortsRadarReturn.title}
                             className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/35 bg-white/16 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/26 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            Hubへ戻る
+                            {danceShortsRadarReturn.label}
                         </Link>
                     </div>
                 </header>
@@ -263,9 +270,11 @@ export default function DanceShortsRadarPage({
                             <button
                                 type="button"
                                 onClick={() => setSelectedObservationView(null)}
+                                aria-label="比較ランキングへ戻る"
+                                title="比較ランキングへ戻る"
                                 className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/30 bg-white/12 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                             >
-                                比較ランキングへ戻る
+                                戻る
                             </button>
                         </div>
 

@@ -1,11 +1,14 @@
 export type ProjectId =
     | 'api-discovery-hub'
-    | 'dance-shorts'
+    | 'dance-shorts-radar'
+    | 'dance-shorts-analyzer'
     | 'japan-quake-wave-map'
     | 'lumilabo'
     | 'construction-order'
     | 'event-card-calendar'
     | 'logs';
+
+export type StageProjectId = Exclude<ProjectId, 'logs'>;
 
 export type ProjectIconKey =
     | 'bar-chart'
@@ -34,34 +37,43 @@ export type ProjectTheme = {
     muted: string;
 };
 
-export type ProjectModule = {
-    id: string;
-    name: string;
-    description: string;
-    route?: string;
-    iconKey: ProjectIconKey;
-};
-
 export type Stage = {
     kind: StageKind;
     name: string;
     description: string;
     status: StageStatus;
     iconKey: ProjectIconKey;
-    route?: string;
-    modules?: ProjectModule[];
+    route: string;
 };
 
-export type Project = {
-    id: ProjectId;
+type ProjectBase = {
     name: string;
     description: string;
     theme: ProjectTheme;
     iconKey: ProjectIconKey;
-    stages: Stage[];
 };
 
-const projectHubStageOrder: StageKind[] = [
+export type StagedProject = ProjectBase & {
+    kind: 'staged';
+    id: StageProjectId;
+    stages: [Stage, ...Stage[]];
+};
+
+export type DedicatedProject = ProjectBase & {
+    kind: 'dedicated';
+    id: 'logs';
+    stages: [];
+    action: {
+        name: string;
+        description: string;
+        route: string;
+        iconKey: ProjectIconKey;
+    };
+};
+
+export type Project = StagedProject | DedicatedProject;
+
+const projectSelectStageOrder: StageKind[] = [
     'product',
     'prototype',
     'mock',
@@ -70,6 +82,7 @@ const projectHubStageOrder: StageKind[] = [
 
 export const projects: Project[] = [
     {
+        kind: 'staged',
         id: 'api-discovery-hub',
         name: 'API Discovery Hub',
         description:
@@ -111,25 +124,64 @@ export const projects: Project[] = [
                     '公開APIカタログ本体へ入ります。同期、検索、メモ保存は既存画面側で扱います。',
                 status: 'available',
                 iconKey: 'rocket',
-                modules: [
-                    {
-                        id: 'api-catalog',
-                        name: 'API Catalog',
-                        description:
-                            '公開APIを検索し、詳細と保存メモを確認する本体一覧です。',
-                        route: '/api-catalog',
-                        iconKey: 'globe',
-                    },
-                ],
+                route: '/api-catalog',
             },
         ],
     },
     {
-        id: 'dance-shorts',
-        name: 'DanceShorts',
+        kind: 'staged',
+        id: 'dance-shorts-radar',
+        name: 'DanceShortsRadar',
         description:
-            'YouTube Shorts のダンス候補を集め、伸び方と比較分析を見せるポートフォリオProjectです。',
-        iconKey: 'play',
+            'YouTube Shorts のダンス候補を収集し、地域別ランキングと snapshot 差分を確認するProjectです。',
+        iconKey: 'radar',
+        theme: {
+            background: '#10131f',
+            backgroundGlow: '#22d3ee',
+            sphere: '#14b8a6',
+            sphereShadow: 'rgba(20, 184, 166, 0.44)',
+            accent: '#67e8f9',
+            surface: 'rgba(15, 23, 42, 0.64)',
+            text: '#f0fdfa',
+            muted: '#99f6e4',
+        },
+        stages: [
+            {
+                kind: 'product',
+                name: 'PRODUCT',
+                description:
+                    '収集した候補の snapshot 差分と地域別ランキングを確認する本体画面です。',
+                status: 'available',
+                iconKey: 'rocket',
+                route: '/dance-shorts-radar',
+            },
+            {
+                kind: 'mock',
+                name: 'MOCK',
+                description:
+                    '地域別の候補一覧と snapshot 差分表示を固定データで確認します。',
+                status: 'available',
+                iconKey: 'layout',
+                route: '/lab/dance-shorts-radar-mock',
+            },
+            {
+                kind: 'idea-board',
+                name: 'IDEA BOARD',
+                description:
+                    '候補収集、snapshot 設計、地域別ランキングの仕様を整理します。',
+                status: 'available',
+                iconKey: 'lightbulb',
+                route: '/lab/dance-shorts-radar-idea-board',
+            },
+        ],
+    },
+    {
+        kind: 'staged',
+        id: 'dance-shorts-analyzer',
+        name: 'DanceShortsAnalyzer',
+        description:
+            '保存済み動画を検索・選択し、snapshot の推移と差分を比較分析するProjectです。',
+        iconKey: 'bar-chart',
         theme: {
             background: '#10131f',
             backgroundGlow: '#e94584',
@@ -142,86 +194,36 @@ export const projects: Project[] = [
         },
         stages: [
             {
-                kind: 'idea-board',
-                name: 'IDEA BOARD',
+                kind: 'product',
+                name: 'PRODUCT',
                 description:
-                    'Radar と Analyzer の仕様、データの流れ、説明の出し方を確認・相談する入口です。',
+                    '保存済み動画を検索・選択し、snapshot を比較分析する本体画面です。',
                 status: 'available',
-                iconKey: 'lightbulb',
-                modules: [
-                    {
-                        id: 'radar-idea',
-                        name: 'Radar',
-                        description:
-                            'Shorts の候補収集、snapshot 設計、ランキング表示の仕様を整理します。',
-                        route: '/lab/dance-shorts-radar-idea-board',
-                        iconKey: 'radar',
-                    },
-                    {
-                        id: 'analyzer-idea',
-                        name: 'Analyzer',
-                        description:
-                            '保存済み動画と snapshot を使った比較分析画面の仕様を整理します。',
-                        route: '/lab/dance-shorts-analyzer-idea-board',
-                        iconKey: 'bar-chart',
-                    },
-                ],
+                iconKey: 'rocket',
+                route: '/dance-shorts-analyzer',
             },
             {
                 kind: 'mock',
                 name: 'MOCK',
                 description:
-                    'Radar と Analyzer の操作感を、固定データだけで確認する入口です。',
+                    '保存済み動画の検索・選択と比較分析UIを固定データで確認します。',
                 status: 'available',
                 iconKey: 'layout',
-                modules: [
-                    {
-                        id: 'radar-mock',
-                        name: 'Radar MOCK',
-                        description:
-                            '地域別の候補一覧と差分表示を固定データで確認します。',
-                        route: '/lab/dance-shorts-radar-mock',
-                        iconKey: 'radar',
-                    },
-                    {
-                        id: 'analyzer-mock',
-                        name: 'Analyzer MOCK',
-                        description:
-                            '検索、選択、比較分析UIを固定データで確認します。',
-                        route: '/lab/dance-shorts-analyzer-mock',
-                        iconKey: 'bar-chart',
-                    },
-                ],
+                route: '/lab/dance-shorts-analyzer-mock',
             },
             {
-                kind: 'product',
-                name: 'PRODUCT',
+                kind: 'idea-board',
+                name: 'IDEA BOARD',
                 description:
-                    '保存済み動画と snapshot を使う本体画面です。Analyzer と Radar へ入れます。',
+                    '保存済み動画と snapshot を使った比較分析画面の仕様を整理します。',
                 status: 'available',
-                iconKey: 'rocket',
-                modules: [
-                    {
-                        id: 'analyzer',
-                        name: 'Analyzer',
-                        description:
-                            '保存済み動画を検索し、選択した Shorts の snapshot を比較分析します。',
-                        route: '/dance-shorts-analyzer',
-                        iconKey: 'bar-chart',
-                    },
-                    {
-                        id: 'radar',
-                        name: 'Radar',
-                        description:
-                            '保存済み snapshot の差分から、地域別のランキング候補を確認します。',
-                        route: '/dance-shorts-radar',
-                        iconKey: 'radar',
-                    },
-                ],
+                iconKey: 'lightbulb',
+                route: '/lab/dance-shorts-analyzer-idea-board',
             },
         ],
     },
     {
+        kind: 'staged',
         id: 'japan-quake-wave-map',
         name: 'Japan Quake Wave Map',
         description:
@@ -254,24 +256,7 @@ export const projects: Project[] = [
                     '地震マップのモック、XML確認、同期状態を確認する開発入口です。',
                 status: 'available',
                 iconKey: 'layout',
-                modules: [
-                    {
-                        id: 'preview-tools',
-                        name: 'Preview',
-                        description:
-                            '地図、XML、同期状態を確認する QuakeWave Preview 入口です。',
-                        route: '/quakewave-preview',
-                        iconKey: 'radar',
-                    },
-                    {
-                        id: 'map-mock',
-                        name: 'Map MOCK',
-                        description:
-                            'DB保存済みpinを使わず、地図表示だけを確認するモックです。',
-                        route: '/quakewave-preview/map/mock',
-                        iconKey: 'layout',
-                    },
-                ],
+                route: '/quakewave-preview',
             },
             {
                 kind: 'product',
@@ -280,20 +265,12 @@ export const projects: Project[] = [
                     '保存済み地震ピンを地図上に表示する本体画面へ入ります。',
                 status: 'available',
                 iconKey: 'rocket',
-                modules: [
-                    {
-                        id: 'quake-map',
-                        name: 'Map',
-                        description:
-                            '気象庁XMLから保存した震源・震度・波紋を地図で確認します。',
-                        route: '/quakewave-preview/map',
-                        iconKey: 'radar',
-                    },
-                ],
+                route: '/quakewave-preview/map',
             },
         ],
     },
     {
+        kind: 'staged',
         id: 'lumilabo',
         name: 'LumiLabo',
         description:
@@ -326,20 +303,12 @@ export const projects: Project[] = [
                     'LumiLaboと案件システムの考え方を、お客様向けの機能説明資料として整理します。',
                 status: 'available',
                 iconKey: 'lightbulb',
-                modules: [
-                    {
-                        id: 'project-system-idea-board',
-                        name: '案件システム',
-                        description:
-                            '概要、フロー、機能説明、画面候補、図解、グラフ、codeで、案件システムの目的と将来候補を確認します。',
-                        route: '/lab/lumilabo-project-idea-board',
-                        iconKey: 'clipboard',
-                    },
-                ],
+                route: '/lab/lumilabo-project-idea-board',
             },
         ],
     },
     {
+        kind: 'staged',
         id: 'construction-order',
         name: '工事発注管理',
         description:
@@ -377,6 +346,7 @@ export const projects: Project[] = [
         ],
     },
     {
+        kind: 'staged',
         id: 'event-card-calendar',
         name: 'イベント・カードカレンダー',
         description:
@@ -405,6 +375,7 @@ export const projects: Project[] = [
         ],
     },
     {
+        kind: 'dedicated',
         id: 'logs',
         name: 'アプリログ',
         description:
@@ -421,6 +392,12 @@ export const projects: Project[] = [
             muted: '#bfdbfe',
         },
         stages: [],
+        action: {
+            name: 'アプリログ',
+            description: 'API連携ログとエラーログを確認します。',
+            route: '/projects/logs',
+            iconKey: 'clipboard',
+        },
     },
 ];
 
@@ -428,15 +405,31 @@ export function getProjectById(projectId: string | undefined): Project | null {
     return projects.find((project) => project.id === projectId) ?? null;
 }
 
-export function getProjectHubHref(project: Project): string {
-    return `/projects/${project.id}`;
+export function getProjectStageSelectHref(projectId: string): string {
+    return isStageProjectId(projectId)
+        ? `/projects?project=${projectId}&view=stages`
+        : '/projects';
 }
 
-export function sortStagesForProjectHub(stages: Stage[]): Stage[] {
+export function sortStagesForProjectSelect(
+    stages: readonly Stage[],
+): Stage[] {
     return [...stages].sort(
         (left, right) =>
-            projectHubStageOrder.indexOf(left.kind) -
-            projectHubStageOrder.indexOf(right.kind),
+            projectSelectStageOrder.indexOf(left.kind) -
+            projectSelectStageOrder.indexOf(right.kind),
+    );
+}
+
+export function isProjectId(projectId: string): projectId is ProjectId {
+    return projects.some((project) => project.id === projectId);
+}
+
+export function isStageProjectId(
+    projectId: string,
+): projectId is StageProjectId {
+    return projects.some(
+        (project) => project.kind === 'staged' && project.id === projectId,
     );
 }
 

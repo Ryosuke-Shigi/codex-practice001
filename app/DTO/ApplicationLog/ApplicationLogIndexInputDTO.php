@@ -3,7 +3,7 @@
 namespace App\DTO\ApplicationLog;
 
 /**
- * Project Hub の logs 表示で受け付ける query 条件です。
+ * アプリログ専用ページで受け付ける query 条件です。
  */
 final readonly class ApplicationLogIndexInputDTO
 {

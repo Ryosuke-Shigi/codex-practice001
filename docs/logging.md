@@ -85,7 +85,7 @@ APIキー、Authorization header、秘密情報、レスポンス全文は記録
 
 ### application_logs
 
-Project Hub の `logs` から確認するアプリ内ログは、Laravel標準ログの代替ではなく、画面確認用のDB保存ログとして扱います。
+Project Selectの専用操作から開くアプリログページは、Laravel標準ログの代替ではなく、画面確認用のDB保存ログとして扱います。
 
 保存先:
 

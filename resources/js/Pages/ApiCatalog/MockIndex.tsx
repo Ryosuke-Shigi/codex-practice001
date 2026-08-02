@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList, { type ApiCatalogListItem } from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import {
     createProviderDomainOptions,
     extractProviderDomain,
@@ -28,6 +29,7 @@ import {
 const ITEMS_PER_PAGE = 6;
 const ALL_PROVIDERS = '';
 const ALL_DOMAINS = '';
+const apiDiscoveryHubReturn = getStageProjectReturnLink('api-discovery-hub');
 
 type ApiCatalogFilters = {
     keyword: string;
@@ -261,17 +263,19 @@ export default function MockIndex() {
 
                     {/*
                         画面状態を示す Mock ラベルを先に置き、戻るボタンを一番右に固定します。
-                        Project Hub へ戻る導線なので、一覧操作とは分けて扱います。
+                        開発段階選択へ戻る導線なので、一覧操作とは分けて扱います。
                     */}
                     <div className="flex flex-wrap items-center gap-3">
                         <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
                             Mock
                         </span>
                         <Link
-                            href="/projects/api-discovery-hub"
+                            href={apiDiscoveryHubReturn.href}
+                            aria-label={apiDiscoveryHubReturn.ariaLabel}
+                            title={apiDiscoveryHubReturn.title}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            Hubへ戻る
+                            {apiDiscoveryHubReturn.label}
                         </Link>
                     </div>
                 </header>

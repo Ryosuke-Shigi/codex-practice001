@@ -33,6 +33,9 @@ describe('ProjectDetailPanel', () => {
         expect(markup).toContain('現場アクセス');
         expect(markup).toContain('詳細');
         expect(markup).toContain('書類');
+        expect(markup).toContain('aria-label="案件一覧へ戻る"');
+        expect(markup).toContain('title="案件一覧へ戻る"');
+        expect(markup).toContain('>戻る</button>');
         expect(markup).not.toContain('開く');
         expect(markup).not.toContain('工程内カード');
         expect(markup).not.toContain('履歴');

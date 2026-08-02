@@ -38,12 +38,6 @@ Route::get('/projects', function () {
 Route::get('/projects/logs', ProjectLogsController::class)
     ->name('projects.logs');
 
-Route::get('/projects/{projectId}', function (string $projectId) {
-    return Inertia::render('Projects/Hub', [
-        'projectId' => $projectId,
-    ]);
-})->where('projectId', '[a-z0-9-]+')->name('projects.hub');
-
 Route::post('/application-error-logs/{log}/resolve', ApplicationErrorLogResolveController::class)
     ->whereNumber('log')
     ->name('application-error-logs.resolve');

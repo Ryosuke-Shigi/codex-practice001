@@ -99,10 +99,12 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                         </span>
                         <Link
                             href={mockReturnUrl}
+                            aria-label="APIモック一覧へ戻る"
+                            title="APIモック一覧へ戻る"
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
                             {/* returnUrl は route 側でモック一覧 URL に限定済みです。 */}
-                            一覧へ戻る
+                            戻る
                         </Link>
                     </header>
 
@@ -135,7 +137,7 @@ export default function MockDetail({ apiKey, returnUrl }: MockDetailProps) {
                 <ApiCatalogDetailHeader
                     modeLabel="Mock"
                     returnUrl={mockReturnUrl}
-                    returnComment="モック詳細でも一覧状態を含む returnUrl へ戻します。"
+                    returnAccessibleLabel="APIモック一覧へ戻る"
                     searchTarget={item}
                 />
 

@@ -155,9 +155,11 @@ export default function WorkCardDetailPanel({
                     <button
                         type="button"
                         onClick={onBackToProject}
+                        aria-label="案件詳細へ戻る"
+                        title="案件詳細へ戻る"
                         className="min-h-8 w-fit rounded-md border border-slate-300 bg-white px-2.5 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     >
-                        案件詳細へ戻る
+                        戻る
                     </button>
                     <div className="min-w-0">
                         <span

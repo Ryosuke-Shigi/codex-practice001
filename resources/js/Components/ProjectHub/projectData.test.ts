@@ -1,125 +1,145 @@
 import { describe, expect, it } from 'vitest';
 
-import { projects, sortStagesForProjectHub } from './projectData';
+import {
+    getProjectStageSelectHref,
+    projects,
+    sortStagesForProjectSelect,
+    type Stage,
+    type StageKind,
+} from './projectData';
 
-describe('ProjectHub static project data', () => {
-    it('keeps the existing portfolio project entries without a fake portfolio project', () => {
+const normalProjectStageRoutes = {
+    'api-discovery-hub': {
+        product: '/api-catalog',
+        mock: '/api-catalog/mock',
+        'idea-board': '/lab/api-discovery-hub-idea-board',
+    },
+    'dance-shorts-radar': {
+        product: '/dance-shorts-radar',
+        mock: '/lab/dance-shorts-radar-mock',
+        'idea-board': '/lab/dance-shorts-radar-idea-board',
+    },
+    'dance-shorts-analyzer': {
+        product: '/dance-shorts-analyzer',
+        mock: '/lab/dance-shorts-analyzer-mock',
+        'idea-board': '/lab/dance-shorts-analyzer-idea-board',
+    },
+    'japan-quake-wave-map': {
+        product: '/quakewave-preview/map',
+        mock: '/quakewave-preview',
+        'idea-board': '/lab/quake-wave-map-idea-board',
+    },
+    lumilabo: {
+        mock: '/lab/lumilabo-project-mock',
+        'idea-board': '/lab/lumilabo-project-idea-board',
+    },
+    'construction-order': {
+        mock: '/lab/construction-order-workflow-mock',
+        'idea-board': '/lab/construction-order-workflow-idea-board',
+    },
+    'event-card-calendar': {
+        'idea-board': '/lab/event-card-calendar-idea-board',
+    },
+} as const;
+
+describe('Project selection data contract', () => {
+    it('keeps the eight project entries and never recreates a combined DanceShorts project', () => {
         expect(projects.map((project) => project.id)).toEqual([
             'api-discovery-hub',
-            'dance-shorts',
+            'dance-shorts-radar',
+            'dance-shorts-analyzer',
             'japan-quake-wave-map',
             'lumilabo',
             'construction-order',
             'event-card-calendar',
             'logs',
         ]);
+        expect(projects.map((project) => project.id)).not.toContain('dance-shorts');
     });
 
-    it('does not show prototype stages when no prototype exists', () => {
+    it('exposes only existing direct stages for every normal project, without modules or prototype', () => {
+        const normalProjects = projects.filter((project) => project.id !== 'logs');
+
+        expect(normalProjects).toHaveLength(7);
         expect(
-            projects.flatMap((project) =>
+            normalProjects.flatMap((project) =>
                 project.stages.map((stage) => stage.kind),
             ),
         ).not.toContain('prototype');
+
+        normalProjects.forEach((project) => {
+            const expectedRoutes = normalProjectStageRoutes[project.id];
+
+            expect(expectedRoutes).toBeDefined();
+            expect(project.stages.every((stage) => stage.route !== undefined)).toBe(true);
+            expect(project.stages.every((stage) => !('modules' in stage))).toBe(true);
+            expect(
+                Object.fromEntries(
+                    project.stages.map((stage) => [stage.kind, stage.route]),
+                ),
+            ).toEqual(expectedRoutes);
+        });
     });
 
-    it('orders Project Hub stages from product to idea board', () => {
-        const danceShorts = projects.find(
-            (project) => project.id === 'dance-shorts',
+    it('keeps Radar and Analyzer visually and semantically separate', () => {
+        const radar = projects.find(
+            (project) => project.id === 'dance-shorts-radar',
+        );
+        const analyzer = projects.find(
+            (project) => project.id === 'dance-shorts-analyzer',
         );
 
-        expect(danceShorts).toBeDefined();
+        expect(radar?.name).toBe('DanceShortsRadar');
+        expect(analyzer?.name).toBe('DanceShortsAnalyzer');
+        expect(radar?.iconKey).not.toBe(analyzer?.iconKey);
+        expect(radar?.theme).not.toEqual(analyzer?.theme);
+        expect(radar?.description).not.toBe(analyzer?.description);
+        expect(radar?.stages.map((stage) => stage.route)).not.toEqual(
+            analyzer?.stages.map((stage) => stage.route),
+        );
+    });
+
+    it('keeps logs as the only dedicated action without fictional stages', () => {
+        const logs = projects.find((project) => project.id === 'logs');
+
+        expect(logs?.stages).toEqual([]);
+        expect(getProjectStageSelectHref('logs')).toBe('/projects');
+    });
+
+    it.each(Object.keys(normalProjectStageRoutes))(
+        'builds a reload-safe stage selection URL for %s',
+        (projectId) => {
+            expect(getProjectStageSelectHref(projectId)).toBe(
+                `/projects?project=${projectId}&view=stages`,
+            );
+        },
+    );
+
+    it('preserves supplied stage order without inventing missing stage kinds', () => {
+        const stageByKind = new Map<StageKind, Stage>([
+            ['product', stageFixture('product')],
+            ['prototype', stageFixture('prototype')],
+            ['mock', stageFixture('mock')],
+            ['idea-board', stageFixture('idea-board')],
+        ]);
+
         expect(
-            sortStagesForProjectHub(danceShorts?.stages ?? []).map(
-                (stage) => stage.kind,
-            ),
+            sortStagesForProjectSelect(
+                (['idea-board', 'product', 'mock'] satisfies StageKind[]).map(
+                    (kind) => stageByKind.get(kind)!,
+                ),
+            ).map((stage) => stage.kind),
         ).toEqual(['product', 'mock', 'idea-board']);
     });
-
-    it('keeps LumiLabo as an upper project with mock and idea board entries', () => {
-        const lumiLabo = projects.find((project) => project.id === 'lumilabo');
-
-        expect(lumiLabo).toBeDefined();
-        expect(lumiLabo?.name).toBe('LumiLabo');
-        expect(lumiLabo?.description).toContain('上位プロダクト');
-        expect(lumiLabo?.description).toContain('案件システム');
-        expect(lumiLabo?.theme.background).toBe('#111827');
-        expect(lumiLabo?.theme.sphere).toBe('#facc15');
-        expect(lumiLabo?.theme.text).toBe('#fffbea');
-
-        const mockStage = lumiLabo?.stages.find(
-            (stage) => stage.kind === 'mock',
-        );
-
-        expect(mockStage?.description).toContain('開始UI');
-        expect(mockStage?.route).toBe('/lab/lumilabo-project-mock');
-
-        const ideaBoardStage = lumiLabo?.stages.find(
-            (stage) => stage.kind === 'idea-board',
-        );
-
-        expect(ideaBoardStage?.description).toContain('お客様向けの機能説明資料');
-        expect(ideaBoardStage?.description).toContain('案件システム');
-        expect(ideaBoardStage?.modules?.map((module) => module.name)).toEqual([
-            '案件システム',
-        ]);
-        expect(ideaBoardStage?.modules?.[0].description).toContain('概要');
-        expect(ideaBoardStage?.modules?.[0].description).toContain('フロー');
-        expect(ideaBoardStage?.modules?.[0].description).toContain('図解');
-        expect(ideaBoardStage?.modules?.[0].description).toContain('グラフ');
-        expect(ideaBoardStage?.modules?.[0].description).toContain('code');
-        expect(ideaBoardStage?.modules?.[0].description).not.toContain('5タブ');
-        expect(ideaBoardStage?.modules?.[0].description).not.toContain('Coding');
-        expect(ideaBoardStage?.modules?.[0].route).toBe(
-            '/lab/lumilabo-project-idea-board',
-        );
-    });
-
-    it('keeps current Project Hub routes without legacy Lab selection URLs', () => {
-        const routes = projects.flatMap((project) =>
-            project.stages.flatMap((stage) => [
-                stage.route,
-                ...(stage.modules?.map((module) => module.route) ?? []),
-            ]),
-        ).filter((route): route is string => route !== undefined);
-
-        expect(routes).toContain('/lab/construction-order-workflow-idea-board');
-        expect(routes).toContain('/lab/construction-order-workflow-mock');
-        expect(routes).toContain('/lab/event-card-calendar-idea-board');
-        expect(routes).toContain('/lab/lumilabo-project-idea-board');
-        expect(routes).toContain('/lab/lumilabo-project-mock');
-        expect(routes).not.toContain('/lab');
-        expect(routes).not.toContain('/lab/construction-order-new-mock');
-        expect(routes).not.toContain('/lab/construction-order-workflow-pp');
-        expect(routes).not.toContain('/lab/api-discovery-hub-pp');
-        expect(routes).not.toContain('/lab/quake-wave-map-pp');
-        expect(routes.some((route) => route.includes('category='))).toBe(false);
-    });
-
-    it('keeps coding-only EventDeck wording out of Project Hub copy', () => {
-        const eventProject = projects.find(
-            (project) => project.id === 'event-card-calendar',
-        );
-
-        expect(eventProject).toBeDefined();
-
-        const projectText = [
-            eventProject?.name,
-            eventProject?.description,
-            ...(eventProject?.stages.flatMap((stage) => [
-                stage.name,
-                stage.description,
-                ...(stage.modules?.flatMap((module) => [
-                    module.name,
-                    module.description,
-                ]) ?? []),
-            ]) ?? []),
-        ]
-            .filter((text): text is string => text !== undefined)
-            .join('\n');
-
-        const eventDeckLabel = ['EventDeck', 'イベントデッキ'].join(' / ');
-
-        expect(projectText).not.toContain(eventDeckLabel);
-    });
 });
+
+function stageFixture(kind: StageKind): Stage {
+    return {
+        kind,
+        name: kind.toUpperCase(),
+        description: `${kind} stage fixture`,
+        status: 'available',
+        iconKey: 'rocket',
+        route: `/fixture/${kind}`,
+    };
+}

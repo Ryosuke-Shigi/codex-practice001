@@ -208,7 +208,9 @@ describe('LumiLabo 案件システム IDEA BOARD データ', () => {
 
         expect(codeText).toContain('codeタブは補助');
         expect(codeText).toContain('/lab/lumilabo-project-idea-board');
-        expect(codeText).toContain('Project HubからIDEA BOARDへ入る既存導線は壊さない');
+        expect(codeText).toContain(
+            'Project SelectのLumiLabo開発段階からIDEA BOARDへ入るdirect routeを維持する',
+        );
         expect(codeText).toContain('業務判断、完了判定、保存処理は持たせない');
         expect(codeText).toContain('Controller / Request / Action / Service / Repository / DTO / Responderは今回追加しない');
         expect(codeText).toContain('LumiLabo以外の機能変更');

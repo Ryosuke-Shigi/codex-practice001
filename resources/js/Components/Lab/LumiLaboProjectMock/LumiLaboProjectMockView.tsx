@@ -28,11 +28,14 @@ import {
     createLumiLaboProjectDetail,
     lumiLaboProjectActionTabs,
     lumiLaboProjectBackLabel,
+    lumiLaboProjectBackAccessibleLabel,
     lumiLaboProjectDeleteActionLabel,
     lumiLaboProjectDeleteConfirmMessage,
     lumiLaboProjectDeleteConfirmNoLabel,
     lumiLaboProjectDeleteConfirmYesLabel,
     lumiLaboProjectDetailBackLabel,
+    lumiLaboProjectDetailBackAccessibleLabel,
+    lumiLaboProjectTopBackAccessibleLabel,
     lumiLaboProjectDetailEditingLabel,
     lumiLaboProjectDetailSaveLabel,
     lumiLaboProjectDetailSavingLabel,
@@ -42,6 +45,7 @@ import {
     lumiLaboProjectRegisterPanel,
     lumiLaboProjectTabs,
     lumiLaboTopReturnLabel,
+    lumiLaboTopReturnAccessibleLabel,
 } from './mockData';
 import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
 import ProjectPhotoCaptureFeature from './ProjectPhotoCapture/ProjectPhotoCaptureFeature';
@@ -1051,6 +1055,8 @@ function SelectPanel({
                 </button>
                 <button
                     type="button"
+                    aria-label={lumiLaboTopReturnAccessibleLabel}
+                    title={lumiLaboTopReturnAccessibleLabel}
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-base font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                     onClick={onBackToTop}
                 >
@@ -1096,6 +1102,8 @@ function ProjectEntryPanel({
                 </div>
                 <button
                     type="button"
+                    aria-label={lumiLaboProjectBackAccessibleLabel}
+                    title={lumiLaboProjectBackAccessibleLabel}
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10 [@media(orientation:landscape)_and_(max-height:480px)]:text-base"
                     data-lumilabo-back-target={backTargetId}
                     onClick={onBack}
@@ -1158,6 +1166,8 @@ function ProjectDetailPanel({
                         <div className="grid min-w-0 gap-3">
                             <button
                                 type="button"
+                                aria-label={lumiLaboProjectDetailBackAccessibleLabel}
+                                title={lumiLaboProjectDetailBackAccessibleLabel}
                                 className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-stone-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-fit"
                                 data-lumilabo-back-target={backTargetId}
                                 onClick={onBack}
@@ -1673,6 +1683,8 @@ function ProjectRegisterPanel({ onBack, backTargetId }: BackActionProps) {
                     </button>
                     <button
                         type="button"
+                        aria-label={lumiLaboProjectTopBackAccessibleLabel}
+                        title={lumiLaboProjectTopBackAccessibleLabel}
                         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                         data-lumilabo-back-target={backTargetId}
                         onClick={onBack}

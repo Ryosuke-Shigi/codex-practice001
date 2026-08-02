@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, Layers3, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Layers3, RotateCcw } from 'lucide-react';
 
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
@@ -38,9 +38,11 @@ export default function ClosingStatement({
                         <Link
                             className="dp-button dp-button--primary"
                             href="/projects"
+                            aria-label="PROJECT選択へ戻る"
+                            title="PROJECT選択へ戻る"
                         >
-                            プロジェクトへ戻る
-                            <ArrowRight aria-hidden="true" />
+                            <ArrowLeft aria-hidden="true" />
+                            戻る
                         </Link>
                         <a
                             className="dp-button dp-button--secondary"

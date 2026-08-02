@@ -14,7 +14,12 @@ import PortfolioLpFeatureGrid from '@/Components/Lab/PortfolioLpFeatureGrid';
 import PortfolioLpHero from '@/Components/Lab/PortfolioLpHero';
 import PortfolioLpTechSection from '@/Components/Lab/PortfolioLpTechSection';
 import PortfolioLpTestSection from '@/Components/Lab/PortfolioLpTestSection';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const danceShortsAnalyzerReturn = getStageProjectReturnLink(
+    'dance-shorts-analyzer',
+);
 
 type AnalyzerField = 'search' | 'analyze';
 type AnalyzerMetric = 'view_count' | 'like_count' | 'comment_count';
@@ -167,9 +172,9 @@ const techItems = [
 
 const testItems = [
     {
-        title: 'Project Hub カード',
+        title: 'PROJECT選択の開発段階',
         description:
-            'Dance Shorts Analyzer の IDEA-BOARD カードが、DanceShorts Project Hub に表示されることを固定します。',
+            'DanceShortsAnalyzer の IDEA BOARD が、専用PROJECTの開発段階として表示されることを固定します。',
     },
     {
         title: 'IDEA-BOARD ルート',
@@ -792,7 +797,10 @@ export default function DanceShortsAnalyzer() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
-                    backHref="/projects/dance-shorts"
+                    backHref={danceShortsAnalyzerReturn.href}
+                    backLabel={danceShortsAnalyzerReturn.label}
+                    backAriaLabel={danceShortsAnalyzerReturn.ariaLabel}
+                    backTitle={danceShortsAnalyzerReturn.title}
                     eyebrow="Idea Board"
                     title="Dance Shorts Analyzer"
                     lead="DanceShortsRadar が保存した動画と snapshot を使い、複数動画を選択して比較分析する画面構想"

@@ -12,7 +12,12 @@ import PortfolioLpFeatureGrid from '@/Components/Lab/PortfolioLpFeatureGrid';
 import PortfolioLpHero from '@/Components/Lab/PortfolioLpHero';
 import PortfolioLpTechSection from '@/Components/Lab/PortfolioLpTechSection';
 import PortfolioLpTestSection from '@/Components/Lab/PortfolioLpTestSection';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const danceShortsRadarReturn = getStageProjectReturnLink(
+    'dance-shorts-radar',
+);
 
 /*
  * このページは Dance Shorts Radar のアイデアボードです。
@@ -381,7 +386,10 @@ export default function DanceShortsRadar() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
-                    backHref="/projects/dance-shorts"
+                    backHref={danceShortsRadarReturn.href}
+                    backLabel={danceShortsRadarReturn.label}
+                    backAriaLabel={danceShortsRadarReturn.ariaLabel}
+                    backTitle={danceShortsRadarReturn.title}
                     eyebrow="Idea Board"
                     title="Dance Shorts Radar"
                     lead="YouTube Shorts のダンス候補を、公開APIの統計snapshotと差分から検出する分析ツール"

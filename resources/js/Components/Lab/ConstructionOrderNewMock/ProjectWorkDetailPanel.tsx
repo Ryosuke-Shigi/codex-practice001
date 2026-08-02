@@ -1050,9 +1050,12 @@ function SectionScreen({
                     <button
                         type="button"
                         onClick={onBack}
-                        className="grid h-8 w-8 place-items-center rounded-md text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                        aria-label="案件詳細へ戻る"
+                        title="案件詳細へ戻る"
+                        className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                     >
                         <ArrowLeft aria-hidden="true" className="h-5 w-5" />
+                        <span>戻る</span>
                     </button>
                 }
                 titleIcon={<Icon aria-hidden="true" className={`h-5 w-5 ${tone.text}`} />}
@@ -1218,6 +1221,8 @@ function BackButton({ onBack }: { onBack: () => void }) {
         <button
             type="button"
             onClick={onBack}
+            aria-label="案件詳細へ戻る"
+            title="案件詳細へ戻る"
             className="inline-flex min-h-9 w-fit items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
         >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" />
