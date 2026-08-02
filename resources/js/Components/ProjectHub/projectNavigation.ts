@@ -27,8 +27,8 @@ const projectSelectPath = '/projects';
 const allowedQueryKeys = new Set(['project', 'view']);
 
 /**
- * Inertia の page URL だけを入力に、Project Select の復元状態を決めます。
- * DOM やブラウザ履歴へ依存しないため、direct access と画面内遷移で同じ規則を使えます。
+ * 呼び出し元から渡された URL だけを入力に、Project Select の復元状態を決めます。
+ * parser 自身は DOM やブラウザ履歴へ依存せず、direct access と画面内遷移で同じ規則を使えます。
  */
 export function parseProjectSelectUrl(url: string): ParsedProjectSelectUrl {
     const parsedUrl = new URL(url, 'https://project-select.local');

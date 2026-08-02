@@ -52,7 +52,8 @@ const STAGE_TRANSITION_MS = 280;
 
 export default function ProjectSelectView() {
     const { url: pageUrl } = usePage();
-    const initialUrl = useRef(parseProjectSelectUrl(pageUrl)).current;
+    const projectSelectUrl = getProjectSelectRuntimeUrl(pageUrl);
+    const initialUrl = useRef(parseProjectSelectUrl(projectSelectUrl)).current;
     const initialSelectedIndex = getProjectIndex(initialUrl.state.projectId);
     const [selectedIndex, setSelectedIndex] = useState(initialSelectedIndex);
     const [screen, setScreen] = useState<ProjectSelectScreen>(
@@ -68,7 +69,7 @@ export default function ProjectSelectView() {
     const firstStageActionRef = useRef<HTMLButtonElement>(null);
     const transitionTimerRef = useRef<number | null>(null);
     const navigatingHrefRef = useRef<string | null>(null);
-    const lastPageUrlRef = useRef(pageUrl);
+    const lastPageUrlRef = useRef(projectSelectUrl);
     const internalPageUrlRef = useRef<string | null>(null);
     const prefersReducedMotion = usePrefersReducedMotion();
     const selectedProject = projects[selectedIndex];
@@ -231,19 +232,19 @@ export default function ProjectSelectView() {
     });
 
     useEffect(() => {
-        const parsedUrl = parseProjectSelectUrl(pageUrl);
+        const parsedUrl = parseProjectSelectUrl(projectSelectUrl);
 
         if (parsedUrl.shouldCanonicalize) {
             router.replace({ url: parsedUrl.canonicalHref });
         }
 
-        if (lastPageUrlRef.current === pageUrl) {
+        if (lastPageUrlRef.current === projectSelectUrl) {
             return;
         }
 
-        lastPageUrlRef.current = pageUrl;
+        lastPageUrlRef.current = projectSelectUrl;
 
-        if (internalPageUrlRef.current === pageUrl) {
+        if (internalPageUrlRef.current === projectSelectUrl) {
             internalPageUrlRef.current = null;
             return;
         }
@@ -253,7 +254,7 @@ export default function ProjectSelectView() {
         setSelectedIndex(getProjectIndex(parsedUrl.state.projectId));
         setScreen(parsedUrl.state.screen);
         setIsStageMounted(parsedUrl.state.screen === 'stage-select');
-    }, [clearTransitionTimer, pageUrl]);
+    }, [clearTransitionTimer, projectSelectUrl]);
 
     useEffect(() => {
         if (prefersReducedMotion) {
@@ -296,23 +297,45 @@ export default function ProjectSelectView() {
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (!isProjectSelectable || shouldIgnoreProjectKeyTarget(event.target)) {
+            if (!isProjectSelectable) {
                 return;
             }
 
             if (event.key === 'ArrowLeft') {
+                if (
+                    shouldIgnoreProjectKeyTarget(
+                        event.target,
+                        sphereRef.current,
+                    )
+                ) {
+                    return;
+                }
+
                 event.preventDefault();
                 selectPreviousProject();
                 return;
             }
 
             if (event.key === 'ArrowRight') {
+                if (
+                    shouldIgnoreProjectKeyTarget(
+                        event.target,
+                        sphereRef.current,
+                    )
+                ) {
+                    return;
+                }
+
                 event.preventDefault();
                 selectNextProject();
                 return;
             }
 
             if (event.key === 'Enter') {
+                if (shouldIgnoreProjectKeyTarget(event.target)) {
+                    return;
+                }
+
                 event.preventDefault();
                 enterSelectedProject();
             }
@@ -625,8 +648,30 @@ function createProjectThemeStyle(project: Project): ProjectThemeStyle {
     };
 }
 
-function shouldIgnoreProjectKeyTarget(target: EventTarget | null): boolean {
+/**
+ * Laravel / Inertia が同名 query を1件へ正規化しても、直接URLの不正値を
+ * canonicalizeできるよう、Project Select表示中はbrowserの実URLを優先します。
+ */
+function getProjectSelectRuntimeUrl(pageUrl: string): string {
+    if (
+        typeof window === 'undefined' ||
+        window.location.pathname !== '/projects'
+    ) {
+        return pageUrl;
+    }
+
+    return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function shouldIgnoreProjectKeyTarget(
+    target: EventTarget | null,
+    allowedButton: HTMLButtonElement | null = null,
+): boolean {
     if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+
+    if (target === allowedButton) {
         return false;
     }
 

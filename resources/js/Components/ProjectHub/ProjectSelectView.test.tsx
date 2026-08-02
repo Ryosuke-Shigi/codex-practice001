@@ -75,6 +75,18 @@ function pressKey(key: string) {
     });
 }
 
+function pressKeyOn(target: HTMLElement, key: string) {
+    act(() => {
+        target.dispatchEvent(
+            new KeyboardEvent('keydown', {
+                key,
+                bubbles: true,
+                cancelable: true,
+            }),
+        );
+    });
+}
+
 function dispatchTouch(
     type: 'touchstart' | 'touchend',
     touches: Array<{ clientX: number; clientY: number }>,
@@ -104,6 +116,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         routerReplace.mockReset();
         prefersReducedMotion.value = true;
         pageUrl.value = '/projects';
+        window.history.replaceState({}, '', '/');
     });
 
     afterEach(() => {
@@ -219,6 +232,40 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(routerReplace).toHaveBeenCalledWith({ url: '/projects' });
     });
 
+    it('canonicalizes duplicate project query values from the browser URL before Inertia normalization', () => {
+        pageUrl.value = '/projects?project=logs';
+        window.history.replaceState(
+            {},
+            '',
+            '/projects?project=lumilabo&project=logs',
+        );
+
+        render();
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'API Discovery Hub',
+        );
+        expect(container.querySelector('.project-stage-grid')).toBeNull();
+        expect(routerReplace).toHaveBeenCalledWith({ url: '/projects' });
+    });
+
+    it('canonicalizes duplicate view query values from the browser URL before Inertia normalization', () => {
+        pageUrl.value = '/projects?project=lumilabo&view=stages';
+        window.history.replaceState(
+            {},
+            '',
+            '/projects?project=lumilabo&view=stages&view=stages',
+        );
+
+        render();
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'API Discovery Hub',
+        );
+        expect(container.querySelector('.project-stage-grid')).toBeNull();
+        expect(routerReplace).toHaveBeenCalledWith({ url: '/projects' });
+    });
+
     it('keeps project switching and keyboard selection within the two-stage screen', () => {
         render();
 
@@ -233,6 +280,78 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(container.textContent).toContain('MOCK');
         expect(container.textContent).toContain('IDEA BOARD');
         expect(container.textContent).not.toContain('PROTOTYPE');
+    });
+
+    it('switches left and right from the focused central sphere and synchronizes the URL', () => {
+        render();
+
+        const sphere = selectedSphere();
+        expect(document.activeElement).toBe(sphere);
+
+        pressKeyOn(sphere, 'ArrowRight');
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'DanceShortsRadar',
+        );
+        expect(routerReplace).toHaveBeenLastCalledWith({
+            url: '/projects?project=dance-shorts-radar',
+        });
+
+        pressKeyOn(selectedSphere(), 'ArrowLeft');
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'API Discovery Hub',
+        );
+        expect(routerReplace).toHaveBeenLastCalledWith({
+            url: '/projects?project=api-discovery-hub',
+        });
+    });
+
+    it('does not globally switch projects from other interactive elements or stage actions', () => {
+        render();
+
+        const portfolioLink = container.querySelector<HTMLAnchorElement>(
+            'a[href="/"]',
+        );
+
+        if (portfolioLink === null) {
+            throw new Error('Portfolioへ戻るlinkが見つかりません。');
+        }
+
+        portfolioLink.focus();
+        pressKeyOn(portfolioLink, 'ArrowRight');
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'API Discovery Hub',
+        );
+        expect(routerReplace).not.toHaveBeenCalled();
+
+        act(() => selectedSphere().click());
+        routerReplace.mockReset();
+        const firstStageAction = buttonWithText('PRODUCT');
+        pressKeyOn(firstStageAction, 'ArrowRight');
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'API Discovery Hub',
+        );
+        expect(routerReplace).not.toHaveBeenCalled();
+    });
+
+    it('leaves Enter on the central sphere to its click contract without a global duplicate', () => {
+        render();
+
+        const sphere = selectedSphere();
+        pressKeyOn(sphere, 'Enter');
+
+        expect(routerReplace).not.toHaveBeenCalled();
+        expect(container.querySelector('.project-stage-grid')).toBeNull();
+
+        act(() => sphere.click());
+
+        expect(routerReplace).toHaveBeenCalledTimes(1);
+        expect(routerReplace).toHaveBeenCalledWith({
+            url: '/projects?project=api-discovery-hub&view=stages',
+        });
     });
 
     it('switches projects on a left swipe but disables swiping during stage selection', () => {
@@ -401,6 +520,12 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(container.textContent).toContain('DanceShortsRadar');
         expect(container.textContent).not.toContain('PRODUCT');
         expect(document.activeElement).toBe(selectedSphere());
+
+        pressKeyOn(selectedSphere(), 'ArrowRight');
+
+        expect(selectedSphere().getAttribute('aria-label')).toContain(
+            'DanceShortsAnalyzer',
+        );
     });
 
     it('does not issue another visit when a different stage is activated while navigating', () => {
