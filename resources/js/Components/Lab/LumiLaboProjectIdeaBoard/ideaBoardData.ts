@@ -363,7 +363,7 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
         lead: 'codeタブは補助です。お客様向け説明を主役にし、DB、Migration、API、Backend層へ進みません。',
         tags: [
             { id: 'boundary', label: '責務', title: '今回のIDEA BOARDで守る責務境界', lead: '画面表示上の説明と、将来PRODUCT実装の責務を混ぜないための短いメモです。', blocks: [{ type: 'code', title: '補助メモ', lead: '実装コードを大量に載せず、境界だけを確認します。', notes: [
-                { title: '既存導線', description: '既存Routeは `/lab/lumilabo-project-idea-board` を使います。', items: ['Project HubからIDEA BOARDへ入る既存導線は壊さない。', '旧 `/lab/lumilabo-project-create-idea-board` は既存redirectのまま扱う。'] },
+                { title: '既存導線', description: '既存Routeは `/lab/lumilabo-project-idea-board` を使います。', items: ['Project SelectのLumiLabo開発段階からIDEA BOARDへ入るdirect routeを維持する。', '旧 `/lab/lumilabo-project-create-idea-board` は既存redirectのまま扱う。'] },
                 { title: 'React Component', description: 'タブと薄いファイルタグの選択状態、静的説明の描画だけを担当します。', items: ['業務判断、完了判定、保存処理は持たせない。', '表示文言、図解、概念グラフは型付き静的データに置く。'] },
                 { title: '将来PRODUCT段階', description: '本実装へ進む場合はADR Patternに沿って責務を分けます。', items: ['Controller / Request / Action / Service / Repository / DTO / Responderは今回追加しない。', '完了判定や状態判断は将来Service側で扱う考え方に留める。'] },
             ] }] },

@@ -8,7 +8,7 @@ use App\Responders\ApplicationLog\ProjectLogsResponder;
 use Inertia\Response;
 
 /**
- * Project Hub の logs 表示入口です。
+ * アプリログ専用ページの表示入口です。
  */
 final class ProjectLogsController extends Controller
 {

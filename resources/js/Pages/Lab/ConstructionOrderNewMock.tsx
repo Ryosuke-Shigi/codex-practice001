@@ -4,7 +4,7 @@
  * 画面導線、カード構造、帳票構造、現場アクセス導線、ADR / レイヤード分解の材料を
  * 固定データだけで確認します。DB保存、CSV実取込、ファイル保存、帳票生成は行いません。
  */
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 
 import ConstructionOrderNewMockHeader from '@/Components/Lab/ConstructionOrderNewMock/ConstructionOrderNewMockHeader';
@@ -33,7 +33,12 @@ import type {
     WorkCard,
 } from '@/Components/Lab/ConstructionOrderNewMock/mockData';
 import { formatYen } from '@/Components/Lab/ConstructionOrderNewMock/mockData';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const constructionOrderReturn = getStageProjectReturnLink(
+    'construction-order',
+);
 
 const initialMockProjects = syncEntryDraftToProjects(
     projects,
@@ -221,6 +226,14 @@ export default function ConstructionOrderNewMock() {
                             工事発注管理・請求システム
                         </h1>
                     </div>
+                    <Link
+                        href={constructionOrderReturn.href}
+                        className="inline-flex min-h-9 items-center justify-center rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
+                        aria-label={constructionOrderReturn.ariaLabel}
+                        title={constructionOrderReturn.title}
+                    >
+                        {constructionOrderReturn.label}
+                    </Link>
                 </header>
 
                 {isEntryFlow && (

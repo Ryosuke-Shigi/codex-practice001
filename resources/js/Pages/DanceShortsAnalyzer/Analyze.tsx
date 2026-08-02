@@ -42,9 +42,11 @@ export default function DanceShortsAnalyzerAnalyze({
                         </div>
                         <Link
                             href={analyzeField.search_url}
+                            aria-label="Searchへ戻る"
+                            title="Searchへ戻る"
                             className="inline-flex min-h-10 max-w-[42vw] shrink-0 items-center justify-center rounded-lg border border-blue-100/35 bg-white/10 px-3 text-center text-xs font-bold leading-4 text-blue-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
                         >
-                            Searchに戻る
+                            戻る
                         </Link>
                     </div>
                 </header>

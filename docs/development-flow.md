@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-10
+- Last reviewed: 2026-08-02
 
 ## このドキュメントの目的
 
@@ -38,17 +38,29 @@ PRODUCT
 
 ただし、MOCKで確認した画面単体のUI構造と、PROTOTYPEで確認した画面間の導線は、`docs/ui-development-flow.md` に従ってProductへ引き継ぎます。
 
-## Project Select / Project Hub
+## Project Select / アプリログ専用ページ
 
 既存TOPのSTART後の正規入口は Project Select です。
 
-Project Select から各 Project の Project Hub へ入り、Project Hub で Project ごとの Stage / Module を確認します。
+Project Select は同一画面内で PROJECT を選択してから、その PROJECT の Stage を選択する2段階の入口です。通常PROJECTのStageはすべて直接routeを持ち、Project SelectのStage選択からそのrouteへ遷移します。
 
-Project / Stage / Module の一覧は `resources/js/Components/ProjectHub/projectData.ts` の静的TypeScriptデータで管理し、Project Select / Project Hub はDB/APIへ接続しません。
+Project / Stage の定義は `resources/js/Components/ProjectHub/projectData.ts` の静的TypeScriptデータで管理し、Project Selectはその定義の表示・選択のためにDB/APIへ接続しません。通常PROJECTは1件以上のStageを持ち、アプリログはStageを持たない専用操作として `/projects/logs` へ接続します。
 
-現時点では PROTOTYPE stage は未作成のため表示しません。旧Lab入口、旧Project選択、旧MOCK選択は Project Select / Project Hub へ整理済みです。
+DanceShortsRadarとDanceShortsAnalyzerは別PROJECTとして扱い、Project Selectでも別々に表示します。現時点ではPROTOTYPE stageは本番dataに存在しないため表示しません。旧Lab入口、旧Project選択、旧MOCK選択は Project Select と各Stageのdirect routeへ整理済みです。
 
-現在作成中の新しい工事発注管理システムの IDEA BOARD / MOCK は削除対象ではなく、Project Hub から入る現行Moduleとして扱います。
+現在のdirect routeは次の通りです。
+
+| PROJECT | PRODUCT | MOCK | IDEA BOARD |
+|---|---|---|---|
+| API Discovery Hub | `/api-catalog` | `/api-catalog/mock` | `/lab/api-discovery-hub-idea-board` |
+| DanceShortsRadar | `/dance-shorts-radar` | `/lab/dance-shorts-radar-mock` | `/lab/dance-shorts-radar-idea-board` |
+| DanceShortsAnalyzer | `/dance-shorts-analyzer` | `/lab/dance-shorts-analyzer-mock` | `/lab/dance-shorts-analyzer-idea-board` |
+| Japan Quake Wave Map | `/quakewave-preview/map` | `/quakewave-preview` | `/lab/quake-wave-map-idea-board` |
+| LumiLabo | - | `/lab/lumilabo-project-mock` | `/lab/lumilabo-project-idea-board` |
+| 工事発注管理 | - | `/lab/construction-order-workflow-mock` | `/lab/construction-order-workflow-idea-board` |
+| イベント・カードカレンダー | - | - | `/lab/event-card-calendar-idea-board` |
+
+`/projects/{projectId}` の汎用routeは持ちません。`/projects/logs` だけがアプリログ用の専用ページです。
 
 ## IDEA BOARD
 
@@ -212,7 +224,7 @@ docsは実装と分離した古い説明書ではなく、使っていくうち�
 
 - 新しい責務、入力、出力、状態、導線がどこに置かれるか
 - バリデーション、業務判断、表示整形、UI状態の境界が既存docsと矛盾しないか
-- feature docs、README、操作ガイド、Project Hub説明へ反映が必要か
+- feature docs、README、操作ガイド、Project Select導線またはアプリログ専用ページの説明へ反映が必要か
 - テストで固定すべきService判断、Request validation、DTO境界、Responder props、UI状態があるか
 - PHPDoc、JSDoc、TypeScript型で意図と変更時の注意を回収できるか
 
@@ -232,7 +244,7 @@ docsは実装と分離した古い説明書ではなく、使っていくうち�
 
 - Route、Controller、Request、Action、Service、Repository、DTO、Responderへの参照
 - Page、Feature Component、Common Component、Hook、Type、Utilityへの参照
-- Test、feature docs、README、ガイド、Project Hub導線への参照
+- Test、feature docs、README、ガイド、Project Select導線またはアプリログ専用ページへの参照
 - unused import、command、scheduler、queue、configへの参照
 - 削除した仕様を参照する古いコメントや型が残っていないか
 

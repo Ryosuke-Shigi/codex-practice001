@@ -30,11 +30,15 @@ export const lumiLaboProjectItem = {
     label: '案件',
 } as const satisfies LumiLaboMockProjectItem;
 
-export const lumiLaboTopReturnLabel = 'TOPへ戻る';
+export const lumiLaboTopReturnLabel = '戻る';
+export const lumiLaboTopReturnAccessibleLabel = 'TOPへ戻る';
 
 export const lumiLaboProjectBackLabel = '戻る';
+export const lumiLaboProjectBackAccessibleLabel = '案件選択へ戻る';
 
-export const lumiLaboProjectDetailBackLabel = '案件一覧へ戻る';
+export const lumiLaboProjectDetailBackLabel = '戻る';
+export const lumiLaboProjectDetailBackAccessibleLabel = '案件一覧へ戻る';
+export const lumiLaboProjectTopBackAccessibleLabel = '案件TOPへ戻る';
 
 export const lumiLaboProjectRegisterPanel = {
     title: '案件登録',

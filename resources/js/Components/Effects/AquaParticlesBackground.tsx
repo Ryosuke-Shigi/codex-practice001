@@ -11,7 +11,10 @@ import type { CSSProperties } from 'react';
  */
 export default function AquaParticlesBackground() {
     return (
-        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_18%_18%,rgba(125,211,252,0.46),rgba(255,255,255,0)_30%),linear-gradient(150deg,rgba(6,182,212,0.32)_0%,rgba(20,184,166,0.28)_34%,rgba(14,116,144,0.34)_58%,rgba(2,6,23,0.72)_100%)]">
+        <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_18%_18%,rgba(125,211,252,0.46),rgba(255,255,255,0)_30%),linear-gradient(150deg,rgba(6,182,212,0.32)_0%,rgba(20,184,166,0.28)_34%,rgba(14,116,144,0.34)_58%,rgba(2,6,23,0.72)_100%)]"
+        >
             {/*
                 particle の移動量は percentage ではなく vh で指定します。
                 percentage transform は各粒子自身の box 基準になるため、画面下部で詰まって見えることがあります。
@@ -50,6 +53,13 @@ export default function AquaParticlesBackground() {
                             transform: translate3d(10%, -3%, 0) scale(1.05);
                         }
                     }
+
+                    @media (prefers-reduced-motion: reduce) {
+                        .portfolio-aqua-particle,
+                        .portfolio-aqua-particle-sheen {
+                            animation: none !important;
+                        }
+                    }
                 `}
             </style>
 
@@ -75,7 +85,7 @@ export default function AquaParticlesBackground() {
                     <span
                         key={index}
                         aria-hidden="true"
-                        className="absolute bottom-[-18%] rounded-full border border-white/45 bg-cyan-50/80 shadow-[0_0_26px_rgba(103,232,249,0.76),0_0_52px_rgba(20,184,166,0.34)]"
+                        className="portfolio-aqua-particle absolute bottom-[-18%] rounded-full border border-white/45 bg-cyan-50/80 shadow-[0_0_26px_rgba(103,232,249,0.76),0_0_52px_rgba(20,184,166,0.34)]"
                         style={{
                             animation: `portfolio-aqua-particle-rise ${duration}s ease-in-out ${delay}s infinite`,
                             height: size,
@@ -95,7 +105,7 @@ export default function AquaParticlesBackground() {
                 sheen layer は particle と分け、全粒子の opacity を同時に変えずに明るさだけを pulse させます。
             */}
             <div
-                className="absolute inset-[-12%] opacity-[0.42] mix-blend-screen"
+                className="portfolio-aqua-particle-sheen absolute inset-[-12%] opacity-[0.42] mix-blend-screen"
                 style={{
                     animation: 'portfolio-aqua-particle-sheen 8s ease-in-out infinite',
                     background:

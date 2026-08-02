@@ -12,7 +12,12 @@ import PortfolioLpLinkButtons, {
 } from '@/Components/Lab/PortfolioLpLinkButtons';
 import PortfolioLpTechSection from '@/Components/Lab/PortfolioLpTechSection';
 import PortfolioLpTestSection from '@/Components/Lab/PortfolioLpTestSection';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const quakeWaveMapReturn = getStageProjectReturnLink(
+    'japan-quake-wave-map',
+);
 
 /*
  * このページは Japan Quake Wave Map の紹介LPであり、地震情報の同期・解析・保存を実行しません。
@@ -212,7 +217,10 @@ export default function QuakeWaveMapPp() {
 
             <article className="mx-auto flex min-h-screen min-w-0 w-[calc(100vw-2rem)] max-w-7xl flex-col gap-2 break-words pb-10 [overflow-wrap:anywhere] sm:w-[calc(100vw-3rem)] lg:w-full">
                 <PortfolioLpHero
-                    backHref="/projects/japan-quake-wave-map"
+                    backHref={quakeWaveMapReturn.href}
+                    backLabel={quakeWaveMapReturn.label}
+                    backAriaLabel={quakeWaveMapReturn.ariaLabel}
+                    backTitle={quakeWaveMapReturn.title}
                     eyebrow="Idea Board"
                     title="Japan Quake Wave Map"
                     lead="気象庁XMLを取得・解析し、地震情報を地図上に可視化するポートフォリオ機能"

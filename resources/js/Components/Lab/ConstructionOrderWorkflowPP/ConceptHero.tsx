@@ -5,6 +5,12 @@
  */
 import { Link } from '@inertiajs/react';
 
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
+
+const constructionOrderReturn = getStageProjectReturnLink(
+    'construction-order',
+);
+
 export default function ConceptHero() {
     return (
         <header className="min-w-0 rounded-lg border border-white/20 bg-slate-950/62 p-5 shadow-[0_22px_54px_rgba(2,6,23,0.24)] backdrop-blur-2xl sm:p-7">
@@ -37,10 +43,12 @@ export default function ConceptHero() {
                         MOCKを見る
                     </Link>
                     <Link
-                        href="/projects/construction-order"
+                        href={constructionOrderReturn.href}
+                        aria-label={constructionOrderReturn.ariaLabel}
+                        title={constructionOrderReturn.title}
                         className="inline-flex min-h-12 items-center justify-center rounded-lg border border-cyan-100/40 bg-cyan-100 px-4 text-sm font-bold text-slate-950 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        Project Hubへ戻る
+                        {constructionOrderReturn.label}
                     </Link>
                 </div>
             </div>

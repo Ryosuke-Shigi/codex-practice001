@@ -7,6 +7,7 @@ import { Head, Link } from '@inertiajs/react';
 
 import EarthquakePin from '@/Components/JapanQuakeWaveMap/EarthquakePin';
 import EarthquakeRipple from '@/Components/JapanQuakeWaveMap/EarthquakeRipple';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { useQuakeWavePreviewSync } from '@/Pages/QuakeWavePreview/hooks/useQuakeWavePreviewSync';
 import type { QuakeWavePreviewIndexProps } from '@/Pages/QuakeWavePreview/types';
@@ -15,6 +16,10 @@ import {
     syncBadgeClassName,
     valueOrDash,
 } from '@/Pages/QuakeWavePreview/utils/quakeSyncStatus';
+
+const quakeWaveMapReturn = getStageProjectReturnLink(
+    'japan-quake-wave-map',
+);
 
 export default function Index({
     mocks,
@@ -87,10 +92,12 @@ export default function Index({
                             {isMapPinSyncButtonDisabled ? '生成中' : '地図ピン生成'}
                         </button>
                         <Link
-                            href="/projects/japan-quake-wave-map"
+                            href={quakeWaveMapReturn.href}
+                            aria-label={quakeWaveMapReturn.ariaLabel}
+                            title={quakeWaveMapReturn.title}
                             className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
                         >
-                            Hub
+                            {quakeWaveMapReturn.label}
                         </Link>
                     </div>
                 </header>

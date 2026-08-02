@@ -79,10 +79,12 @@ export default function ProjectDetailPanel({
                             <button
                                 type="button"
                                 onClick={onBackToProjects}
+                                aria-label="案件一覧へ戻る"
+                                title="案件一覧へ戻る"
                                 className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-xs font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-100"
                             >
                                 <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-                                案件一覧
+                                戻る
                             </button>
                         )}
                     </div>

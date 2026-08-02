@@ -69,7 +69,16 @@ describe('ApiPreview Index', () => {
         expect(markup).toContain('開発確認');
         expect(markup).toContain('利用可');
         expect(markup).toContain('準備中');
-        expect(markup).toContain('Hubへ戻る');
+        expect(markup).toContain('>戻る</a>');
+        expect(markup).toContain(
+            'aria-label="API Discovery Hubの開発段階へ戻る"',
+        );
+        expect(markup).toContain(
+            'title="API Discovery Hubの開発段階へ戻る"',
+        );
+        expect(markup).not.toContain(
+            '>API Discovery Hubの開発段階へ</a>',
+        );
         expect(markup).not.toContain('Development Tool');
         expect(markup).not.toContain('Ready');
         expect(markup).not.toContain('Planned');

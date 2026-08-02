@@ -5,7 +5,10 @@
  */
 import { Head, Link } from '@inertiajs/react';
 
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const apiDiscoveryHubReturn = getStageProjectReturnLink('api-discovery-hub');
 
 type ApiPreviewTarget = {
     id: string;
@@ -74,10 +77,12 @@ export default function Index({ apis }: IndexProps) {
                     </div>
 
                     <Link
-                        href="/projects/api-discovery-hub"
+                        href={apiDiscoveryHubReturn.href}
+                        aria-label={apiDiscoveryHubReturn.ariaLabel}
+                        title={apiDiscoveryHubReturn.title}
                         className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200"
                     >
-                        Hubへ戻る
+                        {apiDiscoveryHubReturn.label}
                     </Link>
                 </header>
 

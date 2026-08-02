@@ -6,6 +6,7 @@ import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Field
 import DanceShortsDisplayHeaderField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayHeaderField';
 import DanceShortsDisplayMessageField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayMessageField';
 import DanceShortsDisplaySelectField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplaySelectField';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import {
     createDanceShortsDisplaySelectGroups,
     type DanceShortsDisplaySelectGroupKey,
@@ -29,6 +30,10 @@ type DanceShortsRadarIndexProps = {
     displayHeaderField: DanceShortsDisplayHeaderFieldProps;
     displayCardField: DanceShortsDisplayCardFieldProps;
 };
+
+const danceShortsRadarReturn = getStageProjectReturnLink(
+    'dance-shorts-radar',
+);
 
 /**
  * DanceShortsRadar本番ランキングの Page Component です。
@@ -70,10 +75,12 @@ export default function DanceShortsRadarIndex({
                         displayHeaderField={displayHeaderField}
                     />
                     <Link
-                        href="/projects/dance-shorts"
+                        href={danceShortsRadarReturn.href}
+                        aria-label={danceShortsRadarReturn.ariaLabel}
+                        title={danceShortsRadarReturn.title}
                         className="inline-flex min-h-8 shrink-0 items-center rounded-md border border-slate-700/[0.16] bg-white/[0.18] px-2.5 text-xs font-semibold text-slate-800 shadow-[0_8px_18px_rgba(80,105,140,0.1)] backdrop-blur-xl transition hover:bg-white/[0.26] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-200/[0.45]"
                     >
-                        Hubへ戻る
+                        {danceShortsRadarReturn.label}
                     </Link>
                 </header>
 

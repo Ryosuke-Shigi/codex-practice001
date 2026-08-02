@@ -323,6 +323,20 @@ describe('DesignPhilosophyView', () => {
                 ?.querySelector('a[href="/projects"]')
                 ?.getAttribute('data-inertia-link'),
         ).toBe('true');
+        const projectReturnLink = closingSection?.querySelector(
+            'a[href="/projects"]',
+        );
+        expect(projectReturnLink?.textContent?.trim()).toBe('戻る');
+        expect(projectReturnLink?.getAttribute('aria-label')).toBe(
+            'PROJECT選択へ戻る',
+        );
+        expect(projectReturnLink?.getAttribute('title')).toBe(
+            'PROJECT選択へ戻る',
+        );
+        expect(
+            projectReturnLink?.querySelector('.lucide-arrow-left'),
+        ).not.toBeNull();
+        expect(projectReturnLink?.querySelector('.lucide-arrow-right')).toBeNull();
         ['#architecture', '#improvement-loop'].forEach((href) => {
             const anchor = closingSection?.querySelector(`a[href="${href}"]`);
 

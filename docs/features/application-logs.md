@@ -1,13 +1,13 @@
 # Application Logs
 
 - Status: active
-- Scope: Project Hub logs
-- Last reviewed: 2026-06-19
+- Scope: dedicated application logs page
+- Last reviewed: 2026-08-02
 - Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
 
-Project Hub の `logs` 入口、API連携ログとエラーログのDB保存、表示、対応済み管理の仕様をまとめます。
+Project Select の `logs` 専用操作、API連携ログとエラーログのDB保存、表示、対応済み管理の仕様をまとめます。
 
 共通責務は `docs/architecture.md`、共通ログ方針は `docs/logging.md`、共通テスト方針は `docs/testing.md` に従います。
 
@@ -194,9 +194,9 @@ message、url、file は `ApplicationLogSanitizerService` で安全な範囲へ�
 
 ## 表示
 
-`ProjectLogsResponder` は `Projects/Hub` へ `applicationLogs` propsを渡します。
+`ProjectLogsResponder` は `Projects/Logs` へ必須の `applicationLogs` propsだけを渡します。通常PROJECT用の `projectId` やStage情報は渡しません。
 
-React側は `ProjectLogsField` でタブ切り替え、2列表、empty状態、エラー対応済み操作を扱います。
+React側は `ProjectLogsView` を専用Pageの表示入口とし、`ProjectLogsField` でタブ切り替え、2列表、empty状態、エラー対応済み操作を扱います。
 
 ComponentはDB取得、保存可否判断、権限判断を持ちません。
 

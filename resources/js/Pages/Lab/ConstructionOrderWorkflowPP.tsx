@@ -6,7 +6,12 @@
 import { Head, Link } from '@inertiajs/react';
 
 import ConstructionOrderIdeaBoardTabs from '@/Components/Lab/ConstructionOrderWorkflowPP/ConstructionOrderIdeaBoardTabs';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const constructionOrderReturn = getStageProjectReturnLink(
+    'construction-order',
+);
 
 export default function ConstructionOrderWorkflowPP() {
     return (
@@ -14,12 +19,14 @@ export default function ConstructionOrderWorkflowPP() {
             <Head title="工事発注管理システム IDEA BOARD" />
 
             <div className="mx-auto flex min-h-screen min-w-0 w-full max-w-full flex-col gap-5 break-words pb-10 [overflow-wrap:anywhere] sm:max-w-7xl">
-                <nav aria-label="工事発注管理 Project Hub への戻り導線">
+                <nav aria-label={constructionOrderReturn.ariaLabel}>
                     <Link
-                        href="/projects/construction-order"
+                        href={constructionOrderReturn.href}
+                        aria-label={constructionOrderReturn.ariaLabel}
+                        title={constructionOrderReturn.title}
                         className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/18 bg-white/10 px-4 text-sm font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        Project Hubへ戻る
+                        {constructionOrderReturn.label}
                     </Link>
                 </nav>
 

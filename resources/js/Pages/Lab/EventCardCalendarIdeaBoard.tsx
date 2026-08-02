@@ -1,7 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
 
 import EventCardCalendarIdeaBoardView from '@/Components/Lab/EventCardCalendar/EventCardCalendarIdeaBoardView';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
+
+const eventCardCalendarReturn = getStageProjectReturnLink(
+    'event-card-calendar',
+);
 
 export default function EventCardCalendarIdeaBoard() {
     return (
@@ -14,10 +19,12 @@ export default function EventCardCalendarIdeaBoard() {
             <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-2 overflow-hidden">
                 <header className="flex flex-none items-center">
                     <Link
-                        href="/projects/event-card-calendar"
+                        href={eventCardCalendarReturn.href}
+                        aria-label={eventCardCalendarReturn.ariaLabel}
+                        title={eventCardCalendarReturn.title}
                         className="inline-flex min-h-8 w-fit items-center justify-center rounded-md border border-white/18 bg-white/10 px-2.5 text-xs font-semibold text-cyan-50 transition hover:bg-white/16 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-100"
                     >
-                        Project Hub
+                        {eventCardCalendarReturn.label}
                     </Link>
                 </header>
 

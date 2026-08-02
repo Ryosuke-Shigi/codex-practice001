@@ -6,6 +6,7 @@ import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel
 import ApiCatalogList from '@/Components/ApiCatalog/ApiCatalogList';
 import ApiCatalogPagination from '@/Components/ApiCatalog/ApiCatalogPagination';
 import { createProviderDomainOptions } from '@/Components/ApiCatalog/apiCatalogDomain';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import {
     type ApiCatalogSortKey,
     normalizeApiCatalogSortKey,
@@ -27,9 +28,9 @@ import type {
 
 /*
  * 本番 API 一覧の戻るボタンは、ブラウザ履歴や直前画面には依存しません。
- * 画面内ボタンは Project Hub の API Discovery Hub へ戻します。
+ * 画面内ボタンは API Discovery Hub の開発段階選択へ戻します。
  */
-const API_CATALOG_ENTRY_HREF = '/projects/api-discovery-hub';
+const apiDiscoveryHubReturn = getStageProjectReturnLink('api-discovery-hub');
 
 function shouldIgnorePaginationKey(target: EventTarget | null) {
     if (!(target instanceof HTMLElement)) {
@@ -294,13 +295,15 @@ export default function Index({
                         </button>
                         {/*
                             本番API一覧はブラウザ履歴や直前画面ではなく、
-                            Project Hub の API Discovery Hub へ明示的に戻します。
+                            API Discovery Hub の開発段階選択へ明示的に戻します。
                         */}
                         <Link
-                            href={API_CATALOG_ENTRY_HREF}
+                            href={apiDiscoveryHubReturn.href}
+                            aria-label={apiDiscoveryHubReturn.ariaLabel}
+                            title={apiDiscoveryHubReturn.title}
                             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-semibold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
                         >
-                            Hubへ戻る
+                            {apiDiscoveryHubReturn.label}
                         </Link>
                     </div>
                 </header>

@@ -9,19 +9,18 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Project Hub の logs 表示 props を整形する Responder です。
+ * アプリログ専用ページの表示 props を整形する Responder です。
  */
 final readonly class ProjectLogsResponder
 {
     /**
-     * ProjectHubView に渡す props の shape をここで固定します。
+     * ProjectLogsView に渡す props の shape をここで固定します。
      *
      * React 側はタブ切替と resolve 操作だけを担当し、DB項目名や route 生成を知りません。
      */
     public function index(ApplicationLogsPageDTO $page): Response
     {
-        return Inertia::render('Projects/Hub', [
-            'projectId' => 'logs',
+        return Inertia::render('Projects/Logs', [
             'applicationLogs' => [
                 'activeTab' => $page->activeTab,
                 'resolveConfirmationKeyword' => (string) config('application_logs.resolve_confirmation_keyword'),

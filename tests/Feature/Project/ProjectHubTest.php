@@ -17,7 +17,7 @@ class ProjectHubTest extends TestCase
             );
     }
 
-    public function test_project_select_page_is_available(): void
+    public function test_project_select_page_is_the_only_project_navigation_entry_and_accepts_url_state(): void
     {
         $this
             ->get('/projects')
@@ -25,52 +25,35 @@ class ProjectHubTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Projects/Select', false)
             );
-    }
 
-    public function test_dance_shorts_project_hub_page_receives_selected_project_id(): void
-    {
         $this
-            ->get('/projects/dance-shorts')
+            ->get('/projects?project=dance-shorts-radar')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'dance-shorts')
+                ->component('Projects/Select', false)
+            );
+
+        $this
+            ->get('/projects?project=dance-shorts-radar&view=stages')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Projects/Select', false)
             );
     }
 
-    public function test_project_hub_route_accepts_other_static_project_ids(): void
+    public function test_normal_projects_do_not_keep_a_generic_project_hub_route(): void
     {
-        $this
-            ->get('/projects/api-discovery-hub')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'api-discovery-hub')
-            );
-
-        $this
-            ->get('/projects/japan-quake-wave-map')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'japan-quake-wave-map')
-            );
-
-        $this
-            ->get('/projects/lumilabo')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'lumilabo')
-            );
-
-        $this
-            ->get('/projects/construction-order')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Hub', false)
-                ->where('projectId', 'construction-order')
-            );
+        foreach ([
+            'api-discovery-hub',
+            'dance-shorts-radar',
+            'dance-shorts-analyzer',
+            'japan-quake-wave-map',
+            'lumilabo',
+            'construction-order',
+            'event-card-calendar',
+        ] as $projectId) {
+            $this->get('/projects/'.$projectId)->assertNotFound();
+        }
     }
 
     public function test_project_hub_linked_idea_board_and_mock_pages_remain_available(): void
@@ -128,5 +111,7 @@ class ProjectHubTest extends TestCase
         $this->get('/lab/quake-wave-map-pp')->assertNotFound();
         $this->get('/lab/construction-order-workflow-pp')->assertNotFound();
         $this->get('/lab/construction-order-new-mock')->assertNotFound();
+        $this->get('/projects/dance-shorts')->assertNotFound();
+        $this->get('/projects/unknown')->assertNotFound();
     }
 }

@@ -40,6 +40,6 @@ LumiLaboのIDEA BOARD / MOCKを作成・修正する場合や、Coding前にMOCK
 - 案件内タブ: TOP / 登録 / 一覧
 - 案件TOP通常ボタン: 登録 / 一覧 / 戻る
 - TOP: LumiLaboアイコン、LumiLaboタイトル、Startボタンだけを見せる
-- 選択: Primaryの案件ボタン / 案件カードと、SecondaryのTOPへ戻るボタンを見せる
-- 案件TOP: 案件タイトル、登録 / 一覧 の通常ボタン、選択画面へ戻るボタンを見せる
+- 選択: Primaryの案件ボタン / 案件カードと、Secondaryの「戻る」ボタンを見せる。`aria-label` / `title` は `TOPへ戻る`
+- 案件TOP: 案件タイトル、登録 / 一覧 の通常ボタン、表示文字が「戻る」のボタンを見せる。`aria-label` / `title` は `案件選択へ戻る`
 - 対象外: IDEA BOARDへの通常リンク / 案件詳細 / 工程デッキ / 工程カード / DB / Backend本実装 / API通信

@@ -2,7 +2,10 @@ import { ArrowLeft, ChevronRight, Search } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { lumiLaboProjectBackLabel } from './mockData';
+import {
+    lumiLaboProjectBackLabel,
+    lumiLaboProjectTopBackAccessibleLabel,
+} from './mockData';
 import type {
     LumiLaboMockProjectDetailDraft,
     LumiLaboMockProjectList,
@@ -355,6 +358,8 @@ export default function LumiLaboProjectListPanel({
 
                 <button
                     type="button"
+                    aria-label={lumiLaboProjectTopBackAccessibleLabel}
+                    title={lumiLaboProjectTopBackAccessibleLabel}
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:max-w-sm [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10"
                     data-lumilabo-back-target={backTargetId}
                     onClick={onBack}

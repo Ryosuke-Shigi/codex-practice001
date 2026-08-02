@@ -4,12 +4,14 @@ import {
     createLumiLaboProjectDetail,
     lumiLaboGlobalTabs,
     lumiLaboProjectActionTabs,
+    lumiLaboProjectBackAccessibleLabel,
     lumiLaboProjectBackLabel,
     lumiLaboProjectDeleteActionLabel,
     lumiLaboProjectDeleteConfirmMessage,
     lumiLaboProjectDeleteConfirmNoLabel,
     lumiLaboProjectDeleteConfirmYesLabel,
     lumiLaboProjectDetailBackLabel,
+    lumiLaboProjectDetailBackAccessibleLabel,
     lumiLaboProjectDetailEditingLabel,
     lumiLaboProjectDetailSaveLabel,
     lumiLaboProjectDetailSavingLabel,
@@ -18,6 +20,8 @@ import {
     lumiLaboProjectItem,
     lumiLaboProjectRegisterPanel,
     lumiLaboProjectTabs,
+    lumiLaboProjectTopBackAccessibleLabel,
+    lumiLaboTopReturnAccessibleLabel,
     lumiLaboTopReturnLabel,
 } from './mockData';
 
@@ -83,7 +87,12 @@ describe('LumiLaboProjectMock data', () => {
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('戻る');
         expect(lumiLaboProjectActionTabs.map((tab) => tab.label)).not.toContain('詳細');
         expect(lumiLaboProjectBackLabel).toBe('戻る');
-        expect(lumiLaboProjectDetailBackLabel).toBe('案件一覧へ戻る');
+        expect(lumiLaboProjectDetailBackLabel).toBe('戻る');
+        expect(lumiLaboTopReturnLabel).toBe('戻る');
+        expect(lumiLaboTopReturnAccessibleLabel).toBe('TOPへ戻る');
+        expect(lumiLaboProjectBackAccessibleLabel).toBe('案件選択へ戻る');
+        expect(lumiLaboProjectTopBackAccessibleLabel).toBe('案件TOPへ戻る');
+        expect(lumiLaboProjectDetailBackAccessibleLabel).toBe('案件一覧へ戻る');
     });
 
     it('defines only the register mock input fields', () => {
@@ -166,14 +175,14 @@ describe('LumiLaboProjectMock data', () => {
         expect(text).toContain('LumiLabo');
         expect(text).toContain('Start');
         expect(text).toContain('案件');
-        expect(text).toContain('TOPへ戻る');
         expect(text).toContain('戻る');
-        expect(text).toContain('案件一覧へ戻る');
+        expect(text).not.toContain('TOPへ戻る');
+        expect(text).not.toContain('案件一覧へ戻る');
         expect(text).not.toContain('選択へ戻る');
         expect(text).not.toContain('詳細を見る');
         expect(text).not.toContain('YES');
         expect(text).not.toContain('NO');
-        expect(lumiLaboTopReturnLabel).not.toBe(lumiLaboProjectBackLabel);
+        expect(lumiLaboTopReturnLabel).toBe(lumiLaboProjectBackLabel);
         expect(text).not.toContain('案件を選択');
         expect(text).not.toContain('案件選択');
         expect(text).not.toContain('合計');

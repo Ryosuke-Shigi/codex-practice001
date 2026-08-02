@@ -123,6 +123,21 @@ function clickButton(label: string, scope: ParentNode = container) {
     act(() => findButton(label, scope).click());
 }
 
+function clickButtonByAriaLabel(
+    ariaLabel: string,
+    scope: ParentNode = container,
+) {
+    const button = Array.from(scope.querySelectorAll('button')).find(
+        (candidate) => candidate.getAttribute('aria-label') === ariaLabel,
+    );
+
+    if (!(button instanceof HTMLButtonElement)) {
+        throw new Error(`Button not found by aria-label: ${ariaLabel}`);
+    }
+
+    act(() => button.click());
+}
+
 function clickProject(companyName: string) {
     const button = container.querySelector(
         `button[aria-label="${companyName}の案件詳細を開く"]`,
@@ -241,7 +256,7 @@ describe('LumiLaboProjectMock client interactions', () => {
         changeInput(companyInput as HTMLInputElement, '保存後会社');
         clickButton('保存する');
         act(() => vi.advanceTimersByTime(250));
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
 
         expect(container.textContent).toContain('保存後会社');
         clickButton('検索');
@@ -273,7 +288,7 @@ describe('LumiLaboProjectMock client interactions', () => {
 
         expect(wrapper.hidden).toBe(true);
         expect(wrapper.contains(document.activeElement)).toBe(false);
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
 
         expect(wrapper.hidden).toBe(false);
         expect(container.textContent).toContain('検索条件：会社B');
@@ -294,7 +309,7 @@ describe('LumiLaboProjectMock client interactions', () => {
         ]);
 
         clickProject('会社E');
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
 
         expect((select as HTMLSelectElement).value).toBe('registered_asc');
         expect(visibleProjectLabels()).toEqual([
@@ -606,7 +621,7 @@ describe('LumiLaboProjectMock client interactions', () => {
             await Promise.resolve();
         });
 
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
         clickProject('会社B');
         clickButton('写真を撮影する');
         clickButton('完了');
@@ -614,7 +629,7 @@ describe('LumiLaboProjectMock client interactions', () => {
         expect(
             container.querySelector('img[alt^="撮影写真"]'),
         ).toBeNull();
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
         clickProject('会社A');
         expect(container.textContent).not.toContain('今回撮影した写真');
         expect(
@@ -633,12 +648,12 @@ describe('LumiLaboProjectMock client interactions', () => {
         expect(track.stop).toHaveBeenCalledTimes(1);
         expect(fetchRequest).not.toHaveBeenCalled();
 
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
         clickProject('会社B');
         expect(
             container.querySelector('img[alt^="撮影写真"]'),
         ).toBeNull();
-        clickButton('案件一覧へ戻る');
+        clickButtonByAriaLabel('案件一覧へ戻る');
         clickProject('会社A');
         expect(
             container.querySelector('img[alt^="撮影写真"]'),

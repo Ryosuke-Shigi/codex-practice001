@@ -9,6 +9,7 @@ import QuakeDateRangeFilter, {
     type QuakeDateRange,
 } from '@/Components/JapanQuakeWaveMap/QuakeDateRangeFilter';
 import QuakeIntensitySwitchFilter from '@/Components/JapanQuakeWaveMap/QuakeIntensitySwitchFilter';
+import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { useQuakeMapRefresh } from '@/Pages/QuakeWavePreview/hooks/useQuakeMapRefresh';
 import { useVisibleEarthquakePins } from '@/Pages/QuakeWavePreview/hooks/useVisibleEarthquakePins';
@@ -22,6 +23,10 @@ type QuakeWaveMapPageProps = {
     pins: EarthquakeMapPin[];
     filters: QuakeWaveMapFilters;
 };
+
+const quakeWaveMapReturn = getStageProjectReturnLink(
+    'japan-quake-wave-map',
+);
 
 function dateRangeFromFilters(filters: QuakeWaveMapFilters): QuakeDateRange {
     return {
@@ -93,10 +98,12 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 pb-12 pt-4 sm:pt-8">
                 <header className="flex items-center justify-between gap-4">
                     <Link
-                        href="/projects/japan-quake-wave-map"
+                        href={quakeWaveMapReturn.href}
+                        aria-label={quakeWaveMapReturn.ariaLabel}
+                        title={quakeWaveMapReturn.title}
                         className="rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
                     >
-                        Hub
+                        {quakeWaveMapReturn.label}
                     </Link>
                     <Link
                         href="/quakewave-preview"

@@ -12,7 +12,7 @@ use App\Repositories\ApplicationLog\ApplicationErrorLogRepositoryInterface;
 use App\Repositories\ApplicationLog\ApplicationIntegrationLogRepositoryInterface;
 
 /**
- * Project Hub の logs 表示に必要な API連携 / エラーログを取得する Query Action です。
+ * アプリログ専用ページに必要な API連携 / エラーログを取得する Query Action です。
  */
 final readonly class GetApplicationLogsAction
 {

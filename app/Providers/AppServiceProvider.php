@@ -81,7 +81,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ApisGuruPreviewRepositoryInterface::class, ApisGuruPreviewRepository::class);
 
         /*
-         * Project Hub の logs 表示と Event 経由保存で使うアプリログ依存です。
+         * アプリログ専用ページの表示と Event 経由保存で使う依存です。
          * API 連携ログと ERROR ログは保存先も責務も分けます。
          */
         $this->app->bind(ApplicationIntegrationLogRepositoryInterface::class, ApplicationIntegrationLogRepository::class);

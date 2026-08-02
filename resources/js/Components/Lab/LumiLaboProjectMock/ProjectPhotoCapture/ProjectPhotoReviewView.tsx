@@ -26,14 +26,16 @@ export default function ProjectPhotoReviewView({
 
     return (
         <div className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-neutral-950 text-white [@media(min-width:768px)_and_(min-height:600px)]:h-[min(90dvh,56rem)] [@media(min-width:768px)_and_(min-height:600px)]:max-h-[calc(100dvh-3rem)] [@media(min-width:768px)_and_(min-height:600px)]:max-w-4xl [@media(min-width:768px)_and_(min-height:600px)]:rounded-2xl [@media(min-width:768px)_and_(min-height:600px)]:border [@media(min-width:768px)_and_(min-height:600px)]:border-white/15 [@media(min-width:768px)_and_(min-height:600px)]:shadow-2xl">
-            <header className="grid min-h-16 grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] items-center border-b border-white/10 px-2 pt-[env(safe-area-inset-top)] sm:px-4">
+            <header className="grid min-h-16 grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] items-center border-b border-white/10 px-2 pt-[env(safe-area-inset-top)] sm:px-4">
                 <button
                     type="button"
                     aria-label="撮影画面へ戻る"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300"
+                    title="撮影画面へ戻る"
+                    className="inline-flex h-11 items-center justify-center gap-1 rounded-full bg-white/15 px-2 text-sm font-black transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300"
                     onClick={onBack}
                 >
                     <ArrowLeft className="h-6 w-6" aria-hidden />
+                    <span>戻る</span>
                 </button>
                 <h1 className="text-center text-lg font-black sm:text-xl">
                     写真を確認
@@ -66,6 +68,8 @@ export default function ProjectPhotoReviewView({
                 <div className="grid gap-3 sm:grid-cols-2">
                     <button
                         type="button"
+                        aria-label="撮影画面へ戻る"
+                        title="撮影画面へ戻る"
                         className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg border border-white/50 px-5 text-lg font-black transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-300"
                         onClick={onBack}
                     >

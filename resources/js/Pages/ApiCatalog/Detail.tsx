@@ -102,7 +102,7 @@ export default function Detail({ apiCatalogItem, returnUrl }: DetailProps) {
                 <ApiCatalogDetailHeader
                     modeLabel="Live"
                     returnUrl={catalogReturnUrl}
-                    returnComment="returnUrl は Controller 側で本番一覧 URL に限定済みです。"
+                    returnAccessibleLabel="API一覧へ戻る"
                     searchTarget={apiCatalogItem}
                 />
 
