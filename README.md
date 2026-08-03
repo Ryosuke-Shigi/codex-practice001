@@ -1,182 +1,208 @@
-# Laravel Portfolio - codex-practice001
+# codex-practice001
 
-Laravel 11 / Inertia / React / TypeScriptを中心に、外部API連携、非同期同期、分析UI、運用ログ、S3互換Storage、AI支援開発の運用までをまとめたポートフォリオです。
+Laravel 11、Inertia、React、TypeScriptで構成したポートフォリオアプリケーションです。
 
-- 公開URL: https://ada-works.dev
-- Project Hub: https://ada-works.dev/projects
-- Docker / infrastructure: https://github.com/Ryosuke-Shigi/laravel11-docker
+外部APIを使うPRODUCT、固定データで画面と操作を確認するMOCK、構想と仕様を整理するIDEA BOARDを同じアプリ内で分けて公開しています。
 
-## このポートフォリオで示していること
+## Links
 
-このリポジトリは、画面だけを並べたデモではなく、構想、UI確認、本実装、検証、運用までを段階ごとに分けて追える実装例です。
+- [公開サイト](https://ada-works.dev)
+- [Project Select](https://ada-works.dev/projects)
+- [設計思想](https://ada-works.dev/design-philosophy)
+- [Docker / Infrastructure Repository](https://github.com/Ryosuke-Shigi/laravel11-docker)
 
-- Laravel / React / Inertia / TypeScriptによるフルスタック実装
-- Action - Domain - Responderを軸にしたレイヤード設計
-- Controller / Request / Action / Service / Repository / DTO / Responder / Componentの責務分離
-- YouTube Data API、APIs.guru、気象庁XMLを使った外部データ連携
-- Queue / Scheduler / Job / Event / Listenerによる非同期処理と副作用の分離
-- snapshot / read modelを使った、同期処理と参照画面の分離
-- API連携ログ、エラーログ、運用通知による状態確認
-- S3互換StorageをFeatureから切り離す共通境界
-- Feature / Unit / React test、CI、Pull Request、docsによる仕様固定
-- CodexなどのAI支援を利用しつつ、人間が仕様、責務境界、合格条件、merge判断を持つ開発プロセス
+## Repository Scope
 
-READMEは外部閲覧者向けの概要に絞り、詳細な仕様と作業ルールは用途別のdocsへ分離しています。
+このリポジトリには、Laravelアプリケーション本体、Reactフロントエンド、Migration、テスト、GitHub Actions、機能仕様と開発ルールを含めています。
 
-## 開発段階
+Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境は、別リポジトリの `Ryosuke-Shigi/laravel11-docker` で管理しています。
 
-構想と実装済み機能を混同しないため、次の段階を分けています。
+## Projects
 
-| 段階 | 役割 |
-|---|---|
-| IDEA BOARD | 目的、価値、流れ、画面候補をお客様向けに説明する |
-| MOCK | 固定データで画面、導線、操作感、状態表示を確認する |
-| PROTOTYPE | 仮データや簡易通信で画面間の接続とデータの流れを検証する |
-| PRODUCT | DB、API、Validation、権限、責務境界、テストを持つ本実装 |
+`/projects` では8つの選択肢を表示します。7つのProjectには合計17のStageがあり、アプリログはStageを持たない専用操作として分けています。
 
-MOCKやPROTOTYPEのコードを、そのままPRODUCT完成版として扱いません。確認できたUI契約や仕様を取り出し、PRODUCTでは責務境界に沿って実装し直します。
-
-## Projects / Current Stage
-
-公開画面ではProject Hubを中心に、各Projectで現在公開しているStage / Moduleや運用画面へ進めます。
-
-| Project | 現在公開しているStage / 入口 | 概要 |
+| Project | 公開Stage / 操作 | 現在の内容 |
 |---|---|---|
-| DanceShorts | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot、地域別ランキング、比較分析 |
-| API Discovery Hub | PRODUCT / MOCK / IDEA BOARD | 公開APIカタログの同期、検索、詳細、調査メモ |
-| Japan Quake Wave Map | PRODUCT / MOCK / IDEA BOARD | 気象庁XMLの取得、保存、震源・震度・波紋の地図表示 |
-| LumiLabo | MOCK / IDEA BOARD | 案件システムを最初のサブシステムとして育てる上位プロダクト |
-| 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積、請求、領収の画面検証 |
-| イベント・カードカレンダー | IDEA BOARD | イベントを起点に入金・出金・請求カードを可視化する構想 |
-| アプリログ | 運用画面 | API連携ログとエラーログの確認、対応済み管理 |
+| API Discovery Hub | PRODUCT / MOCK / IDEA BOARD | APIs.guruの公開APIカタログを同期・検索し、詳細確認と調査メモ管理を行う |
+| DanceShortsRadar | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot保存、地域別ランキングと上昇候補を表示する |
+| DanceShortsAnalyzer | PRODUCT / MOCK / IDEA BOARD | 保存済み動画を検索・選択し、snapshotの推移と差分を比較する |
+| Japan Quake Wave Map | PRODUCT / MOCK / IDEA BOARD | 気象庁XMLを取得・解析し、保存済みの震源・震度情報を地図表示する |
+| LumiLabo | MOCK / IDEA BOARD | 案件システムの画面構成、一覧、詳細、写真・ファイル操作を固定データで確認する |
+| 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積・請求・領収の流れと画面を固定データで確認する |
+| イベント・カードカレンダー | IDEA BOARD | イベントを生成元として、入金・出金・請求カードを扱う構想を整理する |
+| アプリログ | 専用操作 | API連携ログとエラーログを表示し、エラーログの対応済み操作を行う |
 
-## PRODUCT実装
+## Development Stages
 
-### DanceShorts
+| Stage | 扱う内容 |
+|---|---|
+| IDEA BOARD | 目的、価値、業務の流れ、画面候補、未確定事項を整理する |
+| MOCK | 固定データを使い、画面、導線、操作、状態表示を確認する |
+| PROTOTYPE | 仮データや簡易的な接続を使い、画面間やデータの流れを確認する |
+| PRODUCT | DB、外部API、Validation、責務境界、エラー処理、テストを持つ実装を扱う |
 
-YouTube Shortsのダンス動画を保存・観測し、伸び方や地域別候補を確認するProjectです。
+MOCKやPROTOTYPEのコードを、そのままPRODUCTの完成実装として扱いません。確認したUI契約や仕様を分離し、PRODUCTでは必要な責務とデータ境界を定めて実装します。
 
-- **Radar**: 保存済みsnapshotから地域別ランキング候補や上昇候補を表示
-- **Analyzer**: 保存済み動画を検索し、選択したShortsのsnapshotを横比較
-- YouTube Data API連携、動画保存、snapshot保存
-- Queue / Schedulerによる通常同期、page2同期、snapshot専用同期
-- ranking read modelとEChartsによる表示
-- Strategy / Factory / Responderによるランキング条件と表示整形の分離
-- Analyzerでは保存済みデータを使い、分析表示のためにYouTube APIを追加で呼ばない設計
+## PRODUCT / Operations
 
 ### API Discovery Hub
 
-APIs.guruの公開APIカタログを取得し、検索、詳細確認、調査メモ保存ができるProjectです。
+APIs.guruの `list.json` を取得し、公開APIカタログを保存・検索する機能です。
 
-- `list.json`の同期キャッシュ
-- insert / update / skipの差分同期
-- `payload_hash`による変更検知
-- provider / domain / keyword検索
+- APIカタログの同期
+- insert / update / skipの差分判定
+- `payload_hash` による変更検知
+- keyword / provider / domain検索
+- sort / pagination
+- API詳細表示
 - APIごとの調査メモCRUD
-- 同期開始、status polling、完了後の部分更新
-- Repository / Service / DTO / Action / Responderの責務分離
+- 同期開始、状態確認、完了後の画面更新
+- 外部API通信、DB操作、業務判断、出力整形の責務分離
+
+Feature固有の仕様は [API Discovery Hub](docs/features/api-discovery-hub.md) に記載しています。
+
+### DanceShortsRadar
+
+YouTube Data APIからダンス系Shortsの候補を収集し、保存済みsnapshotを使ってランキングを表示する機能です。
+
+- JP / US / KRの検索キーワード管理
+- `search.list` / `videos.list` の取得境界
+- 通常同期、page2同期、snapshot専用同期
+- video / region / snapshotの保存
+- JSTの12時間枠によるsnapshot管理
+- normal / summary / risingのranking read model
+- 比較期間と並び順を切り替えるStrategy / Factory
+- read model生成失敗時に直前のactive世代を維持する処理
+- Queue / Scheduler / Jobによる実行入口の分離
+
+Feature固有の仕様は [DanceShortsRadar](docs/features/dance-shorts-radar.md) に記載しています。
+
+### DanceShortsAnalyzer
+
+DanceShortsRadarで保存した動画とsnapshotを使い、複数動画を横比較する機能です。
+
+- 保存済み動画のkeyword検索
+- 最大5件の動画選択
+- 選択動画ごとのsnapshot推移表示
+- 増加量と1時間あたり増加量の比較
+- regionを混在させない分析グループ
+- ECharts用optionのResponder生成
+- 分析表示ではYouTube APIを追加で呼ばない
+- 計算不能値を0へ丸めず `null` として扱う
+
+Feature固有の仕様は [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md) に記載しています。
 
 ### Japan Quake Wave Map
 
-気象庁の地震火山情報Atom feedと個別XMLを取得し、保存済みの震源、震度、波紋を地図上で確認するProjectです。
+気象庁の地震火山情報Atom feedと個別XMLを取得し、地震情報を保存・解析・表示する機能です。
 
-- Atom feed取得、entry保存、個別XML解析
-- 震源座標、最大震度、マグニチュード、深さの抽出
+- Atom feedの取得とentry抽出
+- `entry_id` による重複回避
+- 個別XMLの取得と解析
+- 震源座標、最大震度、マグニチュード、深さ、発生日時の抽出
 - 緯度、経度、最大震度を持つデータだけをmap pin化
-- 座標なし、震度なし、XML取得失敗、XML解析失敗の扱いを分離
-- feed entry同期とmap pin同期を別処理として管理
-- Queue Jobを実行入口に寄せ、処理本体をCommand Action / Serviceへ分離
-- 同期開始API、status API、polling、完了後のpartial reloadを責務別に整理
+- 対象外、取得失敗、XML構文破損の分類
+- feed処理とmap pin処理の状態分離
+- 15分ごとのScheduler入口
+- 同期状態を返すstatus API
 
-### Project Logs / アプリログ
+Feature固有の仕様は [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md) に記載しています。
 
-アプリ内で保存したAPI連携ログとエラーログを確認するための機能です。
+### Application Logs
+
+外部API連携とアプリケーションエラーをDBへ保存し、`/projects/logs` で確認する機能です。
 
 - API連携ログとエラーログを別テーブルで保存
-- Event / Listener / Repositoryでログ保存の副作用を分離
-- 成功ログを処理単位や分類ごとの要約へ集約
-- エラーログの詳細表示と対応済み管理
+- Eventで発生事実を表現
+- ListenerでDTOへ変換し、Repository経由で保存
+- 同じ処理内で大量に発生するログの要約
+- API連携タブとエラータブ
+- エラーログの詳細表示
+- エラーログの対応済み管理
+- API key、token、response body全文を保存しない境界
 
-## IDEA BOARD / MOCK
+Feature固有の仕様は [Application Logs](docs/features/application-logs.md) に記載しています。
+
+## MOCK / IDEA BOARD
 
 ### LumiLabo
 
-LumiLaboは、案件システムを最初のサブシステムとして育てる上位プロダクトです。現在公開しているのはIDEA BOARD / MOCKであり、PRODUCT完成済みの業務システムではありません。
+LumiLaboは上位Projectとして扱い、現在は案件システムのIDEA BOARDとMOCKを公開しています。
 
-IDEA BOARDでは案件システムの目的、価値、流れ、画面候補を説明し、MOCKでは登録、一覧、詳細などの画面導線と操作感を固定データで確認しています。DB、API、本番CRUD、S3保存にはまだ接続していません。
+IDEA BOARDでは、案件システムの目的、業務の流れ、構造、画面候補を説明します。
 
-詳細は [LumiLabo docs](docs/lumilabo/index.md) と [案件システム MOCK](docs/lumilabo/project-mock.md) を参照してください。
+MOCKでは、固定20件の案件データを初回のInertia propsとして渡し、その後の一覧操作と詳細操作をReact state内で行います。
+
+- TOP、サブシステム選択、案件TOP
+- 案件登録UI
+- keyword検索、登録日順、pagination
+- 案件一覧と案件詳細
+- 会社名、担当者名、住所、メモの擬似保存
+- 地図検索への外部リンク
+- ブラウザカメラを使う連続撮影UI
+- 写真とファイルのプレビュー・削除
+- 案件削除と一覧への反映
+
+現在のMOCKはDB、外部API、本番CRUD、S3保存へ接続していません。保存や削除はブラウザ内の状態として扱います。
+
+詳細は [LumiLabo docs](docs/lumilabo/index.md) と [案件システム MOCK](docs/lumilabo/project-mock.md) に記載しています。
 
 ### 工事発注管理
 
-案件、作業カード、見積、請求、領収の流れを、現場向けの入力体験として整理するProjectです。現在はIDEA BOARD / MOCK段階で、固定データによるCSV投入、案件詳細、帳票プレビューなどを確認しています。
+案件、作業カード、見積、請求、領収の流れを整理するProjectです。
+
+- IDEA BOARDによる業務と画面候補の整理
+- 固定データを使うUI MOCK
+- CSV投入画面
+- 案件詳細
+- 帳票プレビュー
+
+現在はIDEA BOARD / MOCKであり、PRODUCTのDB、API、保存処理には接続していません。
 
 ### イベント・カードカレンダー
 
-イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ広げる構想Projectです。現在はIDEA BOARD段階です。
+イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ展開する構想Projectです。
 
-## Cross-cutting Foundations
+現在公開しているのはIDEA BOARDです。PRODUCTやMOCKの完成実装としては扱いません。
+
+## Shared Foundations
 
 ### S3-compatible Storage
 
-Feature側がLaravel Storageへ直接依存しないための、共通Service / Repository / DTO境界を実装しています。ローカルMinIOとAWS S3向け環境を同じLaravel disk名`s3`で切り替え、自動テストは`Storage::fake('s3')`を使います。
+FeatureがLaravel Storageへ直接依存しないための共通境界を実装しています。
 
-この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDへはまだ接続していません。詳細は [Storage](docs/storage.md) を参照してください。
+- Storage Service
+- Storage Repository
+- 保存結果DTO
+- Laravel disk名 `s3` による接続先切替
+- ローカルMinIOとAWS S3向け設定
+- `Storage::fake('s3')` を使うテスト
 
-### Operations / Notification
+この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDには接続していません。
 
-Laravel Reverb / Broadcastingの基盤、Daily Server Health Reportのメール通知、API連携ログとエラーログを、Scheduler、Artisan Command、Command Action、Notification、Queueなどの責務へ分けて実装しています。
+詳細は [Storage](docs/storage.md) に記載しています。
 
-個別Broadcast EventやReactのリアルタイム通知UIが完成済みであるとは扱っていません。
+### Queue / Scheduler / Notification / Reverb
+
+外部データ同期や定期処理は、実行入口と処理本体を分けています。
+
+- Queue Job
+- Artisan Command
+- Scheduler
+- Notification
+- Laravel Reverb / Broadcastingの基盤
+
+個別のリアルタイム通知UIが完成済みであるとは扱いません。
 
 ### AI-assisted Development
 
-AIは調査、実装補助、差分修正、レビュー補助に使い、人間が仕様、責務境界、完成判定、merge判断を持ちます。作業時は [AGENTS.md](AGENTS.md) から該当する [MD Router](docs/ai/workflows/md-router.md) のプロファイルへ進み、必要なdocsと対象コードだけを確認します。
+AIは調査、実装補助、差分修正、レビュー補助に使用しています。
 
-詳しい考え方は [設計思想ページ](https://ada-works.dev/design-philosophy) を参照してください。
+仕様、責務境界、合格条件、完成判定、merge判断は人間が持ちます。公開リポジトリ内の作業入口は [AGENTS.md](AGENTS.md)、設計と開発工程の説明は [設計思想ページ](https://ada-works.dev/design-philosophy) に記載しています。
 
-## Tech Stack
+## Architecture
 
-### Backend
-
-- PHP 8.3
-- Laravel 11
-- Inertia Laravel
-- MySQL 8
-- Redis 7
-- Laravel Queue / Scheduler / Notification
-- Laravel Reverb
-- Flysystem AWS S3 Adapter
-
-### Frontend
-
-- React 19
-- TypeScript
-- Inertia.js
-- Vite
-- Tailwind CSS
-- ECharts
-- Mermaid
-- Vitest
-- `motion`
-- `lucide-react`
-
-### Infrastructure / CI
-
-- Docker Compose
-- nginx
-- php-fpm
-- queue / scheduler / Reverb services
-- MinIO、Mailpit、Adminer（ローカル開発用）
-- AWS Lightsail
-- Cloudflare
-- GitHub Actions
-
-ローカル用のMinIO、Mailpit、Adminerは開発確認用であり、本番公開対象ではありません。
-
-## Architecture / Design Policy
-
-このプロジェクトでいうADR Patternは **Action - Domain - Responder** を意味します。Architecture Decision Recordと混同しないため、設計判断の記録はDecision Recordまたは設計判断記録と呼びます。
+このプロジェクトでいうADR Patternは、Action - Domain - Responderを指します。Architecture Decision Recordとは分けて扱います。
 
 ```text
 Controller / Request
@@ -190,54 +216,108 @@ Responder
 React / Inertia
 ```
 
-- ControllerはHTTP入口、Requestは入力形式のValidation
-- Actionは1ユースケースの手順
-- Serviceは業務判断とドメインルール
-- RepositoryはDBや外部データソースとの境界
-- DTO / ListDTOはレイヤー間のデータキャリア
-- ResponderはInertia propsやJSONなどの出力整形
-- Event / Listenerは発生した事実と副作用を分離
-- Job / Artisan Command / Schedulerは実行入口
-- React Page / Hook / Componentは画面入口、UI状態、表示、操作を分担
-- 単純な処理へ不要なService、Factory、Strategyを機械的に増やさない
+主な責務は次のとおりです。
 
-詳細は [Architecture](docs/architecture.md)、[Responsibility Boundaries](docs/ai/rules/responsibility-boundaries.md)、[Frontend](docs/frontend.md)、[UI](docs/ui.md) を参照してください。
+| 責務 | 扱う内容 |
+|---|---|
+| Controller | HTTP入口、Request・Action・Responderの接続 |
+| Request | 入力形式と許可値のValidation |
+| Action | 1ユースケースの処理手順 |
+| Service | 業務判断、計算、状態遷移、処理結果の意味づけ |
+| Repository | DBまたは外部データソースとの境界 |
+| DTO / ListDTO | レイヤー間のデータ受け渡し |
+| Strategy / Factory | 条件ごとの差分処理、実装や設定の選択 |
+| Responder | Inertia props、JSON、redirectなどの出力整形 |
+| Event / Listener | 発生した事実と保存・通知などの副作用の分離 |
+| Job / Command / Scheduler | 非同期処理・定期処理の実行入口 |
+| React Page / Hook / Component | 画面入口、UI状態、表示、操作の分担 |
 
-## Testing / CI / Review
+すべての機能に全レイヤーを作るのではなく、変更理由を分ける必要がある責務だけを配置します。
 
-テストは、壊してはいけない仕様と責務境界を固定する実行可能な資料として扱います。
+詳細は [Architecture](docs/architecture.md) と [Responsibility Boundaries](docs/ai/rules/responsibility-boundaries.md) に記載しています。
 
-- Laravel Feature / Unit test
-- React utility / component test
-- Request Validation、Action / Service / Repository / DTO / Responderの境界確認
+## Technology
+
+### Backend
+
+- PHP 8.3
+- Laravel 11
+- Inertia Laravel 3
+- MySQL
+- Redis
+- Laravel Queue / Scheduler / Notification
+- Laravel Reverb
+- Flysystem AWS S3 Adapter
+
+### Frontend
+
+- React 19
+- TypeScript
+- Inertia.js 2
+- Vite 6
+- Tailwind CSS 3
+- ECharts 6
+- Mermaid 11
+- Motion 12
+- Lucide React
+- Vitest 4
+
+### Infrastructure
+
+- Docker Compose
+- nginx
+- php-fpm
+- MySQL
+- Redis
+- Queue / Scheduler / Reverb services
+- AWS Lightsail
+- Cloudflare
+- GitHub Actions
+
+Docker構成の詳細は [laravel11-docker](https://github.com/Ryosuke-Shigi/laravel11-docker) に分離しています。
+
+## Testing / CI
+
+テストは、現在の仕様とレイヤー間の契約を固定するために使用しています。
+
+- Laravel Feature test
+- Laravel Unit test
+- Request / Action / Service / Repository / DTO / Responderの境界確認
 - Inertia props / API JSON contractの確認
-- Job / Artisan Command / Schedulerの実行境界
-- `Storage::fake('s3')`によるStorage境界の確認
-- TypeScript typecheckとfrontend build
+- Job / Artisan Command / Schedulerの実行確認
+- React component / utility test
+- TypeScript typecheck
+- frontend production build
+- Pint format check
+- `Storage::fake('s3')` によるStorage境界の確認
 
-GitHub Actionsでは、PHP 8.3 / Node 22環境で、変更PHPファイルのPint check、frontend build、Laravel tests、Vitestを実行します。
+GitHub ActionsはPull Requestとmainへのpushで実行し、現在は次を確認します。
 
-詳細は [Testing](docs/testing.md)、[PR Review Strength](docs/operations/pr-review-strength.md)、[Sensors](docs/operations/sensors.md) を参照してください。
+- 変更されたPHPファイルのPint check
+- frontend production build
+- Laravel tests
+- Vitest
+
+TypeScript typecheckはローカルの登録コマンドとして実行し、現在のGitHub Actionsには含めていません。
+
+詳細は [Testing](docs/testing.md)、[PR Review Strength](docs/operations/pr-review-strength.md)、[Sensors](docs/operations/sensors.md) に記載しています。
 
 ## Documentation
 
-READMEは外部閲覧者向けの概要です。内部の作業ルール、機能固有仕様、確認コマンドは用途ごとの正本へ分離しています。
+READMEは外部閲覧者向けの概要です。機能固有の仕様、共通設計、テスト方針、AI作業ルールは用途ごとの文書へ分けています。
 
-- [Documentation Index](docs/index.md): docs全体の総合索引、用途別の正本、配置基準
-- [Architecture](docs/architecture.md): ADR Patternとレイヤー責務
-- [Development Flow](docs/development-flow.md): IDEA BOARD / MOCK / PROTOTYPE / PRODUCT
-- [Product Design Guide](docs/product-design/index.md): IDEA BOARD / MOCK / Coding前の境界
-- [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
-- [LumiLabo docs](docs/lumilabo/index.md): LumiLabo固有のIDEA BOARD / MOCK
-- [Storage](docs/storage.md): S3互換Storageの共通境界
-- [Command Registry](docs/operations/command-registry.md): Docker経由の実行コマンドとrepo境界
-
-同じ詳細をREADMEへ複製せず、現在挙動はコード、Migration、設定、成功しているテストで確認します。
-
-## Local Development / Notes
-
-Laravel / React / app docs / testsはこのリポジトリで管理し、Docker / nginx / php-fpm / MySQL / Redis / MinIO / queue / schedulerなどの外側構成は [laravel11-docker](https://github.com/Ryosuke-Shigi/laravel11-docker) で管理しています。
-
-ローカル実行はDocker Composeを前提とし、具体的なコマンドとservice名は [Command Registry](docs/operations/command-registry.md) を参照してください。
-
-README、docs、PR、ログには、本番`.env`、APIキー、DBパスワード、AWS credentials、token、cookie、session、個人情報を載せません。
+- [Documentation Index](docs/index.md)
+- [Architecture](docs/architecture.md)
+- [Development Flow](docs/development-flow.md)
+- [Product Design Guide](docs/product-design/index.md)
+- [Frontend](docs/frontend.md)
+- [UI](docs/ui.md)
+- [Testing](docs/testing.md)
+- [Security](docs/security.md)
+- [Storage](docs/storage.md)
+- [API Discovery Hub](docs/features/api-discovery-hub.md)
+- [DanceShortsRadar](docs/features/dance-shorts-radar.md)
+- [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md)
+- [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md)
+- [Application Logs](docs/features/application-logs.md)
+- [LumiLabo docs](docs/lumilabo/index.md)
