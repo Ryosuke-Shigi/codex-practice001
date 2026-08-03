@@ -4,24 +4,24 @@ Laravel 11、Inertia、React、TypeScriptで構成したポートフォリオア
 
 外部APIを使うPRODUCT、固定データで画面と操作を確認するMOCK、構想と仕様を整理するIDEA BOARDを同じアプリ内で分けて公開しています。
 
-## Links
+## 公開先
 
 - [公開サイト](https://ada-works.dev)
-- [Project Select](https://ada-works.dev/projects)
+- [プロジェクト選択](https://ada-works.dev/projects)
 - [設計思想](https://ada-works.dev/design-philosophy)
-- [Docker / Infrastructure Repository](https://github.com/Ryosuke-Shigi/laravel11-docker)
+- [Docker・インフラ構成リポジトリ](https://github.com/Ryosuke-Shigi/laravel11-docker)
 
-## Repository Scope
+## このリポジトリの範囲
 
 このリポジトリには、Laravelアプリケーション本体、Reactフロントエンド、Migration、テスト、GitHub Actions、機能仕様と開発ルールを含めています。
 
 Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境は、別リポジトリの `Ryosuke-Shigi/laravel11-docker` で管理しています。
 
-## Projects
+## 公開プロジェクト
 
-`/projects` では8つの選択肢を表示します。7つのProjectには合計17のStageがあり、アプリログはStageを持たない専用操作として分けています。
+`/projects` では8つの選択肢を表示します。7つのプロジェクトには合計17のStageがあり、アプリログはStageを持たない専用操作として分けています。
 
-| Project | 公開Stage / 操作 | 現在の内容 |
+| プロジェクト | 公開Stage・操作 | 現在の内容 |
 |---|---|---|
 | API Discovery Hub | PRODUCT / MOCK / IDEA BOARD | APIs.guruの公開APIカタログを同期・検索し、詳細確認と調査メモ管理を行う |
 | DanceShortsRadar | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot保存、地域別ランキングと上昇候補を表示する |
@@ -32,7 +32,7 @@ Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境�
 | イベント・カードカレンダー | IDEA BOARD | イベントを生成元として、入金・出金・請求カードを扱う構想を整理する |
 | アプリログ | 専用操作 | API連携ログとエラーログを表示し、エラーログの対応済み操作を行う |
 
-## Development Stages
+## 開発段階
 
 | Stage | 扱う内容 |
 |---|---|
@@ -43,7 +43,7 @@ Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境�
 
 MOCKやPROTOTYPEのコードを、そのままPRODUCTの完成実装として扱いません。確認したUI契約や仕様を分離し、PRODUCTでは必要な責務とデータ境界を定めて実装します。
 
-## PRODUCT / Operations
+## PRODUCT・運用機能
 
 ### API Discovery Hub
 
@@ -59,7 +59,7 @@ APIs.guruの `list.json` を取得し、公開APIカタログを保存・検索�
 - 同期開始、状態確認、完了後の画面更新
 - 外部API通信、DB操作、業務判断、出力整形の責務分離
 
-Feature固有の仕様は [API Discovery Hub](docs/features/api-discovery-hub.md) に記載しています。
+機能固有の仕様は [API Discovery Hub](docs/features/api-discovery-hub.md) に記載しています。
 
 ### DanceShortsRadar
 
@@ -75,7 +75,7 @@ YouTube Data APIからダンス系Shortsの候補を収集し、保存済みsnap
 - read model生成失敗時に直前のactive世代を維持する処理
 - Queue / Scheduler / Jobによる実行入口の分離
 
-Feature固有の仕様は [DanceShortsRadar](docs/features/dance-shorts-radar.md) に記載しています。
+機能固有の仕様は [DanceShortsRadar](docs/features/dance-shorts-radar.md) に記載しています。
 
 ### DanceShortsAnalyzer
 
@@ -90,7 +90,7 @@ DanceShortsRadarで保存した動画とsnapshotを使い、複数動画を横�
 - 分析表示ではYouTube APIを追加で呼ばない
 - 計算不能値を0へ丸めず `null` として扱う
 
-Feature固有の仕様は [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md) に記載しています。
+機能固有の仕様は [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md) に記載しています。
 
 ### Japan Quake Wave Map
 
@@ -106,9 +106,9 @@ Feature固有の仕様は [DanceShortsAnalyzer](docs/features/dance-shorts-analy
 - 15分ごとのScheduler入口
 - 同期状態を返すstatus API
 
-Feature固有の仕様は [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md) に記載しています。
+機能固有の仕様は [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md) に記載しています。
 
-### Application Logs
+### アプリログ
 
 外部API連携とアプリケーションエラーをDBへ保存し、`/projects/logs` で確認する機能です。
 
@@ -121,13 +121,13 @@ Feature固有の仕様は [Japan Quake Wave Map](docs/features/japan-quake-wave-
 - エラーログの対応済み管理
 - API key、token、response body全文を保存しない境界
 
-Feature固有の仕様は [Application Logs](docs/features/application-logs.md) に記載しています。
+機能固有の仕様は [アプリログ](docs/features/application-logs.md) に記載しています。
 
-## MOCK / IDEA BOARD
+## MOCK・IDEA BOARD
 
 ### LumiLabo
 
-LumiLaboは上位Projectとして扱い、現在は案件システムのIDEA BOARDとMOCKを公開しています。
+LumiLaboは上位プロジェクトとして扱い、現在は案件システムのIDEA BOARDとMOCKを公開しています。
 
 IDEA BOARDでは、案件システムの目的、業務の流れ、構造、画面候補を説明します。
 
@@ -145,11 +145,11 @@ MOCKでは、固定20件の案件データを初回のInertia propsとして渡�
 
 現在のMOCKはDB、外部API、本番CRUD、S3保存へ接続していません。保存や削除はブラウザ内の状態として扱います。
 
-詳細は [LumiLabo docs](docs/lumilabo/index.md) と [案件システム MOCK](docs/lumilabo/project-mock.md) に記載しています。
+詳細は [LumiLabo案件システム IDEA BOARD](docs/lumilabo/project-idea-board.md) と [LumiLabo案件システム MOCK](docs/lumilabo/project-mock.md) に記載しています。
 
 ### 工事発注管理
 
-案件、作業カード、見積、請求、領収の流れを整理するProjectです。
+案件、作業カード、見積、請求、領収の流れを整理するプロジェクトです。
 
 - IDEA BOARDによる業務と画面候補の整理
 - 固定データを使うUI MOCK
@@ -161,15 +161,15 @@ MOCKでは、固定20件の案件データを初回のInertia propsとして渡�
 
 ### イベント・カードカレンダー
 
-イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ展開する構想Projectです。
+イベントを背景・生成元として扱い、入金、出金、請求カードをカレンダー、表、可視化へ展開する構想プロジェクトです。
 
 現在公開しているのはIDEA BOARDです。PRODUCTやMOCKの完成実装としては扱いません。
 
-## Shared Foundations
+## 共通基盤
 
-### S3-compatible Storage
+### S3互換Storage
 
-FeatureがLaravel Storageへ直接依存しないための共通境界を実装しています。
+機能側がLaravel Storageへ直接依存しないための共通境界を実装しています。
 
 - Storage Service
 - Storage Repository
@@ -182,7 +182,7 @@ FeatureがLaravel Storageへ直接依存しないための共通境界を実装�
 
 詳細は [Storage](docs/storage.md) に記載しています。
 
-### Queue / Scheduler / Notification / Reverb
+### 非同期処理・定期処理・通知・Reverb
 
 外部データ同期や定期処理は、実行入口と処理本体を分けています。
 
@@ -194,13 +194,13 @@ FeatureがLaravel Storageへ直接依存しないための共通境界を実装�
 
 個別のリアルタイム通知UIが完成済みであるとは扱いません。
 
-### AI-assisted Development
+### AI支援開発
 
 AIは調査、実装補助、差分修正、レビュー補助に使用しています。
 
 仕様、責務境界、合格条件、完成判定、merge判断は人間が持ちます。公開リポジトリ内の作業入口は [AGENTS.md](AGENTS.md)、設計と開発工程の説明は [設計思想ページ](https://ada-works.dev/design-philosophy) に記載しています。
 
-## Architecture
+## 設計
 
 このプロジェクトでいうADR Patternは、Action - Domain - Responderを指します。Architecture Decision Recordとは分けて扱います。
 
@@ -234,11 +234,11 @@ React / Inertia
 
 すべての機能に全レイヤーを作るのではなく、変更理由を分ける必要がある責務だけを配置します。
 
-詳細は [Architecture](docs/architecture.md) と [Responsibility Boundaries](docs/ai/rules/responsibility-boundaries.md) に記載しています。
+詳細は [アーキテクチャ](docs/architecture.md) と [責務境界](docs/ai/rules/responsibility-boundaries.md) に記載しています。
 
-## Technology
+## 技術構成
 
-### Backend
+### バックエンド
 
 - PHP 8.3
 - Laravel 11
@@ -249,7 +249,7 @@ React / Inertia
 - Laravel Reverb
 - Flysystem AWS S3 Adapter
 
-### Frontend
+### フロントエンド
 
 - React 19
 - TypeScript
@@ -262,7 +262,7 @@ React / Inertia
 - Lucide React
 - Vitest 4
 
-### Infrastructure
+### インフラ
 
 - Docker Compose
 - nginx
@@ -276,7 +276,7 @@ React / Inertia
 
 Docker構成の詳細は [laravel11-docker](https://github.com/Ryosuke-Shigi/laravel11-docker) に分離しています。
 
-## Testing / CI
+## テスト・CI
 
 テストは、現在の仕様とレイヤー間の契約を固定するために使用しています。
 
@@ -298,26 +298,27 @@ GitHub ActionsはPull Requestとmainへのpushで実行し、現在は次を確�
 - Laravel tests
 - Vitest
 
-TypeScript typecheckはローカルの登録コマンドとして実行し、現在のGitHub Actionsには含めていません。
+TypeScript typecheckはプロジェクトの登録コマンドとして実行し、現在のGitHub Actionsには含めていません。
 
-詳細は [Testing](docs/testing.md)、[PR Review Strength](docs/operations/pr-review-strength.md)、[Sensors](docs/operations/sensors.md) に記載しています。
+詳細は [テスト](docs/testing.md)、[PRレビュー強度](docs/operations/pr-review-strength.md)、[Sensors](docs/operations/sensors.md) に記載しています。
 
-## Documentation
+## ドキュメント
 
 READMEは外部閲覧者向けの概要です。機能固有の仕様、共通設計、テスト方針、AI作業ルールは用途ごとの文書へ分けています。
 
-- [Documentation Index](docs/index.md)
-- [Architecture](docs/architecture.md)
-- [Development Flow](docs/development-flow.md)
-- [Product Design Guide](docs/product-design/index.md)
-- [Frontend](docs/frontend.md)
+- [ドキュメント索引](docs/index.md)
+- [アーキテクチャ](docs/architecture.md)
+- [開発段階](docs/development-flow.md)
+- [プロダクトデザインガイド](docs/product-design/index.md)
+- [フロントエンド](docs/frontend.md)
 - [UI](docs/ui.md)
-- [Testing](docs/testing.md)
-- [Security](docs/security.md)
+- [テスト](docs/testing.md)
+- [セキュリティ](docs/security.md)
 - [Storage](docs/storage.md)
 - [API Discovery Hub](docs/features/api-discovery-hub.md)
 - [DanceShortsRadar](docs/features/dance-shorts-radar.md)
 - [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md)
 - [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md)
-- [Application Logs](docs/features/application-logs.md)
-- [LumiLabo docs](docs/lumilabo/index.md)
+- [アプリログ](docs/features/application-logs.md)
+- [LumiLabo案件システム IDEA BOARD](docs/lumilabo/project-idea-board.md)
+- [LumiLabo案件システム MOCK](docs/lumilabo/project-mock.md)
