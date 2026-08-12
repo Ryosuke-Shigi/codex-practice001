@@ -19,17 +19,17 @@ class ApplicationFileStorageServiceTest extends TestCase
             mimeType: 'text/plain',
             size: 19,
             disk: 's3',
-            prefix: 'lumilabo',
+            prefix: 'lumilab',
             visibility: 'private',
         );
 
-        Storage::disk('s3')->assertExists('lumilabo/event-cards/card.txt');
+        Storage::disk('s3')->assertExists('lumilab/event-cards/card.txt');
 
         $this->assertSame('hello s3 foundation', Storage::disk('s3')->get($storedFile->path));
         $this->assertSame('private', Storage::disk('s3')->getVisibility($storedFile->path));
         $this->assertSame([
             'disk' => 's3',
-            'path' => 'lumilabo/event-cards/card.txt',
+            'path' => 'lumilab/event-cards/card.txt',
             'original_name' => 'card.txt',
             'mime_type' => 'text/plain',
             'size' => 19,
@@ -50,25 +50,25 @@ class ApplicationFileStorageServiceTest extends TestCase
             mimeType: 'text/plain',
             size: 9,
             disk: 's3',
-            prefix: 'lumilabo',
+            prefix: 'lumilab',
         );
 
         $this->assertTrue($this->service()->exists(
             path: 'attachments/delete-me.txt',
             disk: 's3',
-            prefix: 'lumilabo',
+            prefix: 'lumilab',
         ));
 
         $this->assertTrue($this->service()->delete(
             path: 'attachments/delete-me.txt',
             disk: 's3',
-            prefix: 'lumilabo',
+            prefix: 'lumilab',
         ));
 
         $this->assertFalse($this->service()->exists(
             path: 'attachments/delete-me.txt',
             disk: 's3',
-            prefix: 'lumilabo',
+            prefix: 'lumilab',
         ));
     }
 

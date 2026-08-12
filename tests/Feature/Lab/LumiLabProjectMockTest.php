@@ -2,21 +2,21 @@
 
 namespace Tests\Feature\Lab;
 
-use App\Actions\LumiLabo\Queries\GetLumiLaboProjectMockListAction;
-use App\DTO\LumiLabo\LumiLaboProjectMockItemDTO;
-use App\DTO\LumiLabo\LumiLaboProjectMockListDTO;
-use App\Responders\LumiLabo\LumiLaboProjectMockResponder;
+use App\Actions\LumiLab\Queries\GetLumiLabProjectMockListAction;
+use App\DTO\LumiLab\LumiLabProjectMockItemDTO;
+use App\DTO\LumiLab\LumiLabProjectMockListDTO;
+use App\Responders\LumiLab\LumiLabProjectMockResponder;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
-class LumiLaboProjectMockTest extends TestCase
+class LumiLabProjectMockTest extends TestCase
 {
     public function test_index_returns_all_twenty_initial_projects_without_list_query_props(): void
     {
-        $this->get('/lab/lumilabo-project-mock')
+        $this->get('/lab/lumilab-project-mock')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Lab/LumiLaboProjectMock', false)
+                ->component('Lab/LumiLabProjectMock', false)
                 ->has('projectList', fn (Assert $projectList) => $projectList
                     ->has('items', 20)
                     ->where('items.0.id', 'mock-project-001')
@@ -37,16 +37,16 @@ class LumiLaboProjectMockTest extends TestCase
 
     public function test_action_returns_a_list_dto_with_twenty_item_dtos_in_fixed_order(): void
     {
-        $list = app(GetLumiLaboProjectMockListAction::class)->execute();
+        $list = app(GetLumiLabProjectMockListAction::class)->execute();
         $expectedIds = array_map(
             fn (int $number): string => sprintf('mock-project-%03d', $number),
             range(1, 20),
         );
 
-        $this->assertInstanceOf(LumiLaboProjectMockListDTO::class, $list);
+        $this->assertInstanceOf(LumiLabProjectMockListDTO::class, $list);
         $this->assertCount(20, $list->items);
         $this->assertContainsOnlyInstancesOf(
-            LumiLaboProjectMockItemDTO::class,
+            LumiLabProjectMockItemDTO::class,
             $list->items,
         );
         $this->assertSame(
@@ -61,7 +61,7 @@ class LumiLaboProjectMockTest extends TestCase
     public function test_legacy_list_query_is_ignored_without_a_validation_redirect(): void
     {
         $this->get(
-            '/lab/lumilabo-project-mock?sort=name&page=0&per_page=0'.
+            '/lab/lumilab-project-mock?sort=name&page=0&per_page=0'.
             '&deleted_ids[]=invalid&overrides[0][company_name]=changed',
         )
             ->assertOk()
@@ -77,8 +77,8 @@ class LumiLaboProjectMockTest extends TestCase
 
     public function test_responder_keeps_item_fields_and_converts_only_the_display_date(): void
     {
-        $list = app(GetLumiLaboProjectMockListAction::class)->execute();
-        $response = app(LumiLaboProjectMockResponder::class)->index($list);
+        $list = app(GetLumiLabProjectMockListAction::class)->execute();
+        $response = app(LumiLabProjectMockResponder::class)->index($list);
 
         request()->headers->set('X-Inertia', 'true');
         $page = $response->toResponse(request())->getData(true);
@@ -87,7 +87,7 @@ class LumiLaboProjectMockTest extends TestCase
             'registeredDate' => '2026/07/07',
         ];
 
-        $this->assertSame('Lab/LumiLaboProjectMock', $page['component']);
+        $this->assertSame('Lab/LumiLabProjectMock', $page['component']);
         $this->assertSame(
             ['items'],
             array_keys($page['props']['projectList']),
@@ -102,10 +102,10 @@ class LumiLaboProjectMockTest extends TestCase
     public function test_removed_request_and_middleware_are_not_referenced(): void
     {
         $requestPath = app_path(
-            'Http/Requests/LumiLabo/LumiLaboProjectMockIndexRequest.php',
+            'Http/Requests/LumiLab/LumiLabProjectMockIndexRequest.php',
         );
         $middlewarePath = app_path(
-            'Http/Middleware/PreserveLumiLaboProjectMockCompanyNameWhitespace.php',
+            'Http/Middleware/PreserveLumiLabProjectMockCompanyNameWhitespace.php',
         );
         $bootstrap = file_get_contents(base_path('bootstrap/app.php'));
 
@@ -113,7 +113,7 @@ class LumiLaboProjectMockTest extends TestCase
         $this->assertFileDoesNotExist($middlewarePath);
         $this->assertIsString($bootstrap);
         $this->assertStringNotContainsString(
-            'PreserveLumiLaboProjectMockCompanyNameWhitespace',
+            'PreserveLumiLabProjectMockCompanyNameWhitespace',
             $bootstrap,
         );
     }

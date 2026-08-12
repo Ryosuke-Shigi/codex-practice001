@@ -19,13 +19,13 @@ class ApplicationFileStorageServiceTest extends TestCase
         $repository
             ->expects($this->once())
             ->method('put')
-            ->with('s3', 'lumilabo/events/photos/photo.jpg', 'image-bytes', 'private')
+            ->with('s3', 'lumilab/events/photos/photo.jpg', 'image-bytes', 'private')
             ->willReturn(true);
 
         $repository
             ->expects($this->once())
             ->method('temporaryUrl')
-            ->with('s3', 'lumilabo/events/photos/photo.jpg', $expiresAt)
+            ->with('s3', 'lumilab/events/photos/photo.jpg', $expiresAt)
             ->willReturn('https://example.test/temporary/photo.jpg');
 
         $repository
@@ -38,12 +38,12 @@ class ApplicationFileStorageServiceTest extends TestCase
             originalName: ' photo.jpg ',
             mimeType: ' image/jpeg ',
             size: 10,
-            prefix: 'lumilabo/events/',
+            prefix: 'lumilab/events/',
             temporaryUrlExpiresAt: $expiresAt,
         );
 
         $this->assertSame('s3', $storedFile->disk);
-        $this->assertSame('lumilabo/events/photos/photo.jpg', $storedFile->path);
+        $this->assertSame('lumilab/events/photos/photo.jpg', $storedFile->path);
         $this->assertSame('photo.jpg', $storedFile->originalName);
         $this->assertSame('image/jpeg', $storedFile->mimeType);
         $this->assertSame(10, $storedFile->size);

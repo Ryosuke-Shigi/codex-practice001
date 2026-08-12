@@ -4,9 +4,9 @@ import { act, type ReactNode, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
-import LumiLaboProjectMockView from './LumiLaboProjectMockView';
-import type { LumiLaboMockProjectList } from './types';
+import LumiLabProjectListPanel from './LumiLabProjectListPanel';
+import LumiLabProjectMockView from './LumiLabProjectMockView';
+import type { LumiLabMockProjectList } from './types';
 
 const projectList = {
     items: [
@@ -51,7 +51,7 @@ const projectList = {
             registeredDate: '2026/07/08',
         },
     ],
-} satisfies LumiLaboMockProjectList;
+} satisfies LumiLabMockProjectList;
 
 class TestResizeObserver {
     static instances: TestResizeObserver[] = [];
@@ -180,7 +180,7 @@ function submit(form: HTMLFormElement) {
 
 function renderListPanel() {
     render(
-        <LumiLaboProjectListPanel
+        <LumiLabProjectListPanel
             projectList={projectList}
             projectOverrides={{}}
             deletedProjectIds={[]}
@@ -192,7 +192,7 @@ function renderListPanel() {
 }
 
 function openProjectList() {
-    render(<LumiLaboProjectMockView projectList={projectList} />);
+    render(<LumiLabProjectMockView projectList={projectList} />);
     clickButton('Start');
     clickButton('案件');
     clickButton('一覧');
@@ -243,7 +243,7 @@ function mockRectHeight(element: Element, height: number) {
     });
 }
 
-describe('LumiLaboProjectMock client interactions', () => {
+describe('LumiLabProjectMock client interactions', () => {
     it('saves an override, returns to the list, and searches the saved value', () => {
         openProjectList();
         clickProject('会社A');
@@ -578,7 +578,7 @@ describe('LumiLaboProjectMock client interactions', () => {
 
             return isPageMounted ? (
                 <>
-                    <LumiLaboProjectMockView projectList={projectList} />
+                    <LumiLabProjectMockView projectList={projectList} />
                     <button type="button" onClick={() => setIsPageMounted(false)}>
                         ページを破棄
                     </button>

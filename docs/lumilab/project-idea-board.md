@@ -1,20 +1,20 @@
-# LumiLabo 案件システム IDEA BOARD
+# LumiLab 案件システム IDEA BOARD
 
 - Status: active
-- Scope: LumiLabo / 案件システム IDEA BOARD
+- Scope: LumiLab / 案件システム IDEA BOARD
 - Last reviewed: 2026-07-06
-- Canonical source: この文書と `/lab/lumilabo-project-idea-board` のタブ構成
+- Canonical source: この文書と `/lab/lumilab-project-idea-board` のタブ構成
 
 ## 目的
 
-LumiLabo 案件システム IDEA BOARD は、お客様に LumiLabo と案件システムの考え方を説明する資料として扱う。
+LumiLab 案件システム IDEA BOARD は、お客様に LumiLab と案件システムの考え方を説明する資料として扱う。
 
-LumiLaboは案件管理機能そのものではなく、複数のサブシステムを置ける上位プロダクト / 上位ドメインである。
+LumiLabは案件管理機能そのものではなく、複数のサブシステムを置ける上位プロダクト / 上位ドメインである。
 最初に扱うサブシステムが案件システムであり、案件を起点に登録、一覧、詳細、将来の工程候補へ広がる考え方を説明する。
 
 これはPRODUCT実装ではない。
 MOCK、DB、Backend本実装、API通信、カレンダー、工程デッキ実装、工程カード実装は扱わない。
-現行MOCKは別画面 `/lab/lumilabo-project-mock` で扱い、このIDEA BOARD内には実画面導線を置かない。
+現行MOCKは別画面 `/lab/lumilab-project-mock` で扱い、このIDEA BOARD内には実画面導線を置かない。
 
 ## 画面構成
 
@@ -37,11 +37,11 @@ IDEA BOARD画面は次の上位タブを基本にする。
 
 ## 概要
 
-概要タブでは、LumiLaboと案件システムの位置づけを説明する。
+概要タブでは、LumiLabと案件システムの位置づけを説明する。
 
 見せること:
 
-- LumiLabo は上位プロダクトである
+- LumiLab は上位プロダクトである
 - 案件システムは最初のサブシステムである
 - 後から別サブシステムが並ぶ余地がある
 - 工程デッキ、工程カード、横断カレンダーは拡張候補であり、確定PRODUCT仕様ではない
@@ -51,7 +51,7 @@ IDEA BOARD画面は次の上位タブを基本にする。
 フロータブでは、次の流れをフローチャートとして見せる。
 
 ```text
-LumiLabo
+LumiLab
   ↓
 案件システム
   ↓
@@ -148,7 +148,7 @@ LumiLabo
 
 図解タブでは、次を見せる。
 
-- LumiLabo が上位プロダクトであること
+- LumiLab が上位プロダクトであること
 - その下に案件システムがあること
 - 後から別システムが並ぶ余地があること
 - 共通カレンダー / 横断ビューは将来候補であり、初期PRODUCT仕様ではないこと

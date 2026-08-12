@@ -3,27 +3,27 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
-    lumiLaboProjectBackLabel,
-    lumiLaboProjectTopBackAccessibleLabel,
+    lumiLabProjectBackLabel,
+    lumiLabProjectTopBackAccessibleLabel,
 } from './mockData';
 import type {
-    LumiLaboMockProjectDetailDraft,
-    LumiLaboMockProjectList,
-    LumiLaboMockProjectListItem,
+    LumiLabMockProjectDetailDraft,
+    LumiLabMockProjectList,
+    LumiLabMockProjectListItem,
 } from './types';
 
-type LumiLaboProjectListPanelProps = {
-    projectList: LumiLaboMockProjectList;
+type LumiLabProjectListPanelProps = {
+    projectList: LumiLabMockProjectList;
     projectOverrides: Readonly<
-        Record<string, LumiLaboMockProjectDetailDraft | undefined>
+        Record<string, LumiLabMockProjectDetailDraft | undefined>
     >;
     deletedProjectIds: readonly string[];
-    onOpenProjectDetail: (project: LumiLaboMockProjectListItem) => void;
+    onOpenProjectDetail: (project: LumiLabMockProjectListItem) => void;
     onBack: () => void;
     backTargetId: string;
 };
 
-type LumiLaboProjectListSort = 'registered_desc' | 'registered_asc';
+type LumiLabProjectListSort = 'registered_desc' | 'registered_asc';
 
 type ProjectSearchDialogProps = {
     keyword: string;
@@ -32,19 +32,19 @@ type ProjectSearchDialogProps = {
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-export const LUMILABO_PROJECT_LIST_MAX_PER_PAGE = 20;
+export const LUMILAB_PROJECT_LIST_MAX_PER_PAGE = 20;
 
 const INITIAL_PER_PAGE = 4;
 
-export function filterAndSortLumiLaboProjects(
-    items: readonly LumiLaboMockProjectListItem[],
+export function filterAndSortLumiLabProjects(
+    items: readonly LumiLabMockProjectListItem[],
     overrides: Readonly<
-        Record<string, LumiLaboMockProjectDetailDraft | undefined>
+        Record<string, LumiLabMockProjectDetailDraft | undefined>
     >,
     deletedIds: readonly string[],
     keyword: string,
-    sort: LumiLaboProjectListSort,
-): LumiLaboMockProjectListItem[] {
+    sort: LumiLabProjectListSort,
+): LumiLabMockProjectListItem[] {
     const deleted = new Set(deletedIds);
     const terms = keyword
         .trim()
@@ -83,8 +83,8 @@ export function filterAndSortLumiLaboProjects(
         .map(({ order: _order, ...item }) => item);
 }
 
-export function paginateLumiLaboProjects(
-    projects: readonly LumiLaboMockProjectListItem[],
+export function paginateLumiLabProjects(
+    projects: readonly LumiLabMockProjectListItem[],
     requestedPage: number,
     perPage: number,
 ) {
@@ -102,26 +102,26 @@ export function paginateLumiLaboProjects(
     };
 }
 
-export default function LumiLaboProjectListPanel({
+export default function LumiLabProjectListPanel({
     projectList,
     projectOverrides,
     deletedProjectIds,
     onOpenProjectDetail,
     onBack,
     backTargetId,
-}: LumiLaboProjectListPanelProps) {
+}: LumiLabProjectListPanelProps) {
     const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [keyword, setKeyword] = useState('');
     const [sort, setSort] =
-        useState<LumiLaboProjectListSort>('registered_desc');
+        useState<LumiLabProjectListSort>('registered_desc');
     const [perPage, setPerPage] = useState(INITIAL_PER_PAGE);
     const [page, setPage] = useState(1);
     const listRegionRef = useRef<HTMLDivElement>(null);
     const rowMeasurementRef = useRef<HTMLDivElement>(null);
     const projects = useMemo(
         () =>
-            filterAndSortLumiLaboProjects(
+            filterAndSortLumiLabProjects(
                 projectList.items,
                 projectOverrides,
                 deletedProjectIds,
@@ -130,7 +130,7 @@ export default function LumiLaboProjectListPanel({
             ),
         [projectList.items, projectOverrides, deletedProjectIds, keyword, sort],
     );
-    const pagination = paginateLumiLaboProjects(projects, page, perPage);
+    const pagination = paginateLumiLabProjects(projects, page, perPage);
 
     useEffect(() => {
         if (page !== pagination.currentPage) {
@@ -160,7 +160,7 @@ export default function LumiLaboProjectListPanel({
 
             setPerPage(
                 Math.min(
-                    LUMILABO_PROJECT_LIST_MAX_PER_PAGE,
+                    LUMILAB_PROJECT_LIST_MAX_PER_PAGE,
                     Math.max(1, Math.floor(listHeight / rowHeight)),
                 ),
             );
@@ -222,7 +222,7 @@ export default function LumiLaboProjectListPanel({
                             onChange={(event) => {
                                 setSort(
                                     event.target
-                                        .value as LumiLaboProjectListSort,
+                                        .value as LumiLabProjectListSort,
                                 );
                                 setPage(1);
                             }}
@@ -358,14 +358,14 @@ export default function LumiLaboProjectListPanel({
 
                 <button
                     type="button"
-                    aria-label={lumiLaboProjectTopBackAccessibleLabel}
-                    title={lumiLaboProjectTopBackAccessibleLabel}
+                    aria-label={lumiLabProjectTopBackAccessibleLabel}
+                    title={lumiLabProjectTopBackAccessibleLabel}
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:max-w-sm [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10"
-                    data-lumilabo-back-target={backTargetId}
+                    data-lumilab-back-target={backTargetId}
                     onClick={onBack}
                 >
                     <ArrowLeft className="h-5 w-5" aria-hidden />
-                    <span>{lumiLaboProjectBackLabel}</span>
+                    <span>{lumiLabProjectBackLabel}</span>
                 </button>
             </div>
 
@@ -392,13 +392,13 @@ function ProjectSearchDialog({
             <form
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="lumilabo-project-search-title"
+                aria-labelledby="lumilab-project-search-title"
                 className="w-full max-w-lg rounded-md border border-neutral-300 bg-white p-5 shadow-xl"
                 onSubmit={onSubmit}
             >
                 <div className="flex items-start justify-between gap-4">
                     <h2
-                        id="lumilabo-project-search-title"
+                        id="lumilab-project-search-title"
                         className="text-xl font-black text-black"
                     >
                         案件を検索

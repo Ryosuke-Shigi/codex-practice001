@@ -237,7 +237,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         window.history.replaceState(
             {},
             '',
-            '/projects?project=lumilabo&project=logs',
+            '/projects?project=lumilab&project=logs',
         );
 
         render();
@@ -250,11 +250,11 @@ describe('ProjectSelectView two-stage project navigation', () => {
     });
 
     it('canonicalizes duplicate view query values from the browser URL before Inertia normalization', () => {
-        pageUrl.value = '/projects?project=lumilabo&view=stages';
+        pageUrl.value = '/projects?project=lumilab&view=stages';
         window.history.replaceState(
             {},
             '',
-            '/projects?project=lumilabo&view=stages&view=stages',
+            '/projects?project=lumilab&view=stages&view=stages',
         );
 
         render();

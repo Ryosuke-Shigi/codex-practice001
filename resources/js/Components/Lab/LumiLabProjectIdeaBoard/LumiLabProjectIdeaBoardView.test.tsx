@@ -1,13 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import LumiLaboProjectIdeaBoardView from './LumiLaboProjectIdeaBoardView';
+import LumiLabProjectIdeaBoardView from './LumiLabProjectIdeaBoardView';
 
-describe('LumiLaboProjectIdeaBoardView', () => {
+describe('LumiLabProjectIdeaBoardView', () => {
     it('初期表示は概要で、上位7タブと薄いファイルタグを表示する', () => {
-        const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
+        const markup = renderToStaticMarkup(<LumiLabProjectIdeaBoardView />);
 
-        expect(markup).toContain('LumiLabo 案件システム IDEA BOARD');
+        expect(markup).toContain('LumiLab 案件システム IDEA BOARD');
         expect(markup).toContain('概要');
         expect(markup).toContain('フロー');
         expect(markup).toContain('機能説明');
@@ -21,12 +21,12 @@ describe('LumiLaboProjectIdeaBoardView', () => {
         expect(markup).toContain('rounded-t-md');
         expect(markup).toContain('border-b-0');
         expect(markup).toContain('bg-yellow-300');
-        expect(markup).toContain('LumiLaboと案件システムの親子関係');
+        expect(markup).toContain('LumiLabと案件システムの親子関係');
         expect(markup).not.toContain('Coding');
     });
 
     it('非選択タブの本文を同じ画面へ縦並び表示しない', () => {
-        const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
+        const markup = renderToStaticMarkup(<LumiLabProjectIdeaBoardView />);
 
         expect(markup).not.toContain('概念フローチャート');
         expect(markup).not.toContain('1案件として扱う初期情報');
@@ -37,7 +37,7 @@ describe('LumiLaboProjectIdeaBoardView', () => {
     });
 
     it('保存可能フォームや入力欄として描画しない', () => {
-        const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
+        const markup = renderToStaticMarkup(<LumiLabProjectIdeaBoardView />);
 
         expect(markup).not.toContain('<form');
         expect(markup).not.toContain('<input');
@@ -45,7 +45,7 @@ describe('LumiLaboProjectIdeaBoardView', () => {
     });
 
     it('モバイルでタブとファイルタグを横スクロールにし、本文側のスクロール領域を残す', () => {
-        const markup = renderToStaticMarkup(<LumiLaboProjectIdeaBoardView />);
+        const markup = renderToStaticMarkup(<LumiLabProjectIdeaBoardView />);
 
         expect(markup).toContain('overflow-x-auto');
         expect(markup).toContain('min-w-32 flex-none');

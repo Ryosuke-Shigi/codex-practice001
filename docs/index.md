@@ -103,17 +103,17 @@ feature docsは共通ルールを上書きしません。コード、テスト�
 
 新しい機能固有文書を追加した場合は、この一覧と必要なルーターだけを更新します。
 
-## Product Design / LumiLabo
+## Product Design / LumiLab
 
 | 文書 | 対象 |
 |---|---|
 | `docs/product-design/index.md` | IDEA BOARD / MOCK / Coding境界、Coding前ゲート |
-| `docs/lumilabo/index.md` | LumiLabo docs入口 |
-| `docs/lumilabo/ui-design-guideline.md` | LumiLabo画面設計・表示・操作方針 |
-| `docs/lumilabo/project-idea-board.md` | LumiLabo案件システム IDEA BOARD |
-| `docs/lumilabo/project-mock.md` | LumiLabo案件システム MOCK |
+| `docs/lumilab/index.md` | LumiLab docs入口 |
+| `docs/lumilab/ui-design-guideline.md` | LumiLab画面設計・表示・操作方針 |
+| `docs/lumilab/project-idea-board.md` | LumiLab案件システム IDEA BOARD |
+| `docs/lumilab/project-mock.md` | LumiLab案件システム MOCK |
 
-Product DesignやLumiLaboに関係しない作業では、これらを読みません。
+Product DesignやLumiLabに関係しない作業では、これらを読みません。
 
 ## テンプレート
 

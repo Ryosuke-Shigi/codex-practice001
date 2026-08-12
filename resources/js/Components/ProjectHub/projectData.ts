@@ -3,7 +3,7 @@ export type ProjectId =
     | 'dance-shorts-radar'
     | 'dance-shorts-analyzer'
     | 'japan-quake-wave-map'
-    | 'lumilabo'
+    | 'lumilab'
     | 'construction-order'
     | 'event-card-calendar'
     | 'logs';
@@ -271,10 +271,10 @@ export const projects: Project[] = [
     },
     {
         kind: 'staged',
-        id: 'lumilabo',
-        name: 'LumiLabo',
+        id: 'lumilab',
+        name: 'LumiLab',
         description:
-            'LumiLaboは案件システムを最初のサブシステムとして育てる上位プロダクトです。',
+            'LumiLabは案件システムを最初のサブシステムとして育てる上位プロダクトです。',
         iconKey: 'lightbulb',
         theme: {
             background: '#111827',
@@ -291,19 +291,19 @@ export const projects: Project[] = [
                 kind: 'mock',
                 name: 'MOCK',
                 description:
-                    'LumiLaboの開始UIを固定表示で確認します。',
+                    'LumiLabの開始UIを固定表示で確認します。',
                 status: 'available',
                 iconKey: 'layout',
-                route: '/lab/lumilabo-project-mock',
+                route: '/lab/lumilab-project-mock',
             },
             {
                 kind: 'idea-board',
                 name: 'IDEA BOARD',
                 description:
-                    'LumiLaboと案件システムの考え方を、お客様向けの機能説明資料として整理します。',
+                    'LumiLabと案件システムの考え方を、お客様向けの機能説明資料として整理します。',
                 status: 'available',
                 iconKey: 'lightbulb',
-                route: '/lab/lumilabo-project-idea-board',
+                route: '/lab/lumilab-project-idea-board',
             },
         ],
     },

@@ -136,7 +136,7 @@ Product Design Guide では、IDEA BOARD / MOCK の構成を完全固定しな�
 - 表現方法
 - 画面ごとの最適化
 
-LumiLaboのように、TOP / 登録 / 一覧 / 詳細で画面の目的が違う場合、同じ骨格を使いつつ、見せ方は画面ごとに最適化してよい。
+LumiLabのように、TOP / 登録 / 一覧 / 詳細で画面の目的が違う場合、同じ骨格を使いつつ、見せ方は画面ごとに最適化してよい。
 
 ## 読むタイミング
 
@@ -161,7 +161,7 @@ Product Design Guide を原則読まないタイミング:
 ## 他docsとの読み分け
 
 - UI作業時はUI責務ガイドを読む
-- LumiLabo作業時はLumiLabo docs indexを読む
+- LumiLab作業時はLumiLab docs indexを読む
 - Backend実装時はADR Pattern、レイヤード、対象機能docsを読む
 - Loop Engineeringが必要な作業ではLoop Engineering docsを読む
 - local環境、gh、WSL、Git操作に関係する場合はlocal系MDを確認する
@@ -170,7 +170,7 @@ Product Design Guide を原則読まないタイミング:
 
 ## local系MDとの関係
 
-local系MDは、そのPC固有の環境差分、コマンド差分、gh / Git操作差分を扱う。Product Designの共通ルール、ADR Pattern、レイヤード責務、UI責務、LumiLaboのプロダクト方針を上書きしない。
+local系MDは、そのPC固有の環境差分、コマンド差分、gh / Git操作差分を扱う。Product Designの共通ルール、ADR Pattern、レイヤード責務、UI責務、LumiLabのプロダクト方針を上書きしない。
 
 local系MDが存在する場合は、Git操作、WSL、gh、ローカル実行手順など、環境差分に関係する範囲だけ確認する。存在しない場合でも、Product Design判断やdocs更新を止めない。
 

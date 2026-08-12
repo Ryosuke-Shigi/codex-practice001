@@ -45,7 +45,7 @@ MOCKやPROTOTYPEのコードを、そのままPRODUCT完成版として扱いま
 | DanceShorts | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot、地域別ランキング、比較分析 |
 | API Discovery Hub | PRODUCT / MOCK / IDEA BOARD | 公開APIカタログの同期、検索、詳細、調査メモ |
 | Japan Quake Wave Map | PRODUCT / MOCK / IDEA BOARD | 気象庁XMLの取得、保存、震源・震度・波紋の地図表示 |
-| LumiLabo | MOCK / IDEA BOARD | 案件システムを最初のサブシステムとして育てる上位プロダクト |
+| LumiLab | MOCK / IDEA BOARD | 案件システムを最初のサブシステムとして育てる上位プロダクト |
 | 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積、請求、領収の画面検証 |
 | イベント・カードカレンダー | IDEA BOARD | イベントを起点に入金・出金・請求カードを可視化する構想 |
 | アプリログ | 運用画面 | API連携ログとエラーログの確認、対応済み管理 |
@@ -99,13 +99,13 @@ APIs.guruの公開APIカタログを取得し、検索、詳細確認、調査�
 
 ## IDEA BOARD / MOCK
 
-### LumiLabo
+### LumiLab
 
-LumiLaboは、案件システムを最初のサブシステムとして育てる上位プロダクトです。現在公開しているのはIDEA BOARD / MOCKであり、PRODUCT完成済みの業務システムではありません。
+LumiLabは、案件システムを最初のサブシステムとして育てる上位プロダクトです。現在公開しているのはIDEA BOARD / MOCKであり、PRODUCT完成済みの業務システムではありません。
 
 IDEA BOARDでは案件システムの目的、価値、流れ、画面候補を説明し、MOCKでは登録、一覧、詳細などの画面導線と操作感を固定データで確認しています。DB、API、本番CRUD、S3保存にはまだ接続していません。
 
-詳細は [LumiLabo docs](docs/lumilabo/index.md) と [案件システム MOCK](docs/lumilabo/project-mock.md) を参照してください。
+詳細は [LumiLab docs](docs/lumilab/index.md) と [案件システム MOCK](docs/lumilab/project-mock.md) を参照してください。
 
 ### 工事発注管理
 
@@ -121,7 +121,7 @@ IDEA BOARDでは案件システムの目的、価値、流れ、画面候補を�
 
 Feature側がLaravel Storageへ直接依存しないための、共通Service / Repository / DTO境界を実装しています。ローカルMinIOとAWS S3向け環境を同じLaravel disk名`s3`で切り替え、自動テストは`Storage::fake('s3')`を使います。
 
-この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDへはまだ接続していません。詳細は [Storage](docs/storage.md) を参照してください。
+この共通境界は実装済みですが、LumiLabの写真・案件ファイル、DB紐付け、アップロードCRUDへはまだ接続していません。詳細は [Storage](docs/storage.md) を参照してください。
 
 ### Operations / Notification
 
@@ -228,7 +228,7 @@ READMEは外部閲覧者向けの概要です。内部の作業ルール、機�
 - [Development Flow](docs/development-flow.md): IDEA BOARD / MOCK / PROTOTYPE / PRODUCT
 - [Product Design Guide](docs/product-design/index.md): IDEA BOARD / MOCK / Coding前の境界
 - [Feature Docs](docs/features/): 機能固有仕様、UI契約、テスト固定内容
-- [LumiLabo docs](docs/lumilabo/index.md): LumiLabo固有のIDEA BOARD / MOCK
+- [LumiLab docs](docs/lumilab/index.md): LumiLab固有のIDEA BOARD / MOCK
 - [Storage](docs/storage.md): S3互換Storageの共通境界
 - [Command Registry](docs/operations/command-registry.md): Docker経由の実行コマンドとrepo境界
 

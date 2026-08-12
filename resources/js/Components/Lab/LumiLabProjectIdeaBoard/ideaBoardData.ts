@@ -131,7 +131,7 @@ export const screenCandidateLabels = [
 
 const positionCards: readonly IdeaBoardCard[] = [
     {
-        title: 'LumiLabo は上位プロダクト',
+        title: 'LumiLab は上位プロダクト',
         badge: '親',
         body: '単なる案件管理機能ではなく、複数のサブシステムを置ける上位プロダクトとして説明します。',
         tone: 'lemon',
@@ -190,7 +190,7 @@ const projectFieldCards: readonly IdeaBoardCard[] = [
 ];
 
 const mainFlowSteps: readonly IdeaBoardFlowStep[] = [
-    { label: 'LumiLabo', badge: '上位', description: '複数のサブシステムを束ねる上位プロダクト。', state: 'current' },
+    { label: 'LumiLab', badge: '上位', description: '複数のサブシステムを束ねる上位プロダクト。', state: 'current' },
     { label: '案件システム', badge: '最初', description: '最初に作るサブシステム。案件を起点に扱う。', state: 'current' },
     { label: '案件登録', description: '会社名、担当者名、住所、メモを入力対象として考える。', state: 'current' },
     { label: '案件一覧', description: '登録済み案件をカード型リストで確認する考え方。', state: 'current' },
@@ -202,7 +202,7 @@ const mainFlowSteps: readonly IdeaBoardFlowStep[] = [
 const screenCandidates: readonly IdeaBoardScreenCandidate[] = [
     {
         title: 'TOP',
-        role: 'LumiLaboから案件システムへ入った最初の現在位置を見せる候補。',
+        role: 'LumiLabから案件システムへ入った最初の現在位置を見せる候補。',
         mockFocus: ['案件登録へ進む入口', '案件一覧を見る入口', '後続サブシステムへ広がる余白'],
         boundary: 'TOP画面の実UIはこのIDEA BOARDでは作り込みません。',
     },
@@ -237,16 +237,16 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
     {
         id: 'overview',
         label: '概要',
-        kicker: 'LumiLaboの位置づけ',
+        kicker: 'LumiLabの位置づけ',
         title: '案件システムから始める上位プロダクトとして説明する',
-        lead: 'LumiLaboを案件管理単体ではなく、案件を起点に複数のサブシステムへ広げられる上位プロダクトとして整理します。',
+        lead: 'LumiLabを案件管理単体ではなく、案件を起点に複数のサブシステムへ広げられる上位プロダクトとして整理します。',
         tags: [
             {
                 id: 'positioning',
                 label: '位置づけ',
-                title: 'LumiLaboと案件システムの親子関係',
-                lead: 'お客様に最初に伝えるのは、LumiLabo全体の中で案件システムがどこにあるかです。',
-                blocks: [{ type: 'cards', title: '上位プロダクトとしてのLumiLabo', lead: '最初の実装候補は案件システムですが、LumiLabo自体はその上にある入れ物として説明します。', cards: positionCards }],
+                title: 'LumiLabと案件システムの親子関係',
+                lead: 'お客様に最初に伝えるのは、LumiLab全体の中で案件システムがどこにあるかです。',
+                blocks: [{ type: 'cards', title: '上位プロダクトとしてのLumiLab', lead: '最初の実装候補は案件システムですが、LumiLab自体はその上にある入れ物として説明します。', cards: positionCards }],
             },
             {
                 id: 'value',
@@ -265,7 +265,7 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
                 title: '今回扱う範囲と扱わない範囲',
                 lead: 'IDEA BOARDは機能説明資料です。MOCK、PRODUCT、Backend実装へ進まない境界を明示します。',
                 blocks: [
-                    { type: 'list', title: '扱うこと', lead: 'お客様向けに機能の目的、価値、流れ、構造を伝えます。', items: ['LumiLaboが上位プロダクトであること。', '最初のサブシステムが案件システムであること。', '案件登録、案件一覧、案件詳細へ進む考え方。', '将来の工程デッキ、工程カード、横断ビューへ広げる余地。'] },
+                    { type: 'list', title: '扱うこと', lead: 'お客様向けに機能の目的、価値、流れ、構造を伝えます。', items: ['LumiLabが上位プロダクトであること。', '最初のサブシステムが案件システムであること。', '案件登録、案件一覧、案件詳細へ進む考え方。', '将来の工程デッキ、工程カード、横断ビューへ広げる余地。'] },
                     { type: 'list', title: '作らないこと', lead: '画面そのものや本番実装は、次のMOCK / PRODUCT段階で扱います。', items: ['MOCK画面、保存可能フォーム、固定データ付き一覧。', 'DB / Migration / API / Backend層。', '工程デッキ、工程カード、カレンダーの確定PRODUCT仕様。', '案件名、住所分割、キャンセル / 失注ステータスの初期固定追加。'] },
                 ],
             },
@@ -275,10 +275,10 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
         id: 'flow',
         label: 'フロー',
         kicker: '流れの説明',
-        title: 'LumiLaboから案件、案件から工程候補へ進む流れを見せる',
+        title: 'LumiLabから案件、案件から工程候補へ進む流れを見せる',
         lead: '実装済み導線と将来候補を混同せず、最初の案件システムから後続候補へ広がる流れを図として見せます。',
         tags: [
-            { id: 'main-flow', label: '基本導線', title: 'LumiLaboから案件システムへ入る基本フロー', lead: 'どの順番で機能が広がるかを追える構成にします。', blocks: [{ type: 'flow', title: '概念フローチャート', lead: '現在の説明対象と、今後広げる余地を分けて並べます。', steps: mainFlowSteps, note: '工程デッキ以降は拡張候補です。今回のIDEA BOARDでは画面やデータ構造を確定しません。' }] },
+            { id: 'main-flow', label: '基本導線', title: 'LumiLabから案件システムへ入る基本フロー', lead: 'どの順番で機能が広がるかを追える構成にします。', blocks: [{ type: 'flow', title: '概念フローチャート', lead: '現在の説明対象と、今後広げる余地を分けて並べます。', steps: mainFlowSteps, note: '工程デッキ以降は拡張候補です。今回のIDEA BOARDでは画面やデータ構造を確定しません。' }] },
             { id: 'status-flow', label: '状態', title: '案件ステータスと工程カード状態の違い', lead: '案件そのものの状態と、工程カードごとの状態を分けて説明します。', blocks: [
                 { type: 'list', title: '案件ステータス', lead: '初期案は進行中、完了、終了の3つです。完了と終了は分けて扱います。', items: projectStatusConceptItems },
                 { type: 'list', title: '工程カード状態', lead: 'スルーを未実行ではなく「この案件では不要」と分けて見せます。', items: processCardStatusItems },
@@ -327,11 +327,11 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
         id: 'diagram',
         label: '図解',
         kicker: '構造の見える化',
-        title: 'LumiLabo、案件システム、工程候補の関係を図解する',
+        title: 'LumiLab、案件システム、工程候補の関係を図解する',
         lead: '文章だけでなく、親子関係、案件から工程デッキへの構造、横断候補を図として見せます。',
         tags: [
-            { id: 'product-map', label: 'プロダクト', title: 'LumiLabo配下にサブシステムが増える構造', lead: '案件システムは最初のサブシステムであり、後から別システムが並ぶ余地があります。', blocks: [{ type: 'diagram', title: 'プロダクト構造図', lead: '上位プロダクトとサブシステムを分けて見せます。', groups: [
-                { title: 'LumiLabo', description: '上位プロダクト / 上位ドメイン。', nodes: [{ title: '案件システム', badge: '最初', body: '最初に扱うサブシステム。', tone: 'lemon' }, { title: '別サブシステム', badge: '余地', body: '後から並べられる候補。', tone: 'slate' }] },
+            { id: 'product-map', label: 'プロダクト', title: 'LumiLab配下にサブシステムが増える構造', lead: '案件システムは最初のサブシステムであり、後から別システムが並ぶ余地があります。', blocks: [{ type: 'diagram', title: 'プロダクト構造図', lead: '上位プロダクトとサブシステムを分けて見せます。', groups: [
+                { title: 'LumiLab', description: '上位プロダクト / 上位ドメイン。', nodes: [{ title: '案件システム', badge: '最初', body: '最初に扱うサブシステム。', tone: 'lemon' }, { title: '別サブシステム', badge: '余地', body: '後から並べられる候補。', tone: 'slate' }] },
                 { title: '横断候補', description: '初期PRODUCT仕様ではなく、今後広げる余地。', nodes: [{ title: '共通カレンダー', badge: '候補', body: '予定や期限を横断して見せる候補。', tone: 'amber' }, { title: '横断ビュー', badge: '候補', body: '複数サブシステムをまたいで確認する候補。', tone: 'sky' }] },
             ] }] },
             { id: 'case-structure', label: '案件構造', title: '案件から工程デッキ、工程カードへ広げる構造', lead: '案件にすべてを直接ぶら下げるのではなく、工程デッキを挟む考え方を図解します。', blocks: [{ type: 'diagram', title: '案件構造図', lead: '工程デッキと工程カードは拡張候補として見せます。', groups: [
@@ -363,11 +363,11 @@ export const ideaBoardTabs: readonly IdeaBoardTab[] = [
         lead: 'codeタブは補助です。お客様向け説明を主役にし、DB、Migration、API、Backend層へ進みません。',
         tags: [
             { id: 'boundary', label: '責務', title: '今回のIDEA BOARDで守る責務境界', lead: '画面表示上の説明と、将来PRODUCT実装の責務を混ぜないための短いメモです。', blocks: [{ type: 'code', title: '補助メモ', lead: '実装コードを大量に載せず、境界だけを確認します。', notes: [
-                { title: '既存導線', description: '既存Routeは `/lab/lumilabo-project-idea-board` を使います。', items: ['Project SelectのLumiLabo開発段階からIDEA BOARDへ入るdirect routeを維持する。', '旧 `/lab/lumilabo-project-create-idea-board` は既存redirectのまま扱う。'] },
+                { title: '既存導線', description: '既存Routeは `/lab/lumilab-project-idea-board` を使います。', items: ['Project SelectのLumiLab開発段階からIDEA BOARDへ入るdirect routeを維持する。', '旧 `/lab/lumilab-project-create-idea-board` は既存redirectのまま扱う。'] },
                 { title: 'React Component', description: 'タブと薄いファイルタグの選択状態、静的説明の描画だけを担当します。', items: ['業務判断、完了判定、保存処理は持たせない。', '表示文言、図解、概念グラフは型付き静的データに置く。'] },
                 { title: '将来PRODUCT段階', description: '本実装へ進む場合はADR Patternに沿って責務を分けます。', items: ['Controller / Request / Action / Service / Repository / DTO / Responderは今回追加しない。', '完了判定や状態判断は将来Service側で扱う考え方に留める。'] },
             ] }] },
-            { id: 'not-doing', label: '対象外', title: '今回作らないもの', lead: 'codeタブでも、作らないものを短く確認するだけに留めます。', blocks: [{ type: 'list', title: '対象外', lead: '今回の差分はIDEA BOARD周辺に閉じます。', items: ['MOCK画面作成。', 'TOP / 案件登録 / 案件一覧 / 案件詳細の実UI作成。', 'DB / Migration / Model / Controller / Request / Action / Service / Repository / DTO。', 'API通信、保存処理、Docker、本番反映。', 'LumiLabo以外の機能変更。'] }] },
+            { id: 'not-doing', label: '対象外', title: '今回作らないもの', lead: 'codeタブでも、作らないものを短く確認するだけに留めます。', blocks: [{ type: 'list', title: '対象外', lead: '今回の差分はIDEA BOARD周辺に閉じます。', items: ['MOCK画面作成。', 'TOP / 案件登録 / 案件一覧 / 案件詳細の実UI作成。', 'DB / Migration / Model / Controller / Request / Action / Service / Repository / DTO。', 'API通信、保存処理、Docker、本番反映。', 'LumiLab以外の機能変更。'] }] },
         ],
     },
 ] as const;

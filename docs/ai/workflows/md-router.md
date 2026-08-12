@@ -102,12 +102,12 @@
 - 確認コマンド: [command-registry.md](../../operations/command-registry.md) のReact / TypeScript変更時のコマンド
 - PRレビュー強度: 原則Level 2。画面導線や複数レイヤーへ広がる場合はLevel 3
 
-### LumiLabo既存MOCKの小修正
+### LumiLab既存MOCKの小修正
 
-- 読む: `docs/lumilabo/project-mock.md` の対象画面・導線・対象外、対象Page / Component / Test
-- 条件付きで読む: LumiLabo全体UI方針を変える場合だけ `docs/lumilabo/ui-design-guideline.md` の該当見出し、IDEA BOARD上の説明へ影響する場合だけ `docs/lumilabo/project-idea-board.md` の該当箇所、React / UI責務を変える場合だけ関連共通docs
-- 読まない: LumiLabo以外のfeature docs、Backend、DB、API、S3、Queue、Scheduler、無関係なLumiLabo文書の全文
-- 編集しない: LumiLaboの固定仕様と異なる段階、Backend、DB、API
+- 読む: `docs/lumilab/project-mock.md` の対象画面・導線・対象外、対象Page / Component / Test
+- 条件付きで読む: LumiLab全体UI方針を変える場合だけ `docs/lumilab/ui-design-guideline.md` の該当見出し、IDEA BOARD上の説明へ影響する場合だけ `docs/lumilab/project-idea-board.md` の該当箇所、React / UI責務を変える場合だけ関連共通docs
+- 読まない: LumiLab以外のfeature docs、Backend、DB、API、S3、Queue、Scheduler、無関係なLumiLab文書の全文
+- 編集しない: LumiLabの固定仕様と異なる段階、Backend、DB、API
 - 停止条件: 案件内ファイルタグ、戻る導線、保存済み写真・ファイル0件時の非表示等の対象MOCK固定仕様を確認できない、共通UI docsで機能固有仕様を上書きする必要がある
 - 確認コマンド: [command-registry.md](../../operations/command-registry.md) のReact / TypeScript変更時のコマンド
 - PRレビュー強度: 原則Level 2。Routeや画面導線変更を含む場合はLevel 3
@@ -182,7 +182,7 @@
 
 - 読む: `docs/testing.md`、[command-registry.md](../../operations/command-registry.md)、対象workflow、対象composer / package scripts、存在確認できたCI関連docs
 - 条件付きで読む: secretsや権限を扱う場合は `docs/security.md`、Docker構成へ影響する場合は外側repoの正本、MigrationやDBへ影響する場合だけMigration関連範囲
-- 読まない: 無関係feature docs、無関係なMigration / 認証 / 認可コード、LumiLaboやUI固有仕様
+- 読まない: 無関係feature docs、無関係なMigration / 認証 / 認可コード、LumiLabやUI固有仕様
 - 編集しない: 無関係workflow、未確認script、目的外のアプリ・DB・Docker構成
 - 停止条件: workflow、実行script、権限、secrets、対象runnerを確認できない、外側repoやDB変更が必要になる
 - 確認コマンド: command registryと対象workflowに存在するコマンド
@@ -192,7 +192,7 @@
 
 - 読む: 外側repoの `AGENTS.md` とroot側AI docs、確認済み運用docs
 - 条件付きで読む: アプリ側コマンド境界が必要な場合だけ [command-registry.md](../../operations/command-registry.md)
-- 読まない: 無関係feature docs、React UI、LumiLabo仕様
+- 読まない: 無関係feature docs、React UI、LumiLab仕様
 - 編集しない: アプリrepoのLaravel / React / app docs / tests
 - 停止条件: 外側repoを確認できない、本番コマンド・rollback・権限・対象環境が未確認
 - 確認コマンド: 外側repoの正本に登録されたコマンドのみ

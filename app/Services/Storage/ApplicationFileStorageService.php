@@ -12,7 +12,7 @@ use RuntimeException;
  * アプリ側からS3互換Storageを使うための共通Serviceです。
  *
  * disk、prefix、visibility、保存結果DTO化の共通ルールだけを担当し、
- * LumiLaboなどFeature固有のDB紐付けや保存可否判断は持ちません。
+ * LumiLabなどFeature固有のDB紐付けや保存可否判断は持ちません。
  */
 class ApplicationFileStorageService
 {
