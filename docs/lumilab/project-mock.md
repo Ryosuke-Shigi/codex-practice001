@@ -1,13 +1,13 @@
-# LumiLabo 案件システム MOCK
+# LumiLab 案件システム MOCK
 
 - Status: active
-- Scope: LumiLabo / 案件システム MOCK
+- Scope: LumiLab / 案件システム MOCK
 - Last reviewed: 2026-07-15
-- Canonical source: `/lab/lumilabo-project-mock` の初期導線と画面範囲
+- Canonical source: `/lab/lumilab-project-mock` の初期導線と画面範囲
 
 ## 目的
 
-LumiLabo 案件システム MOCK は、お客様に実際の画面導線を見てもらうための仮UIとして扱う。
+LumiLab 案件システム MOCK は、お客様に実際の画面導線を見てもらうための仮UIとして扱う。
 
 IDEA BOARDは機能説明資料、MOCKは画面確認であり、MOCK側へIDEA BOARDの通常リンクや説明資料への戻り導線を置かない。
 
@@ -51,12 +51,12 @@ TOP
 
 ## TOP
 
-TOPでは、LumiLaboの入口だけを見せる。
+TOPでは、LumiLabの入口だけを見せる。
 
 見せるもの:
 
-- LumiLaboアイコン
-- LumiLaboタイトル
+- LumiLabアイコン
+- LumiLabタイトル
 - Startボタン
 
 置かないもの:
@@ -68,7 +68,7 @@ TOPでは、LumiLaboの入口だけを見せる。
 
 ## 選択
 
-選択では、LumiLabo配下のサブシステムを選ぶ。
+選択では、LumiLab配下のサブシステムを選ぶ。
 
 現在見せるもの:
 
@@ -224,7 +224,7 @@ Object URLは、Component破棄、または既存ファイル選択へ戻って�
 - TOP → Start → 選択 → 案件 → 案件TOP の導線になっていること
 - 選択で案件と表示文字が「戻る」のボタンを選べること
 - 選択の「戻る」でTOPへ戻れ、`aria-label` / `title` が `TOPへ戻る` であること
-- TOPは LumiLabo / Start の入口だけになっていること
+- TOPは LumiLab / Start の入口だけになっていること
 - 選択はPrimaryの案件ボタン / 案件カードとSecondaryの「戻る」ボタンだけになっていること
 - 案件内タブが TOP / 登録 / 一覧、案件TOP通常ボタンが 登録 / 一覧 / 戻る であること
 - 案件TOPはモバイル縦で上寄せ、スマホ横では通常ボタンと戻るが見切れないこと

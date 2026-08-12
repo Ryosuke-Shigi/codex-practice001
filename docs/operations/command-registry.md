@@ -119,7 +119,7 @@ local系MDは、このPC固有の環境差分、gh / Git / WSL / ローカル実
 
 local系MDを更新またはstageする前に、必ずGit管理対象かGit外かを確認します。Git外のlocalファイルはPRへ含めません。
 
-local系MDは、Product Design、ADR Pattern、レイヤード責務、UI責務、LumiLaboのプロダクト方針、全体開発ルールを上書きしません。中身を汎用docsやPR本文へ無断で転記しません。
+local系MDは、Product Design、ADR Pattern、レイヤード責務、UI責務、LumiLabのプロダクト方針、全体開発ルールを上書きしません。中身を汎用docsやPR本文へ無断で転記しません。
 
 ## 作業開始前のリポジトリ確認
 

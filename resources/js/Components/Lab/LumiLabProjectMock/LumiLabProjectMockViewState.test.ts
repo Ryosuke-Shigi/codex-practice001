@@ -1,48 +1,48 @@
 import { describe, expect, it } from 'vitest';
 
-import { lumiLaboProjectDetail } from './mockData';
+import { lumiLabProjectDetail } from './mockData';
 import {
-    applyLumiLaboMockProjectSaveToCurrentDetail,
-    canCompleteLumiLaboMockProjectSave,
-    completeLumiLaboMockProjectSave,
-    createLumiLaboMockProjectSession,
-    getLumiLaboMockProjectCompanyNameValidationError,
-    prepareLumiLaboMockProjectSave,
-    setLumiLaboMockProjectCompanyNameValidationError,
-    setLumiLaboMockProjectDroppedFileNames,
-    updateLumiLaboMockProjectSession,
-} from './LumiLaboProjectMockView';
-import type { LumiLaboMockProjectDetailDraft } from './types';
+    applyLumiLabMockProjectSaveToCurrentDetail,
+    canCompleteLumiLabMockProjectSave,
+    completeLumiLabMockProjectSave,
+    createLumiLabMockProjectSession,
+    getLumiLabMockProjectCompanyNameValidationError,
+    prepareLumiLabMockProjectSave,
+    setLumiLabMockProjectCompanyNameValidationError,
+    setLumiLabMockProjectDroppedFileNames,
+    updateLumiLabMockProjectSession,
+} from './LumiLabProjectMockView';
+import type { LumiLabMockProjectDetailDraft } from './types';
 
 const projectBDetail = {
-    ...lumiLaboProjectDetail,
+    ...lumiLabProjectDetail,
     id: 'mock-project-002',
     companyName: '南海リフォーム',
     contactName: '田中 花子',
 };
 
 function createSavedDraft(
-    overrides: Partial<LumiLaboMockProjectDetailDraft> = {},
-): LumiLaboMockProjectDetailDraft {
+    overrides: Partial<LumiLabMockProjectDetailDraft> = {},
+): LumiLabMockProjectDetailDraft {
     return {
-        companyName: lumiLaboProjectDetail.companyName,
-        contactName: lumiLaboProjectDetail.contactName,
-        address: lumiLaboProjectDetail.address,
-        memo: lumiLaboProjectDetail.memo,
+        companyName: lumiLabProjectDetail.companyName,
+        contactName: lumiLabProjectDetail.contactName,
+        address: lumiLabProjectDetail.address,
+        memo: lumiLabProjectDetail.memo,
         ...overrides,
     };
 }
 
-describe('LumiLaboProjectMockView project-scoped state', () => {
+describe('LumiLabProjectMockView project-scoped state', () => {
     it('preserves draft and media changes made after a save began', () => {
         const savedDraft = createSavedDraft({
             companyName: '保存開始時の会社名',
         });
         const sessionAfterAdditionalChanges = {
             detail: {
-                ...lumiLaboProjectDetail,
-                savedPhotos: lumiLaboProjectDetail.savedPhotos.slice(1),
-                savedFiles: lumiLaboProjectDetail.savedFiles.slice(1),
+                ...lumiLabProjectDetail,
+                savedPhotos: lumiLabProjectDetail.savedPhotos.slice(1),
+                savedFiles: lumiLabProjectDetail.savedFiles.slice(1),
             },
             draft: createSavedDraft({
                 companyName: '保存開始後の会社名',
@@ -50,7 +50,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
             }),
         };
 
-        const completed = completeLumiLaboMockProjectSave(
+        const completed = completeLumiLabMockProjectSave(
             sessionAfterAdditionalChanges,
             savedDraft,
         );
@@ -68,10 +68,10 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
     });
 
     it('completes only the saving project after another project is opened', () => {
-        const projectA = createLumiLaboMockProjectSession(
-            lumiLaboProjectDetail,
+        const projectA = createLumiLabMockProjectSession(
+            lumiLabProjectDetail,
         );
-        const projectB = createLumiLaboMockProjectSession(projectBDetail);
+        const projectB = createLumiLabMockProjectSession(projectBDetail);
         const sessions = {
             [projectA.detail.id]: projectA,
             [projectB.detail.id]: projectB,
@@ -80,16 +80,16 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
             companyName: '案件A保存後',
         });
 
-        const visibleDetail = applyLumiLaboMockProjectSaveToCurrentDetail(
+        const visibleDetail = applyLumiLabMockProjectSaveToCurrentDetail(
             projectB.detail,
             projectA.detail.id,
             savedDraft,
         );
-        const completedSessions = updateLumiLaboMockProjectSession(
+        const completedSessions = updateLumiLabMockProjectSession(
             sessions,
             projectA.detail.id,
             (session) =>
-                completeLumiLaboMockProjectSave(session, savedDraft).session,
+                completeLumiLabMockProjectSave(session, savedDraft).session,
         );
 
         expect(visibleDetail).toBe(projectB.detail);
@@ -100,14 +100,14 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
     });
 
     it('does not complete or restore a project deleted while saving', () => {
-        const projectId = lumiLaboProjectDetail.id;
+        const projectId = lumiLabProjectDetail.id;
         const deletedProjectIds = new Set([projectId]);
         const savedDraft = createSavedDraft({ companyName: '復活させない' });
-        const completion = canCompleteLumiLaboMockProjectSave(
+        const completion = canCompleteLumiLabMockProjectSave(
             projectId,
             deletedProjectIds,
         )
-            ? applyLumiLaboMockProjectSaveToCurrentDetail(
+            ? applyLumiLabMockProjectSaveToCurrentDetail(
                   null,
                   projectId,
                   savedDraft,
@@ -115,21 +115,21 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
             : null;
 
         expect(
-            canCompleteLumiLaboMockProjectSave(projectId, deletedProjectIds),
+            canCompleteLumiLabMockProjectSave(projectId, deletedProjectIds),
         ).toBe(false);
         expect(completion).toBeNull();
     });
 
     it('keeps sessions and selected file names separated by project', () => {
-        const projectA = createLumiLaboMockProjectSession(
-            lumiLaboProjectDetail,
+        const projectA = createLumiLabMockProjectSession(
+            lumiLabProjectDetail,
         );
-        const projectB = createLumiLaboMockProjectSession(projectBDetail);
+        const projectB = createLumiLabMockProjectSession(projectBDetail);
         const sessions = {
             [projectA.detail.id]: projectA,
             [projectB.detail.id]: projectB,
         };
-        const updatedSessions = updateLumiLaboMockProjectSession(
+        const updatedSessions = updateLumiLabMockProjectSession(
             sessions,
             projectA.detail.id,
             (session) => ({
@@ -140,12 +140,12 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
                 },
             }),
         );
-        const projectAFiles = setLumiLaboMockProjectDroppedFileNames(
+        const projectAFiles = setLumiLabMockProjectDroppedFileNames(
             {},
             projectA.detail.id,
             ['案件A資料.pdf'],
         );
-        const projectFiles = setLumiLaboMockProjectDroppedFileNames(
+        const projectFiles = setLumiLabMockProjectDroppedFileNames(
             projectAFiles,
             projectB.detail.id,
             ['案件B写真.zip'],
@@ -164,7 +164,7 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
     it('compares the latest draft with the saved snapshot', () => {
         const savedDraft = createSavedDraft({ companyName: '保存対象' });
         const matchingSession = {
-            detail: lumiLaboProjectDetail,
+            detail: lumiLabProjectDetail,
             draft: savedDraft,
         };
         const changedSession = {
@@ -176,45 +176,45 @@ describe('LumiLaboProjectMockView project-scoped state', () => {
         };
 
         expect(
-            completeLumiLaboMockProjectSave(matchingSession, savedDraft)
+            completeLumiLabMockProjectSave(matchingSession, savedDraft)
                 .hasUnsavedChanges,
         ).toBe(false);
         expect(
-            completeLumiLaboMockProjectSave(changedSession, savedDraft)
+            completeLumiLabMockProjectSave(changedSession, savedDraft)
                 .hasUnsavedChanges,
         ).toBe(true);
     });
 
     it('keeps company-name validation errors scoped to each project', () => {
         const projectAErrors =
-            setLumiLaboMockProjectCompanyNameValidationError(
+            setLumiLabMockProjectCompanyNameValidationError(
                 {},
-                lumiLaboProjectDetail.id,
+                lumiLabProjectDetail.id,
                 '会社名を入力してください',
             );
-        const projectErrors = setLumiLaboMockProjectCompanyNameValidationError(
+        const projectErrors = setLumiLabMockProjectCompanyNameValidationError(
             projectAErrors,
             projectBDetail.id,
             '会社名を入力してください',
         );
         const clearedProjectA =
-            setLumiLaboMockProjectCompanyNameValidationError(
+            setLumiLabMockProjectCompanyNameValidationError(
                 projectErrors,
-                lumiLaboProjectDetail.id,
+                lumiLabProjectDetail.id,
                 null,
             );
 
         expect(projectErrors).toEqual({
-            [lumiLaboProjectDetail.id]: '会社名を入力してください',
+            [lumiLabProjectDetail.id]: '会社名を入力してください',
             [projectBDetail.id]: '会社名を入力してください',
         });
         expect(clearedProjectA).toEqual({
             [projectBDetail.id]: '会社名を入力してください',
         });
-        expect(getLumiLaboMockProjectCompanyNameValidationError('　')).toBe(
+        expect(getLumiLabMockProjectCompanyNameValidationError('　')).toBe(
             '会社名を入力してください',
         );
-        expect(prepareLumiLaboMockProjectSave(createSavedDraft())).toEqual({
+        expect(prepareLumiLabMockProjectSave(createSavedDraft())).toEqual({
             isValid: true,
             savedDraft: createSavedDraft(),
         });

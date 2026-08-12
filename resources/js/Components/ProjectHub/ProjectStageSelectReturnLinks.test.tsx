@@ -180,10 +180,10 @@ vi.mock('@/Pages/QuakeWavePreview/hooks/useVisibleEarthquakePins', () => ({
     }),
 }));
 
-vi.mock('@/Components/Lab/LumiLaboProjectMock/LumiLaboProjectMockView', () => ({
+vi.mock('@/Components/Lab/LumiLabProjectMock/LumiLabProjectMockView', () => ({
     default: () => null,
 }));
-vi.mock('@/Components/Lab/LumiLaboProjectIdeaBoard/LumiLaboProjectIdeaBoardView', () => ({
+vi.mock('@/Components/Lab/LumiLabProjectIdeaBoard/LumiLabProjectIdeaBoardView', () => ({
     default: () => null,
 }));
 vi.mock('@/Components/Lab/ConstructionOrderNewMock/ConstructionOrderNewMockHeader', () => ({
@@ -217,8 +217,8 @@ import DanceShortsAnalyzerMock from '@/Pages/Lab/DanceShortsAnalyzerMock';
 import DanceShortsRadarIdeaBoard from '@/Pages/Lab/DanceShortsRadar';
 import DanceShortsRadarMock from '@/Pages/Lab/DanceShortsRadarMock';
 import EventCardCalendarIdeaBoard from '@/Pages/Lab/EventCardCalendarIdeaBoard';
-import LumiLaboIdeaBoard from '@/Pages/Lab/LumiLaboProjectIdeaBoard';
-import LumiLaboMock from '@/Pages/Lab/LumiLaboProjectMock';
+import LumiLabIdeaBoard from '@/Pages/Lab/LumiLabProjectIdeaBoard';
+import LumiLabMock from '@/Pages/Lab/LumiLabProjectMock';
 import QuakeWaveMapIdeaBoard from '@/Pages/Lab/QuakeWaveMapPp';
 import QuakeWaveMock from '@/Pages/QuakeWavePreview/Index';
 import QuakeWaveProduct from '@/Pages/QuakeWavePreview/QuakeWaveMapPage';
@@ -400,16 +400,16 @@ const stageReturnCases: StageReturnCase[] = [
         page: () => <QuakeWaveMapIdeaBoard />,
     },
     {
-        stage: 'LumiLabo MOCK',
-        projectName: 'LumiLabo',
-        projectId: 'lumilabo',
-        page: () => <LumiLaboMock projectList={{ items: [] }} />,
+        stage: 'LumiLab MOCK',
+        projectName: 'LumiLab',
+        projectId: 'lumilab',
+        page: () => <LumiLabMock projectList={{ items: [] }} />,
     },
     {
-        stage: 'LumiLabo IDEA BOARD',
-        projectName: 'LumiLabo',
-        projectId: 'lumilabo',
-        page: () => <LumiLaboIdeaBoard />,
+        stage: 'LumiLab IDEA BOARD',
+        projectName: 'LumiLab',
+        projectId: 'lumilab',
+        page: () => <LumiLabIdeaBoard />,
     },
     {
         stage: 'Construction MOCK',

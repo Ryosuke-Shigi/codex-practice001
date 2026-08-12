@@ -27,7 +27,7 @@ Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境�
 | DanceShortsRadar | PRODUCT / MOCK / IDEA BOARD | YouTube Shortsの候補収集、snapshot保存、地域別ランキングと上昇候補を表示する |
 | DanceShortsAnalyzer | PRODUCT / MOCK / IDEA BOARD | 保存済み動画を検索・選択し、snapshotの推移と差分を比較する |
 | Japan Quake Wave Map | PRODUCT / MOCK / IDEA BOARD | 気象庁XMLを取得・解析し、保存済みの震源・震度情報を地図表示する |
-| LumiLabo | MOCK / IDEA BOARD | 案件システムの画面構成、一覧、詳細、写真・ファイル操作を固定データで確認する |
+| LumiLab | MOCK / IDEA BOARD | 案件システムの画面構成、一覧、詳細、写真・ファイル操作を固定データで確認する |
 | 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積・請求・領収の流れと画面を固定データで確認する |
 | イベント・カードカレンダー | IDEA BOARD | イベントを生成元として、入金・出金・請求カードを扱う構想を整理する |
 | アプリログ | 専用操作 | API連携ログとエラーログを表示し、エラーログの対応済み操作を行う |
@@ -125,9 +125,9 @@ DanceShortsRadarで保存した動画とsnapshotを使い、複数動画を横�
 
 ## MOCK・IDEA BOARD
 
-### LumiLabo
+### LumiLab
 
-LumiLaboは上位プロジェクトとして扱い、現在は案件システムのIDEA BOARDとMOCKを公開しています。
+LumiLabは上位プロジェクトとして扱い、現在は案件システムのIDEA BOARDとMOCKを公開しています。
 
 IDEA BOARDでは、案件システムの目的、業務の流れ、構造、画面候補を説明します。
 
@@ -145,7 +145,7 @@ MOCKでは、固定20件の案件データを初回のInertia propsとして渡�
 
 現在のMOCKはDB、外部API、本番CRUD、S3保存へ接続していません。保存や削除はブラウザ内の状態として扱います。
 
-詳細は [LumiLabo案件システム IDEA BOARD](docs/lumilabo/project-idea-board.md) と [LumiLabo案件システム MOCK](docs/lumilabo/project-mock.md) に記載しています。
+詳細は [LumiLab案件システム IDEA BOARD](docs/lumilab/project-idea-board.md) と [LumiLab案件システム MOCK](docs/lumilab/project-mock.md) に記載しています。
 
 ### 工事発注管理
 
@@ -178,7 +178,7 @@ MOCKでは、固定20件の案件データを初回のInertia propsとして渡�
 - ローカルMinIOとAWS S3向け設定
 - `Storage::fake('s3')` を使うテスト
 
-この共通境界は実装済みですが、LumiLaboの写真・案件ファイル、DB紐付け、アップロードCRUDには接続していません。
+この共通境界は実装済みですが、LumiLabの写真・案件ファイル、DB紐付け、アップロードCRUDには接続していません。
 
 詳細は [Storage](docs/storage.md) に記載しています。
 
@@ -320,5 +320,5 @@ READMEは外部閲覧者向けの概要です。機能固有の仕様、共通�
 - [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md)
 - [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md)
 - [アプリログ](docs/features/application-logs.md)
-- [LumiLabo案件システム IDEA BOARD](docs/lumilabo/project-idea-board.md)
-- [LumiLabo案件システム MOCK](docs/lumilabo/project-mock.md)
+- [LumiLab案件システム IDEA BOARD](docs/lumilab/project-idea-board.md)
+- [LumiLab案件システム MOCK](docs/lumilab/project-mock.md)

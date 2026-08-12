@@ -100,7 +100,7 @@ function collectTabText(tabId: Parameters<typeof getIdeaBoardTabById>[0]): strin
     ].join('\n');
 }
 
-describe('LumiLabo 案件システム IDEA BOARD データ', () => {
+describe('LumiLab 案件システム IDEA BOARD データ', () => {
     it('新しいIDEA BOARD仕様の上位7タブと初期タグを持つ', () => {
         expect(ideaBoardTabs.map((tab) => tab.label)).toEqual(requiredTabLabels);
         expect(requiredTabLabels).toEqual([
@@ -119,10 +119,10 @@ describe('LumiLabo 案件システム IDEA BOARD データ', () => {
         expect(requiredTabLabels).not.toContain('カレンダー');
     });
 
-    it('概要タブはLumiLaboを上位プロダクトとして説明する', () => {
+    it('概要タブはLumiLabを上位プロダクトとして説明する', () => {
         const overviewText = collectTabText('overview');
 
-        expect(overviewText).toContain('LumiLabo は上位プロダクト');
+        expect(overviewText).toContain('LumiLab は上位プロダクト');
         expect(overviewText).toContain('最初のサブシステムは案件システム');
         expect(overviewText).toContain('確定PRODUCT仕様とは断定しません');
         expect(overviewText).toContain('MOCK、PRODUCT、Backend実装へ進まない');
@@ -132,7 +132,7 @@ describe('LumiLabo 案件システム IDEA BOARD データ', () => {
     it('フロータブは案件システムから将来候補までを分けて示す', () => {
         const flowText = collectTabText('flow');
 
-        expect(flowText).toContain('LumiLabo');
+        expect(flowText).toContain('LumiLab');
         expect(flowText).toContain('案件システム');
         expect(flowText).toContain('案件登録');
         expect(flowText).toContain('案件一覧');
@@ -207,12 +207,12 @@ describe('LumiLabo 案件システム IDEA BOARD データ', () => {
         const codeText = collectTabText('code');
 
         expect(codeText).toContain('codeタブは補助');
-        expect(codeText).toContain('/lab/lumilabo-project-idea-board');
+        expect(codeText).toContain('/lab/lumilab-project-idea-board');
         expect(codeText).toContain(
-            'Project SelectのLumiLabo開発段階からIDEA BOARDへ入るdirect routeを維持する',
+            'Project SelectのLumiLab開発段階からIDEA BOARDへ入るdirect routeを維持する',
         );
         expect(codeText).toContain('業務判断、完了判定、保存処理は持たせない');
         expect(codeText).toContain('Controller / Request / Action / Service / Repository / DTO / Responderは今回追加しない');
-        expect(codeText).toContain('LumiLabo以外の機能変更');
+        expect(codeText).toContain('LumiLab以外の機能変更');
     });
 });

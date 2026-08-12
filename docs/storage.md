@@ -8,7 +8,7 @@
 
 この文書は、既存のS3互換Storage基盤をアプリ側から使うときの共通方針を固定します。
 
-ここで扱うのはStorage境界だけです。LumiLabo写真保存、案件ファイル添付、PDF保存、DB紐付け、アップロードCRUD、本番bucket作成は各Featureの別PRで扱います。
+ここで扱うのはStorage境界だけです。LumiLab写真保存、案件ファイル添付、PDF保存、DB紐付け、アップロードCRUD、本番bucket作成は各Featureの別PRで扱います。
 
 ## 前提
 

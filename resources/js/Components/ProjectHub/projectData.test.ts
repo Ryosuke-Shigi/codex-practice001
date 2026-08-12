@@ -29,9 +29,9 @@ const normalProjectStageRoutes = {
         mock: '/quakewave-preview',
         'idea-board': '/lab/quake-wave-map-idea-board',
     },
-    lumilabo: {
-        mock: '/lab/lumilabo-project-mock',
-        'idea-board': '/lab/lumilabo-project-idea-board',
+    lumilab: {
+        mock: '/lab/lumilab-project-mock',
+        'idea-board': '/lab/lumilab-project-idea-board',
     },
     'construction-order': {
         mock: '/lab/construction-order-workflow-mock',
@@ -49,7 +49,7 @@ describe('Project selection data contract', () => {
             'dance-shorts-radar',
             'dance-shorts-analyzer',
             'japan-quake-wave-map',
-            'lumilabo',
+            'lumilab',
             'construction-order',
             'event-card-calendar',
             'logs',

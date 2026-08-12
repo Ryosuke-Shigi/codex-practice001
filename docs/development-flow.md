@@ -56,7 +56,7 @@ DanceShortsRadarとDanceShortsAnalyzerは別PROJECTとして扱い、Project Sel
 | DanceShortsRadar | `/dance-shorts-radar` | `/lab/dance-shorts-radar-mock` | `/lab/dance-shorts-radar-idea-board` |
 | DanceShortsAnalyzer | `/dance-shorts-analyzer` | `/lab/dance-shorts-analyzer-mock` | `/lab/dance-shorts-analyzer-idea-board` |
 | Japan Quake Wave Map | `/quakewave-preview/map` | `/quakewave-preview` | `/lab/quake-wave-map-idea-board` |
-| LumiLabo | - | `/lab/lumilabo-project-mock` | `/lab/lumilabo-project-idea-board` |
+| LumiLab | - | `/lab/lumilab-project-mock` | `/lab/lumilab-project-idea-board` |
 | 工事発注管理 | - | `/lab/construction-order-workflow-mock` | `/lab/construction-order-workflow-idea-board` |
 | イベント・カードカレンダー | - | - | `/lab/event-card-calendar-idea-board` |
 

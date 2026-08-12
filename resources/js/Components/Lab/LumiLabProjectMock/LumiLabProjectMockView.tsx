@@ -24,66 +24,66 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import {
-    lumiLaboGlobalTabs,
-    createLumiLaboProjectDetail,
-    lumiLaboProjectActionTabs,
-    lumiLaboProjectBackLabel,
-    lumiLaboProjectBackAccessibleLabel,
-    lumiLaboProjectDeleteActionLabel,
-    lumiLaboProjectDeleteConfirmMessage,
-    lumiLaboProjectDeleteConfirmNoLabel,
-    lumiLaboProjectDeleteConfirmYesLabel,
-    lumiLaboProjectDetailBackLabel,
-    lumiLaboProjectDetailBackAccessibleLabel,
-    lumiLaboProjectTopBackAccessibleLabel,
-    lumiLaboProjectDetailEditingLabel,
-    lumiLaboProjectDetailSaveLabel,
-    lumiLaboProjectDetailSavingLabel,
-    lumiLaboProjectDetail,
-    lumiLaboProjectDetailSavedMessage,
-    lumiLaboProjectItem,
-    lumiLaboProjectRegisterPanel,
-    lumiLaboProjectTabs,
-    lumiLaboTopReturnLabel,
-    lumiLaboTopReturnAccessibleLabel,
+    lumiLabGlobalTabs,
+    createLumiLabProjectDetail,
+    lumiLabProjectActionTabs,
+    lumiLabProjectBackLabel,
+    lumiLabProjectBackAccessibleLabel,
+    lumiLabProjectDeleteActionLabel,
+    lumiLabProjectDeleteConfirmMessage,
+    lumiLabProjectDeleteConfirmNoLabel,
+    lumiLabProjectDeleteConfirmYesLabel,
+    lumiLabProjectDetailBackLabel,
+    lumiLabProjectDetailBackAccessibleLabel,
+    lumiLabProjectTopBackAccessibleLabel,
+    lumiLabProjectDetailEditingLabel,
+    lumiLabProjectDetailSaveLabel,
+    lumiLabProjectDetailSavingLabel,
+    lumiLabProjectDetail,
+    lumiLabProjectDetailSavedMessage,
+    lumiLabProjectItem,
+    lumiLabProjectRegisterPanel,
+    lumiLabProjectTabs,
+    lumiLabTopReturnLabel,
+    lumiLabTopReturnAccessibleLabel,
 } from './mockData';
-import LumiLaboProjectListPanel from './LumiLaboProjectListPanel';
+import LumiLabProjectListPanel from './LumiLabProjectListPanel';
 import ProjectPhotoCaptureFeature from './ProjectPhotoCapture/ProjectPhotoCaptureFeature';
 import type { ProjectCapturedPhoto } from './ProjectPhotoCapture/types';
 import type {
-    LumiLaboMockGlobalTabId,
-    LumiLaboMockProjectDetail,
-    LumiLaboMockProjectDetailDraft,
-    LumiLaboMockProjectDetailEditableFieldId,
-    LumiLaboMockProjectDetailReturnTarget,
-    LumiLaboMockProjectList,
-    LumiLaboMockProjectListItem,
-    LumiLaboMockProjectRegisterField,
-    LumiLaboMockProjectTabId,
-    LumiLaboMockProjectViewId,
-    LumiLaboMockScreen,
-    LumiLaboMockTab,
+    LumiLabMockGlobalTabId,
+    LumiLabMockProjectDetail,
+    LumiLabMockProjectDetailDraft,
+    LumiLabMockProjectDetailEditableFieldId,
+    LumiLabMockProjectDetailReturnTarget,
+    LumiLabMockProjectList,
+    LumiLabMockProjectListItem,
+    LumiLabMockProjectRegisterField,
+    LumiLabMockProjectTabId,
+    LumiLabMockProjectViewId,
+    LumiLabMockScreen,
+    LumiLabMockTab,
 } from './types';
 
 const projectTabIcons = {
     top: Home,
     register: FilePlus2,
     list: List,
-} satisfies Record<LumiLaboMockProjectTabId, LucideIcon>;
+} satisfies Record<LumiLabMockProjectTabId, LucideIcon>;
 
-const lumiLaboProjectTopReturnTarget = {
+const lumiLabProjectTopReturnTarget = {
     projectTabId: 'top',
     projectViewId: 'top',
-} as const satisfies LumiLaboMockProjectDetailReturnTarget;
+} as const satisfies LumiLabMockProjectDetailReturnTarget;
 
-const lumiLaboProjectListReturnTarget = {
+const lumiLabProjectListReturnTarget = {
     projectTabId: 'list',
     projectViewId: 'list',
-} as const satisfies LumiLaboMockProjectDetailReturnTarget;
+} as const satisfies LumiLabMockProjectDetailReturnTarget;
 
-type ProjectActionTabId = Exclude<LumiLaboMockProjectTabId, 'top'>;
+type ProjectActionTabId = Exclude<LumiLabMockProjectTabId, 'top'>;
 
-type LumiLaboTemporaryCapturedPhotosByProjectId = Record<
+type LumiLabTemporaryCapturedPhotosByProjectId = Record<
     string,
     readonly ProjectCapturedPhoto[] | undefined
 >;
@@ -91,14 +91,14 @@ type LumiLaboTemporaryCapturedPhotosByProjectId = Record<
 type ProjectBackTargetId = 'select' | 'project-top' | 'detail-return-target';
 
 type FileTagBarProps<TId extends string> = {
-    tabs: readonly LumiLaboMockTab<TId>[];
+    tabs: readonly LumiLabMockTab<TId>[];
     activeTabId: string;
     ariaLabel: string;
     onSelectTab: (tabId: TId) => void;
 };
 
 type ProjectDetailTextFieldConfig = {
-    id: LumiLaboMockProjectDetailEditableFieldId;
+    id: LumiLabMockProjectDetailEditableFieldId;
     label: string;
     control: 'input' | 'textarea';
     rows?: number;
@@ -111,8 +111,8 @@ type ProjectEntryPanelProps = BackActionProps & {
 
 
 type ProjectDetailPanelProps = BackActionProps & {
-    projectDetail: LumiLaboMockProjectDetail;
-    draft: LumiLaboMockProjectDetailDraft;
+    projectDetail: LumiLabMockProjectDetail;
+    draft: LumiLabMockProjectDetailDraft;
     companyNameValidationError?: string;
     isDeleteDialogOpen: boolean;
     hasUnsavedChanges: boolean;
@@ -122,7 +122,7 @@ type ProjectDetailPanelProps = BackActionProps & {
     temporaryCapturedPhotos: readonly ProjectCapturedPhoto[];
     fileInputRef: RefObject<HTMLInputElement | null>;
     onChangeDraftField: (
-        fieldId: LumiLaboMockProjectDetailEditableFieldId,
+        fieldId: LumiLabMockProjectDetailEditableFieldId,
         value: string,
     ) => void;
     onSave: () => void;
@@ -154,7 +154,7 @@ type ProjectDetailTextFieldProps = {
     mapSearchUrl?: string;
     validationError?: string;
     onChange: (
-        fieldId: LumiLaboMockProjectDetailEditableFieldId,
+        fieldId: LumiLabMockProjectDetailEditableFieldId,
         value: string,
     ) => void;
 };
@@ -186,30 +186,30 @@ const projectDetailTextFields = [
     { id: 'memo', label: 'メモ', control: 'textarea', rows: 4 },
 ] as const satisfies readonly ProjectDetailTextFieldConfig[];
 
-export type LumiLaboMockProjectSession = {
-    detail: LumiLaboMockProjectDetail;
-    draft: LumiLaboMockProjectDetailDraft;
+export type LumiLabMockProjectSession = {
+    detail: LumiLabMockProjectDetail;
+    draft: LumiLabMockProjectDetailDraft;
 };
 
-export type LumiLaboMockProjectSessionById = Record<
+export type LumiLabMockProjectSessionById = Record<
     string,
-    LumiLaboMockProjectSession | undefined
+    LumiLabMockProjectSession | undefined
 >;
 
-export function createLumiLaboMockProjectSession(
-    detail: LumiLaboMockProjectDetail,
-): LumiLaboMockProjectSession {
+export function createLumiLabMockProjectSession(
+    detail: LumiLabMockProjectDetail,
+): LumiLabMockProjectSession {
     return {
         detail,
         draft: createProjectDetailDraft(detail),
     };
 }
 
-export function updateLumiLaboMockProjectSession(
-    sessions: LumiLaboMockProjectSessionById,
+export function updateLumiLabMockProjectSession(
+    sessions: LumiLabMockProjectSessionById,
     projectId: string,
-    update: (session: LumiLaboMockProjectSession) => LumiLaboMockProjectSession,
-): LumiLaboMockProjectSessionById {
+    update: (session: LumiLabMockProjectSession) => LumiLabMockProjectSession,
+): LumiLabMockProjectSessionById {
     const session = sessions[projectId];
 
     if (session === undefined) {
@@ -222,7 +222,7 @@ export function updateLumiLaboMockProjectSession(
     };
 }
 
-export function setLumiLaboMockProjectDroppedFileNames(
+export function setLumiLabMockProjectDroppedFileNames(
     droppedFileNamesByProjectId: Record<string, readonly string[] | undefined>,
     projectId: string,
     droppedFileNames: readonly string[],
@@ -233,18 +233,18 @@ export function setLumiLaboMockProjectDroppedFileNames(
     };
 }
 
-export function canCompleteLumiLaboMockProjectSave(
+export function canCompleteLumiLabMockProjectSave(
     projectId: string,
     deletedProjectIds: ReadonlySet<string>,
 ): boolean {
     return !deletedProjectIds.has(projectId);
 }
 
-export function applyLumiLaboMockProjectSaveToCurrentDetail(
-    currentProjectDetail: LumiLaboMockProjectDetail | null,
+export function applyLumiLabMockProjectSaveToCurrentDetail(
+    currentProjectDetail: LumiLabMockProjectDetail | null,
     savedProjectId: string,
-    savedDraft: LumiLaboMockProjectDetailDraft,
-): LumiLaboMockProjectDetail | null {
+    savedDraft: LumiLabMockProjectDetailDraft,
+): LumiLabMockProjectDetail | null {
     if (
         currentProjectDetail === null ||
         currentProjectDetail.id !== savedProjectId
@@ -258,10 +258,10 @@ export function applyLumiLaboMockProjectSaveToCurrentDetail(
     };
 }
 
-export function applyLumiLaboMockProjectSaveToSession(
-    session: LumiLaboMockProjectSession,
-    savedDraft: LumiLaboMockProjectDetailDraft,
-): LumiLaboMockProjectSession {
+export function applyLumiLabMockProjectSaveToSession(
+    session: LumiLabMockProjectSession,
+    savedDraft: LumiLabMockProjectDetailDraft,
+): LumiLabMockProjectSession {
     return {
         detail: {
             ...session.detail,
@@ -271,16 +271,16 @@ export function applyLumiLaboMockProjectSaveToSession(
     };
 }
 
-export type LumiLaboMockCompletedProjectSave = {
-    session: LumiLaboMockProjectSession;
+export type LumiLabMockCompletedProjectSave = {
+    session: LumiLabMockProjectSession;
     hasUnsavedChanges: boolean;
 };
 
-export function completeLumiLaboMockProjectSave(
-    session: LumiLaboMockProjectSession,
-    savedDraft: LumiLaboMockProjectDetailDraft,
-): LumiLaboMockCompletedProjectSave {
-    const nextSession = applyLumiLaboMockProjectSaveToSession(
+export function completeLumiLabMockProjectSave(
+    session: LumiLabMockProjectSession,
+    savedDraft: LumiLabMockProjectDetailDraft,
+): LumiLabMockCompletedProjectSave {
+    const nextSession = applyLumiLabMockProjectSaveToSession(
         session,
         savedDraft,
     );
@@ -294,31 +294,31 @@ export function completeLumiLaboMockProjectSave(
     };
 }
 
-export const lumiLaboProjectCompanyNameRequiredMessage =
+export const lumiLabProjectCompanyNameRequiredMessage =
     '会社名を入力してください';
 
-export type LumiLaboMockProjectSavePreparation =
+export type LumiLabMockProjectSavePreparation =
     | {
           isValid: false;
           validationError: string;
       }
     | {
           isValid: true;
-          savedDraft: LumiLaboMockProjectDetailDraft;
+          savedDraft: LumiLabMockProjectDetailDraft;
       };
 
-export function getLumiLaboMockProjectCompanyNameValidationError(
+export function getLumiLabMockProjectCompanyNameValidationError(
     companyName: string,
 ): string | null {
     return companyName.trim() === ''
-        ? lumiLaboProjectCompanyNameRequiredMessage
+        ? lumiLabProjectCompanyNameRequiredMessage
         : null;
 }
 
-export function prepareLumiLaboMockProjectSave(
-    draft: LumiLaboMockProjectDetailDraft,
-): LumiLaboMockProjectSavePreparation {
-    const validationError = getLumiLaboMockProjectCompanyNameValidationError(
+export function prepareLumiLabMockProjectSave(
+    draft: LumiLabMockProjectDetailDraft,
+): LumiLabMockProjectSavePreparation {
+    const validationError = getLumiLabMockProjectCompanyNameValidationError(
         draft.companyName,
     );
 
@@ -329,7 +329,7 @@ export function prepareLumiLaboMockProjectSave(
     return { isValid: true, savedDraft: { ...draft } };
 }
 
-export function setLumiLaboMockProjectCompanyNameValidationError(
+export function setLumiLabMockProjectCompanyNameValidationError(
     validationErrors: Record<string, string | undefined>,
     projectId: string,
     validationError: string | null,
@@ -344,34 +344,34 @@ export function setLumiLaboMockProjectCompanyNameValidationError(
     };
 }
 
-type LumiLaboProjectMockViewProps = {
-    projectList: LumiLaboMockProjectList;
+type LumiLabProjectMockViewProps = {
+    projectList: LumiLabMockProjectList;
 };
 
-export default function LumiLaboProjectMockView({
+export default function LumiLabProjectMockView({
     projectList,
-}: LumiLaboProjectMockViewProps) {
+}: LumiLabProjectMockViewProps) {
     const [activeScreen, setActiveScreen] =
-        useState<LumiLaboMockScreen>('top');
+        useState<LumiLabMockScreen>('top');
     const [activeProjectTabId, setActiveProjectTabId] =
-        useState<LumiLaboMockProjectTabId>('top');
+        useState<LumiLabMockProjectTabId>('top');
     const [activeProjectViewId, setActiveProjectViewId] =
-        useState<LumiLaboMockProjectViewId>('top');
+        useState<LumiLabMockProjectViewId>('top');
     const [projectDetailReturnTarget, setProjectDetailReturnTarget] =
-        useState<LumiLaboMockProjectDetailReturnTarget>(
-            lumiLaboProjectListReturnTarget,
+        useState<LumiLabMockProjectDetailReturnTarget>(
+            lumiLabProjectListReturnTarget,
         );
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
         null,
     );
     const [projectDetail, setProjectDetail] =
-        useState<LumiLaboMockProjectDetail | null>(null);
+        useState<LumiLabMockProjectDetail | null>(null);
     const [projectDetailDraft, setProjectDetailDraft] =
-        useState<LumiLaboMockProjectDetailDraft>(
-            createProjectDetailDraft(lumiLaboProjectDetail),
+        useState<LumiLabMockProjectDetailDraft>(
+            createProjectDetailDraft(lumiLabProjectDetail),
         );
     const [projectOverrides, setProjectOverrides] = useState<
-        Record<string, LumiLaboMockProjectDetailDraft | undefined>
+        Record<string, LumiLabMockProjectDetailDraft | undefined>
     >({});
     const [deletedProjectIds, setDeletedProjectIds] =
         useState<ReadonlySet<string>>(new Set());
@@ -386,18 +386,18 @@ export default function LumiLaboProjectMockView({
     const [droppedFileNamesByProjectId, setDroppedFileNamesByProjectId] =
         useState<Record<string, readonly string[] | undefined>>({});
     const [temporaryCapturedPhotosByProjectId, setTemporaryCapturedPhotosByProjectId] =
-        useState<LumiLaboTemporaryCapturedPhotosByProjectId>({});
+        useState<LumiLabTemporaryCapturedPhotosByProjectId>({});
     const [isProjectDeleteDialogOpen, setIsProjectDeleteDialogOpen] =
         useState(false);
     const [isPhotoCaptureOpen, setIsPhotoCaptureOpen] = useState(false);
     const [projectSessions, setProjectSessions] =
-        useState<LumiLaboMockProjectSessionById>({});
+        useState<LumiLabMockProjectSessionById>({});
     const deletedProjectIdsRef = useRef<ReadonlySet<string>>(new Set());
     const photoCaptureProjectIdRef = useRef<string | null>(null);
     const projectDetailFileInputRef = useRef<HTMLInputElement>(null);
-    const projectSessionsRef = useRef<LumiLaboMockProjectSessionById>({});
+    const projectSessionsRef = useRef<LumiLabMockProjectSessionById>({});
     const temporaryCapturedPhotosByProjectIdRef =
-        useRef<LumiLaboTemporaryCapturedPhotosByProjectId>({});
+        useRef<LumiLabTemporaryCapturedPhotosByProjectId>({});
     const nextTemporaryCapturedPhotoIdRef = useRef(1);
     const saveCompleteTimerRef = useRef<
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
@@ -406,7 +406,7 @@ export default function LumiLaboProjectMockView({
         Record<string, ReturnType<typeof window.setTimeout> | undefined>
     >({});
 
-    const activeGlobalTabId: LumiLaboMockGlobalTabId =
+    const activeGlobalTabId: LumiLabMockGlobalTabId =
         activeScreen === 'select' ? 'select' : 'top';
     const isProjectDetailSaving =
         projectDetail !== null && savingProjectIds.has(projectDetail.id);
@@ -423,7 +423,7 @@ export default function LumiLaboProjectMockView({
 
     const hasProjectDetailChanges = hasProjectDetailDraftChanged(
         projectDetailDraft,
-        projectDetail ?? lumiLaboProjectDetail,
+        projectDetail ?? lumiLabProjectDetail,
     );
 
     useEffect(() => {
@@ -440,8 +440,8 @@ export default function LumiLaboProjectMockView({
 
     const updateProjectSessions = (
         update: (
-            sessions: LumiLaboMockProjectSessionById,
-        ) => LumiLaboMockProjectSessionById,
+            sessions: LumiLabMockProjectSessionById,
+        ) => LumiLabMockProjectSessionById,
     ) => {
         const nextSessions = update(projectSessionsRef.current);
 
@@ -449,11 +449,11 @@ export default function LumiLaboProjectMockView({
         setProjectSessions(nextSessions);
     };
 
-    const selectGlobalTab = (tabId: LumiLaboMockGlobalTabId) => {
+    const selectGlobalTab = (tabId: LumiLabMockGlobalTabId) => {
         setActiveScreen(tabId);
     };
 
-    const selectProjectTab = (tabId: LumiLaboMockProjectTabId) => {
+    const selectProjectTab = (tabId: LumiLabMockProjectTabId) => {
         setActiveProjectTabId(tabId);
         setActiveProjectViewId(tabId);
     };
@@ -463,13 +463,13 @@ export default function LumiLaboProjectMockView({
     };
 
     const handleBackFromProjectRegister = () => {
-        setActiveProjectTabId(lumiLaboProjectTopReturnTarget.projectTabId);
-        setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
+        setActiveProjectTabId(lumiLabProjectTopReturnTarget.projectTabId);
+        setActiveProjectViewId(lumiLabProjectTopReturnTarget.projectViewId);
     };
 
     const handleBackFromProjectList = () => {
-        setActiveProjectTabId(lumiLaboProjectTopReturnTarget.projectTabId);
-        setActiveProjectViewId(lumiLaboProjectTopReturnTarget.projectViewId);
+        setActiveProjectTabId(lumiLabProjectTopReturnTarget.projectTabId);
+        setActiveProjectViewId(lumiLabProjectTopReturnTarget.projectViewId);
     };
 
     const openProject = () => {
@@ -479,13 +479,13 @@ export default function LumiLaboProjectMockView({
     };
 
     const openProjectDetailFromList = (
-        project: LumiLaboMockProjectListItem,
+        project: LumiLabMockProjectListItem,
     ) => {
         const session =
             projectSessionsRef.current[project.id] ??
             projectSessions[project.id] ??
-            createLumiLaboMockProjectSession(
-                createLumiLaboProjectDetail(
+            createLumiLabMockProjectSession(
+                createLumiLabProjectDetail(
                     project,
                     projectOverrides[project.id],
                 ),
@@ -499,7 +499,7 @@ export default function LumiLaboProjectMockView({
                 ? { ...current, [project.id]: session }
                 : current,
         );
-        setProjectDetailReturnTarget(lumiLaboProjectListReturnTarget);
+        setProjectDetailReturnTarget(lumiLabProjectListReturnTarget);
         setActiveProjectTabId('list');
         setActiveProjectViewId('detail');
     };
@@ -596,7 +596,7 @@ export default function LumiLaboProjectMockView({
     };
 
     const updateProjectDetailDraft = (
-        fieldId: LumiLaboMockProjectDetailEditableFieldId,
+        fieldId: LumiLabMockProjectDetailEditableFieldId,
         value: string,
     ) => {
         if (projectDetail === null) {
@@ -611,10 +611,10 @@ export default function LumiLaboProjectMockView({
         setProjectDetailDraft(nextDraft);
         if (
             fieldId === 'companyName' &&
-            getLumiLaboMockProjectCompanyNameValidationError(value) === null
+            getLumiLabMockProjectCompanyNameValidationError(value) === null
         ) {
             setCompanyNameValidationErrors((current) =>
-                setLumiLaboMockProjectCompanyNameValidationError(
+                setLumiLabMockProjectCompanyNameValidationError(
                     current,
                     projectDetail.id,
                     null,
@@ -622,7 +622,7 @@ export default function LumiLaboProjectMockView({
             );
         }
         updateProjectSessions((current) =>
-            updateLumiLaboMockProjectSession(
+            updateLumiLabMockProjectSession(
                 current,
                 projectDetail.id,
                 (session) => ({ ...session, draft: nextDraft }),
@@ -641,13 +641,13 @@ export default function LumiLaboProjectMockView({
             return;
         }
 
-        const savePreparation = prepareLumiLaboMockProjectSave(
+        const savePreparation = prepareLumiLabMockProjectSave(
             projectDetailDraft,
         );
 
         if (!savePreparation.isValid) {
             setCompanyNameValidationErrors((current) =>
-                setLumiLaboMockProjectCompanyNameValidationError(
+                setLumiLabMockProjectCompanyNameValidationError(
                     current,
                     selectedProjectId,
                     savePreparation.validationError,
@@ -666,7 +666,7 @@ export default function LumiLaboProjectMockView({
         setSavedProjectIds((current) => removeProjectId(current, savedProjectId));
 
         saveCompleteTimerRef.current[savedProjectId] = window.setTimeout(() => {
-            if (!canCompleteLumiLaboMockProjectSave(savedProjectId, deletedProjectIdsRef.current)) {
+            if (!canCompleteLumiLabMockProjectSave(savedProjectId, deletedProjectIdsRef.current)) {
                 setSavingProjectIds((current) =>
                     removeProjectId(current, savedProjectId),
                 );
@@ -676,7 +676,7 @@ export default function LumiLaboProjectMockView({
             }
 
             setProjectDetail((current) =>
-                applyLumiLaboMockProjectSaveToCurrentDetail(
+                applyLumiLabMockProjectSaveToCurrentDetail(
                     current,
                     savedProjectId,
                     savedDraft,
@@ -693,7 +693,7 @@ export default function LumiLaboProjectMockView({
                 return;
             }
 
-            const completedSave = completeLumiLaboMockProjectSave(
+            const completedSave = completeLumiLabMockProjectSave(
                 session,
                 savedDraft,
             );
@@ -739,7 +739,7 @@ export default function LumiLaboProjectMockView({
         }
 
         setDroppedFileNamesByProjectId((current) =>
-            setLumiLaboMockProjectDroppedFileNames(
+            setLumiLabMockProjectDroppedFileNames(
                 current,
                 projectDetail.id,
                 Array.from(files).map((file) => file.name),
@@ -766,7 +766,7 @@ export default function LumiLaboProjectMockView({
             };
         });
         updateProjectSessions((current) =>
-            updateLumiLaboMockProjectSession(current, projectId, (session) => ({
+            updateLumiLabMockProjectSession(current, projectId, (session) => ({
                 ...session,
                 detail: {
                     ...session.detail,
@@ -795,7 +795,7 @@ export default function LumiLaboProjectMockView({
             };
         });
         updateProjectSessions((current) =>
-            updateLumiLaboMockProjectSession(current, projectId, (session) => ({
+            updateLumiLabMockProjectSession(current, projectId, (session) => ({
                 ...session,
                 detail: {
                     ...session.detail,
@@ -855,7 +855,7 @@ export default function LumiLaboProjectMockView({
             removeProjectId(current, deletedProjectId),
         );
         setCompanyNameValidationErrors((current) =>
-            setLumiLaboMockProjectCompanyNameValidationError(
+            setLumiLabMockProjectCompanyNameValidationError(
                 current,
                 deletedProjectId,
                 null,
@@ -863,7 +863,7 @@ export default function LumiLaboProjectMockView({
         );
         setSelectedProjectId(null);
         setProjectDetail(null);
-        setProjectDetailDraft(createProjectDetailDraft(lumiLaboProjectDetail));
+        setProjectDetailDraft(createProjectDetailDraft(lumiLabProjectDetail));
         handleBackFromProjectDetail();
     };
 
@@ -871,16 +871,16 @@ export default function LumiLaboProjectMockView({
         <article className="flex h-full min-h-0 flex-col overflow-hidden bg-[#fffdf2] text-black">
             {activeScreen === 'project' ? (
                 <FileTagBar
-                    tabs={lumiLaboProjectTabs}
+                    tabs={lumiLabProjectTabs}
                     activeTabId={activeProjectTabId}
                     ariaLabel="案件内画面"
                     onSelectTab={selectProjectTab}
                 />
             ) : (
                 <FileTagBar
-                    tabs={lumiLaboGlobalTabs}
+                    tabs={lumiLabGlobalTabs}
                     activeTabId={activeGlobalTabId}
-                    ariaLabel="LumiLabo MOCK画面"
+                    ariaLabel="LumiLab MOCK画面"
                     onSelectTab={selectGlobalTab}
                 />
             )}
@@ -923,7 +923,7 @@ export default function LumiLaboProjectMockView({
                         }
                         hidden={activeProjectViewId !== 'list'}
                     >
-                        <LumiLaboProjectListPanel
+                        <LumiLabProjectListPanel
                             projectList={projectList}
                             projectOverrides={projectOverrides}
                             deletedProjectIds={Array.from(deletedProjectIds)}
@@ -1018,7 +1018,7 @@ function TopPanel({ onStart }: { onStart: () => void }) {
                     <Sparkles className="h-10 w-10" aria-hidden />
                 </span>
                 <h1 className="text-center text-4xl font-black leading-tight text-black">
-                    LumiLabo
+                    LumiLab
                 </h1>
                 <button
                     type="button"
@@ -1051,17 +1051,17 @@ function SelectPanel({
                         className="h-10 w-10 text-yellow-900"
                         aria-hidden
                     />
-                    <span>{lumiLaboProjectItem.label}</span>
+                    <span>{lumiLabProjectItem.label}</span>
                 </button>
                 <button
                     type="button"
-                    aria-label={lumiLaboTopReturnAccessibleLabel}
-                    title={lumiLaboTopReturnAccessibleLabel}
+                    aria-label={lumiLabTopReturnAccessibleLabel}
+                    title={lumiLabTopReturnAccessibleLabel}
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-base font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                     onClick={onBackToTop}
                 >
                     <ArrowLeft className="h-5 w-5" aria-hidden />
-                    <span>{lumiLaboTopReturnLabel}</span>
+                    <span>{lumiLabTopReturnLabel}</span>
                 </button>
             </div>
         </section>
@@ -1081,10 +1081,10 @@ function ProjectEntryPanel({
                     <Layers3 className="h-8 w-8 [@media(orientation:landscape)_and_(max-height:480px)]:h-5 [@media(orientation:landscape)_and_(max-height:480px)]:w-5" aria-hidden />
                 </span>
                 <h1 className="text-center text-3xl font-black leading-tight text-black [@media(orientation:landscape)_and_(max-height:480px)]:text-left [@media(orientation:landscape)_and_(max-height:480px)]:text-2xl">
-                    {lumiLaboProjectItem.label}
+                    {lumiLabProjectItem.label}
                 </h1>
                 <div className="grid w-full gap-2 [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:grid-cols-2 [@media(orientation:landscape)_and_(max-height:480px)]:gap-1.5">
-                    {lumiLaboProjectActionTabs.map((tab) => {
+                    {lumiLabProjectActionTabs.map((tab) => {
                         const Icon = projectTabIcons[tab.id];
 
                         return (
@@ -1102,14 +1102,14 @@ function ProjectEntryPanel({
                 </div>
                 <button
                     type="button"
-                    aria-label={lumiLaboProjectBackAccessibleLabel}
-                    title={lumiLaboProjectBackAccessibleLabel}
+                    aria-label={lumiLabProjectBackAccessibleLabel}
+                    title={lumiLabProjectBackAccessibleLabel}
                     className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px [@media(orientation:landscape)_and_(max-height:480px)]:col-span-2 [@media(orientation:landscape)_and_(max-height:480px)]:min-h-10 [@media(orientation:landscape)_and_(max-height:480px)]:text-base"
-                    data-lumilabo-back-target={backTargetId}
+                    data-lumilab-back-target={backTargetId}
                     onClick={onBack}
                 >
                     <ArrowLeft className="h-5 w-5" aria-hidden />
-                    <span>{lumiLaboProjectBackLabel}</span>
+                    <span>{lumiLabProjectBackLabel}</span>
                 </button>
             </div>
         </section>
@@ -1144,11 +1144,11 @@ function ProjectDetailPanel({
     const mapSearchUrl =
         mapAddress === '' ? undefined : createGoogleMapsSearchUrl(mapAddress);
     const statusLabel = isSaving
-        ? lumiLaboProjectDetailSavingLabel
+        ? lumiLabProjectDetailSavingLabel
         : hasUnsavedChanges
-          ? lumiLaboProjectDetailEditingLabel
+          ? lumiLabProjectDetailEditingLabel
           : saveMessageVisible
-            ? lumiLaboProjectDetailSavedMessage
+            ? lumiLabProjectDetailSavedMessage
             : null;
     const shouldShowSaveBar = statusLabel !== null || hasUnsavedChanges;
 
@@ -1166,14 +1166,14 @@ function ProjectDetailPanel({
                         <div className="grid min-w-0 gap-3">
                             <button
                                 type="button"
-                                aria-label={lumiLaboProjectDetailBackAccessibleLabel}
-                                title={lumiLaboProjectDetailBackAccessibleLabel}
+                                aria-label={lumiLabProjectDetailBackAccessibleLabel}
+                                title={lumiLabProjectDetailBackAccessibleLabel}
                                 className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-[6px] border border-stone-300 bg-white px-4 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px sm:w-fit"
-                                data-lumilabo-back-target={backTargetId}
+                                data-lumilab-back-target={backTargetId}
                                 onClick={onBack}
                             >
                                 <ArrowLeft className="h-5 w-5" aria-hidden />
-                                <span>{lumiLaboProjectDetailBackLabel}</span>
+                                <span>{lumiLabProjectDetailBackLabel}</span>
                             </button>
 
                             <div className="grid gap-2">
@@ -1289,7 +1289,7 @@ function ProjectDetailPanel({
                         onClick={onRequestDeleteProject}
                     >
                         <Trash2 className="h-5 w-5" aria-hidden />
-                        <span>{lumiLaboProjectDeleteActionLabel}</span>
+                        <span>{lumiLabProjectDeleteActionLabel}</span>
                     </button>
                 </div>
 
@@ -1313,7 +1313,7 @@ function ProjectDetailSaveBar({
     return (
         <div
             className="sticky top-0 z-20 rounded-[8px] border border-yellow-200/80 bg-white/85 p-2.5 text-black shadow-sm shadow-stone-900/10 backdrop-blur-md sm:p-3"
-            data-lumilabo-save-bar="true"
+            data-lumilab-save-bar="true"
         >
             <div
                 className={classNames(
@@ -1343,7 +1343,7 @@ function ProjectDetailSaveBar({
                         disabled={isSaving}
                     >
                         <Save className="h-5 w-5 shrink-0" aria-hidden />
-                        <span>{lumiLaboProjectDetailSaveLabel}</span>
+                        <span>{lumiLabProjectDetailSaveLabel}</span>
                     </button>
                 ) : null}
             </div>
@@ -1358,7 +1358,7 @@ function ProjectDetailTextField({
     validationError,
     onChange,
 }: ProjectDetailTextFieldProps) {
-    const controlId = `lumilabo-project-detail-${field.id}`;
+    const controlId = `lumilab-project-detail-${field.id}`;
     const validationErrorId = `${controlId}-error`;
     const handleChange = (
         event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -1450,7 +1450,7 @@ function FileDropZone({
     onDropFiles: (files: FileList | null) => void;
     inputRef: RefObject<HTMLInputElement | null>;
 }) {
-    const inputId = 'lumilabo-project-detail-files';
+    const inputId = 'lumilab-project-detail-files';
     const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
         onDropFiles(event.target.files);
     };
@@ -1507,14 +1507,14 @@ function ProjectDeleteConfirmDialog({
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-labelledby="lumilabo-project-delete-dialog-title"
+                aria-labelledby="lumilab-project-delete-dialog-title"
                 className="grid w-full max-w-sm gap-4 rounded-[6px] border border-red-300 bg-white p-5 text-black shadow-xl shadow-red-950/20"
             >
                 <h2
-                    id="lumilabo-project-delete-dialog-title"
+                    id="lumilab-project-delete-dialog-title"
                     className="text-center text-2xl font-black leading-tight"
                 >
-                    {lumiLaboProjectDeleteConfirmMessage}
+                    {lumiLabProjectDeleteConfirmMessage}
                 </h2>
                 <div className="grid gap-2">
                     <button
@@ -1522,14 +1522,14 @@ function ProjectDeleteConfirmDialog({
                         className="inline-flex min-h-14 w-full items-center justify-center rounded-[6px] border border-stone-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                         onClick={onCancel}
                     >
-                        {lumiLaboProjectDeleteConfirmNoLabel}
+                        {lumiLabProjectDeleteConfirmNoLabel}
                     </button>
                     <button
                         type="button"
                         className="inline-flex min-h-14 w-full items-center justify-center rounded-[6px] border border-red-700 bg-red-600 px-5 text-lg font-black text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:translate-y-px"
                         onClick={onConfirm}
                     >
-                        {lumiLaboProjectDeleteConfirmYesLabel}
+                        {lumiLabProjectDeleteConfirmYesLabel}
                     </button>
                 </div>
             </div>
@@ -1543,7 +1543,7 @@ function SavedPhotoPreview({
     onRemoveTemporaryCapturedPhoto,
     onRemoveSavedPhoto,
 }: {
-    projectDetail: LumiLaboMockProjectDetail;
+    projectDetail: LumiLabMockProjectDetail;
     temporaryCapturedPhotos: readonly ProjectCapturedPhoto[];
     onRemoveTemporaryCapturedPhoto: (photoId: string) => void;
     onRemoveSavedPhoto: (photoId: string) => void;
@@ -1612,7 +1612,7 @@ function SavedFilePreview({
     projectDetail,
     onRemoveSavedFile,
 }: {
-    projectDetail: LumiLaboMockProjectDetail;
+    projectDetail: LumiLabMockProjectDetail;
     onRemoveSavedFile: (fileId: string) => void;
 }) {
     if (projectDetail.savedFiles.length === 0) {
@@ -1660,15 +1660,15 @@ function ProjectRegisterPanel({ onBack, backTargetId }: BackActionProps) {
             <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-4 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
                 <header className="grid gap-1">
                     <p className="text-sm font-black text-yellow-800">
-                        {lumiLaboProjectItem.label}
+                        {lumiLabProjectItem.label}
                     </p>
                     <h1 className="text-2xl font-black leading-tight text-black sm:text-3xl">
-                        {lumiLaboProjectRegisterPanel.title}
+                        {lumiLabProjectRegisterPanel.title}
                     </h1>
                 </header>
 
                 <div className="grid gap-4 md:grid-cols-2 [@media(orientation:landscape)_and_(max-height:480px)]:gap-3">
-                    {lumiLaboProjectRegisterPanel.fields.map((field) => (
+                    {lumiLabProjectRegisterPanel.fields.map((field) => (
                         <ProjectRegisterField key={field.id} field={field} />
                     ))}
                 </div>
@@ -1679,18 +1679,18 @@ function ProjectRegisterPanel({ onBack, backTargetId }: BackActionProps) {
                         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-yellow-600 bg-yellow-300 px-5 text-lg font-black text-black shadow-sm shadow-yellow-900/20 transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
                     >
                         <FilePlus2 className="h-5 w-5" aria-hidden />
-                        <span>{lumiLaboProjectRegisterPanel.primaryActionLabel}</span>
+                        <span>{lumiLabProjectRegisterPanel.primaryActionLabel}</span>
                     </button>
                     <button
                         type="button"
-                        aria-label={lumiLaboProjectTopBackAccessibleLabel}
-                        title={lumiLaboProjectTopBackAccessibleLabel}
+                        aria-label={lumiLabProjectTopBackAccessibleLabel}
+                        title={lumiLabProjectTopBackAccessibleLabel}
                         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-5 text-lg font-black text-black transition hover:border-yellow-500 hover:bg-yellow-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 active:translate-y-px"
-                        data-lumilabo-back-target={backTargetId}
+                        data-lumilab-back-target={backTargetId}
                         onClick={onBack}
                     >
                         <ArrowLeft className="h-5 w-5" aria-hidden />
-                        <span>{lumiLaboProjectBackLabel}</span>
+                        <span>{lumiLabProjectBackLabel}</span>
                     </button>
                 </div>
             </div>
@@ -1701,9 +1701,9 @@ function ProjectRegisterPanel({ onBack, backTargetId }: BackActionProps) {
 function ProjectRegisterField({
     field,
 }: {
-    field: LumiLaboMockProjectRegisterField;
+    field: LumiLabMockProjectRegisterField;
 }) {
-    const controlId = `lumilabo-project-register-${field.id}`;
+    const controlId = `lumilab-project-register-${field.id}`;
     return (
         <div
             className={classNames(
@@ -1757,8 +1757,8 @@ function ProjectRegisterField({
 }
 
 function createProjectDetailDraft(
-    projectDetail: LumiLaboMockProjectDetail,
-): LumiLaboMockProjectDetailDraft {
+    projectDetail: LumiLabMockProjectDetail,
+): LumiLabMockProjectDetailDraft {
     return {
         companyName: projectDetail.companyName,
         contactName: projectDetail.contactName,
@@ -1768,8 +1768,8 @@ function createProjectDetailDraft(
 }
 
 function hasProjectDetailDraftChanged(
-    draft: LumiLaboMockProjectDetailDraft,
-    saved: LumiLaboMockProjectDetail,
+    draft: LumiLabMockProjectDetailDraft,
+    saved: LumiLabMockProjectDetail,
 ): boolean {
     return projectDetailTextFields.some((field) => draft[field.id] !== saved[field.id]);
 }
@@ -1817,9 +1817,9 @@ function removeProjectRecord<T>(
 }
 
 function removeProjectSession(
-    sessions: LumiLaboMockProjectSessionById,
+    sessions: LumiLabMockProjectSessionById,
     projectId: string,
-): LumiLaboMockProjectSessionById {
+): LumiLabMockProjectSessionById {
     return removeProjectRecord(sessions, projectId);
 }
 

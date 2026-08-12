@@ -38,7 +38,7 @@ const tabIcons = {
 } satisfies Record<IdeaBoardTabId, LucideIcon>;
 
 // 表示ComponentはタブとタグのUI状態だけを担当し、案件の業務判断は扱わない。
-export default function LumiLaboProjectIdeaBoardView() {
+export default function LumiLabProjectIdeaBoardView() {
     const [activeTabId, setActiveTabId] =
         useState<IdeaBoardTabId>('overview');
     const [activeTagIds, setActiveTagIds] =
@@ -57,10 +57,10 @@ export default function LumiLaboProjectIdeaBoardView() {
                 </span>
                 <div className="min-w-0">
                     <p className="text-sm font-semibold text-yellow-800 [@media(max-height:480px)]:sr-only">
-                        LumiLabo / ルミラボ IDEA BOARD
+                        LumiLab / ルミラボ IDEA BOARD
                     </p>
                     <h1 className="mt-1 text-xl font-semibold leading-tight text-black [@media(max-height:480px)]:text-lg sm:text-3xl">
-                        LumiLabo 案件システム IDEA BOARD
+                        LumiLab 案件システム IDEA BOARD
                     </h1>
                 </div>
             </header>
@@ -95,7 +95,7 @@ function TopTabBar({
     return (
         <nav
             className="flex-none overflow-hidden border-b border-neutral-200 bg-white px-2 py-1.5 [@media(max-height:480px)]:py-1 sm:px-3 sm:py-2"
-            aria-label="LumiLabo 案件システム IDEA BOARD 上位タブ"
+            aria-label="LumiLab 案件システム IDEA BOARD 上位タブ"
         >
             <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 sm:grid sm:grid-cols-4 sm:gap-1.5 sm:overflow-visible sm:pb-0 lg:grid-cols-7">
                 {ideaBoardTabs.map((tab) => {

@@ -48,7 +48,7 @@ class ProjectHubTest extends TestCase
             'dance-shorts-radar',
             'dance-shorts-analyzer',
             'japan-quake-wave-map',
-            'lumilabo',
+            'lumilab',
             'construction-order',
             'event-card-calendar',
         ] as $projectId) {
@@ -66,17 +66,17 @@ class ProjectHubTest extends TestCase
             );
 
         $this
-            ->get('/lab/lumilabo-project-idea-board')
+            ->get('/lab/lumilab-project-idea-board')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Lab/LumiLaboProjectIdeaBoard', false)
+                ->component('Lab/LumiLabProjectIdeaBoard', false)
             );
 
         $this
-            ->get('/lab/lumilabo-project-mock')
+            ->get('/lab/lumilab-project-mock')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Lab/LumiLaboProjectMock', false)
+                ->component('Lab/LumiLabProjectMock', false)
             );
 
         $this
@@ -94,11 +94,11 @@ class ProjectHubTest extends TestCase
             );
     }
 
-    public function test_old_lumilabo_project_create_idea_board_url_redirects_to_project_system_idea_board(): void
+    public function test_old_lumilab_project_create_idea_board_url_redirects_to_project_system_idea_board(): void
     {
         $this
-            ->get('/lab/lumilabo-project-create-idea-board')
-            ->assertRedirect('/lab/lumilabo-project-idea-board');
+            ->get('/lab/lumilab-project-create-idea-board')
+            ->assertRedirect('/lab/lumilab-project-idea-board');
     }
 
     public function test_legacy_lab_entrypoint_and_compatibility_urls_are_removed(): void

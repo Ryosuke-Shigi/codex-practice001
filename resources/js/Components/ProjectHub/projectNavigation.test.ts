@@ -54,17 +54,17 @@ const parseCases: ParseCase[] = [
     },
     {
         name: 'duplicate project',
-        url: '/projects?project=api-discovery-hub&project=lumilabo',
+        url: '/projects?project=api-discovery-hub&project=lumilab',
         expected: invalidUrl(),
     },
     {
         name: 'duplicate view',
-        url: '/projects?project=lumilabo&view=stages&view=stages',
+        url: '/projects?project=lumilab&view=stages&view=stages',
         expected: invalidUrl(),
     },
     {
         name: 'invalid view',
-        url: '/projects?project=lumilabo&view=modules',
+        url: '/projects?project=lumilab&view=modules',
         expected: invalidUrl(),
     },
     {
@@ -74,15 +74,15 @@ const parseCases: ParseCase[] = [
     },
     {
         name: 'unknown query key',
-        url: '/projects?project=lumilabo&tab=stages',
+        url: '/projects?project=lumilab&tab=stages',
         expected: invalidUrl(),
     },
     {
         name: 'non-canonical valid query order',
-        url: '/projects?view=stages&project=lumilabo',
+        url: '/projects?view=stages&project=lumilab',
         expected: {
-            state: { screen: 'stage-select', projectId: 'lumilabo' },
-            canonicalHref: '/projects?project=lumilabo&view=stages',
+            state: { screen: 'stage-select', projectId: 'lumilab' },
+            canonicalHref: '/projects?project=lumilab&view=stages',
             shouldCanonicalize: true,
         },
     },

@@ -222,7 +222,7 @@ Graphic Builder UIは、ユーザーが見た目や配置を編集できるよ�
 
 Effectsは操作UIや業務処理から分離します。Graphic Web UIであっても、Effectsへ保存処理、API通信、権限判断を入れません。
 
-## LumiLaboへの適用例
+## LumiLabへの適用例
 
 次は分類例です。実装済みroute、実装済みディレクトリ、実装済み機能を示すものではありません。
 
@@ -235,38 +235,38 @@ Effectsは操作UIや業務処理から分離します。Graphic Web UIであっ
 想定route例:
 
 ```text
-/lab/lumilabo
-/lab/lumilabo/projects
-/lab/lumilabo/projects/create
-/lab/lumilabo/projects/{id}
+/lab/lumilab
+/lab/lumilab/projects
+/lab/lumilab/projects/create
+/lab/lumilab/projects/{id}
 ```
 
 推奨ディレクトリ例:
 
 ```text
-resources/js/Features/LumiLabo/Web/
-resources/js/Features/LumiLabo/Web/Pages/
-resources/js/Features/LumiLabo/Web/Sections/
-resources/js/Features/LumiLabo/Web/Blocks/
-resources/js/Features/LumiLabo/Web/Visuals/
-resources/js/Features/LumiLabo/Web/Copy/
-resources/js/Features/LumiLabo/Web/Theme/
+resources/js/Features/LumiLab/Web/
+resources/js/Features/LumiLab/Web/Pages/
+resources/js/Features/LumiLab/Web/Sections/
+resources/js/Features/LumiLab/Web/Blocks/
+resources/js/Features/LumiLab/Web/Visuals/
+resources/js/Features/LumiLab/Web/Copy/
+resources/js/Features/LumiLab/Web/Theme/
 
-resources/js/Features/LumiLabo/System/
-resources/js/Features/LumiLabo/System/Pages/
-resources/js/Features/LumiLabo/System/Hooks/
-resources/js/Features/LumiLabo/System/Components/
-resources/js/Features/LumiLabo/System/Fields/
-resources/js/Features/LumiLabo/System/Types/
-resources/js/Features/LumiLabo/System/constants/
+resources/js/Features/LumiLab/System/
+resources/js/Features/LumiLab/System/Pages/
+resources/js/Features/LumiLab/System/Hooks/
+resources/js/Features/LumiLab/System/Components/
+resources/js/Features/LumiLab/System/Fields/
+resources/js/Features/LumiLab/System/Types/
+resources/js/Features/LumiLab/System/constants/
 
-resources/js/Features/LumiLabo/Builder/
-resources/js/Features/LumiLabo/Builder/Pages/
-resources/js/Features/LumiLabo/Builder/Components/
-resources/js/Features/LumiLabo/Builder/Renderer/
-resources/js/Features/LumiLabo/Builder/Hooks/
-resources/js/Features/LumiLabo/Builder/Types/
-resources/js/Features/LumiLabo/Builder/constants/
+resources/js/Features/LumiLab/Builder/
+resources/js/Features/LumiLab/Builder/Pages/
+resources/js/Features/LumiLab/Builder/Components/
+resources/js/Features/LumiLab/Builder/Renderer/
+resources/js/Features/LumiLab/Builder/Hooks/
+resources/js/Features/LumiLab/Builder/Types/
+resources/js/Features/LumiLab/Builder/constants/
 ```
 
 上記は設計例です。既存構成と衝突する場合は既存構成を優先し、docs内では例として扱います。今回のdocs追加だけで、このディレクトリを実装として作成する必要はありません。

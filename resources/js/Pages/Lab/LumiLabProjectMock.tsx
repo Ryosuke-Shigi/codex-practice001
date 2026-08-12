@@ -1,34 +1,34 @@
 import { Head, Link } from '@inertiajs/react';
 
-import LumiLaboProjectMockView from '@/Components/Lab/LumiLaboProjectMock/LumiLaboProjectMockView';
-import type { LumiLaboMockProjectList } from '@/Components/Lab/LumiLaboProjectMock/types';
+import LumiLabProjectMockView from '@/Components/Lab/LumiLabProjectMock/LumiLabProjectMockView';
+import type { LumiLabMockProjectList } from '@/Components/Lab/LumiLabProjectMock/types';
 import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import PublicLayout from '@/Layouts/PublicLayout';
 
-const lumiLaboReturn = getStageProjectReturnLink('lumilabo');
+const lumiLabReturn = getStageProjectReturnLink('lumilab');
 
-type LumiLaboProjectMockProps = {
-    projectList: LumiLaboMockProjectList;
+type LumiLabProjectMockProps = {
+    projectList: LumiLabMockProjectList;
 };
 
-export default function LumiLaboProjectMock({
+export default function LumiLabProjectMock({
     projectList,
-}: LumiLaboProjectMockProps) {
+}: LumiLabProjectMockProps) {
     return (
         <PublicLayout
             className="h-dvh overflow-hidden bg-white text-black"
             effectIntensity="subtle"
         >
-            <Head title="LumiLabo MOCK" />
+            <Head title="LumiLab MOCK" />
             <Link
-                href={lumiLaboReturn.href}
+                href={lumiLabReturn.href}
                 className="fixed right-2 top-2 z-50 inline-flex min-h-9 items-center justify-center rounded-lg border border-neutral-300 bg-white/95 px-3 text-xs font-semibold text-black shadow-sm transition hover:border-yellow-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500"
-                aria-label={lumiLaboReturn.ariaLabel}
-                title={lumiLaboReturn.title}
+                aria-label={lumiLabReturn.ariaLabel}
+                title={lumiLabReturn.title}
             >
-                {lumiLaboReturn.label}
+                {lumiLabReturn.label}
             </Link>
-            <LumiLaboProjectMockView projectList={projectList} />
+            <LumiLabProjectMockView projectList={projectList} />
         </PublicLayout>
     );
 }

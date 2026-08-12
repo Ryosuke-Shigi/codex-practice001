@@ -1,14 +1,14 @@
 <?php
 
-namespace App\DTO\LumiLabo;
+namespace App\DTO\LumiLab;
 
 /**
- * LumiLabo 案件一覧 MOCK の readonly item DTO を固定定義順のまま運ぶ ListDTO です。
+ * LumiLab 案件一覧 MOCK の readonly item DTO を固定定義順のまま運ぶ ListDTO です。
  */
-final readonly class LumiLaboProjectMockListDTO
+final readonly class LumiLabProjectMockListDTO
 {
     /**
-     * @param  array<int, LumiLaboProjectMockItemDTO>  $items
+     * @param  array<int, LumiLabProjectMockItemDTO>  $items
      */
     public function __construct(
         public array $items,
@@ -21,7 +21,7 @@ final readonly class LumiLaboProjectMockListDTO
     {
         return [
             'items' => array_map(
-                fn (LumiLaboProjectMockItemDTO $item): array => $item->toArray(),
+                fn (LumiLabProjectMockItemDTO $item): array => $item->toArray(),
                 $this->items,
             ),
         ];

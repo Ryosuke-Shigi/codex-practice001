@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Actions\LumiLabo\Queries;
+namespace App\Actions\LumiLab\Queries;
 
-use App\DTO\LumiLabo\LumiLaboProjectMockItemDTO;
-use App\DTO\LumiLabo\LumiLaboProjectMockListDTO;
+use App\DTO\LumiLab\LumiLabProjectMockItemDTO;
+use App\DTO\LumiLab\LumiLabProjectMockListDTO;
 
 /**
- * LumiLabo 案件一覧 MOCK の固定20件を readonly item DTO の ListDTO として返す Query Action です。
+ * LumiLab 案件一覧 MOCK の固定20件を readonly item DTO の ListDTO として返す Query Action です。
  *
  * DB、外部 API、本番 CRUD には接続しません。
  */
-final readonly class GetLumiLaboProjectMockListAction
+final readonly class GetLumiLabProjectMockListAction
 {
     /**
      * @var array<int, array{id: string, companyName: string, contactName: string, address: string, memo: string, registeredDate: string}>
@@ -178,10 +178,10 @@ final readonly class GetLumiLaboProjectMockListAction
         ],
     ];
 
-    public function execute(): LumiLaboProjectMockListDTO
+    public function execute(): LumiLabProjectMockListDTO
     {
-        return new LumiLaboProjectMockListDTO(array_map(
-            fn (array $project): LumiLaboProjectMockItemDTO => new LumiLaboProjectMockItemDTO(...$project),
+        return new LumiLabProjectMockListDTO(array_map(
+            fn (array $project): LumiLabProjectMockItemDTO => new LumiLabProjectMockItemDTO(...$project),
             self::PROJECTS,
         ));
     }

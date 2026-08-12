@@ -1,11 +1,11 @@
 <?php
 
-namespace App\DTO\LumiLabo;
+namespace App\DTO\LumiLab;
 
 /**
- * LumiLabo 案件一覧 MOCK の固定データ1件を運ぶ readonly DTO です。
+ * LumiLab 案件一覧 MOCK の固定データ1件を運ぶ readonly DTO です。
  */
-final readonly class LumiLaboProjectMockItemDTO
+final readonly class LumiLabProjectMockItemDTO
 {
     public function __construct(
         public string $id,
