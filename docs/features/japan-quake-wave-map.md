@@ -33,6 +33,8 @@ insert / updateされたentry IDだけ個別XML取得
 map pin生成条件を判定
     ↓
 保存・status更新
+    ↓
+一時失敗IDだけを有限回数でQueue retry
 ```
 
 ## feed entry
@@ -48,6 +50,7 @@ map pin生成条件を判定
 - insert / update / skipを分ける
 - 同じentryを重複保存しない
 - insert / updateされた保存済みentry IDだけを個別XML・map pin段階へ渡す
+- 1 feed内の保存はatomicにし、一部entry失敗時に新しいcutoffだけが保存される状態を残さない
 - insert / updateが0件なら、個別XML取得とmap pin生成を実行せず両runを完了扱いにする
 - 取得失敗・解析失敗を成功扱いしない
 - 気象庁XML feed取得は単発取得としてAPI連携ログを発火し、map pin生成run内の個別XML取得は成功・skipped・failed分類ごとにAPI連携ログを集約する
@@ -101,6 +104,14 @@ skippedとして扱うもの:
 
 差分更新されたentryがXML URLなし、または地図ピン対象外になった場合は、同じ `source_entry_id` の古いpinを削除します。個別XMLの一時的な取得失敗・解析失敗では既存pinを削除しません。
 
+限定retryの分類:
+
+- retryable: HTTP 429、5xx、connection / DNS / TLS / timeout、404、空body、XML parse failure
+- terminal skipped: XML URLなし、JMA以外のURL、正常解析後のnot-mappable
+- terminal failed: 上記以外のHTTP error
+
+retryableなentry IDはpublic status APIへ出さず、既存 `SyncEarthquakeMapPinsJob` のpayloadだけに保持します。1回目を60秒後、2回目を180秒後に対象IDだけ再処理し、成功済みやterminal対象は再取得しません。
+
 ## Job・処理状態
 
 Jobでは同期処理を実行し、成功・失敗・部分失敗を区別します。
@@ -117,6 +128,8 @@ Jobでは同期処理を実行し、成功・失敗・部分失敗を区別し�
 JobへXML解析や業務判断本体を詰め込まず、Action / Serviceへ委譲します。
 
 Schedulerと画面の手動更新は同じ統合Jobを投入します。統合Jobには共有の重複実行防止キーを設定し、同時に実行される統合更新は1件だけにします。重なったJobは破棄せず30秒後に再試行し、重複待機のattempt回数では失敗させません。統合処理本体で例外が発生した場合は1回でfailedにします。
+
+限定retry Jobも同じ共有キーを使い、Scheduler・手動更新・retry間で個別XML処理を同時実行しません。Queueの再配送はJob timeout後になるよう、Redis / database connectionの `retry_after` 既定値は720秒、Job timeoutは統合600秒・map pin 300秒とします。runtimeでenv overrideする場合も `retry_after` を対象Job timeoutより大きく保ちます。
 
 ## Artisan Command / Scheduler
 
@@ -191,6 +204,7 @@ Request validationで固定する主な内容:
 - 保存・更新・重複回避
 - insert / updateされたentry IDだけを後段処理する
 - 更新後に地図対象外となったentryの古いpinを削除する
+- 一時失敗したentryだけを有限retryし、成功済み・terminal対象を再取得しない
 
 ### Job / Action
 
@@ -200,6 +214,7 @@ Request validationで固定する主な内容:
 - feed completed / map pin failed等の状態管理
 - 再実行時の安全性
 - Schedulerと手動更新が重なっても統合Jobを同時実行しない
+- retry Jobも統合Jobと同じlockを使い、最大2回のbackoffで終端状態になる
 - `earthquake:refresh-map` が既存の統合更新Actionを呼び、Queue経由で一括更新Jobを投入する
 - Scheduler の `earthquake-map-refresh` が3分ごとに `earthquake:refresh-map` を呼ぶ
 

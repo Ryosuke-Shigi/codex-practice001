@@ -212,7 +212,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         );
     }
 
-    public function test_sync_skips_detail_xml_404_empty_body_and_rejected_url_without_error_log(): void
+    public function test_sync_retries_detail_xml_404_and_empty_body_but_keeps_rejected_url_terminal(): void
     {
         Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
 
@@ -253,20 +253,21 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $result = $service->sync(88);
 
         $this->assertSame(3, $result->totalCount);
-        $this->assertSame(3, $result->skippedCount);
-        $this->assertSame(0, $result->failedCount);
+        $this->assertSame(1, $result->skippedCount);
+        $this->assertSame(2, $result->failedCount);
+        $this->assertSame([201, 202], $result->retryableSourceEntryIds);
         $this->assertSame(0, $result->insertedCount);
-        Event::assertNotDispatched(ApplicationErrorOccurred::class);
+        Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 2);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 3);
         Event::assertDispatched(
             ApplicationIntegrationLogged::class,
-            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'failed'
                 && $event->responseStatus === 404
                 && str_contains((string) $event->message, '分類: 404'),
         );
         Event::assertDispatched(
             ApplicationIntegrationLogged::class,
-            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'failed'
                 && $event->responseStatus === 200
                 && str_contains((string) $event->message, '分類: empty_body'),
         );
@@ -345,6 +346,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(6, $result->totalCount);
         $this->assertSame(0, $result->skippedCount);
         $this->assertSame(6, $result->failedCount);
+        $this->assertSame([301, 302, 303, 304, 305], $result->retryableSourceEntryIds);
         Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 4);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 4);
         Event::assertDispatched(
@@ -421,6 +423,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(2, $result->totalCount);
         $this->assertSame(0, $result->skippedCount);
         $this->assertSame(2, $result->failedCount);
+        $this->assertSame([401, 402], $result->retryableSourceEntryIds);
         Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 1);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
         Event::assertDispatched(

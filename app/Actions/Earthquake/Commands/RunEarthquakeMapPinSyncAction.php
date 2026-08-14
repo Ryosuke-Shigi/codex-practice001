@@ -20,9 +20,9 @@ final readonly class RunEarthquakeMapPinSyncAction
         private EarthquakeMapPinBuildService $buildService,
     ) {}
 
-    public function execute(int $syncRunId): void
+    public function execute(int $syncRunId): EarthquakeMapPinSyncResultDTO
     {
-        $this->executeBuild(
+        return $this->executeBuild(
             $syncRunId,
             fn (): EarthquakeMapPinSyncResultDTO => $this->buildService->sync($syncRunId),
         );
@@ -31,16 +31,16 @@ final readonly class RunEarthquakeMapPinSyncAction
     /**
      * @param  array<int, int>  $sourceEntryIds
      */
-    public function executeEntries(int $syncRunId, array $sourceEntryIds): void
+    public function executeEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
     {
-        $this->executeBuild(
+        return $this->executeBuild(
             $syncRunId,
             fn (): EarthquakeMapPinSyncResultDTO => $this->buildService->syncEntries($syncRunId, $sourceEntryIds),
         );
     }
 
     /** @param callable(): EarthquakeMapPinSyncResultDTO $build */
-    private function executeBuild(int $syncRunId, callable $build): void
+    private function executeBuild(int $syncRunId, callable $build): EarthquakeMapPinSyncResultDTO
     {
         $this->syncRunRepository->markRunning($syncRunId);
 
@@ -53,5 +53,7 @@ final readonly class RunEarthquakeMapPinSyncAction
         }
 
         $this->syncRunRepository->markCompleted($syncRunId, $result);
+
+        return $result;
     }
 }

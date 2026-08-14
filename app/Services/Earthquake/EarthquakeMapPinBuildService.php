@@ -102,6 +102,7 @@ class EarthquakeMapPinBuildService
         $pins = [];
         $skippedCount = 0;
         $failedCount = 0;
+        $retryableSourceEntryIds = [];
         $failureSummaries = [];
         /*
          * 個別XML取得は run 内で多数発生するため、Repository では発火せず、
@@ -126,6 +127,7 @@ class EarthquakeMapPinBuildService
                  */
                 $transport = $this->detailXmlRepository->fetch($xmlUrl);
             } catch (Throwable $exception) {
+                $this->addRetryableSourceEntryId($retryableSourceEntryIds, $sourceEntry);
                 $this->recordDetailXmlIntegrationSummary(
                     collector: $integrationSummaries,
                     status: 'failed',
@@ -169,6 +171,10 @@ class EarthquakeMapPinBuildService
             }
 
             if ($transportClassification['outcome'] === self::TRANSPORT_OUTCOME_FAILED) {
+                if (($transportClassification['retryable'] ?? false) === true) {
+                    $this->addRetryableSourceEntryId($retryableSourceEntryIds, $sourceEntry);
+                }
+
                 $this->recordDetailXmlIntegrationSummary(
                     collector: $integrationSummaries,
                     status: 'failed',
@@ -213,8 +219,8 @@ class EarthquakeMapPinBuildService
                 /*
                  * 緯度経度などが取れない電文は「ピン化対象外」としてskippedに数え、
                  * 同じsource entryの古いpinが残らないよう削除します。
-                 * 一時的な取得失敗や解析失敗では既存pinを削除せず、feed entryの再更新時または
-                 * 単独のmap pin同期で再評価できる状態を保ちます。
+                 * 一時的な取得失敗や解析失敗では既存pinを削除せず、対象ID限定の
+                 * Queue retryへ渡して通常の自動更新内で再評価できる状態を保ちます。
                  */
                 if (! $this->detailXmlParseService->isMappable($pin)) {
                     $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
@@ -228,6 +234,7 @@ class EarthquakeMapPinBuildService
                 $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                 $skippedCount++;
             } catch (Throwable $exception) {
+                $this->addRetryableSourceEntryId($retryableSourceEntryIds, $sourceEntry);
                 $this->addFailureSummary(
                     failureSummaries: $failureSummaries,
                     message: '気象庁 個別XMLを解析できず、地図ピンに追加できませんでした。',
@@ -265,6 +272,7 @@ class EarthquakeMapPinBuildService
             errorMessage: null,
             startedAt: $startedAt,
             finishedAt: CarbonImmutable::now(),
+            retryableSourceEntryIds: $retryableSourceEntryIds,
         );
     }
 
@@ -282,6 +290,7 @@ class EarthquakeMapPinBuildService
                 'classification' => 'url_rejected',
                 'statusCode' => null,
                 'reason' => self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE,
+                'retryable' => false,
             ];
         }
 
@@ -295,25 +304,28 @@ class EarthquakeMapPinBuildService
                 'classification' => 'success',
                 'statusCode' => $statusCode,
                 'reason' => 'success',
+                'retryable' => false,
             ];
         }
 
         if ($statusCode === 404) {
-            return [
-                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
-                'classification' => '404',
-                'statusCode' => $statusCode,
-                'reason' => $this->failureReason($errorMessage, '404'),
-            ];
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_FETCH_FAILED,
+                classification: '404',
+                statusCode: $statusCode,
+                reason: $errorMessage,
+                retryable: true,
+            );
         }
 
         if ($statusCode !== null && $statusCode >= 200 && $statusCode < 300 && ! $hasBody) {
-            return [
-                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
-                'classification' => 'empty_body',
-                'statusCode' => $statusCode,
-                'reason' => $this->failureReason($errorMessage, 'empty_body'),
-            ];
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_FETCH_FAILED,
+                classification: 'empty_body',
+                statusCode: $statusCode,
+                reason: $errorMessage,
+                retryable: true,
+            );
         }
 
         if ($statusCode === 429) {
@@ -322,6 +334,7 @@ class EarthquakeMapPinBuildService
                 classification: '429',
                 statusCode: $statusCode,
                 reason: $errorMessage,
+                retryable: true,
             );
         }
 
@@ -331,6 +344,7 @@ class EarthquakeMapPinBuildService
                 classification: '5xx',
                 statusCode: $statusCode,
                 reason: $errorMessage,
+                retryable: true,
             );
         }
 
@@ -340,6 +354,7 @@ class EarthquakeMapPinBuildService
                 classification: 'connection_failed',
                 statusCode: null,
                 reason: $errorMessage,
+                retryable: true,
             );
         }
 
@@ -348,6 +363,7 @@ class EarthquakeMapPinBuildService
             classification: 'http_error',
             statusCode: $statusCode,
             reason: $errorMessage,
+            retryable: false,
         );
     }
 
@@ -359,6 +375,7 @@ class EarthquakeMapPinBuildService
         string $classification,
         ?int $statusCode,
         ?string $reason,
+        bool $retryable,
     ): array {
         return [
             'outcome' => self::TRANSPORT_OUTCOME_FAILED,
@@ -366,7 +383,23 @@ class EarthquakeMapPinBuildService
             'classification' => $classification,
             'statusCode' => $statusCode,
             'reason' => $this->failureReason($reason, $classification),
+            'retryable' => $retryable,
         ];
+    }
+
+    /**
+     * @param  array<int, int>  $retryableSourceEntryIds
+     * @param  array<string, mixed>  $sourceEntry
+     */
+    private function addRetryableSourceEntryId(array &$retryableSourceEntryIds, array $sourceEntry): void
+    {
+        $sourceEntryId = $sourceEntry['id'] ?? null;
+
+        if (! is_int($sourceEntryId) || in_array($sourceEntryId, $retryableSourceEntryIds, true)) {
+            return;
+        }
+
+        $retryableSourceEntryIds[] = $sourceEntryId;
     }
 
     /**

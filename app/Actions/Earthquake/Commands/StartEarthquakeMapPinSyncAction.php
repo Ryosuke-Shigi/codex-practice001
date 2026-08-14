@@ -7,6 +7,7 @@ use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use RuntimeException;
+use Throwable;
 
 /**
  * QuakeWave Preview の map pin 生成同期を開始する Command Action です。
@@ -15,6 +16,14 @@ use RuntimeException;
  */
 final readonly class StartEarthquakeMapPinSyncAction
 {
+    private const MAX_RETRY_ATTEMPTS = 2;
+
+    /** @var array<int, int> */
+    private const RETRY_BACKOFF_SECONDS = [
+        1 => 60,
+        2 => 180,
+    ];
+
     public function __construct(
         private EarthquakeMapPinSyncRunRepositoryInterface $syncRunRepository,
         private EarthquakeMapPinRepositoryInterface $mapPinRepository,
@@ -47,11 +56,41 @@ final readonly class StartEarthquakeMapPinSyncAction
         $syncRunId = $this->syncRunRepository->createPending();
 
         /*
-         * Job payload は syncRunId のみに限定します。
-         * 対象entry一覧は Job 実行時点のDBから Service が読み直すため、POST時点の古い配列や
-         * XML本文を Queue に積まずに済みます。
+         * 通常のfull syncはJob payloadにsyncRunIdだけを持ち、対象entryは実行時にDBから読みます。
+         * retry時だけは一時失敗したIDをpayloadへ固定し、全対象を再取得しません。
          */
         SyncEarthquakeMapPinsJob::dispatch($syncRunId);
+
+        return $syncRunId;
+    }
+
+    /**
+     * 一時失敗したentryだけの次回runを有限回数で開始します。
+     *
+     * @param  array<int, int>  $sourceEntryIds
+     */
+    public function executeRetryableEntries(array $sourceEntryIds, int $completedRetryAttempt = 0): ?int
+    {
+        $sourceEntryIds = array_values(array_unique(array_filter(
+            $sourceEntryIds,
+            fn (mixed $sourceEntryId): bool => is_int($sourceEntryId) && $sourceEntryId > 0,
+        )));
+
+        if ($sourceEntryIds === [] || $completedRetryAttempt >= self::MAX_RETRY_ATTEMPTS) {
+            return null;
+        }
+
+        $nextRetryAttempt = $completedRetryAttempt + 1;
+        $syncRunId = $this->createPendingRun();
+
+        try {
+            SyncEarthquakeMapPinsJob::dispatch($syncRunId, $sourceEntryIds, $nextRetryAttempt)
+                ->delay(self::RETRY_BACKOFF_SECONDS[$nextRetryAttempt]);
+        } catch (Throwable $exception) {
+            $this->syncRunRepository->markFailed($syncRunId, $exception->getMessage());
+
+            throw $exception;
+        }
 
         return $syncRunId;
     }
@@ -67,5 +106,14 @@ final readonly class StartEarthquakeMapPinSyncAction
             syncRunId: $syncRunId,
             syncStatus: $this->syncRunRepository->findResult($syncRunId),
         );
+    }
+
+    private function createPendingRun(): int
+    {
+        if (! $this->syncRunRepository->isStorageReady() || ! $this->mapPinRepository->isStorageReady()) {
+            throw new RuntimeException('Earthquake map pin sync storage is not ready. Run migrations.');
+        }
+
+        return $this->syncRunRepository->createPending();
     }
 }

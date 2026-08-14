@@ -3,6 +3,7 @@
 namespace App\Jobs\Earthquake;
 
 use App\Actions\Earthquake\Commands\RunEarthquakeMapRefreshAction;
+use App\Actions\Earthquake\Commands\StartEarthquakeMapPinSyncAction;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
@@ -54,13 +55,17 @@ class RefreshEarthquakeMapDataJob implements ShouldQueue
         ];
     }
 
-    public function handle(RunEarthquakeMapRefreshAction $action): void
-    {
+    public function handle(
+        RunEarthquakeMapRefreshAction $action,
+        ?StartEarthquakeMapPinSyncAction $retryAction = null,
+    ): void {
         /*
          * Job payload は2つのsyncRunIdだけです。
          * XML取得、解析、DB保存、状態run更新の手順は Action / Service / Repository へ委譲します。
          */
-        $action->execute($this->feedEntrySyncRunId, $this->mapPinSyncRunId);
+        $result = $action->execute($this->feedEntrySyncRunId, $this->mapPinSyncRunId);
+
+        $retryAction?->executeRetryableEntries($result->retryableSourceEntryIds);
     }
 
     public function failed(?Throwable $exception): void

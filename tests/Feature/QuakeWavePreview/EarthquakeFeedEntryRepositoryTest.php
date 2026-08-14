@@ -7,6 +7,7 @@ use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\Models\EarthquakeFeedEntry;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Tests\TestCase;
 
 class EarthquakeFeedEntryRepositoryTest extends TestCase
@@ -17,15 +18,29 @@ class EarthquakeFeedEntryRepositoryTest extends TestCase
     {
         $repository = app(EarthquakeFeedEntryRepositoryInterface::class);
 
+        try {
+            $repository->upsertFromExtractedEntries(new EarthquakeExtractedEntryListDTO([
+                $this->entry(id: 'urn:jma:earthquake:1', title: '震源・震度に関する情報'),
+                $this->entry(id: '', title: 'IDなし'),
+                $this->entry(id: 'urn:jma:earthquake:newer', title: 'より新しい地震情報', updatedAt: '2026-05-11T08:40:00+09:00'),
+            ]));
+
+            $this->fail('A partially failed feed batch must be rolled back.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Feed entry ID is missing.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('earthquake_feed_entries', 0);
+
         $insertResult = $repository->upsertFromExtractedEntries(new EarthquakeExtractedEntryListDTO([
             $this->entry(id: 'urn:jma:earthquake:1', title: '震源・震度に関する情報'),
-            $this->entry(id: '', title: 'IDなし'),
+            $this->entry(id: 'urn:jma:earthquake:newer', title: 'より新しい地震情報', updatedAt: '2026-05-11T08:40:00+09:00'),
         ]));
 
         $this->assertSame(2, $insertResult['totalCount']);
-        $this->assertSame(1, $insertResult['insertedCount']);
-        $this->assertSame(1, $insertResult['failedCount']);
-        $this->assertDatabaseCount('earthquake_feed_entries', 1);
+        $this->assertSame(2, $insertResult['insertedCount']);
+        $this->assertSame(0, $insertResult['failedCount']);
+        $this->assertDatabaseCount('earthquake_feed_entries', 2);
         $this->assertDatabaseHas('earthquake_feed_entries', [
             'entry_id' => 'urn:jma:earthquake:1',
             'title' => '震源・震度に関する情報',
@@ -39,7 +54,7 @@ class EarthquakeFeedEntryRepositoryTest extends TestCase
         $this->assertSame(0, $skipResult['insertedCount']);
         $this->assertSame(0, $skipResult['updatedCount']);
         $this->assertSame(1, $skipResult['skippedCount']);
-        $this->assertDatabaseCount('earthquake_feed_entries', 1);
+        $this->assertDatabaseCount('earthquake_feed_entries', 2);
 
         $updateResult = $repository->upsertFromExtractedEntries(new EarthquakeExtractedEntryListDTO([
             $this->entry(
@@ -51,7 +66,7 @@ class EarthquakeFeedEntryRepositoryTest extends TestCase
 
         $this->assertSame(0, $updateResult['insertedCount']);
         $this->assertSame(1, $updateResult['updatedCount']);
-        $this->assertDatabaseCount('earthquake_feed_entries', 1);
+        $this->assertDatabaseCount('earthquake_feed_entries', 2);
         $this->assertDatabaseHas('earthquake_feed_entries', [
             'entry_id' => 'urn:jma:earthquake:1',
             'title' => '震源・震度に関する続報',

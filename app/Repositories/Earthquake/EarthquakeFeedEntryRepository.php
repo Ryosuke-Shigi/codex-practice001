@@ -7,7 +7,9 @@ use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\Models\EarthquakeFeedEntry;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -41,23 +43,21 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
          * Repository は保存と取得の境界だけを担当します。
          * 「地震entryとして採用するか」の判断は EarthquakeEntryExtractService 済みなので、
          * ここでは entry_id unique を基準に DB 行へ反映することだけを扱います。
+         * batch途中の失敗でcutoffだけが進まないよう、1 feed分の保存はatomicにします。
          */
-        $totalCount = $entries->count();
-        $insertedCount = 0;
-        $updatedCount = 0;
-        $skippedCount = 0;
-        $failedCount = 0;
-        $changedEntryIds = [];
-        $fetchedAt = CarbonImmutable::now();
+        return DB::transaction(function () use ($entries): array {
+            $totalCount = $entries->count();
+            $insertedCount = 0;
+            $updatedCount = 0;
+            $skippedCount = 0;
+            $changedEntryIds = [];
+            $fetchedAt = CarbonImmutable::now();
 
-        foreach ($entries->items as $entry) {
-            if (trim($entry->id) === '') {
-                $failedCount++;
+            foreach ($entries->items as $entry) {
+                if (trim($entry->id) === '') {
+                    throw new RuntimeException('Feed entry ID is missing.');
+                }
 
-                continue;
-            }
-
-            try {
                 $attributes = $this->attributesFromEntry($entry, $fetchedAt);
                 $existing = EarthquakeFeedEntry::query()
                     ->where('entry_id', $entry->id)
@@ -91,19 +91,17 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
                 $existing->save();
                 $changedEntryIds[] = (int) $existing->getKey();
                 $updatedCount++;
-            } catch (Throwable) {
-                $failedCount++;
             }
-        }
 
-        return [
-            'totalCount' => $totalCount,
-            'insertedCount' => $insertedCount,
-            'updatedCount' => $updatedCount,
-            'skippedCount' => $skippedCount,
-            'failedCount' => $failedCount,
-            'changedEntryIds' => $changedEntryIds,
-        ];
+            return [
+                'totalCount' => $totalCount,
+                'insertedCount' => $insertedCount,
+                'updatedCount' => $updatedCount,
+                'skippedCount' => $skippedCount,
+                'failedCount' => 0,
+                'changedEntryIds' => $changedEntryIds,
+            ];
+        });
     }
 
     /**
