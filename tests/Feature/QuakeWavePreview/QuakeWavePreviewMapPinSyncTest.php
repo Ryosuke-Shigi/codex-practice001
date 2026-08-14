@@ -193,6 +193,173 @@ class QuakeWavePreviewMapPinSyncTest extends TestCase
         $this->assertNotNull($status->finishedAt);
     }
 
+    public function test_map_pin_sync_job_dispatches_only_retryable_entries_with_finite_backoff(): void
+    {
+        Queue::fake();
+        $repository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $syncRunId = $repository->createPending();
+        $buildService = new class extends EarthquakeMapPinBuildService
+        {
+            /** @var array<int, int> */
+            public array $receivedSourceEntryIds = [];
+
+            public function __construct() {}
+
+            public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
+            {
+                $this->receivedSourceEntryIds = $sourceEntryIds;
+
+                return new EarthquakeMapPinSyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 3,
+                    insertedCount: 1,
+                    updatedCount: 0,
+                    skippedCount: 0,
+                    failedCount: 2,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                    retryableSourceEntryIds: [41, 42],
+                );
+            }
+        };
+        $action = new RunEarthquakeMapPinSyncAction($repository, $buildService);
+
+        (new SyncEarthquakeMapPinsJob($syncRunId, [41, 42, 43], 0))->handle(
+            $action,
+            app(StartEarthquakeMapPinSyncAction::class),
+        );
+
+        $this->assertSame([41, 42, 43], $buildService->receivedSourceEntryIds);
+        Queue::assertPushed(
+            SyncEarthquakeMapPinsJob::class,
+            fn (SyncEarthquakeMapPinsJob $job): bool => $job->sourceEntryIds === [41, 42]
+                && $job->retryAttempt === 1
+                && $job->delay === 60,
+        );
+
+        Queue::fake();
+        $terminalRunId = $repository->createPending();
+
+        (new SyncEarthquakeMapPinsJob($terminalRunId, [41, 42], 2))->handle(
+            $action,
+            app(StartEarthquakeMapPinSyncAction::class),
+        );
+
+        Queue::assertNothingPushed();
+        $terminalStatus = $repository->findResult($terminalRunId);
+        $this->assertNotNull($terminalStatus);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $terminalStatus->status);
+        $this->assertSame(2, $terminalStatus->failedCount);
+    }
+
+    public function test_retry_dispatch_failure_marks_the_new_run_as_failed(): void
+    {
+        Queue::shouldReceive('connection')->once()->andThrow(new RuntimeException('Queue unavailable.'));
+
+        try {
+            app(StartEarthquakeMapPinSyncAction::class)->executeRetryableEntries([41], 0);
+            $this->fail('Retry dispatch failure should be rethrown.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Queue unavailable.', $exception->getMessage());
+        }
+
+        $repository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $status = $repository->findResult(1);
+
+        $this->assertNotNull($status);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_FAILED, $status->status);
+        $this->assertSame(1, $status->failedCount);
+        $this->assertSame('Queue unavailable.', $status->errorMessage);
+    }
+
+    public function test_limited_retry_recovers_failed_entry_without_refetching_successful_entry(): void
+    {
+        Queue::fake();
+        $retryEntry = $this->createFeedEntry('urn:jma:earthquake:retry');
+        $retryEntry->update(['xml_url' => 'https://www.data.jma.go.jp/developer/xml/data/retry.xml']);
+        $successEntry = $this->createFeedEntry('urn:jma:earthquake:success');
+        $successEntry->update(['xml_url' => 'https://www.data.jma.go.jp/developer/xml/data/success.xml']);
+        $retryBody = $this->earthquakeReportXml('20260511112751', '2026-05-11T11:31:00+09:00');
+        $successBody = $this->earthquakeReportXml('20260511112752', '2026-05-11T11:32:00+09:00');
+        $detailRepository = new class($retryBody, $successBody) implements EarthquakeDetailXmlRepositoryInterface
+        {
+            /** @var array<string, int> */
+            public array $fetchCounts = [];
+
+            public function __construct(
+                private readonly string $retryBody,
+                private readonly string $successBody,
+            ) {}
+
+            public function fetch(string $url): array
+            {
+                $this->fetchCounts[$url] = ($this->fetchCounts[$url] ?? 0) + 1;
+
+                if (str_ends_with($url, '/retry.xml') && $this->fetchCounts[$url] === 1) {
+                    return [
+                        'endpoint' => $url,
+                        'method' => 'GET',
+                        'success' => false,
+                        'status_code' => 503,
+                        'body' => null,
+                        'error_message' => 'temporary server error',
+                    ];
+                }
+
+                return [
+                    'endpoint' => $url,
+                    'method' => 'GET',
+                    'success' => true,
+                    'status_code' => 200,
+                    'body' => str_ends_with($url, '/retry.xml') ? $this->retryBody : $this->successBody,
+                    'error_message' => null,
+                ];
+            }
+        };
+        $this->app->instance(EarthquakeDetailXmlRepositoryInterface::class, $detailRepository);
+        $syncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $action = new RunEarthquakeMapPinSyncAction(
+            $syncRunRepository,
+            app(EarthquakeMapPinBuildService::class),
+        );
+        $initialRunId = $syncRunRepository->createPending();
+
+        (new SyncEarthquakeMapPinsJob(
+            $initialRunId,
+            [(int) $retryEntry->getKey(), (int) $successEntry->getKey()],
+        ))->handle($action, app(StartEarthquakeMapPinSyncAction::class));
+
+        $retryJob = null;
+        Queue::assertPushed(
+            SyncEarthquakeMapPinsJob::class,
+            function (SyncEarthquakeMapPinsJob $job) use (&$retryJob, $retryEntry): bool {
+                $retryJob = $job;
+
+                return $job->sourceEntryIds === [(int) $retryEntry->getKey()]
+                    && $job->retryAttempt === 1;
+            },
+        );
+        $this->assertInstanceOf(SyncEarthquakeMapPinsJob::class, $retryJob);
+        Queue::fake();
+
+        $retryJob->handle($action, app(StartEarthquakeMapPinSyncAction::class));
+
+        Queue::assertNothingPushed();
+        $this->assertDatabaseHas('earthquake_map_pins', ['source_entry_id' => $retryEntry->getKey()]);
+        $this->assertDatabaseHas('earthquake_map_pins', ['source_entry_id' => $successEntry->getKey()]);
+        $this->assertSame(2, $detailRepository->fetchCounts[$retryEntry->xml_url]);
+        $this->assertSame(1, $detailRepository->fetchCounts[$successEntry->xml_url]);
+        $initialStatus = $syncRunRepository->findResult($initialRunId);
+        $retryStatus = $syncRunRepository->findResult($retryJob->syncRunId);
+        $this->assertNotNull($initialStatus);
+        $this->assertSame(1, $initialStatus->failedCount);
+        $this->assertNotNull($retryStatus);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $retryStatus->status);
+        $this->assertSame(0, $retryStatus->failedCount);
+    }
+
     public function test_detail_xml_parse_service_extracts_map_pin_values(): void
     {
         $dto = app(EarthquakeDetailXmlParseService::class)->parse(
@@ -473,6 +640,11 @@ XML;
                 return $this->innerRepository->latest($limit);
             }
 
+            public function deleteBySourceEntryId(int $sourceEntryId): void
+            {
+                $this->innerRepository->deleteBySourceEntryId($sourceEntryId);
+            }
+
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {
                 return $this->innerRepository->toMapPinListDTO($query);
@@ -527,6 +699,35 @@ XML;
         $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_FAILED, $status->status);
         $this->assertSame(1, $status->failedCount);
         $this->assertSame('Worker timeout.', $status->errorMessage);
+    }
+
+    public function test_sync_job_failed_hook_does_not_overwrite_a_completed_run(): void
+    {
+        $repository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $syncRunId = $repository->createPending();
+        $repository->markCompleted($syncRunId, new EarthquakeMapPinSyncResultDTO(
+            syncRunId: $syncRunId,
+            status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+            totalCount: 2,
+            insertedCount: 1,
+            updatedCount: 0,
+            skippedCount: 0,
+            failedCount: 1,
+            errorMessage: null,
+            startedAt: now(),
+            finishedAt: now(),
+        ));
+
+        (new SyncEarthquakeMapPinsJob($syncRunId))->failed(new RuntimeException('Retry dispatch failed.'));
+
+        $status = $repository->findResult($syncRunId);
+
+        $this->assertNotNull($status);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $status->status);
+        $this->assertSame(2, $status->totalCount);
+        $this->assertSame(1, $status->insertedCount);
+        $this->assertSame(1, $status->failedCount);
+        $this->assertNull($status->errorMessage);
     }
 
     public function test_quakewave_frontend_contains_map_pin_sync_polling_ui(): void

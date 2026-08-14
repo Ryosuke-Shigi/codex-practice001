@@ -7,7 +7,9 @@ use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\Models\EarthquakeFeedEntry;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -31,7 +33,8 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
      *     insertedCount: int,
      *     updatedCount: int,
      *     skippedCount: int,
-     *     failedCount: int
+     *     failedCount: int,
+     *     changedEntryIds: array<int, int>
      * }
      */
     public function upsertFromExtractedEntries(EarthquakeExtractedEntryListDTO $entries): array
@@ -40,22 +43,21 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
          * Repository は保存と取得の境界だけを担当します。
          * 「地震entryとして採用するか」の判断は EarthquakeEntryExtractService 済みなので、
          * ここでは entry_id unique を基準に DB 行へ反映することだけを扱います。
+         * batch途中の失敗でcutoffだけが進まないよう、1 feed分の保存はatomicにします。
          */
-        $totalCount = $entries->count();
-        $insertedCount = 0;
-        $updatedCount = 0;
-        $skippedCount = 0;
-        $failedCount = 0;
-        $fetchedAt = CarbonImmutable::now();
+        return DB::transaction(function () use ($entries): array {
+            $totalCount = $entries->count();
+            $insertedCount = 0;
+            $updatedCount = 0;
+            $skippedCount = 0;
+            $changedEntryIds = [];
+            $fetchedAt = CarbonImmutable::now();
 
-        foreach ($entries->items as $entry) {
-            if (trim($entry->id) === '') {
-                $failedCount++;
+            foreach ($entries->items as $entry) {
+                if (trim($entry->id) === '') {
+                    throw new RuntimeException('Feed entry ID is missing.');
+                }
 
-                continue;
-            }
-
-            try {
                 $attributes = $this->attributesFromEntry($entry, $fetchedAt);
                 $existing = EarthquakeFeedEntry::query()
                     ->where('entry_id', $entry->id)
@@ -67,7 +69,8 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
                      * raw XML 本文は保存しない方針なので、後続の詳細取得に必要な xml_url と
                      * Atom feed 上の表層情報だけに絞ります。
                      */
-                    EarthquakeFeedEntry::query()->create($attributes);
+                    $created = EarthquakeFeedEntry::query()->create($attributes);
+                    $changedEntryIds[] = (int) $created->getKey();
                     $insertedCount++;
 
                     continue;
@@ -86,19 +89,19 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
 
                 $existing->fill($attributes);
                 $existing->save();
+                $changedEntryIds[] = (int) $existing->getKey();
                 $updatedCount++;
-            } catch (Throwable) {
-                $failedCount++;
             }
-        }
 
-        return [
-            'totalCount' => $totalCount,
-            'insertedCount' => $insertedCount,
-            'updatedCount' => $updatedCount,
-            'skippedCount' => $skippedCount,
-            'failedCount' => $failedCount,
-        ];
+            return [
+                'totalCount' => $totalCount,
+                'insertedCount' => $insertedCount,
+                'updatedCount' => $updatedCount,
+                'skippedCount' => $skippedCount,
+                'failedCount' => 0,
+                'changedEntryIds' => $changedEntryIds,
+            ];
+        });
     }
 
     /**
@@ -118,6 +121,19 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
             ->get()
             ->map(fn (EarthquakeFeedEntry $entry): array => $this->entryToArray($entry))
             ->all();
+    }
+
+    public function latestUpdatedAtFromFeed(): ?CarbonImmutable
+    {
+        if (! $this->isStorageReady()) {
+            return null;
+        }
+
+        $value = EarthquakeFeedEntry::query()
+            ->whereNotNull('updated_at_from_feed')
+            ->max('updated_at_from_feed');
+
+        return is_string($value) ? $this->parseFeedDate($value) : null;
     }
 
     /**
@@ -141,6 +157,29 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
             ->orderByDesc('updated_at_from_feed')
             ->orderByDesc('id')
             ->limit(max(1, min($limit, 500)))
+            ->get()
+            ->map(fn (EarthquakeFeedEntry $entry): array => $this->entryToArray($entry))
+            ->all();
+    }
+
+    /**
+     * 差分更新されたIDは、xml_urlが空へ変わったentryも返します。
+     * 古いpinを削除するかの判断はServiceへ残し、Repositoryは指定IDの取得だけを担当します。
+     *
+     * @param  array<int, int>  $sourceEntryIds
+     * @return array<int, array<string, mixed>>
+     */
+    public function entriesForMapPinBuildByIds(array $sourceEntryIds): array
+    {
+        if (! $this->isStorageReady() || $sourceEntryIds === []) {
+            return [];
+        }
+
+        return EarthquakeFeedEntry::query()
+            ->whereKey(array_values(array_unique($sourceEntryIds)))
+            ->orderByRaw('updated_at_from_feed IS NULL')
+            ->orderByDesc('updated_at_from_feed')
+            ->orderByDesc('id')
             ->get()
             ->map(fn (EarthquakeFeedEntry $entry): array => $this->entryToArray($entry))
             ->all();

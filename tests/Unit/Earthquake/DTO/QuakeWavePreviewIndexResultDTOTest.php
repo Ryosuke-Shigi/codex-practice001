@@ -57,6 +57,7 @@ class QuakeWavePreviewIndexResultDTOTest extends TestCase
                     errorMessage: null,
                     startedAt: null,
                     finishedAt: null,
+                    changedEntryIds: [101],
                 ),
             ],
             savedMapPins: [],
@@ -72,6 +73,7 @@ class QuakeWavePreviewIndexResultDTOTest extends TestCase
                     errorMessage: null,
                     startedAt: null,
                     finishedAt: null,
+                    retryableSourceEntryIds: [201],
                 ),
             ],
         );

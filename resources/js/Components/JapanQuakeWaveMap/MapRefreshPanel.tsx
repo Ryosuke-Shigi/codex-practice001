@@ -18,13 +18,35 @@ export type MapRefreshAction = {
 type MapRefreshPanelProps = {
     action: MapRefreshAction;
     defaultOpen?: boolean;
+    compact?: boolean;
 };
 
 export default function MapRefreshPanel({
     action,
     defaultOpen = false,
+    compact = false,
 }: MapRefreshPanelProps) {
     const [isRefreshPanelOpen, setIsRefreshPanelOpen] = useState(defaultOpen);
+
+    if (compact) {
+        return (
+            <section className="flex w-full min-w-0 flex-col items-start gap-2">
+                <button
+                    type="button"
+                    onClick={action.onRefresh}
+                    disabled={action.isRefreshing}
+                    className="inline-flex min-h-11 min-w-28 items-center justify-center rounded-lg border border-cyan-100/45 bg-slate-950/42 px-5 text-sm font-bold text-cyan-50 shadow-[0_14px_34px_rgba(2,24,45,0.2)] backdrop-blur-md transition hover:bg-slate-950/56 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 disabled:cursor-wait disabled:opacity-60"
+                >
+                    {action.isRefreshing ? action.disabledLabel : action.buttonLabel}
+                </button>
+                {action.errorMessage && (
+                    <p role="alert" className="rounded-md border border-rose-200/35 bg-rose-950/35 px-3 py-2 text-sm leading-6 text-rose-50">
+                        {action.errorMessage}
+                    </p>
+                )}
+            </section>
+        );
+    }
 
     return (
         <section className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/28 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">

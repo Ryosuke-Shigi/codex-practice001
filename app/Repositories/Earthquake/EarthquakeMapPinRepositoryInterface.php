@@ -15,10 +15,13 @@ interface EarthquakeMapPinRepositoryInterface
      *     insertedCount: int,
      *     updatedCount: int,
      *     skippedCount: int,
-     *     failedCount: int
+     *     failedCount: int,
+     *     failedSourceEntryIds: array<int, int>
      * }
      */
     public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array;
+
+    public function deleteBySourceEntryId(int $sourceEntryId): void;
 
     /**
      * 保存済み map pin の最新行を、画面やプレビュー一覧で扱いやすい配列として返します。

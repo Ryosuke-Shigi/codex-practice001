@@ -92,7 +92,10 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
     }, [filters.startDate, filters.endDate]);
 
     return (
-        <PublicLayout className="px-5 py-8 sm:px-8 lg:px-10">
+        <PublicLayout
+            withEffect={false}
+            className="bg-[radial-gradient(circle_at_18%_8%,rgba(165,243,252,0.24),transparent_36%),linear-gradient(155deg,#164e63_0%,#0891b2_48%,#0e7490_100%)] px-4 py-6 sm:px-8 sm:py-8 lg:px-10"
+        >
             <Head title="QuakeWave Map" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 pb-12 pt-4 sm:pt-8">
@@ -107,7 +110,7 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
                     </Link>
                     <Link
                         href="/quakewave-preview"
-                        className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-950/70 backdrop-blur-xl transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
+                        className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-50/90 backdrop-blur-xl transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
                     >
                         Preview Tools
                     </Link>
@@ -115,9 +118,7 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
 
                 <JapanQuakeWaveMap
                     pins={visiblePins}
-                    eyebrow="QuakeWave Map"
-                    title="地震情報可視化"
-                    summary="DBに保存済みの地震情報を日本地図上へ重ね、震源・震度・波紋を確認します。"
+                    showIntroduction={false}
                     mapOverlay={(
                         <PinDisplayLimitSlider
                             value={pinDisplayLimit}
@@ -125,7 +126,7 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
                             onChange={setPinDisplayLimit}
                         />
                     )}
-                    mapTopContent={(
+                    mapBottomContent={(
                         <QuakeDateRangeFilter
                             value={dateRange}
                             onChange={reloadPinsByDateRange}
@@ -138,6 +139,7 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
                         />
                     )}
                     refreshAction={refreshAction}
+                    compactRefreshPanel
                     refreshPanelPlacement="controls"
                     detailPanelPlacement="below"
                     detailPanelCollapsible

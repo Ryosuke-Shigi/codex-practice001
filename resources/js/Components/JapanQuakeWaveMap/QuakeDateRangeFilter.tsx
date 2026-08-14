@@ -25,8 +25,8 @@ export default function QuakeDateRangeFilter({
                 </h2>
             </div>
 
-            <div className="mt-3 grid w-full min-w-0 gap-3 sm:grid-cols-2">
-                <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-cyan-100/72">
+            <div className="mt-3 grid w-full min-w-0 grid-cols-2 gap-2 sm:gap-3">
+                <label className="grid min-w-0 gap-1.5 text-[11px] font-semibold text-cyan-100/72 sm:text-xs">
                     開始日
                     <input
                         type="date"
@@ -35,10 +35,10 @@ export default function QuakeDateRangeFilter({
                             ...value,
                             startDate: event.currentTarget.value,
                         })}
-                        className="min-h-10 w-full min-w-0 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-100/70 focus:ring-4 focus:ring-cyan-100/20"
+                        className="min-h-10 w-full min-w-0 rounded-md border border-white/20 bg-white/10 px-2 text-xs font-semibold text-white outline-none transition focus:border-cyan-100/70 focus:ring-4 focus:ring-cyan-100/20 sm:px-3 sm:text-sm"
                     />
                 </label>
-                <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-cyan-100/72">
+                <label className="grid min-w-0 gap-1.5 text-[11px] font-semibold text-cyan-100/72 sm:text-xs">
                     終了日
                     <input
                         type="date"
@@ -47,7 +47,7 @@ export default function QuakeDateRangeFilter({
                             ...value,
                             endDate: event.currentTarget.value,
                         })}
-                        className="min-h-10 w-full min-w-0 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-semibold text-white outline-none transition focus:border-cyan-100/70 focus:ring-4 focus:ring-cyan-100/20"
+                        className="min-h-10 w-full min-w-0 rounded-md border border-white/20 bg-white/10 px-2 text-xs font-semibold text-white outline-none transition focus:border-cyan-100/70 focus:ring-4 focus:ring-cyan-100/20 sm:px-3 sm:text-sm"
                     />
                 </label>
             </div>

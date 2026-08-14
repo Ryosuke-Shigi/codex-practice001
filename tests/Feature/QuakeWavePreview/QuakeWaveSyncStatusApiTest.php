@@ -62,6 +62,11 @@ class QuakeWaveSyncStatusApiTest extends TestCase
             {
                 throw new RuntimeException('map pin generation failed');
             }
+
+            public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
+            {
+                throw new RuntimeException('map pin generation failed');
+            }
         };
         $caughtException = null;
 

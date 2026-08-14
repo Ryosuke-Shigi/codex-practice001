@@ -12,6 +12,7 @@ use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Services\Earthquake\EarthquakeDetailXmlParseService;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -44,6 +45,11 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                 return [];
             }
 
+            public function latestUpdatedAtFromFeed(): ?CarbonImmutable
+            {
+                return null;
+            }
+
             public function entriesForMapPinBuild(int $limit = 100): array
             {
                 return [
@@ -54,6 +60,11 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     ['id' => 105, 'xmlUrl' => '', 'title' => 'URLなし'],
                     ['id' => 106, 'xmlUrl' => 'https://example.test/non-seismology.xml', 'title' => '津波情報'],
                 ];
+            }
+
+            public function entriesForMapPinBuildByIds(array $sourceEntryIds): array
+            {
+                return [];
             }
         };
         $detailXmlRepository = new class($this->earthquakeReportXml(), $this->earthquakeReportXml(maxIntensity: null), $this->earthquakeReportXml(coordinate: null), $this->nonSeismologyReportXml()) implements EarthquakeDetailXmlRepositoryInterface
@@ -106,6 +117,9 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         {
             public ?EarthquakeMapPinListDTO $receivedPins = null;
 
+            /** @var array<int, int> */
+            public array $deletedSourceEntryIds = [];
+
             public function isStorageReady(): bool
             {
                 return true;
@@ -121,12 +135,18 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     'updatedCount' => 0,
                     'skippedCount' => 0,
                     'failedCount' => 0,
+                    'failedSourceEntryIds' => [],
                 ];
             }
 
             public function latest(int $limit = 50): array
             {
                 return [];
+            }
+
+            public function deleteBySourceEntryId(int $sourceEntryId): void
+            {
+                $this->deletedSourceEntryIds[] = $sourceEntryId;
             }
 
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
@@ -150,6 +170,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(0, $result->updatedCount);
         $this->assertSame(4, $result->skippedCount);
         $this->assertSame(1, $result->failedCount);
+        $this->assertSame([102, 103, 105, 106], $mapPinRepository->deletedSourceEntryIds);
 
         $this->assertNotNull($mapPinRepository->receivedPins);
         $this->assertCount(1, $mapPinRepository->receivedPins->items);
@@ -192,7 +213,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         );
     }
 
-    public function test_sync_skips_detail_xml_404_empty_body_and_rejected_url_without_error_log(): void
+    public function test_sync_retries_detail_xml_404_and_empty_body_but_keeps_rejected_url_terminal(): void
     {
         Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
 
@@ -233,20 +254,21 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $result = $service->sync(88);
 
         $this->assertSame(3, $result->totalCount);
-        $this->assertSame(3, $result->skippedCount);
-        $this->assertSame(0, $result->failedCount);
+        $this->assertSame(1, $result->skippedCount);
+        $this->assertSame(2, $result->failedCount);
+        $this->assertSame([201, 202], $result->retryableSourceEntryIds);
         $this->assertSame(0, $result->insertedCount);
-        Event::assertNotDispatched(ApplicationErrorOccurred::class);
+        Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 2);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 3);
         Event::assertDispatched(
             ApplicationIntegrationLogged::class,
-            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'failed'
                 && $event->responseStatus === 404
                 && str_contains((string) $event->message, '分類: 404'),
         );
         Event::assertDispatched(
             ApplicationIntegrationLogged::class,
-            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'skipped'
+            fn (ApplicationIntegrationLogged $event): bool => $event->status === 'failed'
                 && $event->responseStatus === 200
                 && str_contains((string) $event->message, '分類: empty_body'),
         );
@@ -325,6 +347,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(6, $result->totalCount);
         $this->assertSame(0, $result->skippedCount);
         $this->assertSame(6, $result->failedCount);
+        $this->assertSame([301, 302, 303, 304, 305], $result->retryableSourceEntryIds);
         Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 4);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 4);
         Event::assertDispatched(
@@ -401,6 +424,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(2, $result->totalCount);
         $this->assertSame(0, $result->skippedCount);
         $this->assertSame(2, $result->failedCount);
+        $this->assertSame([401, 402], $result->retryableSourceEntryIds);
         Event::assertDispatchedTimes(ApplicationErrorOccurred::class, 1);
         Event::assertDispatchedTimes(ApplicationIntegrationLogged::class, 1);
         Event::assertDispatched(
@@ -417,6 +441,72 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                 && str_contains($event->message, '対象フィードID例: 401, 402')
                 && ! str_contains($event->message, 'not xml payload'),
         );
+    }
+
+    public function test_sync_entries_retries_a_map_pin_persistence_failure_without_another_feed_change(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
+
+        $entry = ['id' => 501, 'xmlUrl' => 'https://example.test/persistence-retry.xml', 'title' => '保存再試行'];
+        $mapPinRepository = new class implements EarthquakeMapPinRepositoryInterface
+        {
+            public int $upsertCalls = 0;
+
+            public function isStorageReady(): bool
+            {
+                return true;
+            }
+
+            public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array
+            {
+                $this->upsertCalls++;
+
+                return [
+                    'totalCount' => $pins->count(),
+                    'insertedCount' => $this->upsertCalls === 1 ? 0 : 1,
+                    'updatedCount' => 0,
+                    'skippedCount' => 0,
+                    'failedCount' => $this->upsertCalls === 1 ? 1 : 0,
+                    'failedSourceEntryIds' => $this->upsertCalls === 1 ? [501] : [],
+                ];
+            }
+
+            public function latest(int $limit = 50): array
+            {
+                return [];
+            }
+
+            public function deleteBySourceEntryId(int $sourceEntryId): void {}
+
+            public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
+            {
+                return new EarthquakeMapPinListDTO([]);
+            }
+        };
+        $service = new EarthquakeMapPinBuildService(
+            $this->feedEntryRepositoryReturning([$entry]),
+            $this->detailXmlRepositoryReturning([
+                'https://example.test/persistence-retry.xml' => $this->transport(
+                    url: 'https://example.test/persistence-retry.xml',
+                    success: true,
+                    statusCode: 200,
+                    body: $this->earthquakeReportXml(),
+                    errorMessage: null,
+                ),
+            ]),
+            new EarthquakeDetailXmlParseService,
+            $mapPinRepository,
+        );
+
+        $failedResult = $service->syncEntries(91, [501]);
+        $recoveredResult = $service->syncEntries(92, $failedResult->retryableSourceEntryIds);
+
+        $this->assertSame(1, $failedResult->failedCount);
+        $this->assertSame([501], $failedResult->retryableSourceEntryIds);
+        $this->assertSame(1, $recoveredResult->insertedCount);
+        $this->assertSame(0, $recoveredResult->failedCount);
+        $this->assertSame([], $recoveredResult->retryableSourceEntryIds);
+        $this->assertSame(2, $mapPinRepository->upsertCalls);
     }
 
     /**
@@ -452,9 +542,22 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                 return [];
             }
 
+            public function latestUpdatedAtFromFeed(): ?CarbonImmutable
+            {
+                return null;
+            }
+
             public function entriesForMapPinBuild(int $limit = 100): array
             {
                 return $this->entries;
+            }
+
+            public function entriesForMapPinBuildByIds(array $sourceEntryIds): array
+            {
+                return array_values(array_filter(
+                    $this->entries,
+                    fn (array $entry): bool => in_array($entry['id'] ?? null, $sourceEntryIds, true),
+                ));
             }
         };
     }
@@ -505,6 +608,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     'updatedCount' => 0,
                     'skippedCount' => 0,
                     'failedCount' => 0,
+                    'failedSourceEntryIds' => [],
                 ];
             }
 
@@ -512,6 +616,8 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
             {
                 return [];
             }
+
+            public function deleteBySourceEntryId(int $sourceEntryId): void {}
 
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {

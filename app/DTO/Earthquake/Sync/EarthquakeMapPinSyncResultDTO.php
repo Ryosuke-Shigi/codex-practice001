@@ -26,6 +26,13 @@ final readonly class EarthquakeMapPinSyncResultDTO
         public ?string $errorMessage,
         public ?CarbonInterface $startedAt,
         public ?CarbonInterface $finishedAt,
+        /**
+         * 同期の同一実行内で有限retryへ渡す一時的なentry IDです。
+         * sync runには永続化せず、status APIのtoArrayにも公開しません。
+         *
+         * @var array<int, int>
+         */
+        public array $retryableSourceEntryIds = [],
     ) {}
 
     public static function fromModel(EarthquakeMapPinSyncRun $syncRun): self

@@ -177,6 +177,7 @@ class EarthquakeMapRefreshCommandTest extends TestCase
                     'updatedCount' => 0,
                     'skippedCount' => 0,
                     'failedCount' => 0,
+                    'failedSourceEntryIds' => [],
                 ];
             }
 
@@ -184,6 +185,8 @@ class EarthquakeMapRefreshCommandTest extends TestCase
             {
                 return [];
             }
+
+            public function deleteBySourceEntryId(int $sourceEntryId): void {}
 
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {

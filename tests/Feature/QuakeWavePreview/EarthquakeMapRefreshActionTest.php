@@ -5,10 +5,12 @@ namespace Tests\Feature\QuakeWavePreview;
 use App\Actions\Earthquake\Commands\RunEarthquakeFeedEntrySyncAction;
 use App\Actions\Earthquake\Commands\RunEarthquakeMapPinSyncAction;
 use App\Actions\Earthquake\Commands\RunEarthquakeMapRefreshAction;
+use App\Actions\Earthquake\Commands\StartEarthquakeMapPinSyncAction;
 use App\Actions\Earthquake\Commands\StartEarthquakeMapRefreshAction;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Jobs\Earthquake\RefreshEarthquakeMapDataJob;
+use App\Jobs\Earthquake\SyncEarthquakeMapPinsJob;
 use App\Models\EarthquakeFeedEntry;
 use App\Models\EarthquakeMapPin;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
@@ -17,6 +19,8 @@ use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use App\Services\Earthquake\EarthquakeFeedEntrySyncService;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -76,6 +80,107 @@ class EarthquakeMapRefreshActionTest extends TestCase
         );
     }
 
+    public function test_refresh_job_uses_shared_queue_overlap_protection(): void
+    {
+        $middleware = (new RefreshEarthquakeMapDataJob(1, 1))->middleware();
+
+        $this->assertCount(1, $middleware);
+        $this->assertInstanceOf(WithoutOverlapping::class, $middleware[0]);
+        $this->assertSame('earthquake-map-refresh', $middleware[0]->key);
+        $this->assertTrue($middleware[0]->shareKey);
+        $this->assertSame(30, $middleware[0]->releaseAfter);
+        $this->assertSame(660, $middleware[0]->expiresAfter);
+
+        $job = new RefreshEarthquakeMapDataJob(1, 1);
+        $this->assertSame(0, $job->tries);
+        $this->assertSame(1, $job->maxExceptions);
+
+        $retryJob = new SyncEarthquakeMapPinsJob(1, [101], 1);
+        $retryMiddleware = $retryJob->middleware();
+        $this->assertCount(1, $retryMiddleware);
+        $this->assertSame('earthquake-map-refresh', $retryMiddleware[0]->key);
+        $this->assertTrue($retryMiddleware[0]->shareKey);
+        $this->assertSame(30, $retryMiddleware[0]->releaseAfter);
+        $this->assertSame(360, $retryMiddleware[0]->expiresAfter);
+        $this->assertSame(0, $retryJob->tries);
+        $this->assertSame(1, $retryJob->maxExceptions);
+    }
+
+    public function test_queue_retry_after_exceeds_every_earthquake_job_timeout(): void
+    {
+        $requiredRetryAfter = max(
+            (new RefreshEarthquakeMapDataJob(1, 1))->timeout,
+            (new SyncEarthquakeMapPinsJob(1))->timeout,
+        );
+
+        $this->assertGreaterThan($requiredRetryAfter, config('queue.connections.redis.retry_after'));
+        $this->assertGreaterThan($requiredRetryAfter, config('queue.connections.database.retry_after'));
+    }
+
+    public function test_refresh_job_is_released_during_overlap_and_runs_after_the_lock_is_free(): void
+    {
+        $middleware = (new RefreshEarthquakeMapDataJob(1, 1))->middleware()[0];
+        $lock = Cache::lock($middleware->getLockKey(new \stdClass), $middleware->expiresAfter);
+        $this->assertTrue($lock->get());
+
+        $queuedJob = new class
+        {
+            public ?int $releasedAfter = null;
+
+            public function release(int $delay): void
+            {
+                $this->releasedAfter = $delay;
+            }
+        };
+        $handled = false;
+
+        try {
+            $middleware->handle($queuedJob, function () use (&$handled): void {
+                $handled = true;
+            });
+
+            $this->assertSame(30, $queuedJob->releasedAfter);
+            $this->assertFalse($handled);
+        } finally {
+            $lock->release();
+        }
+
+        $middleware->handle($queuedJob, function () use (&$handled): void {
+            $handled = true;
+        });
+
+        $this->assertTrue($handled);
+    }
+
+    public function test_retry_job_is_released_while_the_integrated_refresh_lock_is_held(): void
+    {
+        $refreshMiddleware = (new RefreshEarthquakeMapDataJob(1, 1))->middleware()[0];
+        $retryMiddleware = (new SyncEarthquakeMapPinsJob(2, [101], 1))->middleware()[0];
+        $lock = Cache::lock($refreshMiddleware->getLockKey(new \stdClass), $refreshMiddleware->expiresAfter);
+        $this->assertTrue($lock->get());
+        $queuedJob = new class
+        {
+            public ?int $releasedAfter = null;
+
+            public function release(int $delay): void
+            {
+                $this->releasedAfter = $delay;
+            }
+        };
+        $handled = false;
+
+        try {
+            $retryMiddleware->handle($queuedJob, function () use (&$handled): void {
+                $handled = true;
+            });
+        } finally {
+            $lock->release();
+        }
+
+        $this->assertSame(30, $queuedJob->releasedAfter);
+        $this->assertFalse($handled);
+    }
+
     public function test_refresh_job_marks_both_runs_completed_when_feed_and_map_pin_steps_succeed(): void
     {
         /*
@@ -103,11 +208,15 @@ class EarthquakeMapRefreshActionTest extends TestCase
                     errorMessage: null,
                     startedAt: now(),
                     finishedAt: now(),
+                    changedEntryIds: [11, 12],
                 );
             }
         };
         $mapPinBuildService = new class extends EarthquakeMapPinBuildService
         {
+            /** @var array<int, int>|null */
+            public ?array $receivedSourceEntryIds = null;
+
             public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
@@ -124,6 +233,13 @@ class EarthquakeMapRefreshActionTest extends TestCase
                     startedAt: now(),
                     finishedAt: now(),
                 );
+            }
+
+            public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
+            {
+                $this->receivedSourceEntryIds = $sourceEntryIds;
+
+                return $this->sync($syncRunId);
             }
         };
 
@@ -158,6 +274,126 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $this->assertNull($mapStatus->errorMessage);
         $this->assertNotNull($mapStatus->startedAt);
         $this->assertNotNull($mapStatus->finishedAt);
+        $this->assertSame([11, 12], $mapPinBuildService->receivedSourceEntryIds);
+    }
+
+    public function test_refresh_job_dispatches_a_limited_retry_for_transient_map_pin_failures(): void
+    {
+        Queue::fake();
+        $feedRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedRunId = $feedRepository->createPending();
+        $mapRunId = $mapRepository->createPending();
+        $feedService = new class extends EarthquakeFeedEntrySyncService
+        {
+            public function __construct() {}
+
+            public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
+            {
+                return new EarthquakeFeedEntrySyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 2,
+                    insertedCount: 2,
+                    updatedCount: 0,
+                    skippedCount: 0,
+                    failedCount: 0,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                    changedEntryIds: [51, 52],
+                );
+            }
+        };
+        $buildService = new class extends EarthquakeMapPinBuildService
+        {
+            public function __construct() {}
+
+            public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
+            {
+                return new EarthquakeMapPinSyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 2,
+                    insertedCount: 1,
+                    updatedCount: 0,
+                    skippedCount: 0,
+                    failedCount: 1,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                    retryableSourceEntryIds: [52],
+                );
+            }
+        };
+
+        (new RefreshEarthquakeMapDataJob($feedRunId, $mapRunId))->handle(
+            $this->runMapRefreshAction($feedRepository, $mapRepository, $feedService, $buildService),
+            app(StartEarthquakeMapPinSyncAction::class),
+        );
+
+        Queue::assertPushed(
+            SyncEarthquakeMapPinsJob::class,
+            fn (SyncEarthquakeMapPinsJob $job): bool => $job->sourceEntryIds === [52]
+                && $job->retryAttempt === 1
+                && $job->delay === 60,
+        );
+    }
+
+    public function test_refresh_job_completes_map_pin_run_without_fetching_detail_xml_when_feed_has_no_changes(): void
+    {
+        $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
+        $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);
+        $feedEntrySyncRunId = $feedEntrySyncRunRepository->createPending();
+        $mapPinSyncRunId = $mapPinSyncRunRepository->createPending();
+        $feedEntrySyncService = new class extends EarthquakeFeedEntrySyncService
+        {
+            public function __construct() {}
+
+            public function sync(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
+            {
+                return new EarthquakeFeedEntrySyncResultDTO(
+                    syncRunId: $syncRunId,
+                    status: EarthquakeFeedEntrySyncResultDTO::STATUS_COMPLETED,
+                    totalCount: 1,
+                    insertedCount: 0,
+                    updatedCount: 0,
+                    skippedCount: 1,
+                    failedCount: 0,
+                    errorMessage: null,
+                    startedAt: now(),
+                    finishedAt: now(),
+                    changedEntryIds: [],
+                );
+            }
+        };
+        $mapPinBuildService = new class extends EarthquakeMapPinBuildService
+        {
+            public bool $fullSyncCalled = false;
+
+            public function __construct() {}
+
+            public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
+            {
+                $this->fullSyncCalled = true;
+
+                throw new RuntimeException('Full map pin sync must not run for a zero diff refresh.');
+            }
+        };
+
+        (new RefreshEarthquakeMapDataJob($feedEntrySyncRunId, $mapPinSyncRunId))->handle($this->runMapRefreshAction(
+            $feedEntrySyncRunRepository,
+            $mapPinSyncRunRepository,
+            $feedEntrySyncService,
+            $mapPinBuildService,
+        ));
+
+        $mapStatus = $mapPinSyncRunRepository->findResult($mapPinSyncRunId);
+
+        $this->assertNotNull($mapStatus);
+        $this->assertSame(EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED, $mapStatus->status);
+        $this->assertSame(0, $mapStatus->totalCount);
+        $this->assertFalse($mapPinBuildService->fullSyncCalled);
     }
 
     public function test_refresh_job_marks_both_runs_failed_when_feed_sync_fails_before_map_pin_generation(): void
@@ -293,6 +529,11 @@ class EarthquakeMapRefreshActionTest extends TestCase
             public function __construct() {}
 
             public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
+            {
+                throw new RuntimeException('map pin generation failed');
+            }
+
+            public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
             {
                 throw new RuntimeException('map pin generation failed');
             }

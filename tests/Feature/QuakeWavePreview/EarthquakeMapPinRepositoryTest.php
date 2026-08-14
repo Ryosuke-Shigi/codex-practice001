@@ -70,6 +70,26 @@ class EarthquakeMapPinRepositoryTest extends TestCase
         ]);
     }
 
+    public function test_upsert_returns_the_source_entry_id_when_a_pin_cannot_be_persisted(): void
+    {
+        $repository = app(EarthquakeMapPinRepositoryInterface::class);
+
+        $result = $repository->upsertFromMapPins(new EarthquakeMapPinListDTO([
+            $this->pin(
+                eventId: 'missing-source-entry',
+                sourceEntryId: 999999,
+                areaName: '保存失敗震源',
+                reportedAt: '2026-05-11T11:31:00+09:00',
+            ),
+        ]));
+
+        $this->assertSame(1, $result['failedCount']);
+        $this->assertSame([999999], $result['failedSourceEntryIds']);
+        $this->assertDatabaseMissing('earthquake_map_pins', [
+            'event_id' => 'missing-source-entry',
+        ]);
+    }
+
     public function test_to_map_pin_list_dto_applies_date_range_and_preserves_pin_values(): void
     {
         $sourceEntry = $this->createFeedEntry('urn:jma:earthquake:map-list');
@@ -144,6 +164,23 @@ class EarthquakeMapPinRepositoryTest extends TestCase
         $this->assertSame('発表時刻なし震源', $dto->items[1]->areaName);
         $this->assertSame('2026-05-11T05:00:00+09:00', $dto->items[1]->occurredAt);
         $this->assertNull($dto->items[1]->reportedAt);
+    }
+
+    public function test_delete_by_source_entry_id_removes_only_the_stale_pin(): void
+    {
+        $removedSource = $this->createFeedEntry('urn:jma:earthquake:removed');
+        $keptSource = $this->createFeedEntry('urn:jma:earthquake:kept');
+        $repository = app(EarthquakeMapPinRepositoryInterface::class);
+
+        $repository->upsertFromMapPins(new EarthquakeMapPinListDTO([
+            $this->pin('removed-event', (int) $removedSource->getKey(), '削除対象', '2026-05-11T11:31:00+09:00'),
+            $this->pin('kept-event', (int) $keptSource->getKey(), '保持対象', '2026-05-11T11:31:00+09:00'),
+        ]));
+
+        $repository->deleteBySourceEntryId((int) $removedSource->getKey());
+
+        $this->assertDatabaseMissing('earthquake_map_pins', ['event_id' => 'removed-event']);
+        $this->assertDatabaseHas('earthquake_map_pins', ['event_id' => 'kept-event']);
     }
 
     private function createFeedEntry(string $entryId): EarthquakeFeedEntry

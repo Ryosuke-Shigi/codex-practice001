@@ -87,6 +87,23 @@ class QuakeWaveMapPagePropsTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_product_page_uses_static_aqua_background_and_product_only_compact_map_contract(): void
+    {
+        $source = file_get_contents(resource_path('js/Pages/QuakeWavePreview/QuakeWaveMapPage.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('withEffect={false}', $source);
+        $this->assertStringContainsString('#164e63_0%,#0891b2_48%,#0e7490_100%', $source);
+        $this->assertStringNotContainsString('rgba(255,255,255,0.72)', $source);
+        $this->assertStringContainsString('showIntroduction={false}', $source);
+        $this->assertStringContainsString('compactRefreshPanel', $source);
+        $this->assertStringContainsString('detailPanelPlacement="below"', $source);
+        $this->assertStringNotContainsString('detailPanelPlacement="afterControls"', $source);
+        $this->assertStringContainsString('mapBottomContent', $source);
+        $this->assertStringNotContainsString('title="地震情報可視化"', $source);
+        $this->assertStringNotContainsString('DBに保存済みの地震情報を日本地図上へ重ね', $source);
+    }
+
     private function createFeedEntry(): EarthquakeFeedEntry
     {
         return EarthquakeFeedEntry::query()->create([

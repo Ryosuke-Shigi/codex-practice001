@@ -50,6 +50,45 @@ class EarthquakeMapPinBuildService
 
     public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
     {
+        return $this->syncSourceEntries(
+            $syncRunId,
+            $this->feedEntryRepository->entriesForMapPinBuild(),
+        );
+    }
+
+    /**
+     * @param  array<int, int>  $sourceEntryIds
+     */
+    public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
+    {
+        if ($sourceEntryIds === []) {
+            $now = CarbonImmutable::now();
+
+            return new EarthquakeMapPinSyncResultDTO(
+                syncRunId: $syncRunId,
+                status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                totalCount: 0,
+                insertedCount: 0,
+                updatedCount: 0,
+                skippedCount: 0,
+                failedCount: 0,
+                errorMessage: null,
+                startedAt: $now,
+                finishedAt: $now,
+            );
+        }
+
+        return $this->syncSourceEntries(
+            $syncRunId,
+            $this->feedEntryRepository->entriesForMapPinBuildByIds($sourceEntryIds),
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sourceEntries
+     */
+    private function syncSourceEntries(int $syncRunId, array $sourceEntries): EarthquakeMapPinSyncResultDTO
+    {
         /*
          * この Service は「保存済み feed entry から map pin を作る」業務手順だけを担当します。
          * 同期開始のHTTP入口やQueue状態更新は Action / Job 側へ分け、外部XML取得とDB保存は
@@ -60,10 +99,10 @@ class EarthquakeMapPinBuildService
          * 第2段階の「個別XML解析・地図ピン生成」を明確に分けています。
          */
         $startedAt = CarbonImmutable::now();
-        $sourceEntries = $this->feedEntryRepository->entriesForMapPinBuild();
         $pins = [];
         $skippedCount = 0;
         $failedCount = 0;
+        $retryableSourceEntryIds = [];
         $failureSummaries = [];
         /*
          * 個別XML取得は run 内で多数発生するため、Repository では発火せず、
@@ -75,6 +114,7 @@ class EarthquakeMapPinBuildService
             $xmlUrl = $sourceEntry['xmlUrl'] ?? null;
 
             if (! is_string($xmlUrl) || trim($xmlUrl) === '') {
+                $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                 $skippedCount++;
 
                 continue;
@@ -87,6 +127,7 @@ class EarthquakeMapPinBuildService
                  */
                 $transport = $this->detailXmlRepository->fetch($xmlUrl);
             } catch (Throwable $exception) {
+                $this->addRetryableSourceEntryId($retryableSourceEntryIds, $sourceEntry);
                 $this->recordDetailXmlIntegrationSummary(
                     collector: $integrationSummaries,
                     status: 'failed',
@@ -130,6 +171,10 @@ class EarthquakeMapPinBuildService
             }
 
             if ($transportClassification['outcome'] === self::TRANSPORT_OUTCOME_FAILED) {
+                if (($transportClassification['retryable'] ?? false) === true) {
+                    $this->addRetryableSourceEntryId($retryableSourceEntryIds, $sourceEntry);
+                }
+
                 $this->recordDetailXmlIntegrationSummary(
                     collector: $integrationSummaries,
                     status: 'failed',
@@ -172,11 +217,13 @@ class EarthquakeMapPinBuildService
                 );
 
                 /*
-                 * 緯度経度が取れない電文は、現段階では地図ピンとして保存しません。
-                 * 解析エラーではなく「ピン化対象外」として skipped に数え、後続の詳細解析フェーズに残します。
-                 * たとえば震度速報や一部の津波系情報は、地図ピンに必要な震源座標を持たない可能性があります。
+                 * 緯度経度などが取れない電文は「ピン化対象外」としてskippedに数え、
+                 * 同じsource entryの古いpinが残らないよう削除します。
+                 * 一時的な取得失敗や解析失敗では既存pinを削除せず、対象ID限定の
+                 * Queue retryへ渡して通常の自動更新内で再評価できる状態を保ちます。
                  */
                 if (! $this->detailXmlParseService->isMappable($pin)) {
+                    $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                     $skippedCount++;
 
                     continue;
@@ -184,8 +231,10 @@ class EarthquakeMapPinBuildService
 
                 $pins[] = $pin;
             } catch (EarthquakeDetailXmlNotMappableException) {
+                $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                 $skippedCount++;
             } catch (Throwable $exception) {
+                $this->addRetryableSourceEntryId($retryableSourceEntryIds, $sourceEntry);
                 $this->addFailureSummary(
                     failureSummaries: $failureSummaries,
                     message: '気象庁 個別XMLを解析できず、地図ピンに追加できませんでした。',
@@ -207,6 +256,10 @@ class EarthquakeMapPinBuildService
 
         $upsertResult = $this->mapPinRepository->upsertFromMapPins(new EarthquakeMapPinListDTO($pins));
 
+        foreach ($upsertResult['failedSourceEntryIds'] as $failedSourceEntryId) {
+            $this->addRetryableSourceEntryIdValue($retryableSourceEntryIds, $failedSourceEntryId);
+        }
+
         /*
          * totalCount は「対象として読んだ feed entry 数」です。
          * inserted / updated / skipped / failed は、取得・解析・保存の各段階で分かれるため、
@@ -223,6 +276,7 @@ class EarthquakeMapPinBuildService
             errorMessage: null,
             startedAt: $startedAt,
             finishedAt: CarbonImmutable::now(),
+            retryableSourceEntryIds: $retryableSourceEntryIds,
         );
     }
 
@@ -240,6 +294,7 @@ class EarthquakeMapPinBuildService
                 'classification' => 'url_rejected',
                 'statusCode' => null,
                 'reason' => self::JMA_DETAIL_XML_URL_REJECTED_MESSAGE,
+                'retryable' => false,
             ];
         }
 
@@ -253,25 +308,28 @@ class EarthquakeMapPinBuildService
                 'classification' => 'success',
                 'statusCode' => $statusCode,
                 'reason' => 'success',
+                'retryable' => false,
             ];
         }
 
         if ($statusCode === 404) {
-            return [
-                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
-                'classification' => '404',
-                'statusCode' => $statusCode,
-                'reason' => $this->failureReason($errorMessage, '404'),
-            ];
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_FETCH_FAILED,
+                classification: '404',
+                statusCode: $statusCode,
+                reason: $errorMessage,
+                retryable: true,
+            );
         }
 
         if ($statusCode !== null && $statusCode >= 200 && $statusCode < 300 && ! $hasBody) {
-            return [
-                'outcome' => self::TRANSPORT_OUTCOME_SKIPPED,
-                'classification' => 'empty_body',
-                'statusCode' => $statusCode,
-                'reason' => $this->failureReason($errorMessage, 'empty_body'),
-            ];
+            return $this->failedTransportClassification(
+                errorCode: self::ERROR_CODE_DETAIL_XML_FETCH_FAILED,
+                classification: 'empty_body',
+                statusCode: $statusCode,
+                reason: $errorMessage,
+                retryable: true,
+            );
         }
 
         if ($statusCode === 429) {
@@ -280,6 +338,7 @@ class EarthquakeMapPinBuildService
                 classification: '429',
                 statusCode: $statusCode,
                 reason: $errorMessage,
+                retryable: true,
             );
         }
 
@@ -289,6 +348,7 @@ class EarthquakeMapPinBuildService
                 classification: '5xx',
                 statusCode: $statusCode,
                 reason: $errorMessage,
+                retryable: true,
             );
         }
 
@@ -298,6 +358,7 @@ class EarthquakeMapPinBuildService
                 classification: 'connection_failed',
                 statusCode: null,
                 reason: $errorMessage,
+                retryable: true,
             );
         }
 
@@ -306,6 +367,7 @@ class EarthquakeMapPinBuildService
             classification: 'http_error',
             statusCode: $statusCode,
             reason: $errorMessage,
+            retryable: false,
         );
     }
 
@@ -317,6 +379,7 @@ class EarthquakeMapPinBuildService
         string $classification,
         ?int $statusCode,
         ?string $reason,
+        bool $retryable,
     ): array {
         return [
             'outcome' => self::TRANSPORT_OUTCOME_FAILED,
@@ -324,7 +387,30 @@ class EarthquakeMapPinBuildService
             'classification' => $classification,
             'statusCode' => $statusCode,
             'reason' => $this->failureReason($reason, $classification),
+            'retryable' => $retryable,
         ];
+    }
+
+    /**
+     * @param  array<int, int>  $retryableSourceEntryIds
+     * @param  array<string, mixed>  $sourceEntry
+     */
+    private function addRetryableSourceEntryId(array &$retryableSourceEntryIds, array $sourceEntry): void
+    {
+        $this->addRetryableSourceEntryIdValue(
+            $retryableSourceEntryIds,
+            $sourceEntry['id'] ?? null,
+        );
+    }
+
+    /** @param array<int, int> $retryableSourceEntryIds */
+    private function addRetryableSourceEntryIdValue(array &$retryableSourceEntryIds, mixed $sourceEntryId): void
+    {
+        if (! is_int($sourceEntryId) || in_array($sourceEntryId, $retryableSourceEntryIds, true)) {
+            return;
+        }
+
+        $retryableSourceEntryIds[] = $sourceEntryId;
     }
 
     /**

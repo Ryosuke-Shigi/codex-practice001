@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Commands;
 
+use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use Throwable;
 
@@ -19,10 +20,10 @@ final readonly class RunEarthquakeMapRefreshAction
         private EarthquakeMapPinSyncRunRepositoryInterface $mapPinSyncRunRepository,
     ) {}
 
-    public function execute(int $feedEntrySyncRunId, int $mapPinSyncRunId): void
+    public function execute(int $feedEntrySyncRunId, int $mapPinSyncRunId): EarthquakeMapPinSyncResultDTO
     {
         try {
-            $this->feedEntrySyncAction->execute($feedEntrySyncRunId);
+            $feedEntrySyncResult = $this->feedEntrySyncAction->execute($feedEntrySyncRunId);
         } catch (Throwable $exception) {
             $this->mapPinSyncRunRepository->markFailed(
                 $mapPinSyncRunId,
@@ -32,6 +33,9 @@ final readonly class RunEarthquakeMapRefreshAction
             throw $exception;
         }
 
-        $this->mapPinSyncAction->execute($mapPinSyncRunId);
+        return $this->mapPinSyncAction->executeEntries(
+            $mapPinSyncRunId,
+            $feedEntrySyncResult->changedEntryIds,
+        );
     }
 }
