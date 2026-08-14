@@ -12,6 +12,7 @@ use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinRepositoryInterface;
 use App\Services\Earthquake\EarthquakeDetailXmlParseService;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
@@ -44,6 +45,11 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                 return [];
             }
 
+            public function latestUpdatedAtFromFeed(): ?CarbonImmutable
+            {
+                return null;
+            }
+
             public function entriesForMapPinBuild(int $limit = 100): array
             {
                 return [
@@ -54,6 +60,11 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     ['id' => 105, 'xmlUrl' => '', 'title' => 'URLなし'],
                     ['id' => 106, 'xmlUrl' => 'https://example.test/non-seismology.xml', 'title' => '津波情報'],
                 ];
+            }
+
+            public function entriesForMapPinBuildByIds(array $sourceEntryIds): array
+            {
+                return [];
             }
         };
         $detailXmlRepository = new class($this->earthquakeReportXml(), $this->earthquakeReportXml(maxIntensity: null), $this->earthquakeReportXml(coordinate: null), $this->nonSeismologyReportXml()) implements EarthquakeDetailXmlRepositoryInterface
@@ -106,6 +117,9 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         {
             public ?EarthquakeMapPinListDTO $receivedPins = null;
 
+            /** @var array<int, int> */
+            public array $deletedSourceEntryIds = [];
+
             public function isStorageReady(): bool
             {
                 return true;
@@ -129,6 +143,11 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                 return [];
             }
 
+            public function deleteBySourceEntryId(int $sourceEntryId): void
+            {
+                $this->deletedSourceEntryIds[] = $sourceEntryId;
+            }
+
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {
                 return new EarthquakeMapPinListDTO([]);
@@ -150,6 +169,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         $this->assertSame(0, $result->updatedCount);
         $this->assertSame(4, $result->skippedCount);
         $this->assertSame(1, $result->failedCount);
+        $this->assertSame([102, 103, 105, 106], $mapPinRepository->deletedSourceEntryIds);
 
         $this->assertNotNull($mapPinRepository->receivedPins);
         $this->assertCount(1, $mapPinRepository->receivedPins->items);
@@ -452,9 +472,22 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                 return [];
             }
 
+            public function latestUpdatedAtFromFeed(): ?CarbonImmutable
+            {
+                return null;
+            }
+
             public function entriesForMapPinBuild(int $limit = 100): array
             {
                 return $this->entries;
+            }
+
+            public function entriesForMapPinBuildByIds(array $sourceEntryIds): array
+            {
+                return array_values(array_filter(
+                    $this->entries,
+                    fn (array $entry): bool => in_array($entry['id'] ?? null, $sourceEntryIds, true),
+                ));
             }
         };
     }
@@ -512,6 +545,8 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
             {
                 return [];
             }
+
+            public function deleteBySourceEntryId(int $sourceEntryId): void {}
 
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {

@@ -146,6 +146,23 @@ class EarthquakeMapPinRepositoryTest extends TestCase
         $this->assertNull($dto->items[1]->reportedAt);
     }
 
+    public function test_delete_by_source_entry_id_removes_only_the_stale_pin(): void
+    {
+        $removedSource = $this->createFeedEntry('urn:jma:earthquake:removed');
+        $keptSource = $this->createFeedEntry('urn:jma:earthquake:kept');
+        $repository = app(EarthquakeMapPinRepositoryInterface::class);
+
+        $repository->upsertFromMapPins(new EarthquakeMapPinListDTO([
+            $this->pin('removed-event', (int) $removedSource->getKey(), '削除対象', '2026-05-11T11:31:00+09:00'),
+            $this->pin('kept-event', (int) $keptSource->getKey(), '保持対象', '2026-05-11T11:31:00+09:00'),
+        ]));
+
+        $repository->deleteBySourceEntryId((int) $removedSource->getKey());
+
+        $this->assertDatabaseMissing('earthquake_map_pins', ['event_id' => 'removed-event']);
+        $this->assertDatabaseHas('earthquake_map_pins', ['event_id' => 'kept-event']);
+    }
+
     private function createFeedEntry(string $entryId): EarthquakeFeedEntry
     {
         return EarthquakeFeedEntry::query()->create([

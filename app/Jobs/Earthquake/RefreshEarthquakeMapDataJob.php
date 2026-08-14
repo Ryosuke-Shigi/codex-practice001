@@ -9,6 +9,7 @@ use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Throwable;
 
 /**
@@ -31,6 +32,19 @@ class RefreshEarthquakeMapDataJob implements ShouldQueue
         public readonly int $feedEntrySyncRunId,
         public readonly int $mapPinSyncRunId,
     ) {}
+
+    /**
+     * @return array<int, WithoutOverlapping>
+     */
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping('earthquake-map-refresh'))
+                ->shared()
+                ->releaseAfter(30)
+                ->expireAfter($this->timeout + 60),
+        ];
+    }
 
     public function handle(RunEarthquakeMapRefreshAction $action): void
     {

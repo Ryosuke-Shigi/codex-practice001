@@ -2,11 +2,14 @@
 
 namespace App\Services\Earthquake;
 
+use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryDTO;
+use App\DTO\Earthquake\Preview\EarthquakeExtractedEntryListDTO;
 use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\Events\ApplicationLog\ApplicationErrorOccurred;
 use App\Repositories\Earthquake\EarthquakeFeedEntryRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use RuntimeException;
 use Throwable;
 
@@ -36,6 +39,7 @@ class EarthquakeFeedEntrySyncService
          * 後続処理が参照できる entry_id / title / xml_url / feed時刻だけを永続化します。
          */
         $startedAt = CarbonImmutable::now();
+        $cutoff = $this->feedEntryRepository->latestUpdatedAtFromFeed();
         $transport = $this->xmlRepository->fetchHighFrequencyFeed();
 
         if (! ($transport['success'] ?? false)) {
@@ -64,7 +68,10 @@ class EarthquakeFeedEntrySyncService
             throw new RuntimeException('気象庁 高頻度フィードのXMLを解析できませんでした。', 0, $exception);
         }
 
-        $extractedEntries = $this->entryExtractService->extractAll($feed->entries);
+        $extractedEntries = $this->entriesAtOrAfterCutoff(
+            $this->entryExtractService->extractAll($feed->entries),
+            $cutoff,
+        );
         /*
          * 抽出済み DTO をそのまま Repository に渡します。
          * 同じ feed を何度取り込んでも entry_id unique を基準に insert / update / skip へ分かれるため、
@@ -83,7 +90,32 @@ class EarthquakeFeedEntrySyncService
             errorMessage: null,
             startedAt: $startedAt,
             finishedAt: CarbonImmutable::now(),
+            changedEntryIds: $result['changedEntryIds'],
         );
+    }
+
+    private function entriesAtOrAfterCutoff(
+        EarthquakeExtractedEntryListDTO $entries,
+        ?CarbonInterface $cutoff,
+    ): EarthquakeExtractedEntryListDTO {
+        if ($cutoff === null) {
+            return $entries;
+        }
+
+        return new EarthquakeExtractedEntryListDTO(array_values(array_filter(
+            $entries->items,
+            function (EarthquakeExtractedEntryDTO $entry) use ($cutoff): bool {
+                if ($entry->updatedAt === null || trim($entry->updatedAt) === '') {
+                    return true;
+                }
+
+                try {
+                    return CarbonImmutable::parse($entry->updatedAt)->greaterThanOrEqualTo($cutoff);
+                } catch (Throwable) {
+                    return true;
+                }
+            },
+        )));
     }
 
     private function safeErrorMessage(mixed $message): string

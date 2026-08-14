@@ -223,7 +223,7 @@ export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
     ]);
 
     const refreshAction: MapRefreshAction = useMemo(() => ({
-        buttonLabel: '地図データ更新',
+        buttonLabel: '更新',
         disabledLabel: '更新中',
         statusLabel: mapRefreshStatusLabel(
             feedEntrySyncStatus,
@@ -231,7 +231,7 @@ export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
             isStartingRefresh,
             refreshPollingError,
         ),
-        description: '統合Job内でXML取込を完了させ、その後に保存済みentryからPIN生成を続けて実行します。',
+        description: '',
         isRefreshing,
         errorMessage: refreshErrorMessage,
         onRefresh: startMapRefresh,

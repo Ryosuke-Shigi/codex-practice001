@@ -185,6 +185,8 @@ class EarthquakeMapRefreshCommandTest extends TestCase
                 return [];
             }
 
+            public function deleteBySourceEntryId(int $sourceEntryId): void {}
+
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {
                 return new EarthquakeMapPinListDTO([]);

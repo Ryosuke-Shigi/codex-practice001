@@ -22,7 +22,7 @@ final readonly class RunEarthquakeMapRefreshAction
     public function execute(int $feedEntrySyncRunId, int $mapPinSyncRunId): void
     {
         try {
-            $this->feedEntrySyncAction->execute($feedEntrySyncRunId);
+            $feedEntrySyncResult = $this->feedEntrySyncAction->execute($feedEntrySyncRunId);
         } catch (Throwable $exception) {
             $this->mapPinSyncRunRepository->markFailed(
                 $mapPinSyncRunId,
@@ -32,6 +32,9 @@ final readonly class RunEarthquakeMapRefreshAction
             throw $exception;
         }
 
-        $this->mapPinSyncAction->execute($mapPinSyncRunId);
+        $this->mapPinSyncAction->executeEntries(
+            $mapPinSyncRunId,
+            $feedEntrySyncResult->changedEntryIds,
+        );
     }
 }

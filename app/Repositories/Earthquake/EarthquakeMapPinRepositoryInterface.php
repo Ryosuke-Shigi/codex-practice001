@@ -20,6 +20,8 @@ interface EarthquakeMapPinRepositoryInterface
      */
     public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array;
 
+    public function deleteBySourceEntryId(int $sourceEntryId): void;
+
     /**
      * 保存済み map pin の最新行を、画面やプレビュー一覧で扱いやすい配列として返します。
      * Repository の責務は DB 取得だけなので、震度に応じた色や波紋表現はここで決めません。

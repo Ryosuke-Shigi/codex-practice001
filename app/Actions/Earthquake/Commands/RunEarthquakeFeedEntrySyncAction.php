@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Commands;
 
+use App\DTO\Earthquake\Sync\EarthquakeFeedEntrySyncResultDTO;
 use App\Repositories\Earthquake\EarthquakeFeedEntrySyncRunRepositoryInterface;
 use App\Services\Earthquake\EarthquakeFeedEntrySyncService;
 use Throwable;
@@ -19,7 +20,7 @@ final readonly class RunEarthquakeFeedEntrySyncAction
         private EarthquakeFeedEntrySyncService $syncService,
     ) {}
 
-    public function execute(int $syncRunId): void
+    public function execute(int $syncRunId): EarthquakeFeedEntrySyncResultDTO
     {
         $this->syncRunRepository->markRunning($syncRunId);
 
@@ -32,5 +33,7 @@ final readonly class RunEarthquakeFeedEntrySyncAction
         }
 
         $this->syncRunRepository->markCompleted($syncRunId, $result);
+
+        return $result;
     }
 }

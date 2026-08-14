@@ -88,6 +88,13 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
         ];
     }
 
+    public function deleteBySourceEntryId(int $sourceEntryId): void
+    {
+        EarthquakeMapPin::query()
+            ->where('source_entry_id', $sourceEntryId)
+            ->delete();
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

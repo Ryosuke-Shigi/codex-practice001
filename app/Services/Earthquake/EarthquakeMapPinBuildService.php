@@ -50,6 +50,45 @@ class EarthquakeMapPinBuildService
 
     public function sync(int $syncRunId): EarthquakeMapPinSyncResultDTO
     {
+        return $this->syncSourceEntries(
+            $syncRunId,
+            $this->feedEntryRepository->entriesForMapPinBuild(),
+        );
+    }
+
+    /**
+     * @param  array<int, int>  $sourceEntryIds
+     */
+    public function syncEntries(int $syncRunId, array $sourceEntryIds): EarthquakeMapPinSyncResultDTO
+    {
+        if ($sourceEntryIds === []) {
+            $now = CarbonImmutable::now();
+
+            return new EarthquakeMapPinSyncResultDTO(
+                syncRunId: $syncRunId,
+                status: EarthquakeMapPinSyncResultDTO::STATUS_COMPLETED,
+                totalCount: 0,
+                insertedCount: 0,
+                updatedCount: 0,
+                skippedCount: 0,
+                failedCount: 0,
+                errorMessage: null,
+                startedAt: $now,
+                finishedAt: $now,
+            );
+        }
+
+        return $this->syncSourceEntries(
+            $syncRunId,
+            $this->feedEntryRepository->entriesForMapPinBuildByIds($sourceEntryIds),
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sourceEntries
+     */
+    private function syncSourceEntries(int $syncRunId, array $sourceEntries): EarthquakeMapPinSyncResultDTO
+    {
         /*
          * この Service は「保存済み feed entry から map pin を作る」業務手順だけを担当します。
          * 同期開始のHTTP入口やQueue状態更新は Action / Job 側へ分け、外部XML取得とDB保存は
@@ -60,7 +99,6 @@ class EarthquakeMapPinBuildService
          * 第2段階の「個別XML解析・地図ピン生成」を明確に分けています。
          */
         $startedAt = CarbonImmutable::now();
-        $sourceEntries = $this->feedEntryRepository->entriesForMapPinBuild();
         $pins = [];
         $skippedCount = 0;
         $failedCount = 0;
@@ -75,6 +113,7 @@ class EarthquakeMapPinBuildService
             $xmlUrl = $sourceEntry['xmlUrl'] ?? null;
 
             if (! is_string($xmlUrl) || trim($xmlUrl) === '') {
+                $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                 $skippedCount++;
 
                 continue;
@@ -177,6 +216,7 @@ class EarthquakeMapPinBuildService
                  * たとえば震度速報や一部の津波系情報は、地図ピンに必要な震源座標を持たない可能性があります。
                  */
                 if (! $this->detailXmlParseService->isMappable($pin)) {
+                    $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                     $skippedCount++;
 
                     continue;
@@ -184,6 +224,7 @@ class EarthquakeMapPinBuildService
 
                 $pins[] = $pin;
             } catch (EarthquakeDetailXmlNotMappableException) {
+                $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
                 $skippedCount++;
             } catch (Throwable $exception) {
                 $this->addFailureSummary(

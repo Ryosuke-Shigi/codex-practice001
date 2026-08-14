@@ -2,6 +2,7 @@
 
 namespace App\Actions\Earthquake\Commands;
 
+use App\DTO\Earthquake\Sync\EarthquakeMapPinSyncResultDTO;
 use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
 use Throwable;
@@ -21,10 +22,30 @@ final readonly class RunEarthquakeMapPinSyncAction
 
     public function execute(int $syncRunId): void
     {
+        $this->executeBuild(
+            $syncRunId,
+            fn (): EarthquakeMapPinSyncResultDTO => $this->buildService->sync($syncRunId),
+        );
+    }
+
+    /**
+     * @param  array<int, int>  $sourceEntryIds
+     */
+    public function executeEntries(int $syncRunId, array $sourceEntryIds): void
+    {
+        $this->executeBuild(
+            $syncRunId,
+            fn (): EarthquakeMapPinSyncResultDTO => $this->buildService->syncEntries($syncRunId, $sourceEntryIds),
+        );
+    }
+
+    /** @param callable(): EarthquakeMapPinSyncResultDTO $build */
+    private function executeBuild(int $syncRunId, callable $build): void
+    {
         $this->syncRunRepository->markRunning($syncRunId);
 
         try {
-            $result = $this->buildService->sync($syncRunId);
+            $result = $build();
         } catch (Throwable $exception) {
             $this->syncRunRepository->markFailed($syncRunId, $exception->getMessage());
 

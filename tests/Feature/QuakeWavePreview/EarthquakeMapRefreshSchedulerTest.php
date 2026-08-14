@@ -19,12 +19,12 @@ class EarthquakeMapRefreshSchedulerTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_scheduler_registers_earthquake_map_refresh_every_fifteen_minutes(): void
+    public function test_scheduler_registers_earthquake_map_refresh_every_three_minutes(): void
     {
         $event = $this->earthquakeMapRefreshScheduleEvent();
         $command = Event::normalizeCommand($event->command ?? '');
 
-        $this->assertSame('*/15 * * * *', $event->getExpression());
+        $this->assertSame('*/3 * * * *', $event->getExpression());
         $this->assertSame('earthquake-map-refresh', $event->description);
         $this->assertStringContainsString('artisan earthquake:refresh-map', $command);
         $this->assertTrue($event->withoutOverlapping);

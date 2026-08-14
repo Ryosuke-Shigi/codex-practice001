@@ -88,12 +88,12 @@ Schedule::job(new CleanupDanceShortVideoSnapshotsJob)
 /*
  * Japan Quake Wave Map の地震情報取得入口です。
  *
- * Scheduler は15分ごとに通常 command を呼ぶだけに留めます。
+ * Scheduler は3分ごとに通常 command を呼ぶだけに留めます。
  * feed entry 同期、個別XML取得、map pin 生成は earthquake:refresh-map から既存の
  * StartEarthquakeMapRefreshAction / RefreshEarthquakeMapDataJob / Service / Repository へ委譲します。
  */
 Schedule::command('earthquake:refresh-map')
-    ->everyFifteenMinutes()
+    ->cron('*/3 * * * *')
     ->name('earthquake-map-refresh')
     ->withoutOverlapping();
 

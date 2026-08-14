@@ -44,13 +44,16 @@ export default function PinDisplayLimitSlider({
                     .pin-display-limit-slider {
                         appearance: none;
                         background: transparent;
+                        writing-mode: vertical-lr;
+                        direction: rtl;
                     }
 
                     .pin-display-limit-slider::-webkit-slider-runnable-track {
-                        height: 12px;
+                        width: 12px;
+                        height: 100%;
                         border: 1px solid rgba(207, 250, 254, 0.58);
                         border-radius: 9999px;
-                        background: linear-gradient(90deg, rgba(14, 165, 233, 0.78), rgba(125, 211, 252, 0.92));
+                        background: linear-gradient(0deg, rgba(14, 165, 233, 0.78), rgba(125, 211, 252, 0.92));
                         box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.4);
                     }
 
@@ -58,7 +61,7 @@ export default function PinDisplayLimitSlider({
                         appearance: none;
                         width: 34px;
                         height: 34px;
-                        margin-top: -12px;
+                        margin-left: -12px;
                         border: 2px solid rgba(255, 255, 255, 0.92);
                         border-radius: 9999px;
                         background: #ecfeff;
@@ -66,10 +69,11 @@ export default function PinDisplayLimitSlider({
                     }
 
                     .pin-display-limit-slider::-moz-range-track {
-                        height: 12px;
+                        width: 12px;
+                        height: 100%;
                         border: 1px solid rgba(207, 250, 254, 0.58);
                         border-radius: 9999px;
-                        background: linear-gradient(90deg, rgba(14, 165, 233, 0.78), rgba(125, 211, 252, 0.92));
+                        background: linear-gradient(0deg, rgba(14, 165, 233, 0.78), rgba(125, 211, 252, 0.92));
                         box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.4);
                     }
 
@@ -104,7 +108,8 @@ export default function PinDisplayLimitSlider({
                         aria-label="地震ピン表示件数"
                         aria-orientation="vertical"
                         onChange={(event) => onChange(Number(event.currentTarget.value))}
-                        className="pin-display-limit-slider absolute h-10 w-56 -rotate-90 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:w-72"
+                        style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
+                        className="pin-display-limit-slider h-56 w-10 touch-none cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:h-72"
                     />
                 </div>
                 <div className="flex h-56 flex-col justify-between py-1 text-[10px] font-bold leading-none text-cyan-50/78 sm:h-72" aria-hidden="true">

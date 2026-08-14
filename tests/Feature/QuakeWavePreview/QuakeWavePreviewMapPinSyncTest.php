@@ -473,6 +473,11 @@ XML;
                 return $this->innerRepository->latest($limit);
             }
 
+            public function deleteBySourceEntryId(int $sourceEntryId): void
+            {
+                $this->innerRepository->deleteBySourceEntryId($sourceEntryId);
+            }
+
             public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
             {
                 return $this->innerRepository->toMapPinListDTO($query);

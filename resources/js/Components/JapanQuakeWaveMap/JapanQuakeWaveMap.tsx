@@ -39,13 +39,16 @@ type JapanQuakeWaveMapProps = {
     summary?: string;
     mapOverlay?: ReactNode;
     mapTopContent?: ReactNode;
+    mapBottomContent?: ReactNode;
     controlPanelsBeforeLayers?: ReactNode;
     controlPanelsAfterLayers?: ReactNode;
     refreshAction?: MapRefreshAction;
     refreshPanelPlacement?: 'description' | 'controls';
+    compactRefreshPanel?: boolean;
     detailPanelPlacement?: 'side' | 'below';
     detailPanelCollapsible?: boolean;
     detailPanelDefaultOpen?: boolean;
+    showIntroduction?: boolean;
 };
 
 const defaultLayerVisibility: MapLayerVisibility = {
@@ -78,13 +81,16 @@ export default function JapanQuakeWaveMap({
     summary = '取得済みの地震情報を日本地図上へ重ね、震度に応じたピンと波紋で確認します。',
     mapOverlay,
     mapTopContent,
+    mapBottomContent,
     controlPanelsBeforeLayers,
     controlPanelsAfterLayers,
     refreshAction,
     refreshPanelPlacement = 'description',
+    compactRefreshPanel = false,
     detailPanelPlacement = 'side',
     detailPanelCollapsible = false,
     detailPanelDefaultOpen = true,
+    showIntroduction = true,
 }: JapanQuakeWaveMapProps) {
     /*
      * レイヤー表示状態は画面表示だけの状態として、このコンポーネント内に閉じます。
@@ -117,6 +123,9 @@ export default function JapanQuakeWaveMap({
     const mapAndDetailClassName = detailPanelPlacement === 'below'
         ? 'grid h-full min-h-[430px] w-full min-w-0 gap-4 sm:min-h-[472px]'
         : 'grid h-full min-h-[430px] w-full min-w-0 gap-4 sm:min-h-[472px] lg:grid-cols-[minmax(0,1fr)_280px]';
+    const sectionClassName = showIntroduction
+        ? 'grid w-full min-w-0 flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]'
+        : 'grid w-full min-w-0 flex-1';
 
     return (
         /*
@@ -124,35 +133,37 @@ export default function JapanQuakeWaveMap({
          * にして親幅へ収縮できるようにします。実際の余白や視認性は内側のカード padding と
          * min-height で調整します。
          */
-        <section className="grid w-full min-w-0 flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-            <motion.div
-                className="w-full max-w-2xl min-w-0"
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.75, ease: 'easeOut' }}
-            >
-                <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-950/70">
-                    {eyebrow}
-                </p>
-                <h1 className="mt-3 text-4xl font-semibold leading-tight text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.35)] sm:text-6xl">
-                    {title}
-                </h1>
-                <p className="mt-5 max-w-xl text-base leading-8 text-cyan-50/90 drop-shadow-[0_8px_22px_rgba(2,24,45,0.2)]">
-                    {summary}
-                </p>
+        <section className={sectionClassName}>
+            {showIntroduction && (
+                <motion.div
+                    className="w-full max-w-2xl min-w-0"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.75, ease: 'easeOut' }}
+                >
+                    <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-950/70">
+                        {eyebrow}
+                    </p>
+                    <h1 className="mt-3 text-4xl font-semibold leading-tight text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.35)] sm:text-6xl">
+                        {title}
+                    </h1>
+                    <p className="mt-5 max-w-xl text-base leading-8 text-cyan-50/90 drop-shadow-[0_8px_22px_rgba(2,24,45,0.2)]">
+                        {summary}
+                    </p>
 
-                {refreshAction && refreshPanelPlacement === 'description' && (
-                    <div className="mt-6 max-w-xl">
-                        <MapRefreshPanel action={refreshAction} />
-                    </div>
-                )}
+                    {refreshAction && refreshPanelPlacement === 'description' && (
+                        <div className="mt-6 max-w-xl">
+                            <MapRefreshPanel action={refreshAction} compact={compactRefreshPanel} />
+                        </div>
+                    )}
 
-                {pins.length === 0 && (
-                    <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-                        保存済みの地震ピンはありません。
-                    </div>
-                )}
-            </motion.div>
+                    {pins.length === 0 && (
+                        <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
+                            保存済みの地震ピンはありません。
+                        </div>
+                    )}
+                </motion.div>
+            )}
 
             <motion.div
                 className="relative flex min-h-[430px] w-full min-w-0 flex-col gap-4 sm:min-h-[520px]"
@@ -191,11 +202,13 @@ export default function JapanQuakeWaveMap({
                     </div>
                 </div>
 
+                {mapBottomContent}
+
                 <div className="flex w-full min-w-0 flex-col gap-4">
                     {controlPanelsBeforeLayers}
                     <MapLayerControlPanel layers={layers} onChange={setLayers} />
                     {refreshAction && refreshPanelPlacement === 'controls' && (
-                        <MapRefreshPanel action={refreshAction} />
+                        <MapRefreshPanel action={refreshAction} compact={compactRefreshPanel} />
                     )}
                     {controlPanelsAfterLayers}
                 </div>
