@@ -15,7 +15,8 @@ interface EarthquakeMapPinRepositoryInterface
      *     insertedCount: int,
      *     updatedCount: int,
      *     skippedCount: int,
-     *     failedCount: int
+     *     failedCount: int,
+     *     failedSourceEntryIds: array<int, int>
      * }
      */
     public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array;

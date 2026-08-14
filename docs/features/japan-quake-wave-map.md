@@ -106,7 +106,7 @@ skippedとして扱うもの:
 
 限定retryの分類:
 
-- retryable: HTTP 429、5xx、connection / DNS / TLS / timeout、404、空body、XML parse failure
+- retryable: HTTP 429、5xx、connection / DNS / TLS / timeout、404、空body、XML parse failure、map pin保存の一時失敗
 - terminal skipped: XML URLなし、JMA以外のURL、正常解析後のnot-mappable
 - terminal failed: 上記以外のHTTP error
 
@@ -205,6 +205,7 @@ Request validationで固定する主な内容:
 - insert / updateされたentry IDだけを後段処理する
 - 更新後に地図対象外となったentryの古いpinを削除する
 - 一時失敗したentryだけを有限retryし、成功済み・terminal対象を再取得しない
+- map pin保存だけが失敗したentryもsource entry IDを有限retryへ保持し、次回feed差分を待たずに回復できる
 
 ### Job / Action
 

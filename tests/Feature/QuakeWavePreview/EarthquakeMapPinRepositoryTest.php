@@ -70,6 +70,26 @@ class EarthquakeMapPinRepositoryTest extends TestCase
         ]);
     }
 
+    public function test_upsert_returns_the_source_entry_id_when_a_pin_cannot_be_persisted(): void
+    {
+        $repository = app(EarthquakeMapPinRepositoryInterface::class);
+
+        $result = $repository->upsertFromMapPins(new EarthquakeMapPinListDTO([
+            $this->pin(
+                eventId: 'missing-source-entry',
+                sourceEntryId: 999999,
+                areaName: '保存失敗震源',
+                reportedAt: '2026-05-11T11:31:00+09:00',
+            ),
+        ]));
+
+        $this->assertSame(1, $result['failedCount']);
+        $this->assertSame([999999], $result['failedSourceEntryIds']);
+        $this->assertDatabaseMissing('earthquake_map_pins', [
+            'event_id' => 'missing-source-entry',
+        ]);
+    }
+
     public function test_to_map_pin_list_dto_applies_date_range_and_preserves_pin_values(): void
     {
         $sourceEntry = $this->createFeedEntry('urn:jma:earthquake:map-list');

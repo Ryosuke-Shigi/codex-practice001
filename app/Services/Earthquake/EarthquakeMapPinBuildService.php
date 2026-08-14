@@ -256,6 +256,10 @@ class EarthquakeMapPinBuildService
 
         $upsertResult = $this->mapPinRepository->upsertFromMapPins(new EarthquakeMapPinListDTO($pins));
 
+        foreach ($upsertResult['failedSourceEntryIds'] as $failedSourceEntryId) {
+            $this->addRetryableSourceEntryIdValue($retryableSourceEntryIds, $failedSourceEntryId);
+        }
+
         /*
          * totalCount は「対象として読んだ feed entry 数」です。
          * inserted / updated / skipped / failed は、取得・解析・保存の各段階で分かれるため、
@@ -393,8 +397,15 @@ class EarthquakeMapPinBuildService
      */
     private function addRetryableSourceEntryId(array &$retryableSourceEntryIds, array $sourceEntry): void
     {
-        $sourceEntryId = $sourceEntry['id'] ?? null;
+        $this->addRetryableSourceEntryIdValue(
+            $retryableSourceEntryIds,
+            $sourceEntry['id'] ?? null,
+        );
+    }
 
+    /** @param array<int, int> $retryableSourceEntryIds */
+    private function addRetryableSourceEntryIdValue(array &$retryableSourceEntryIds, mixed $sourceEntryId): void
+    {
         if (! is_int($sourceEntryId) || in_array($sourceEntryId, $retryableSourceEntryIds, true)) {
             return;
         }

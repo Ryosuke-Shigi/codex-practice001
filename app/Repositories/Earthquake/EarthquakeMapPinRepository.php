@@ -34,7 +34,8 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
      *     insertedCount: int,
      *     updatedCount: int,
      *     skippedCount: int,
-     *     failedCount: int
+     *     failedCount: int,
+     *     failedSourceEntryIds: array<int, int>
      * }
      */
     public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array
@@ -52,6 +53,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
         $updatedCount = 0;
         $skippedCount = 0;
         $failedCount = 0;
+        $failedSourceEntryIds = [];
 
         foreach ($pins->items as $pin) {
             try {
@@ -76,6 +78,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
                 $updatedCount++;
             } catch (Throwable) {
                 $failedCount++;
+                $failedSourceEntryIds[] = $pin->sourceEntryId;
             }
         }
 
@@ -85,6 +88,7 @@ class EarthquakeMapPinRepository implements EarthquakeMapPinRepositoryInterface
             'updatedCount' => $updatedCount,
             'skippedCount' => $skippedCount,
             'failedCount' => $failedCount,
+            'failedSourceEntryIds' => $failedSourceEntryIds,
         ];
     }
 

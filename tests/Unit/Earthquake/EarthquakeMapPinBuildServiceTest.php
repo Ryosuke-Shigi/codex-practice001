@@ -135,6 +135,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     'updatedCount' => 0,
                     'skippedCount' => 0,
                     'failedCount' => 0,
+                    'failedSourceEntryIds' => [],
                 ];
             }
 
@@ -442,6 +443,72 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
         );
     }
 
+    public function test_sync_entries_retries_a_map_pin_persistence_failure_without_another_feed_change(): void
+    {
+        Event::fake([ApplicationErrorOccurred::class, ApplicationIntegrationLogged::class]);
+
+        $entry = ['id' => 501, 'xmlUrl' => 'https://example.test/persistence-retry.xml', 'title' => '保存再試行'];
+        $mapPinRepository = new class implements EarthquakeMapPinRepositoryInterface
+        {
+            public int $upsertCalls = 0;
+
+            public function isStorageReady(): bool
+            {
+                return true;
+            }
+
+            public function upsertFromMapPins(EarthquakeMapPinListDTO $pins): array
+            {
+                $this->upsertCalls++;
+
+                return [
+                    'totalCount' => $pins->count(),
+                    'insertedCount' => $this->upsertCalls === 1 ? 0 : 1,
+                    'updatedCount' => 0,
+                    'skippedCount' => 0,
+                    'failedCount' => $this->upsertCalls === 1 ? 1 : 0,
+                    'failedSourceEntryIds' => $this->upsertCalls === 1 ? [501] : [],
+                ];
+            }
+
+            public function latest(int $limit = 50): array
+            {
+                return [];
+            }
+
+            public function deleteBySourceEntryId(int $sourceEntryId): void {}
+
+            public function toMapPinListDTO(EarthquakeMapPinListQueryDTO $query): EarthquakeMapPinListDTO
+            {
+                return new EarthquakeMapPinListDTO([]);
+            }
+        };
+        $service = new EarthquakeMapPinBuildService(
+            $this->feedEntryRepositoryReturning([$entry]),
+            $this->detailXmlRepositoryReturning([
+                'https://example.test/persistence-retry.xml' => $this->transport(
+                    url: 'https://example.test/persistence-retry.xml',
+                    success: true,
+                    statusCode: 200,
+                    body: $this->earthquakeReportXml(),
+                    errorMessage: null,
+                ),
+            ]),
+            new EarthquakeDetailXmlParseService,
+            $mapPinRepository,
+        );
+
+        $failedResult = $service->syncEntries(91, [501]);
+        $recoveredResult = $service->syncEntries(92, $failedResult->retryableSourceEntryIds);
+
+        $this->assertSame(1, $failedResult->failedCount);
+        $this->assertSame([501], $failedResult->retryableSourceEntryIds);
+        $this->assertSame(1, $recoveredResult->insertedCount);
+        $this->assertSame(0, $recoveredResult->failedCount);
+        $this->assertSame([], $recoveredResult->retryableSourceEntryIds);
+        $this->assertSame(2, $mapPinRepository->upsertCalls);
+    }
+
     /**
      * @param  array<int, array<string, mixed>>  $entries
      */
@@ -541,6 +608,7 @@ class EarthquakeMapPinBuildServiceTest extends TestCase
                     'updatedCount' => 0,
                     'skippedCount' => 0,
                     'failedCount' => 0,
+                    'failedSourceEntryIds' => [],
                 ];
             }
 

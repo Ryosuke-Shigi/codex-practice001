@@ -177,6 +177,7 @@ class EarthquakeMapRefreshCommandTest extends TestCase
                     'updatedCount' => 0,
                     'skippedCount' => 0,
                     'failedCount' => 0,
+                    'failedSourceEntryIds' => [],
                 ];
             }
 
