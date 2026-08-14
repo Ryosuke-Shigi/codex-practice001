@@ -26,7 +26,12 @@ final readonly class EarthquakeFeedEntrySyncResultDTO
         public ?string $errorMessage,
         public ?CarbonInterface $startedAt,
         public ?CarbonInterface $finishedAt,
-        /** @var array<int, int> */
+        /**
+         * 統合更新の同一実行内でmap pin段階へ渡す、一時的な保存済みentry IDです。
+         * sync runには永続化せず、status APIのtoArrayにも公開しません。
+         *
+         * @var array<int, int>
+         */
         public array $changedEntryIds = [],
     ) {}
 

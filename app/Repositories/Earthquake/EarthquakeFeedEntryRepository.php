@@ -165,6 +165,9 @@ class EarthquakeFeedEntryRepository implements EarthquakeFeedEntryRepositoryInte
     }
 
     /**
+     * 差分更新されたIDは、xml_urlが空へ変わったentryも返します。
+     * 古いpinを削除するかの判断はServiceへ残し、Repositoryは指定IDの取得だけを担当します。
+     *
      * @param  array<int, int>  $sourceEntryIds
      * @return array<int, array<string, mixed>>
      */

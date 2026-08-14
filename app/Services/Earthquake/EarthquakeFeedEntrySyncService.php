@@ -94,6 +94,9 @@ class EarthquakeFeedEntrySyncService
         );
     }
 
+    /**
+     * 境界時刻と同時刻のentryを再評価し、updated欠落・不正entryは取りこぼし防止のため残します。
+     */
     private function entriesAtOrAfterCutoff(
         EarthquakeExtractedEntryListDTO $entries,
         ?CarbonInterface $cutoff,

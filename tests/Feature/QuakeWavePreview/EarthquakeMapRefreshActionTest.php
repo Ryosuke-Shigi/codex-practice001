@@ -18,6 +18,7 @@ use App\Services\Earthquake\EarthquakeFeedEntrySyncService;
 use App\Services\Earthquake\EarthquakeMapPinBuildService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -85,6 +86,47 @@ class EarthquakeMapRefreshActionTest extends TestCase
         $this->assertInstanceOf(WithoutOverlapping::class, $middleware[0]);
         $this->assertSame('earthquake-map-refresh', $middleware[0]->key);
         $this->assertTrue($middleware[0]->shareKey);
+        $this->assertSame(30, $middleware[0]->releaseAfter);
+        $this->assertSame(660, $middleware[0]->expiresAfter);
+
+        $job = new RefreshEarthquakeMapDataJob(1, 1);
+        $this->assertSame(0, $job->tries);
+        $this->assertSame(1, $job->maxExceptions);
+    }
+
+    public function test_refresh_job_is_released_during_overlap_and_runs_after_the_lock_is_free(): void
+    {
+        $middleware = (new RefreshEarthquakeMapDataJob(1, 1))->middleware()[0];
+        $lock = Cache::lock($middleware->getLockKey(new \stdClass), $middleware->expiresAfter);
+        $this->assertTrue($lock->get());
+
+        $queuedJob = new class
+        {
+            public ?int $releasedAfter = null;
+
+            public function release(int $delay): void
+            {
+                $this->releasedAfter = $delay;
+            }
+        };
+        $handled = false;
+
+        try {
+            $middleware->handle($queuedJob, function () use (&$handled): void {
+                $handled = true;
+            });
+
+            $this->assertSame(30, $queuedJob->releasedAfter);
+            $this->assertFalse($handled);
+        } finally {
+            $lock->release();
+        }
+
+        $middleware->handle($queuedJob, function () use (&$handled): void {
+            $handled = true;
+        });
+
+        $this->assertTrue($handled);
     }
 
     public function test_refresh_job_marks_both_runs_completed_when_feed_and_map_pin_steps_succeed(): void

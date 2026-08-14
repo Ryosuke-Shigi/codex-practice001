@@ -17,12 +17,20 @@ use Throwable;
  *
  * 2つの syncRunId を実行用 Action へ渡します。
  * feed entry 同期から map pin 生成へ進める手順は Action へ置き、Job は Queue 実行入口に留めます。
+ * 共有lockの取得待ちは30秒後に再投入し、実処理で例外が起きた場合だけ1回でfailedにします。
  */
 class RefreshEarthquakeMapDataJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 1;
+    /*
+     * WithoutOverlappingによるreleaseもQueueのattemptsを消費します。
+     * 重複待機だけでMaxAttemptsExceededExceptionにしないようattempt上限は設けず、
+     * 実処理例外の再試行可否はmaxExceptionsで分離します。
+     */
+    public int $tries = 0;
+
+    public int $maxExceptions = 1;
 
     public int $timeout = 600;
 

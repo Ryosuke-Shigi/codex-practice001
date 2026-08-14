@@ -211,9 +211,10 @@ class EarthquakeMapPinBuildService
                 );
 
                 /*
-                 * 緯度経度が取れない電文は、現段階では地図ピンとして保存しません。
-                 * 解析エラーではなく「ピン化対象外」として skipped に数え、後続の詳細解析フェーズに残します。
-                 * たとえば震度速報や一部の津波系情報は、地図ピンに必要な震源座標を持たない可能性があります。
+                 * 緯度経度などが取れない電文は「ピン化対象外」としてskippedに数え、
+                 * 同じsource entryの古いpinが残らないよう削除します。
+                 * 一時的な取得失敗や解析失敗では既存pinを削除せず、feed entryの再更新時または
+                 * 単独のmap pin同期で再評価できる状態を保ちます。
                  */
                 if (! $this->detailXmlParseService->isMappable($pin)) {
                     $this->mapPinRepository->deleteBySourceEntryId((int) $sourceEntry['id']);
