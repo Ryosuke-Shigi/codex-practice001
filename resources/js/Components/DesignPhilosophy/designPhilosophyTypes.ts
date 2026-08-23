@@ -18,10 +18,9 @@ export type DesignPhilosophySection = {
     body: string;
 };
 
-export type Principle = {
+export type TaskContractItem = {
     title: string;
     description: string;
-    signal: string;
 };
 
 export type PublicRole = {
@@ -36,6 +35,12 @@ export type AiDevelopmentStep = {
     title: string;
     description: string;
     owner: string;
+};
+
+export type TaskDependencyNode = {
+    title: string;
+    dependency: string;
+    lane: 'root' | 'branch' | 'merge';
 };
 
 export type ArchitectureLayer = {
@@ -53,7 +58,8 @@ export type ArchitectureResponsibility = {
         | 'application'
         | 'domain'
         | 'infrastructure'
-        | 'output';
+        | 'output'
+        | 'presentation';
 };
 
 export type DevelopmentStage = {
@@ -67,14 +73,19 @@ export type DevelopmentStage = {
     optional: boolean;
 };
 
-export type QualityGate = {
+export type EvidenceType = {
     title: string;
     description: string;
-    check: string;
+    boundary: string;
 };
 
 export type ImprovementStep = {
     step: number;
+    title: string;
+    description: string;
+};
+
+export type NamedFact = {
     title: string;
     description: string;
 };

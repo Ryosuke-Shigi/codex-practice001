@@ -1,4 +1,5 @@
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 
 export default function SectionHeading({
     section,
@@ -6,19 +7,20 @@ export default function SectionHeading({
     section: DesignPhilosophySection;
 }) {
     return (
-        <header className="dp-section-heading dp-reveal">
+        <header className="dp-section-heading">
             <div className="dp-section-heading__title">
-                <p className="dp-eyebrow">
-                    <span aria-hidden="true" />
+                <RpgText as="p" className="dp-eyebrow">
                     {section.eyebrow}
-                </p>
-                <h2 id={`design-philosophy-${section.key}`}>
+                </RpgText>
+                <RpgText as="h2" id={`design-philosophy-${section.key}`}>
                     {section.title}
-                </h2>
+                </RpgText>
             </div>
             <div className="dp-section-heading__copy">
-                <p className="dp-section-heading__lead">{section.lead}</p>
-                <p>{section.body}</p>
+                <RpgText as="p" className="dp-section-heading__lead">
+                    {section.lead}
+                </RpgText>
+                <RpgText as="p">{section.body}</RpgText>
             </div>
         </header>
     );

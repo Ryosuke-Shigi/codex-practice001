@@ -17,18 +17,18 @@ class DesignPhilosophyPageTest extends TestCase
                 ->component('DesignPhilosophy/Index', false)
                 ->has('sections', 9)
                 ->where('sections.0.key', 'hero')
-                ->where('sections.0.title', '人間主導のAI開発設計思想')
+                ->where('sections.0.title', '人間が判断し、AIは分離された責務を実行する。')
                 ->where('sections.0.eyebrow', 'ポートフォリオ／設計思想')
                 ->where('sections.1.key', 'principles')
                 ->where('sections.2.key', 'human-ai-roles')
                 ->where('sections.3.key', 'ai-development-flow')
                 ->where('sections.4.key', 'architecture')
-                ->where('sections.4.title', 'Laravelの責務を、変更理由で分ける。')
+                ->where('sections.4.title', 'Action - Domain - Responderで、変更理由を分ける。')
                 ->where('sections.5.key', 'development-stages')
                 ->where('sections.6.key', 'quality-gates')
                 ->where('sections.7.key', 'improvement-loop')
                 ->where('sections.8.key', 'closing')
-                ->where('sections.8.title', '壊さず、迷わず、成長し続ける。')
+                ->where('sections.8.title', '完成は、Evidenceと未確認事項を分けて判断する。')
             );
     }
 

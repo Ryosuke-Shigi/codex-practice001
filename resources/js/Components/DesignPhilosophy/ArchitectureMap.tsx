@@ -1,18 +1,11 @@
-import { ArrowDown, Box, Cable, Workflow } from 'lucide-react';
-
-import ArchitectureStackVisual from '@/Components/DesignPhilosophy/ArchitectureStackVisual';
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
 import {
     architectureLayers,
     architectureResponsibilities,
+    technologyComposition,
 } from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
-
-const layerIcons = {
-    Action: Workflow,
-    Domain: Box,
-    Responder: Cable,
-};
 
 export default function ArchitectureMap({
     section,
@@ -24,74 +17,78 @@ export default function ArchitectureMap({
             id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
             className="dp-section dp-section--architecture"
+            data-rpg-section
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
-                <div className="dp-architecture-intro">
-                    <div className="dp-architecture-statement dp-reveal">
-                        <span>CANONICAL PATTERN</span>
-                        <p>Action - Domain - Responder</p>
-                        <strong>
-                            入力から出力までを、変更理由で分ける。
-                        </strong>
-                    </div>
-                    <ArchitectureStackVisual />
+                <div className="dp-architecture-statement">
+                    <RpgText className="dp-technical">CANONICAL PATTERN</RpgText>
+                    <RpgText as="p">Action - Domain - Responder</RpgText>
+                    <RpgText as="strong">
+                        Architecture Decision Recordの意味では使わない
+                    </RpgText>
                 </div>
 
                 <div className="dp-architecture-layers">
-                    {architectureLayers.map((layer, index) => {
-                        const Icon = layerIcons[layer.key];
-
-                        return (
-                            <div key={layer.key} className="contents">
-                                <article
-                                    className="dp-card dp-architecture-layer dp-reveal"
-                                    data-architecture-layer={layer.key}
-                                    data-tilt
-                                >
-                                    <div className="dp-architecture-layer__top">
-                                        <span>
-                                            {String(index + 1).padStart(2, '0')}
-                                        </span>
-                                        <Icon aria-hidden="true" />
-                                    </div>
-                                    <p>{layer.key}</p>
-                                    <h3>{layer.title}</h3>
-                                    <small>{layer.description}</small>
-                                </article>
-                                {index < architectureLayers.length - 1 && (
-                                    <ArrowDown
-                                        aria-hidden="true"
-                                        className="dp-architecture-layer__arrow"
-                                    />
-                                )}
-                            </div>
-                        );
-                    })}
+                    {architectureLayers.map((layer, index) => (
+                        <article
+                            key={layer.key}
+                            className="dp-paper-card dp-architecture-layer"
+                            data-architecture-layer={layer.key}
+                        >
+                            <RpgText className="dp-card__index">
+                                {String(index + 1).padStart(2, '0')}
+                            </RpgText>
+                            <RpgText className="dp-technical">{layer.key}</RpgText>
+                            <RpgText as="h3">{layer.title}</RpgText>
+                            <RpgText as="p">{layer.description}</RpgText>
+                        </article>
+                    ))}
                 </div>
 
+                <RpgText
+                    as="p"
+                    className="dp-layer-flow"
+                    data-structure-motion="adr-flow"
+                >
+                    Request → Controller → Action → Service / Repository → DTO → Responder → React
+                </RpgText>
+
                 <div className="dp-responsibility-grid">
-                    {architectureResponsibilities.map(
-                        (responsibility, index) => (
-                            <article
-                                key={responsibility.value}
-                                className="dp-responsibility-card dp-reveal"
-                                data-responsibility-category={
-                                    responsibility.category
-                                }
-                            >
-                                <span>
-                                    R{String(index + 1).padStart(2, '0')}
-                                </span>
-                                <h3>{responsibility.value}</h3>
-                                <strong>
-                                    {responsibility.technicalLabel}
-                                </strong>
-                                <p>{responsibility.description}</p>
-                            </article>
-                        ),
-                    )}
+                    {architectureResponsibilities.map((responsibility, index) => (
+                        <article
+                            key={responsibility.value}
+                            className="dp-blueprint-panel"
+                            data-responsibility-category={responsibility.category}
+                        >
+                            <RpgText className="dp-card__index">
+                                {`R${String(index + 1).padStart(2, '0')}`}
+                            </RpgText>
+                            <RpgText as="h3">{responsibility.value}</RpgText>
+                            <RpgText as="strong">
+                                {responsibility.technicalLabel}
+                            </RpgText>
+                            <RpgText as="p">{responsibility.description}</RpgText>
+                        </article>
+                    ))}
+                </div>
+
+                <div className="dp-composition">
+                    <div className="dp-composition__heading">
+                        <RpgText className="dp-technical">
+                            TECHNOLOGY COMPOSITION
+                        </RpgText>
+                        <RpgText as="h3">Taskごとに必要な範囲だけ組む</RpgText>
+                    </div>
+                    <ol>
+                        {technologyComposition.map((item) => (
+                            <li key={item.title}>
+                                <RpgText as="strong">{item.title}</RpgText>
+                                <RpgText as="small">{item.description}</RpgText>
+                            </li>
+                        ))}
+                    </ol>
                 </div>
             </div>
         </section>

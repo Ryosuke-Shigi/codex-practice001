@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ArrowLeft, Layers3, RotateCcw } from 'lucide-react';
 
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 
 export default function ClosingStatement({
     section,
@@ -13,23 +14,27 @@ export default function ClosingStatement({
             id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
             className="dp-closing"
+            data-rpg-section
         >
             <div className="dp-shell">
-                <div className="dp-closing__panel dp-reveal">
+                <div className="dp-closing__panel">
                     <div className="dp-closing__signal">
                         <span />
                         <span />
                         <span />
                     </div>
-                    <p className="dp-eyebrow">
-                        <span aria-hidden="true" />
+                    <RpgText as="p" className="dp-eyebrow">
                         {section.eyebrow}
-                    </p>
-                    <h2 id={`design-philosophy-${section.key}`}>
+                    </RpgText>
+                    <RpgText as="h2" id={`design-philosophy-${section.key}`}>
                         {section.title}
-                    </h2>
-                    <p className="dp-closing__lead">{section.lead}</p>
-                    <p className="dp-closing__body">{section.body}</p>
+                    </RpgText>
+                    <RpgText as="p" className="dp-closing__lead">
+                        {section.lead}
+                    </RpgText>
+                    <RpgText as="p" className="dp-closing__body">
+                        {section.body}
+                    </RpgText>
 
                     <nav
                         aria-label="設計思想からの次の導線"
@@ -42,21 +47,21 @@ export default function ClosingStatement({
                             title="PROJECT選択へ戻る"
                         >
                             <ArrowLeft aria-hidden="true" />
-                            戻る
+                            <RpgText>戻る</RpgText>
                         </Link>
                         <a
                             className="dp-button dp-button--secondary"
                             href="#architecture"
                         >
                             <Layers3 aria-hidden="true" />
-                            責務設計を再確認
+                            <RpgText>ADR Patternを再確認</RpgText>
                         </a>
                         <a
                             className="dp-button dp-button--secondary"
                             href="#improvement-loop"
                         >
                             <RotateCcw aria-hidden="true" />
-                            改善ループを見る
+                            <RpgText>改善ループを見る</RpgText>
                         </a>
                     </nav>
                 </div>
