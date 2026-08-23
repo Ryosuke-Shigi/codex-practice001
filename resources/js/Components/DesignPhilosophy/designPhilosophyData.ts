@@ -121,8 +121,9 @@ export const aiDevelopmentSteps: AiDevelopmentStep[] = [
     {
         step: 5,
         title: '検証済みTask checkpoint',
-        description: 'Task単位の結果と未確認事項を分離します。',
-        owner: 'Verifier',
+        description:
+            'Task Contractで選択した検証主体が、Task単位の結果と未確認事項を確認します。',
+        owner: 'Task Contract',
     },
     {
         step: 6,
@@ -133,8 +134,9 @@ export const aiDevelopmentSteps: AiDevelopmentStep[] = [
     {
         step: 7,
         title: 'Review / 改善評価',
-        description: '指示、正本、差分、Evidence、Findingを照合します。',
-        owner: 'Reviewer',
+        description:
+            'Reviewerが指示、正本、差分、Evidence、Findingを照合し、改善候補は現在のTask Contract内で評価します。',
+        owner: 'Reviewer / Task Contract',
     },
     {
         step: 8,
@@ -271,8 +273,9 @@ export const evidenceTypes: EvidenceType[] = [
     },
     {
         title: 'Runtime',
-        description: '登録されたcommandを実行して得た結果。',
-        boundary: 'Browser表示へ読み替えない',
+        description:
+            '実行中に観測したeffective stateやruntime metadataなどの実測結果。',
+        boundary: '設定値やInstalledの確認から推測しない',
     },
     {
         title: 'Browser',

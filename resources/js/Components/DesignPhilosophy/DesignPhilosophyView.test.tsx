@@ -171,6 +171,26 @@ describe('DesignPhilosophyView', () => {
             'Review / 改善評価',
             '最終Acceptance',
         ]);
+        const flowSteps = Array.from(
+            flow?.querySelectorAll('[data-flow-step]') ?? [],
+        );
+        expect(flowSteps[4]?.textContent).toContain(
+            'Task Contractで選択した検証主体が、Task単位の結果と未確認事項を確認します。',
+        );
+        expect(flowSteps[4]?.textContent).not.toContain('Verifier');
+        expect(
+            flowSteps[4]?.querySelector(
+                '.dp-flow-card__meta strong [data-rpg-semantic]',
+            )?.textContent,
+        ).toBe('Task Contract');
+        expect(flowSteps[6]?.textContent).toContain(
+            'Reviewerが指示、正本、差分、Evidence、Findingを照合し、改善候補は現在のTask Contract内で評価します。',
+        );
+        expect(
+            flowSteps[6]?.querySelector(
+                '.dp-flow-card__meta strong [data-rpg-semantic]',
+            )?.textContent,
+        ).toBe('Reviewer / Task Contract');
         ['基礎調査', 'Task分割', '実装Task A', '実装Task B', '統合検証'].forEach(
             (task) => expect(flow?.textContent).toContain(task),
         );
@@ -237,7 +257,17 @@ describe('DesignPhilosophyView', () => {
         setMotionPreferences(true);
         render(<DesignPhilosophyView sections={sections} />);
 
-        expect(section('quality-gates')?.textContent).toContain('Runtime');
+        const evidence = section('quality-gates');
+        expect(evidence?.textContent).toContain('Runtime');
+        expect(evidence?.textContent).toContain(
+            '実行中に観測したeffective stateやruntime metadataなどの実測結果。',
+        );
+        expect(evidence?.textContent).toContain(
+            '設定値やInstalledの確認から推測しない',
+        );
+        expect(evidence?.textContent).not.toContain(
+            '登録されたcommandを実行して得た結果。',
+        );
         [
             'resolved model',
             'reasoning effort',
