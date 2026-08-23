@@ -483,15 +483,20 @@ describe('DesignPhilosophyView', () => {
         render(<DesignPhilosophyView sections={sections} />);
 
         const flowLink = container.querySelector('a[href="#ai-development-flow"]');
-        const returnLink = container.querySelector('a[href="/projects"]');
+        const returnLink = container.querySelector('a[href="/"]');
         expect(flowLink?.querySelector('[data-rpg-semantic]')?.textContent).toBe(
             '8段階フローを見る',
         );
         expect(
             flowLink?.querySelector('[data-rpg-visual]')?.getAttribute('aria-hidden'),
         ).toBe('true');
-        expect(returnLink?.getAttribute('aria-label')).toBe('PROJECT選択へ戻る');
+        expect(container.querySelector('a[href="/projects"]')).toBeNull();
+        expect(returnLink).not.toBeNull();
+        expect(returnLink?.getAttribute('aria-label')).toBeNull();
+        expect(returnLink?.getAttribute('title')).toBeNull();
         expect(returnLink?.querySelector('[data-rpg-semantic]')?.textContent).toBe('戻る');
+        expect(returnLink?.querySelector('[data-rpg-visual]')?.textContent).toBe('戻る');
+        expect(returnLink?.textContent).toBe('戻る戻る');
     });
 
     it('和紙・墨・3書体とmobile-first再構成をCSS契約として持つ', () => {

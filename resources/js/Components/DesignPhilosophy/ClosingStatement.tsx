@@ -42,9 +42,7 @@ export default function ClosingStatement({
                     >
                         <Link
                             className="dp-button dp-button--primary"
-                            href="/projects"
-                            aria-label="PROJECT選択へ戻る"
-                            title="PROJECT選択へ戻る"
+                            href="/"
                         >
                             <ArrowLeft aria-hidden="true" />
                             <RpgText>戻る</RpgText>
