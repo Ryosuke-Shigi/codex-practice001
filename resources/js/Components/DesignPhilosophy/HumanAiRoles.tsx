@@ -1,27 +1,23 @@
-import {
-    BadgeCheck,
-    Bot,
-    Eye,
-    MessageSquareText,
-    PenLine,
-    ScanSearch,
-    UserRound,
-    type LucideIcon,
-} from 'lucide-react';
-
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
-import { publicRoles } from '@/Components/DesignPhilosophy/designPhilosophyData';
+import {
+    isolatedWorktreeRules,
+    publicRoles,
+    singleWriterRules,
+} from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
-const roleIcons: LucideIcon[] = [
-    UserRound,
-    MessageSquareText,
-    Bot,
-    ScanSearch,
-    PenLine,
-    BadgeCheck,
-    Eye,
-];
+function RuleList({ items }: { items: readonly string[] }) {
+    return (
+        <ul>
+            {items.map((item) => (
+                <li key={item}>
+                    <RpgText>{item}</RpgText>
+                </li>
+            ))}
+        </ul>
+    );
+}
 
 export default function HumanAiRoles({
     section,
@@ -33,39 +29,37 @@ export default function HumanAiRoles({
             id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
             className="dp-section dp-section--roles"
+            data-rpg-section
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
                 <div className="dp-role-grid">
-                    {publicRoles.map((role, index) => {
-                        const Icon = roleIcons[index];
-
-                        return (
-                            <article
-                                key={role.title}
-                                className="dp-card dp-role-card dp-reveal"
-                                data-tilt
-                            >
-                                <div className="dp-role-card__top">
-                                    <span>{role.label}</span>
-                                    <Icon aria-hidden="true" />
-                                </div>
-                                <h3>{role.title}</h3>
-                                <p>{role.description}</p>
-                                <strong>{role.responsibility}</strong>
-                            </article>
-                        );
-                    })}
+                    {publicRoles.map((role) => (
+                        <article key={role.title} className="dp-paper-card dp-role-card">
+                            <RpgText className="dp-technical">{role.label}</RpgText>
+                            <RpgText as="h3">{role.title}</RpgText>
+                            <RpgText as="p">{role.description}</RpgText>
+                            <RpgText as="strong">{role.responsibility}</RpgText>
+                        </article>
+                    ))}
                 </div>
 
-                <aside className="dp-role-rail dp-reveal">
-                    <span>DECISION</span>
-                    <i aria-hidden="true" />
-                    <span>IMPLEMENTATION</span>
-                    <i aria-hidden="true" />
-                    <span>VERIFICATION</span>
-                </aside>
+                <div className="dp-writer-layout">
+                    <article
+                        className="dp-blueprint-panel dp-writer-lease"
+                        data-structure-motion="writer-lease"
+                    >
+                        <RpgText className="dp-technical">WRITER LEASE</RpgText>
+                        <RpgText as="h3">repository-wide Single Writer</RpgText>
+                        <RuleList items={singleWriterRules} />
+                    </article>
+                    <article className="dp-blueprint-panel">
+                        <RpgText className="dp-technical">WORKTREE / PHASE 1</RpgText>
+                        <RpgText as="h3">Isolated Worktree Phase 1</RpgText>
+                        <RuleList items={isolatedWorktreeRules} />
+                    </article>
+                </div>
             </div>
         </section>
     );

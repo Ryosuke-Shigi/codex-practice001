@@ -1,51 +1,10 @@
-import {
-    ArrowLeft,
-    ArrowRight,
-    CornerDownRight,
-} from 'lucide-react';
-import type { KeyboardEvent } from 'react';
-
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
-import { aiDevelopmentSteps } from '@/Components/DesignPhilosophy/designPhilosophyData';
+import {
+    aiDevelopmentSteps,
+    taskDependencyNodes,
+} from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
-
-function handleFlowKeyDown(event: KeyboardEvent<HTMLElement>) {
-    const supportedKeys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
-
-    if (!supportedKeys.includes(event.key)) {
-        return;
-    }
-
-    event.preventDefault();
-
-    const region = event.currentTarget;
-    const firstCard = region.querySelector<HTMLElement>('ol > li');
-    const cardStep = (firstCard?.offsetWidth ?? region.clientWidth * 0.82) + 16;
-    const endPosition = Math.max(0, region.scrollWidth - region.clientWidth);
-    let nextPosition = region.scrollLeft;
-
-    if (event.key === 'Home') {
-        nextPosition = 0;
-    } else if (event.key === 'End') {
-        nextPosition = endPosition;
-    } else if (event.key === 'ArrowLeft') {
-        nextPosition = Math.max(0, region.scrollLeft - cardStep);
-    } else {
-        nextPosition = Math.min(endPosition, region.scrollLeft + cardStep);
-    }
-
-    const behavior =
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches
-            ? 'auto'
-            : 'smooth';
-
-    if (typeof region.scrollTo === 'function') {
-        region.scrollTo({ left: nextPosition, behavior });
-    } else {
-        region.scrollLeft = nextPosition;
-    }
-}
 
 export default function AiDevelopmentFlow({
     section,
@@ -57,52 +16,51 @@ export default function AiDevelopmentFlow({
             id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
             className="dp-section dp-section--flow"
+            data-rpg-section
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
-                <div className="dp-flow-controls dp-reveal">
-                    <p>
-                        <CornerDownRight aria-hidden="true" />
-                        構想から判断まで、11工程を順にたどれます
-                    </p>
-                    <span className="dp-flow-controls__scroll-hint">
-                        <ArrowLeft aria-hidden="true" />
-                        <ArrowRight aria-hidden="true" />
-                        横向きではスワイプ・キー操作対応
-                    </span>
-                </div>
-            </div>
-
-            <div
-                role="region"
-                aria-label="AI開発の11工程"
-                className="dp-flow-region dp-reveal"
-                tabIndex={0}
-                onKeyDown={handleFlowKeyDown}
-            >
-                <ol className="dp-flow-list">
+                <ol
+                    className="dp-flow-list"
+                    aria-label="現在の8段階フロー"
+                    data-structure-motion="flow"
+                >
                     {aiDevelopmentSteps.map((step) => (
-                        <li key={step.step}>
-                            <article className="dp-flow-card">
+                        <li key={step.step} data-flow-step>
+                            <article className="dp-paper-card dp-flow-card">
                                 <div className="dp-flow-card__meta">
-                                    <span>
+                                    <RpgText>
                                         {String(step.step).padStart(2, '0')}
-                                    </span>
-                                    <strong>{step.owner}</strong>
+                                    </RpgText>
+                                    <RpgText as="strong">{step.owner}</RpgText>
                                 </div>
-                                <h3>{step.title}</h3>
-                                <p>{step.description}</p>
+                                <RpgText as="h3">{step.title}</RpgText>
+                                <RpgText as="p">{step.description}</RpgText>
                             </article>
-                            {step.step < aiDevelopmentSteps.length && (
-                                <ArrowRight
-                                    aria-hidden="true"
-                                    className="dp-flow-card__arrow"
-                                />
-                            )}
                         </li>
                     ))}
                 </ol>
+
+                <div className="dp-dag" data-structure-motion="dag">
+                    <div className="dp-dag__heading">
+                        <RpgText className="dp-technical">
+                            TASK DEPENDENCY DAG
+                        </RpgText>
+                        <RpgText as="h3">依存を読める名前で示す</RpgText>
+                        <RpgText as="p">
+                            DAGはParallel Writer permissionではない
+                        </RpgText>
+                    </div>
+                    <ol className="dp-dag__nodes">
+                        {taskDependencyNodes.map((node) => (
+                            <li key={node.title} data-dag-lane={node.lane}>
+                                <RpgText as="strong">{node.title}</RpgText>
+                                <RpgText as="small">{node.dependency}</RpgText>
+                            </li>
+                        ))}
+                    </ol>
+                </div>
             </div>
         </section>
     );

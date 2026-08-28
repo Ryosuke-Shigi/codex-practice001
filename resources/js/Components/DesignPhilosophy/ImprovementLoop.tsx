@@ -1,7 +1,9 @@
-import { ArrowDown, RefreshCw } from 'lucide-react';
-
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
-import { improvementSteps } from '@/Components/DesignPhilosophy/designPhilosophyData';
+import {
+    feedbackDestinations,
+    improvementSteps,
+} from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
 export default function ImprovementLoop({
@@ -14,36 +16,37 @@ export default function ImprovementLoop({
             id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
             className="dp-section dp-section--improvement"
+            data-rpg-section
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
-                <div className="dp-improvement-layout">
-                    <div aria-hidden="true" className="dp-loop-visual">
-                        <RefreshCw />
-                        <span />
-                        <span />
-                        <span />
-                    </div>
+                <ol
+                    className="dp-improvement-list"
+                    data-structure-motion="improvement"
+                >
+                    {improvementSteps.map((step) => (
+                        <li key={step.step} data-improvement-step>
+                            <RpgText className="dp-card__index">
+                                {String(step.step).padStart(2, '0')}
+                            </RpgText>
+                            <div>
+                                <RpgText as="h3">{step.title}</RpgText>
+                                <RpgText as="p">{step.description}</RpgText>
+                            </div>
+                        </li>
+                    ))}
+                </ol>
 
-                    <ol className="dp-improvement-list">
-                        {improvementSteps.map((step, index) => (
-                            <li key={step.step} className="dp-reveal">
-                                <article>
-                                    <span>
-                                        {String(step.step).padStart(2, '0')}
-                                    </span>
-                                    <div>
-                                        <h3>{step.title}</h3>
-                                        <p>{step.description}</p>
-                                    </div>
-                                </article>
-                                {index < improvementSteps.length - 1 && (
-                                    <ArrowDown aria-hidden="true" />
-                                )}
+                <div className="dp-feedback">
+                    <RpgText className="dp-technical">FEEDBACK DESTINATIONS</RpgText>
+                    <ul>
+                        {feedbackDestinations.map((destination) => (
+                            <li key={destination}>
+                                <RpgText>{destination}</RpgText>
                             </li>
                         ))}
-                    </ol>
+                    </ul>
                 </div>
             </div>
         </section>

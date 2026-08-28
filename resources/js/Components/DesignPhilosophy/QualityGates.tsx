@@ -1,31 +1,7 @@
-import {
-    Accessibility,
-    BadgeCheck,
-    CloudCog,
-    Database,
-    FileKey2,
-    Network,
-    ShieldCheck,
-    TestTube2,
-    Workflow,
-    type LucideIcon,
-} from 'lucide-react';
-
+import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
-import { qualityGates } from '@/Components/DesignPhilosophy/designPhilosophyData';
+import { evidenceTypes } from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
-
-const gateIcons: LucideIcon[] = [
-    BadgeCheck,
-    ShieldCheck,
-    TestTube2,
-    Accessibility,
-    Database,
-    FileKey2,
-    Network,
-    Workflow,
-    CloudCog,
-];
 
 export default function QualityGates({
     section,
@@ -36,33 +12,30 @@ export default function QualityGates({
         <section
             id={section.key}
             aria-labelledby={`design-philosophy-${section.key}`}
-            className="dp-section dp-section--quality"
+            className="dp-section dp-section--evidence"
+            data-rpg-section
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
-                <div className="dp-quality-grid">
-                    {qualityGates.map((gate, index) => {
-                        const Icon = gateIcons[index];
+                <RpgText as="p" className="dp-evidence-rule">
+                    Static、Installed、Runtime、Browser、独立確認、Human Reviewは相互代替しない
+                </RpgText>
 
-                        return (
-                            <article
-                                key={gate.title}
-                                className="dp-card dp-quality-card dp-reveal"
-                                data-tilt
-                            >
-                                <div className="dp-quality-card__top">
-                                    <span>
-                                        G{String(index + 1).padStart(2, '0')}
-                                    </span>
-                                    <Icon aria-hidden="true" />
-                                </div>
-                                <h3>{gate.title}</h3>
-                                <p>{gate.description}</p>
-                                <strong>{gate.check}</strong>
-                            </article>
-                        );
-                    })}
+                <div
+                    className="dp-evidence-grid"
+                    data-structure-motion="evidence"
+                >
+                    {evidenceTypes.map((evidence, index) => (
+                        <article key={evidence.title} className="dp-paper-card">
+                            <RpgText className="dp-card__index">
+                                {`E${String(index + 1).padStart(2, '0')}`}
+                            </RpgText>
+                            <RpgText as="h3">{evidence.title}</RpgText>
+                            <RpgText as="p">{evidence.description}</RpgText>
+                            <RpgText as="strong">{evidence.boundary}</RpgText>
+                        </article>
+                    ))}
                 </div>
             </div>
         </section>

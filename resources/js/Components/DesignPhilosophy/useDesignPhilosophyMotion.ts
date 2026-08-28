@@ -1,14 +1,7 @@
 import { useEffect, type RefObject } from 'react';
 
-const revealSelector = '.dp-reveal';
-const tiltSelector = '[data-tilt]';
-
-function supportsFinePointer() {
-    return (
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(pointer: fine)').matches
-    );
-}
+const sectionSelector = '[data-rpg-section]';
+const textSelector = '[data-rpg-text]';
 
 function prefersReducedMotion() {
     return (
@@ -17,18 +10,18 @@ function prefersReducedMotion() {
     );
 }
 
-function revealAll(elements: NodeListOf<HTMLElement>) {
-    elements.forEach((element) => {
-        delete element.dataset.revealState;
+function revealAll(sections: NodeListOf<HTMLElement>) {
+    sections.forEach((section) => {
+        delete section.dataset.rpgState;
+        delete section.dataset.motionState;
     });
 }
 
 /**
- * Progressive motion enhancements for the Design Philosophy page.
- *
- * The base CSS keeps every section visible. Capability data attributes are only
- * added after an API is confirmed, so unsupported browsers retain the complete
- * document without an animation dependency.
+ * Enables character reveal and structural motion only after every section has
+ * been registered with IntersectionObserver. Sections remain observed so
+ * activity can update offscreen without hiding already revealed copy.
+ * The document remains complete when observer setup fails.
  */
 export default function useDesignPhilosophyMotion(
     rootRef: RefObject<HTMLElement | null>,
@@ -50,117 +43,76 @@ export default function useDesignPhilosophyMotion(
         handleVisibilityChange();
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
+        const sections = root.querySelectorAll<HTMLElement>(sectionSelector);
         let observer: IntersectionObserver | undefined;
+        let candidateObserver: IntersectionObserver | undefined;
 
         if (
             !reducedMotion &&
+            sections.length > 0 &&
             typeof window.IntersectionObserver === 'function'
         ) {
-            const revealElements =
-                root.querySelectorAll<HTMLElement>(revealSelector);
-            let candidateObserver: IntersectionObserver | undefined;
-
             try {
                 const activeObserver = new window.IntersectionObserver(
                     (entries) => {
                         entries.forEach((entry) => {
-                            if (!entry.isIntersecting) {
-                                return;
-                            }
+                            const section = entry.target as HTMLElement;
+                            section.dataset.motionState = entry.isIntersecting
+                                ? 'active'
+                                : 'inactive';
 
-                            const element = entry.target as HTMLElement;
-                            element.dataset.revealState = 'visible';
-                            observer?.unobserve(element);
+                            if (entry.isIntersecting) {
+                                section.dataset.rpgState = 'visible';
+                            }
                         });
                     },
                     {
-                        rootMargin: '0px 0px -10% 0px',
-                        threshold: 0.08,
+                        rootMargin: '0px 0px -8% 0px',
+                        threshold: 0.06,
                     },
                 );
                 candidateObserver = activeObserver;
 
-                revealElements.forEach((element) => {
-                    element.dataset.revealState = 'pending';
+                sections.forEach((section) => {
+                    section.dataset.rpgState = 'pending';
+                    section.dataset.motionState = 'inactive';
+                    section
+                        .querySelectorAll<HTMLElement>(textSelector)
+                        .forEach((text, index) => {
+                            text.style.setProperty(
+                                '--dp-rpg-block-delay',
+                                `${Math.min(index * 55, 770)}ms`,
+                            );
+                        });
+                    activeObserver.observe(section);
                 });
-                revealElements.forEach((element) =>
-                    activeObserver.observe(element),
-                );
+
                 observer = activeObserver;
+                root.dataset.rpgEnhanced = 'true';
             } catch {
                 candidateObserver?.disconnect();
                 observer = undefined;
-                revealAll(revealElements);
+                revealAll(sections);
+                delete root.dataset.rpgEnhanced;
             }
-        }
-
-        const tiltCleanups: Array<() => void> = [];
-
-        if (!reducedMotion && supportsFinePointer()) {
-            root.querySelectorAll<HTMLElement>(tiltSelector).forEach(
-                (element) => {
-                    const handlePointerMove = (event: PointerEvent) => {
-                        const bounds = element.getBoundingClientRect();
-                        const x = (event.clientX - bounds.left) / bounds.width;
-                        const y = (event.clientY - bounds.top) / bounds.height;
-
-                        element.style.setProperty(
-                            '--dp-tilt-x',
-                            `${((0.5 - y) * 5).toFixed(2)}deg`,
-                        );
-                        element.style.setProperty(
-                            '--dp-tilt-y',
-                            `${((x - 0.5) * 7).toFixed(2)}deg`,
-                        );
-                        element.style.setProperty(
-                            '--dp-glow-x',
-                            `${(x * 100).toFixed(1)}%`,
-                        );
-                        element.style.setProperty(
-                            '--dp-glow-y',
-                            `${(y * 100).toFixed(1)}%`,
-                        );
-                    };
-
-                    const resetTilt = () => {
-                        element.style.removeProperty('--dp-tilt-x');
-                        element.style.removeProperty('--dp-tilt-y');
-                        element.style.removeProperty('--dp-glow-x');
-                        element.style.removeProperty('--dp-glow-y');
-                    };
-
-                    element.addEventListener(
-                        'pointermove',
-                        handlePointerMove,
-                    );
-                    element.addEventListener('pointerleave', resetTilt);
-                    element.addEventListener('pointercancel', resetTilt);
-                    tiltCleanups.push(() => {
-                        element.removeEventListener(
-                            'pointermove',
-                            handlePointerMove,
-                        );
-                        element.removeEventListener(
-                            'pointerleave',
-                            resetTilt,
-                        );
-                        element.removeEventListener(
-                            'pointercancel',
-                            resetTilt,
-                        );
-                        resetTilt();
-                    });
-                },
-            );
         }
 
         return () => {
             observer?.disconnect();
-            tiltCleanups.forEach((cleanup) => cleanup());
             document.removeEventListener(
                 'visibilitychange',
                 handleVisibilityChange,
             );
+            sections.forEach((section) => {
+                delete section.dataset.rpgState;
+                delete section.dataset.motionState;
+                section
+                    .querySelectorAll<HTMLElement>(textSelector)
+                    .forEach((text) =>
+                        text.style.removeProperty('--dp-rpg-block-delay'),
+                    );
+            });
+            delete root.dataset.rpgEnhanced;
             delete root.dataset.reducedMotion;
             delete root.dataset.motionPaused;
         };

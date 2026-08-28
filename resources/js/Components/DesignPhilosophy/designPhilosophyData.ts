@@ -3,175 +3,158 @@ import type {
     ArchitectureLayer,
     ArchitectureResponsibility,
     DevelopmentStage,
+    EvidenceType,
     ImprovementStep,
-    Principle,
+    NamedFact,
     PublicRole,
-    QualityGate,
+    TaskContractItem,
+    TaskDependencyNode,
 } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
 export const heroSignals = [
     '人間主導',
-    '契約駆動',
-    '単一編集',
+    'Task Contract',
+    'Single Writer',
     '独立検証',
-    '安全停止',
-    '継続改善',
+    'Evidence分離',
+    'Finding還元',
 ] as const;
 
-export const principles: Principle[] = [
-    {
-        title: '人間主導',
-        description: '目的、優先順位、完成の判断を人間が持ちます。',
-        signal: '判断主体を曖昧にしない',
-    },
-    {
-        title: '契約駆動',
-        description: '入力、出力、禁止事項、成功条件を実装前に固定します。',
-        signal: '曖昧さを境界で止める',
-    },
-    {
-        title: '責務分離',
-        description: '変更理由が異なるものを、同じ場所へ集めません。',
-        signal: '影響範囲を狭く保つ',
-    },
-    {
-        title: '単一編集',
-        description: '同じ成果物を同時に変更せず、差分の所有者を明確にします。',
-        signal: '競合と上書きを防ぐ',
-    },
-    {
-        title: '独立検証',
-        description: '実装した視点とは別の視点で、契約と結果を照合します。',
-        signal: '思い込みを検出する',
-    },
-    {
-        title: '安全に止まる',
-        description: '不明点や権限不足を推測で埋めず、判断できる地点へ戻します。',
-        signal: '不確実性を隠さない',
-    },
-    {
-        title: '必要な工程だけを使う',
-        description: '変更の大きさと危険度に合わせて、工程と専門性を選びます。',
-        signal: '過剰さと不足を避ける',
-    },
-    {
-        title: '制御された継続改善',
-        description: '失敗から得た知見を、次の変更で使える形へ戻します。',
-        signal: '同じ問題を反復しない',
-    },
+export const taskContractItems: TaskContractItem[] = [
+    { title: '目的', description: '今回達成する結果を固定する。' },
+    { title: '範囲', description: 'Taskが扱う境界を固定する。' },
+    { title: '変更対象', description: '編集してよい成果物を特定する。' },
+    { title: '変更禁止', description: '触れない領域を先に分離する。' },
+    { title: '成功条件', description: '完了を判断するEvidenceを定める。' },
+    { title: '失敗条件', description: '成功へ読み替えない状態を定める。' },
+    { title: '停止条件', description: '推測せず人間へ戻す地点を定める。' },
+    { title: '操作許可', description: '外部変更やGit操作の権限を分ける。' },
+    { title: '検証 / Review経路', description: '誰が何を確認するかを定める。' },
 ];
 
 export const publicRoles: PublicRole[] = [
     {
         label: 'DECIDE',
         title: '人間',
-        description: '構想、優先順位、許可、採否、完成を判断します。',
-        responsibility: '目的と最終判断',
+        description: '目的、優先順位、操作許可、採否、完成を判断します。',
+        responsibility: '最終判断',
     },
     {
         label: 'TRANSLATE',
         title: 'ChatGPT',
-        description: '対話を、境界と受入条件のある依頼へ整理します。',
+        description: '対話を、境界と受入条件のあるTaskへ整理します。',
         responsibility: '意図の構造化',
     },
     {
         label: 'ORCHESTRATE',
         title: '親Agent',
-        description: '全体の範囲、順序、役割、停止条件を統合します。',
-        responsibility: '進行と統合',
+        description: '契約、依存関係、順序、停止条件を統合します。',
+        responsibility: 'Task統合',
     },
     {
         label: 'ANALYZE',
         title: 'Specialist',
-        description: '専門領域の事実、危険、設計上の論点を明らかにします。',
+        description: 'Taskに必要な専門領域だけを調査・設計します。',
         responsibility: '専門判断の補助',
     },
     {
         label: 'IMPLEMENT',
         title: 'Writer',
-        description: '固定された契約の範囲だけを、一貫した差分として実装します。',
-        responsibility: '単一の変更',
+        description: '固定された所有範囲を、同時最大1体で編集します。',
+        responsibility: '単一の差分',
     },
     {
         label: 'VERIFY',
         title: 'Verifier',
-        description: '登録された確認方法で、結果と副作用を測定します。',
+        description: '登録された方法で結果と副作用を測定します。',
         responsibility: '実行結果の確認',
     },
     {
         label: 'REVIEW',
         title: 'Reviewer',
-        description: '指示、設計、差分、検証結果を独立した視点で照合します。',
+        description: '指示、正本、差分、検証結果を独立して照合します。',
         responsibility: '完成前の照合',
     },
 ];
 
+export const singleWriterRules = [
+    '親を含め同時writer最大1',
+    'normal working tree + linked worktreeを含むrepository-wide',
+    'read-heavy独立作業だけを条件付き並列',
+    'writer作業は直列',
+    'Verifier / Reviewer中はwriter停止',
+] as const;
+
+export const isolatedWorktreeRules = [
+    'opt-in',
+    'sequential physical isolation',
+    'repository-wide Single Writerを維持',
+    'commit-based integration',
+    'Parallel Writerではない',
+] as const;
+
 export const aiDevelopmentSteps: AiDevelopmentStep[] = [
     {
         step: 1,
-        title: '人間が構想を定める',
-        description: '誰の、どの問題を、なぜ解くのかを言語化します。',
-        owner: 'Human',
+        title: '契約固定',
+        description: '目的、範囲、禁止、停止、許可、検証経路を固定します。',
+        owner: 'Human / Parent',
     },
     {
         step: 2,
-        title: 'ChatGPTで壁打ちする',
-        description: '対話を通じて、構想の曖昧さと検討すべき問いを明らかにします。',
-        owner: 'ChatGPT',
-    },
-    {
-        step: 3,
-        title: '目的・範囲・成功条件を固定',
-        description: '今回変えるもの、変えないもの、到達点を明確にします。',
-        owner: 'Contract',
-    },
-    {
-        step: 4,
-        title: '作業契約を作る',
-        description: '責務、権限、停止条件、確認方法を作業前に揃えます。',
-        owner: 'Contract',
-    },
-    {
-        step: 5,
-        title: '必要な専門役割だけを選ぶ',
-        description: '変更の範囲と危険度に合う専門性だけを組み合わせます。',
+        title: '証拠駆動調査',
+        description: '正本、コード、テスト、実測を分けて確認します。',
         owner: 'Specialist',
     },
     {
-        step: 6,
-        title: '親Agentが結果を統合',
-        description: '調査と設計の結果を照合し、一つの実装方針へまとめます。',
+        step: 3,
+        title: '親統合 / Task分割',
+        description: '依存関係と完了可能なTask境界を固定します。',
         owner: 'Parent Agent',
     },
     {
+        step: 4,
+        title: 'Task実行ループ',
+        description: '必要な専門性を選び、Single Writerで差分を作ります。',
+        owner: 'Specialist / Writer',
+    },
+    {
+        step: 5,
+        title: '検証済みTask checkpoint',
+        description:
+            'Task Contractで選択した検証主体が、Task単位の結果と未確認事項を確認します。',
+        owner: 'Task Contract',
+    },
+    {
+        step: 6,
+        title: '統合検証',
+        description: '依存Taskを統合し、全体の回帰と副作用を確認します。',
+        owner: 'Parent / Verifier',
+    },
+    {
         step: 7,
-        title: '単一Writerが実装',
-        description: '所有範囲を限定し、最小の差分で契約を満たします。',
-        owner: 'Writer',
+        title: 'Review / 改善評価',
+        description:
+            'Reviewerが指示、正本、差分、Evidence、Findingを照合し、改善候補は現在のTask Contract内で評価します。',
+        owner: 'Reviewer / Task Contract',
     },
     {
         step: 8,
-        title: 'Verifierが独立検証',
-        description: '固定された方法で、結果と意図しない副作用を確認します。',
-        owner: 'Verifier',
-    },
-    {
-        step: 9,
-        title: 'Reviewerが独立レビュー',
-        description: '仕様、責務、差分、検証結果を実装者と別の視点で照合します。',
-        owner: 'Reviewer',
-    },
-    {
-        step: 10,
-        title: '改善候補を評価',
-        description: '見つかった課題を、効果と影響範囲から評価します。',
-        owner: 'Improve',
-    },
-    {
-        step: 11,
-        title: '完了・修正・別課題化・人間判断へ分岐',
-        description: '根拠を揃え、次に取る行動を人間が選べる状態へ戻します。',
+        title: '最終Acceptance',
+        description: 'Evidenceと未確認事項を分け、人間が完成を判断します。',
         owner: 'Human',
+    },
+];
+
+export const taskDependencyNodes: TaskDependencyNode[] = [
+    { title: '基礎調査', dependency: '開始', lane: 'root' },
+    { title: 'Task分割', dependency: '基礎調査に依存', lane: 'root' },
+    { title: '実装Task A', dependency: 'Task分割に依存', lane: 'branch' },
+    { title: '実装Task B', dependency: 'Task分割に依存', lane: 'branch' },
+    {
+        title: '統合検証',
+        dependency: 'A / Bの検証済みcheckpointに依存',
+        lane: 'merge',
     },
 ];
 
@@ -179,216 +162,156 @@ export const architectureLayers: ArchitectureLayer[] = [
     {
         key: 'Action',
         title: 'ユースケースを進める',
-        description: '入口から受けた値を使い、必要な処理の順序を制御します。',
+        description: '一つの目的に必要な処理順序を制御します。',
     },
     {
         key: 'Domain',
         title: '業務の意味を守る',
-        description: '再利用できる業務判断、データ契約、発生した事実を表します。',
+        description: '必要なService、Repository、DTO等を配置します。',
     },
     {
         key: 'Responder',
-        title: '利用者へ届ける',
-        description: '処理結果を、画面やAPIが利用できる出力へ整えます。',
+        title: '出力を整える',
+        description: '結果をInertia propsやJSON等へ整形します。',
     },
 ];
 
 export const architectureResponsibilities: ArchitectureResponsibility[] = [
     {
-        value: 'HTTP・画面入口',
-        technicalLabel: 'Request / Controller · Page / Component',
-        description: 'HTTP入力の検証と受付、画面への接続をユースケース本体から分けます。',
+        value: 'HTTP入口',
+        technicalLabel: 'Request / Controller',
+        description: '入力形式とHTTPの受付を担当します。',
         category: 'entry',
     },
     {
-        value: 'ユースケースの進行',
+        value: 'ユースケース',
         technicalLabel: 'Action',
-        description: 'Actionが一つの目的に必要な処理順序を組み立てます。',
+        description: '一つの目的に必要な手順を担当します。',
         category: 'application',
     },
     {
-        value: '再利用できる業務判断',
-        technicalLabel: 'Service / Strategy',
-        description: '入口や出力形式に依存しない業務判断と処理差分を担います。',
+        value: 'Domain',
+        technicalLabel: 'Service / Repository / DTO',
+        description: '業務判断、データ境界、レイヤー間の値を分けます。',
         category: 'domain',
     },
     {
-        value: '事実と副作用の分離',
-        technicalLabel: 'Event / Listener',
-        description: '発生した事実と、それに続く副作用を主処理から分けます。',
-        category: 'domain',
-    },
-    {
-        value: 'データ契約',
-        technicalLabel: 'DTO / ListDTO / Value Object',
-        description: 'DTOと型が、層をまたいで運ぶ値の形を固定します。',
-        category: 'domain',
-    },
-    {
-        value: '永続化と外部接続',
-        technicalLabel: 'Repository実装 / 外部Adapter',
-        description: '保存先や外部サービス固有の入出力を業務判断から分離します。',
-        category: 'infrastructure',
-    },
-    {
-        value: '非同期実行',
-        technicalLabel: 'Queue / Job',
-        description: '実行時点、再試行、Queue固有の制御をユースケースから分けます。',
-        category: 'infrastructure',
-    },
-    {
-        value: '出力と画面接続',
-        technicalLabel: 'Responder / Inertia props / JSON',
-        description: 'ユースケースの結果を利用者へ返す形に整えます。',
+        value: '出力整形',
+        technicalLabel: 'Responder',
+        description: '画面やAPIへ渡す形を担当します。',
         category: 'output',
     },
+    {
+        value: '表示',
+        technicalLabel: 'Page / Feature Component',
+        description: 'propsを受け取り、表示と画面内UI状態を担当します。',
+        category: 'presentation',
+    },
+];
+
+export const technologyComposition: NamedFact[] = [
+    { title: 'Technology', description: '利用可能な技術を確認する。' },
+    { title: 'Capability', description: 'Taskに必要な能力を選ぶ。' },
+    { title: 'Integration', description: '接続点と依存方向を固定する。' },
+    { title: 'Role', description: '責務と編集可否を割り当てる。' },
+    { title: 'Evidence', description: '完了判断に必要な証拠を定める。' },
 ];
 
 export const developmentStages: DevelopmentStage[] = [
     {
         key: 'IDEA BOARD',
         label: '構想',
-        purpose: '利用者、課題、価値、機能候補を整理する。',
-        includes: [
-            '解決したいこと',
-            '想定利用者と利用場面',
-            '機能候補と未確定事項',
-        ],
-        excludes: ['完成仕様の断定', '本番構成の確定'],
-        deliverable: '構想と検討すべき問い',
-        completion: '目的、最初に確認する画面、採否の判断材料を説明できる',
+        purpose: '利用者、課題、機能候補、未確定事項を整理する。',
+        includes: ['目的', '利用場面', '未確定事項'],
+        excludes: ['完成仕様の断定'],
+        deliverable: '構想と問い',
+        completion: '最初に確認する対象を説明できる',
         optional: false,
     },
     {
         key: 'MOCK',
-        label: '画面確認',
-        purpose: '固定データで情報階層、導線、操作感を確かめる。',
-        includes: [
-            '固定データ',
-            '画面・導線・主要状態',
-            '各表示幅での操作感',
-        ],
-        excludes: [
-            'DB保存・本番API',
-            '業務判断・権限判断',
-            '正式な状態遷移',
-        ],
-        deliverable: '画面とUI契約',
-        completion: '主要操作と状態表示を各表示幅で確認できる',
+        label: '画面単体',
+        purpose: '固定データでUI構造、状態、操作感を確認する。',
+        includes: ['UI契約', '表示幅', '主要状態'],
+        excludes: ['DB保存', '本番業務判断'],
+        deliverable: '画面のUI契約',
+        completion: '各表示幅で画面単体を判断できる',
         optional: false,
     },
     {
         key: 'PROTOTYPE',
-        label: '技術検証',
-        purpose: '通信や技術的成立性に不確実性がある場合だけ試す。',
-        includes: [
-            '画面間の接続',
-            '仮データ・簡易通信',
-            '操作順と状態の受け渡し',
-        ],
-        excludes: ['本番業務ロジック', '正式なDB設計', '本番データ更新'],
-        deliverable: '検証結果と正式仕様の候補',
-        completion: '採用可否と本実装へ渡す入出力を説明できる',
+        label: '導線',
+        purpose: '画面間の接続、操作順、仮のデータ流れを確認する。',
+        includes: ['画面間接続', '仮データ', '状態の受け渡し'],
+        excludes: ['本番業務ロジック', '正式DB設計'],
+        deliverable: '導線と入出力候補',
+        completion: 'Productへ渡す振る舞いを説明できる',
         optional: true,
     },
     {
         key: 'PRODUCT',
         label: '本実装',
-        purpose: '確定した契約を、長期保守できる責務へ配置する。',
-        includes: [
-            '確定した仕様と責務',
-            '本データと入力検証',
-            'テスト・文書・運用条件',
-        ],
-        excludes: ['未確認な仕様の補完', '仮処理の流用', '目的外の機能'],
-        deliverable: '製品コードと品質証拠',
+        purpose: '仕様、責務、データ境界、テストを固定する。',
+        includes: ['本データ', '責務分離', '検証'],
+        excludes: ['未確認仕様の補完', '仮処理の流用'],
+        deliverable: '製品コードとEvidence',
         completion: '受入条件と必要なゲートを満たす',
         optional: false,
     },
 ];
 
-export const qualityGates: QualityGate[] = [
+export const evidenceTypes: EvidenceType[] = [
     {
-        title: '契約と責務',
-        description: '入力、出力、依存方向、所有者が一致しているか。',
-        check: '設計レビュー',
+        title: 'Static',
+        description: 'コード、型、設定、静的checkerで確認した事実。',
+        boundary: 'Runtime成功へ読み替えない',
     },
     {
-        title: '型と静的解析',
-        description: '境界の形、nullable、未使用、到達不能を検出できるか。',
-        check: 'Type / Lint',
+        title: 'Installed',
+        description: '依存やtoolが導入され、呼び出せる状態。',
+        boundary: '実行結果へ読み替えない',
     },
     {
-        title: 'テスト',
-        description: '正常、異常、境界、回帰の期待が固定されているか。',
-        check: 'Automated Test',
+        title: 'Runtime',
+        description:
+            '実行中に観測したeffective stateやruntime metadataなどの実測結果。',
+        boundary: '設定値やInstalledの確認から推測しない',
     },
     {
-        title: '画面と操作性',
-        description: '幅、入力方法、状態、読みやすさに破綻がないか。',
-        check: 'Visual / A11y',
+        title: 'Browser',
+        description: 'URL、viewport、操作を固定した実画面の結果。',
+        boundary: 'Screenshotだけで完了にしない',
     },
     {
-        title: 'データ変更',
-        description: '既存データ、移行、索引、巻き戻しを説明できるか。',
-        check: 'Data Review',
+        title: 'independent Verifier / Reviewer',
+        description: '実装担当から分離した検証と照合。',
+        boundary: 'Human Reviewへ読み替えない',
     },
     {
-        title: '認証と認可',
-        description: '誰が何を見て、何を変更できるかが守られているか。',
-        check: 'Access Review',
-    },
-    {
-        title: '外部接続',
-        description: '失敗、遅延、制限、再試行時の挙動が安全か。',
-        check: 'Boundary Test',
-    },
-    {
-        title: '非同期処理',
-        description: '重複、順序、再実行、部分失敗を制御できるか。',
-        check: 'Queue / Event',
-    },
-    {
-        title: '運用、監視、復旧',
-        description: '異常を発見し、安全に切り戻して復旧できるか。',
-        check: 'Operations',
+        title: 'Human Review',
+        description: '採否、完成、最終visualを人間が判断する。',
+        boundary: '他のEvidenceで代替しない',
     },
 ];
 
 export const improvementSteps: ImprovementStep[] = [
-    {
-        step: 1,
-        title: '違和感を捕捉',
-        description: '失敗、手戻り、迷いを改善の入力として残します。',
-    },
-    {
-        step: 2,
-        title: '事実を集める',
-        description: '期待、実測、差分を分けて状況を再現します。',
-    },
-    {
-        step: 3,
-        title: '原因を確認',
-        description: '症状ではなく、契約や責務のどこでずれたかを探します。',
-    },
-    {
-        step: 4,
-        title: '影響を分類',
-        description: '局所修正か、設計や運用へ戻す課題かを分けます。',
-    },
-    {
-        step: 5,
-        title: '対応を設計',
-        description: '最小の修正と、再発を防ぐ確認方法を決めます。',
-    },
-    {
-        step: 6,
-        title: '検証して判断',
-        description: '結果を確認し、採用、保留、却下、別課題化を選びます。',
-    },
-    {
-        step: 7,
-        title: '知見を戻す',
-        description: '次の変更で使える型、テスト、文書へ学びを反映します。',
-    },
+    { step: 1, title: 'Finding', description: '違和感、失敗、手戻りを捕捉する。' },
+    { step: 2, title: 'Evidence', description: '期待値、設定値、実測を分けて集める。' },
+    { step: 3, title: 'root cause', description: '症状ではなく発生源を特定する。' },
+    { step: 4, title: 'scope', description: '影響範囲と非対象を固定する。' },
+    { step: 5, title: 'owner', description: '修正と判断の責務を割り当てる。' },
+    { step: 6, title: 'Fix', description: '固定した範囲へ最小の修正を行う。' },
+    { step: 7, title: 'Verify', description: '同じEvidence経路で再確認する。' },
+    { step: 8, title: 'Feedback', description: '再発防止の正本へ知見を戻す。' },
 ];
+
+export const feedbackDestinations = [
+    'Code',
+    'Test',
+    'Type',
+    'Docs',
+    'Policy',
+    'Checker',
+    'Sensors',
+    'Harness',
+] as const;
