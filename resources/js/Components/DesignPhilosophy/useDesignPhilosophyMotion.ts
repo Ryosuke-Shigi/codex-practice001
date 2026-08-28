@@ -20,7 +20,7 @@ function revealAll(sections: NodeListOf<HTMLElement>) {
 /**
  * Enables character reveal and structural motion only after every section has
  * been registered with IntersectionObserver. Sections remain observed so
- * continuous motion can stop offscreen without hiding already revealed copy.
+ * activity can update offscreen without hiding already revealed copy.
  * The document remains complete when observer setup fails.
  */
 export default function useDesignPhilosophyMotion(

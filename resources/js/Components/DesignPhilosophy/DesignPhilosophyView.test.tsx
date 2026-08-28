@@ -202,7 +202,7 @@ describe('DesignPhilosophyView', () => {
             (item) => expect(architecture?.textContent).toContain(item),
         );
         expect(architecture?.textContent).toContain(
-            'Request → Controller → Action → Service / Repository → DTO → Responder → React',
+            'Route → Controller → Request / Input DTO → Action → Service / Repository / Strategy → Output DTO / ListDTO → Responder → Page / Feature Component → Common Component',
         );
 
         const stages = section('development-stages');
@@ -550,6 +550,15 @@ describe('DesignPhilosophyView', () => {
         expect(css).toContain('@keyframes dp-signal-travel');
         expect(css).toContain('@keyframes dp-node-activate');
         expect(css).toContain('@keyframes dp-lease-position');
+        expect(css).toContain(
+            'animation: dp-signal-travel 3.6s ease-in-out 1 both;',
+        );
+        expect(css).toContain(
+            'animation: dp-lease-position 4.2s ease-in-out 1 both;',
+        );
+        expect(css).not.toMatch(
+            /animation:\s*dp-(?:signal-travel|lease-position)[^;]*\binfinite\b/,
+        );
         expect(css).toMatch(/data-motion-state="active"/);
         expect(css).toMatch(/data-motion-state="inactive"[\s\S]*animation-play-state:\s*paused/);
         expect(css).toMatch(/data-motion-paused="true"[\s\S]*animation-play-state:\s*paused/);

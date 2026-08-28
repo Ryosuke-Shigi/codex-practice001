@@ -52,7 +52,7 @@ export default function ArchitectureMap({
                     className="dp-layer-flow"
                     data-structure-motion="adr-flow"
                 >
-                    Request → Controller → Action → Service / Repository → DTO → Responder → React
+                    Route → Controller → Request / Input DTO → Action → Service / Repository / Strategy → Output DTO / ListDTO → Responder → Page / Feature Component → Common Component
                 </RpgText>
 
                 <div className="dp-responsibility-grid">

@@ -840,7 +840,7 @@
 .dp-page[data-rpg-enhanced="true"] [data-motion-state="active"] [data-structure-motion="adr-flow"]::after,
 .dp-page[data-rpg-enhanced="true"] [data-motion-state="active"] [data-structure-motion="evidence"] > article::after,
 .dp-page[data-rpg-enhanced="true"] [data-motion-state="active"] [data-structure-motion="improvement"] li::after {
-    animation: dp-signal-travel 3.6s ease-in-out infinite;
+    animation: dp-signal-travel 3.6s ease-in-out 1 both;
 }
 
 .dp-page[data-rpg-enhanced="true"] [data-motion-state="active"] [data-structure-motion="dag"] .dp-dag__nodes li,
@@ -851,7 +851,7 @@
 }
 
 .dp-page[data-rpg-enhanced="true"] [data-motion-state="active"] [data-structure-motion="writer-lease"]::after {
-    animation: dp-lease-position 4.2s ease-in-out infinite;
+    animation: dp-lease-position 4.2s ease-in-out 1 both;
 }
 
 .dp-improvement-list h3,
