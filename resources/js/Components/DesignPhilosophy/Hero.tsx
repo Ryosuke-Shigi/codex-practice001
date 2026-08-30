@@ -8,6 +8,7 @@ import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/desi
 export default function Hero({ section }: { section: DesignPhilosophySection }) {
     return (
         <header
+            id={section.key}
             aria-labelledby="design-philosophy-hero"
             className="dp-hero"
             data-rpg-section

@@ -40,14 +40,22 @@ export default function Principles({
                     </ul>
                 </div>
 
-                <div className="dp-trust-frame" data-structure-motion="trust-frame">
+                <figure
+                    className="dp-trust-frame"
+                    data-diagram="decision-circuit"
+                    data-structure-motion="trust-frame"
+                >
                     <div className="dp-trust-frame__equation">
                         <RpgText className="dp-technical">SEPARATE THE DECISION INPUTS</RpgText>
                         <RpgText as="strong">Claim ≠ Evidence ≠ Authority ≠ Acceptance</RpgText>
                     </div>
                     <ol aria-label="検証可能な判断の4要素">
                         {trustFrame.map((node, index) => (
-                            <li key={node.label} data-trust-node>
+                            <li
+                                key={node.label}
+                                data-diagram-node={node.label}
+                                data-trust-node
+                            >
                                 <RpgText className="dp-card__index">
                                     {String(index + 1).padStart(2, '0')}
                                 </RpgText>
@@ -56,7 +64,32 @@ export default function Principles({
                             </li>
                         ))}
                     </ol>
-                </div>
+                    <div aria-hidden="true" className="dp-trust-frame__edges">
+                        <span
+                            aria-hidden="true"
+                            className="dp-diagram-edge dp-diagram-edge--claim"
+                            data-diagram-edge
+                            data-edge-kind="requires-evidence"
+                        />
+                        <span
+                            aria-hidden="true"
+                            className="dp-diagram-edge dp-diagram-edge--evidence"
+                            data-diagram-edge
+                            data-edge-kind="evidence-to-acceptance"
+                        />
+                        <span
+                            aria-hidden="true"
+                            className="dp-diagram-edge dp-diagram-edge--authority"
+                            data-diagram-edge
+                            data-edge-kind="authority-to-acceptance"
+                        />
+                    </div>
+                    <figcaption className="dp-diagram-caption">
+                        <RpgText>
+                            Claimは検証を要し、EvidenceとAuthorityの独立した入力がAcceptanceへ収束する。
+                        </RpgText>
+                    </figcaption>
+                </figure>
 
                 <div className="dp-contract-heading">
                     <RpgText className="dp-technical">TASK CONTRACT / 9 FIELDS</RpgText>

@@ -25,12 +25,18 @@ export default function QualityGates({
                     Static、Installed、Runtime、Browser、Verification / Review、Human Reviewは相互代替しない
                 </RpgText>
 
-                <div
+                <figure
                     className="dp-evidence-grid"
+                    data-diagram="evidence-instruments"
                     data-structure-motion="evidence"
                 >
                     {evidenceTypes.map((evidence, index) => (
-                        <article key={evidence.title} className="dp-paper-card">
+                        <article
+                            key={evidence.title}
+                            className="dp-paper-card"
+                            data-diagram-node={evidence.title}
+                            data-instrument-shape={['bars', 'scope', 'gate'][index % 3]}
+                        >
                             <RpgText className="dp-card__index">
                                 {`E${String(index + 1).padStart(2, '0')}`}
                             </RpgText>
@@ -42,9 +48,19 @@ export default function QualityGates({
                             <RpgText as="h3">{evidence.title}</RpgText>
                             <RpgText as="p">{evidence.description}</RpgText>
                             <RpgText as="strong">{evidence.boundary}</RpgText>
+                            <span
+                                aria-hidden="true"
+                                className="dp-diagram-edge dp-diagram-edge--instrument"
+                                data-diagram-edge
+                            />
                         </article>
                     ))}
-                </div>
+                    <figcaption className="dp-diagram-caption">
+                        <RpgText>
+                            6種類のEvidenceを独立した計器で観測し、ひとつのPASSを他のEvidenceに変換しない。
+                        </RpgText>
+                    </figcaption>
+                </figure>
 
                 <div className="dp-fail-closed">
                     <div className="dp-fail-closed__heading">

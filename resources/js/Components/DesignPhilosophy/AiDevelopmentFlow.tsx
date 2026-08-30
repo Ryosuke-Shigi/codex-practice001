@@ -21,13 +21,21 @@ export default function AiDevelopmentFlow({
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
+                <figure
+                    className="dp-flow-diagram"
+                    data-diagram="evidence-flow"
+                >
                 <ol
                     className="dp-flow-list"
                     aria-label="現在の8段階フロー"
                     data-structure-motion="flow"
                 >
                     {aiDevelopmentSteps.map((step) => (
-                        <li key={step.step} data-flow-step>
+                        <li
+                            key={step.step}
+                            data-diagram-node={step.title}
+                            data-flow-step={String(step.step)}
+                        >
                             <article className="dp-paper-card dp-flow-card">
                                 <div className="dp-flow-card__meta">
                                     <RpgText>
@@ -42,9 +50,22 @@ export default function AiDevelopmentFlow({
                                     <RpgText as="strong">{step.handoff}</RpgText>
                                 </div>
                             </article>
+                            {step.step < aiDevelopmentSteps.length && (
+                                <span
+                                    aria-hidden="true"
+                                    className="dp-diagram-edge dp-diagram-edge--flow"
+                                    data-diagram-edge
+                                />
+                            )}
                         </li>
                     ))}
                 </ol>
+                    <figcaption className="dp-diagram-caption">
+                        <RpgText>
+                            8工程を順に接続し、各工程のHandoff Evidenceを次の工程の入力にするフロー。
+                        </RpgText>
+                    </figcaption>
+                </figure>
 
                 <div className="dp-dag" data-structure-motion="dag">
                     <div className="dp-dag__heading">

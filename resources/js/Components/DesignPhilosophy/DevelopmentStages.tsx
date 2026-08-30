@@ -18,9 +18,10 @@ export default function DevelopmentStages({
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
+                <figure className="dp-stage-diagram" data-diagram="stage-gates">
                 <ol className="dp-stage-grid">
                     {developmentStages.map((stage, index) => (
-                        <li key={stage.key}>
+                        <li key={stage.key} data-diagram-node={stage.key}>
                             <article className="dp-paper-card dp-stage-card">
                                 <RpgText className="dp-card__index">
                                     {String(index + 1).padStart(2, '0')}
@@ -53,9 +54,22 @@ export default function DevelopmentStages({
                                     </RpgText>
                                 </div>
                             </article>
+                            {index < developmentStages.length - 1 && (
+                                <span
+                                    aria-hidden="true"
+                                    className="dp-diagram-edge dp-diagram-edge--gate"
+                                    data-diagram-edge
+                                />
+                            )}
                         </li>
                     ))}
                 </ol>
+                    <figcaption className="dp-diagram-caption">
+                        <RpgText>
+                            IDEA BOARDからPRODUCTまでの各段階は、Human Gateで契約と成果物を確認してのみ進む。
+                        </RpgText>
+                    </figcaption>
+                </figure>
             </div>
         </section>
     );

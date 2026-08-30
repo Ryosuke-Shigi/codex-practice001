@@ -280,6 +280,107 @@ describe('DesignPhilosophyView', () => {
         expect(closing?.textContent).toContain('Human Judgment');
     });
 
+    it('公開概念をノード・接続・方向を持つsemantic diagramで示す', () => {
+        setMotionPreferences(true);
+        render(<DesignPhilosophyView sections={sections} />);
+
+        const diagrams = [
+            ['control-plane', 7, 6],
+            ['decision-circuit', 4, 3],
+            ['responsibility-lanes', 5, 6],
+            ['evidence-flow', 8, 7],
+            ['adr-dependency', 8, 8],
+            ['stage-gates', 4, 3],
+            ['evidence-instruments', 6, 6],
+            ['feedback-loop', 8, 8],
+            ['authority-boundary', 4, 3],
+        ] as const;
+
+        diagrams.forEach(([name, nodeCount, minimumEdgeCount]) => {
+            const diagram = container.querySelector(
+                `figure[data-diagram="${name}"]`,
+            );
+            expect(diagram, `${name} diagram`).not.toBeNull();
+            expect(diagram?.querySelector('figcaption')?.textContent?.trim())
+                .not.toBe('');
+            expect(diagram?.querySelectorAll('[data-diagram-node]')).toHaveLength(
+                nodeCount,
+            );
+            expect(
+                diagram?.querySelectorAll('[data-diagram-edge]').length,
+            ).toBeGreaterThanOrEqual(minimumEdgeCount);
+            diagram?.querySelectorAll('[data-diagram-edge]').forEach((edge) => {
+                expect(edge.getAttribute('aria-hidden')).toBe('true');
+                expect(edge.querySelector('[data-rpg-text]')).toBeNull();
+            });
+        });
+
+        const architecture = container.querySelector(
+            '[data-diagram="adr-dependency"]',
+        );
+        expect(
+            architecture?.querySelectorAll('[data-dependency-kind="main"]')
+                .length,
+        ).toBeGreaterThanOrEqual(5);
+        expect(
+            architecture?.querySelectorAll('[data-dependency-kind="branch"]')
+                .length,
+        ).toBeGreaterThanOrEqual(2);
+
+        const edgeSet = (diagramName: string) =>
+            new Set(
+                Array.from(
+                    container.querySelectorAll(
+                        `[data-diagram="${diagramName}"] [data-edge-from][data-edge-to]`,
+                    ),
+                ).map(
+                    (edge) =>
+                        `${edge.getAttribute('data-edge-from')}->${edge.getAttribute('data-edge-to')}:${edge.getAttribute('data-edge-kind')}`,
+                ),
+            );
+
+        expect(edgeSet('responsibility-lanes')).toEqual(
+            new Set([
+                'Human->Parent:authority',
+                'Parent->Writer:delegation',
+                'Writer->Verifier:verify-branch',
+                'Writer->Reviewer:review-branch',
+                'Verifier->Parent:verification-return',
+                'Reviewer->Parent:review-return',
+                'Parent->Human:judgment-return',
+            ]),
+        );
+        expect(edgeSet('adr-dependency')).toEqual(
+            new Set([
+                '入口->use case:main',
+                'use case->domain / rule:main',
+                'domain / rule->presentation:main',
+                'domain / rule->I/O:branch',
+                'domain / rule->data contract:branch',
+                'domain / rule->side effect:branch',
+                'use case->read side:query',
+                'read side->presentation:query',
+            ]),
+        );
+        expect(edgeSet('feedback-loop')).toEqual(
+            new Set([
+                '1->2:forward',
+                '2->3:forward',
+                '3->4:forward',
+                '4->5:forward',
+                '5->6:forward',
+                '6->7:forward',
+                '7->8:forward',
+                '8->1:return',
+            ]),
+        );
+
+        const feedbackReturn = container.querySelector(
+            '[data-diagram="feedback-loop"] [data-edge-kind="return"]',
+        );
+        expect(feedbackReturn?.getAttribute('aria-hidden')).toBe('true');
+    });
+
     it('ADR責務でHTTP入口とpresentationを分ける', () => {
         setMotionPreferences(true);
         render(<DesignPhilosophyView sections={sections} />);
@@ -578,16 +679,18 @@ describe('DesignPhilosophyView', () => {
         expect(base).toContain('--dp-font-body');
         expect(base).toContain('--dp-font-technical');
         expect(base).not.toMatch(/\.dp-dag[^}]*overflow-x:\s*auto/s);
-        expect(base).toMatch(/\.dp-flow-list::before\s*\{[^}]*content:\s*""/s);
-        expect(base).toMatch(/\.dp-flow-list\s*>\s*li::after\s*\{[^}]*border/s);
+        expect(base).toMatch(/\[data-diagram-edge\]\s*\{[^}]*pointer-events:\s*none/s);
+        expect(base).toMatch(/\.dp-diagram-caption\s*\{[^}]*position:\s*absolute/s);
+        expect(base).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*1fr/s);
         expect(tablet).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*1fr/s);
         expect(desktop).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
         expect(desktop).toMatch(/\.dp-flow-list\s*>\s*li:nth-child\(2\)\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*2/s);
         expect(desktop).toMatch(/\.dp-flow-list\s*>\s*li:nth-child\(8\)\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*8/s);
         expect(desktop).toMatch(/\.dp-architecture-layers\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
-        expect(base).toMatch(/\.dp-responsibility-grid::before\s*\{[^}]*content:\s*""/s);
-        expect(desktop).toMatch(/\.dp-improvement-map\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
-        expect(desktop).toMatch(/\.dp-improvement-map::before\s*\{[^}]*border:/s);
+        expect(base).toMatch(/\.dp-responsibility-grid,\s*\n\.dp-stage-grid,[\s\S]*grid-template-columns:\s*1fr/);
+        expect(desktop).toMatch(/\.dp-improvement-list\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
+        expect(base).toMatch(/\.dp-improvement-return\s*\{[^}]*top:[^}]*bottom:[^}]*border-right:/s);
+        expect(desktop).toMatch(/\.dp-improvement-return\s*\{[^}]*height:\s*34%[^}]*border-left:/s);
         expect(landscape).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*1fr/s);
         expect(landscape).toMatch(/\.dp-flow-list\s*>\s*li:nth-child\(n\)\s*\{[^}]*grid-column:\s*auto[^}]*grid-row:\s*auto/s);
         expect(landscape).not.toMatch(/overflow-x:\s*auto/);
