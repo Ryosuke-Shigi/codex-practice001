@@ -227,10 +227,11 @@ UIの見た目と操作基準は `docs/ui.md` に従います。
 
 PHP:
 
+PHP全体testは `docs/operations/command-registry.md` の「PHP / Laravel変更時の確認」にあるcanonical full-suite routeを使います。
+
 ```bash
 cd /var/www/api-discovery-hub
 docker compose run --rm composer format-check
-docker compose exec php-fpm php artisan test
 ```
 
 Frontend:
