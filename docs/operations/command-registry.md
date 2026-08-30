@@ -177,7 +177,7 @@ artisan は `php-fpm` コンテナで実行します。
 ```bash
 cd /var/www/api-discovery-hub
 docker compose exec php-fpm php artisan optimize:clear
-docker compose exec php-fpm php artisan test
+docker compose exec php-fpm vendor/bin/phpunit --no-progress --display-all-issues --colors=never
 docker compose exec php-fpm php artisan route:list
 docker compose exec php-fpm php artisan migrate:status
 ```
@@ -234,6 +234,16 @@ cd /var/www/api-discovery-hub
 docker compose run --rm npm npm run build
 docker compose run --rm npm npm run test:run
 docker compose run --rm npm npm run typecheck
+```
+
+全体テストの通常経路は、成功時のprogressだけを圧縮し、scope、failure、warning、diagnostic、exit statusを維持します。PHPはPHPUnitのprogressを無効にして全issueの詳細を表示し、Vitestは`test:run` scriptに登録した`dot` reporterを使います。
+
+成功したtestの名前や個別時間まで確認する必要がある場合だけ、次のverbose diagnostic routeを使います。通常のCI入口には混ぜません。
+
+```bash
+cd /var/www/api-discovery-hub
+docker compose exec php-fpm php artisan test
+docker compose run --rm npm npm run test -- --run --reporter=default --no-color
 ```
 
 禁止:
@@ -331,7 +341,7 @@ build、cache、coverage、log、container等の生成物が出た場合、verif
 ```bash
 cd /var/www/api-discovery-hub
 docker compose exec php-fpm php artisan test tests/Feature/ExampleTest.php
-docker compose exec php-fpm php artisan test
+docker compose exec php-fpm vendor/bin/phpunit --no-progress --display-all-issues --colors=never
 ```
 
 PHP format check が必要な場合は、`/src/composer.json` に存在する script だけを使います。

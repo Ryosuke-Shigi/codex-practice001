@@ -75,7 +75,7 @@ jobs:
           php artisan key:generate --ansi
 
       - name: Run Laravel tests
-        run: php artisan test
+        run: vendor/bin/phpunit --no-progress --display-all-issues --colors=never
 
       - name: Run Vitest
         env:
