@@ -37,6 +37,10 @@ export default function AiDevelopmentFlow({
                                 </div>
                                 <RpgText as="h3">{step.title}</RpgText>
                                 <RpgText as="p">{step.description}</RpgText>
+                                <div className="dp-flow-card__handoff">
+                                    <RpgText className="dp-technical">HANDOFF EVIDENCE</RpgText>
+                                    <RpgText as="strong">{step.handoff}</RpgText>
+                                </div>
                             </article>
                         </li>
                     ))}

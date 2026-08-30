@@ -30,19 +30,28 @@ export default function DevelopmentStages({
                                 </RpgText>
                                 <RpgText as="h3">{stage.label}</RpgText>
                                 <RpgText as="p">{stage.purpose}</RpgText>
-                                <RpgText as="strong">
-                                    {stage.optional ? '必要時に選択' : '基本工程'}
-                                </RpgText>
                                 <dl>
                                     <div>
-                                        <RpgText as="dt">成果</RpgText>
-                                        <RpgText as="dd">{stage.deliverable}</RpgText>
+                                        <RpgText as="dt">確認する</RpgText>
+                                        <RpgText as="dd">{stage.includes.join(' / ')}</RpgText>
                                     </div>
                                     <div>
-                                        <RpgText as="dt">完了条件</RpgText>
-                                        <RpgText as="dd">{stage.completion}</RpgText>
+                                        <RpgText as="dt">まだ作らない</RpgText>
+                                        <RpgText as="dd">{stage.excludes.join(' / ')}</RpgText>
+                                    </div>
+                                    <div>
+                                        <RpgText as="dt">次へ渡す</RpgText>
+                                        <RpgText as="dd">{stage.deliverable}</RpgText>
                                     </div>
                                 </dl>
+                                <div className="dp-stage-card__gate">
+                                    <RpgText className="dp-technical">HUMAN GATE</RpgText>
+                                    <RpgText as="strong">
+                                        {stage.key === 'PRODUCT'
+                                            ? '受入条件で判断する'
+                                            : '次段階へ自動昇格しない'}
+                                    </RpgText>
+                                </div>
                             </article>
                         </li>
                     ))}

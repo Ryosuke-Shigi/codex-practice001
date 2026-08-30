@@ -3,6 +3,7 @@ import { ArrowLeft, Layers3, RotateCcw } from 'lucide-react';
 
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
+import { closingAuthorityPath } from '@/Components/DesignPhilosophy/designPhilosophyData';
 
 export default function ClosingStatement({
     section,
@@ -35,6 +36,21 @@ export default function ClosingStatement({
                     <RpgText as="p" className="dp-closing__body">
                         {section.body}
                     </RpgText>
+
+                    <ol
+                        aria-label="CapabilityからHuman Judgmentまでの判断境界"
+                        className="dp-closing__authority"
+                    >
+                        {closingAuthorityPath.map((node, index) => (
+                            <li key={node.label}>
+                                <RpgText className="dp-card__index">
+                                    {String(index + 1).padStart(2, '0')}
+                                </RpgText>
+                                <RpgText as="strong">{node.label}</RpgText>
+                                <RpgText as="small">{node.description}</RpgText>
+                            </li>
+                        ))}
+                    </ol>
 
                     <nav
                         aria-label="設計思想からの次の導線"

@@ -18,15 +18,15 @@ vi.mock('@inertiajs/react', () => ({
 }));
 
 const sections: DesignPhilosophySection[] = ([
-    ['hero', 'ポートフォリオ／設計思想', '人間が判断し、AIは分離された責務を実行する。'],
-    ['principles', '01 / TASK CONTRACT', 'Task Contractで、変更の境界を固定する。'],
-    ['human-ai-roles', '02 / HUMAN + AI', '必要な専門性だけを、Taskごとに選ぶ。'],
-    ['ai-development-flow', '03 / CURRENT FLOW', '8段階で、調査からAcceptanceまでをつなぐ。'],
-    ['architecture', '04 / ADR PATTERN', 'Action - Domain - Responderで、変更理由を分ける。'],
-    ['development-stages', '05 / DEVELOPMENT STAGES', '開発段階を混同しない。'],
-    ['quality-gates', '06 / EVIDENCE', 'Evidenceを相互代替しない。'],
-    ['improvement-loop', '07 / IMPROVEMENT LOOP', 'Findingを、再発防止へ戻す。'],
-    ['closing', 'FINAL ACCEPTANCE', '完成は、Evidenceと未確認事項を分けて判断する。'],
+    ['hero', 'PORTFOLIO / CODEX ZERO TRUST', '人間が判断し、AIは検証可能な境界で実行する。'],
+    ['principles', '01 / VERIFY, THEN ACCEPT', 'AIを信用するのではなく、検証可能な構造を置く。'],
+    ['human-ai-roles', '02 / SEPARATION OF DUTIES', '実行・検証・Review・統合・判断を分離する。'],
+    ['ai-development-flow', '03 / EVIDENCE PIPELINE', 'Evidenceを手渡す8段階で、Acceptanceまで進む。'],
+    ['architecture', '04 / ADR PATTERN', 'Action - Domain - Responderで、責務と依存方向を描く。'],
+    ['development-stages', '05 / DEVELOPMENT STAGES', '段階を越えるときは、契約を渡して人間が判断する。'],
+    ['quality-gates', '06 / FAIL CLOSED', 'Evidenceは独立した計器で測り、不明なら閉じる。'],
+    ['improvement-loop', '07 / IMPROVEMENT LOOP', 'Findingを循環させ、適切な正本へ戻す。'],
+    ['closing', 'FINAL / HUMAN AUTHORITY', '実行可能であることを、実行してよいことへ変換しない。'],
 ] as const).map(([key, eyebrow, title], index) => ({
     key,
     sortOrder: (index + 1) * 10,
@@ -119,10 +119,28 @@ describe('DesignPhilosophyView', () => {
 
         expect(container.querySelectorAll('h1')).toHaveLength(1);
         expect(container.querySelector('h1')?.textContent).toContain(
-            '人間が判断し、AIは分離された責務を実行する。',
+            '人間が判断し、AIは検証可能な境界で実行する。',
         );
 
+        const hero = section('hero');
+        [
+            'Human intent / authority',
+            'Task Contract',
+            'bounded Writer',
+            'Evidence',
+            'Verification / Review',
+            'Parent integration',
+            'Human judgment',
+        ].forEach((node) => expect(hero?.textContent).toContain(node));
+
         const contract = section('principles');
+        ['誤読', '省略', '過剰実装', '誤報告'].forEach((risk) =>
+            expect(contract?.textContent).toContain(risk),
+        );
+        ['Claim', 'Evidence', 'Authority', 'Acceptance'].forEach((node) =>
+            expect(contract?.textContent).toContain(node),
+        );
+        expect(contract?.textContent).toContain('Claim ≠ Evidence');
         [
             '目的',
             '範囲',
@@ -136,20 +154,23 @@ describe('DesignPhilosophyView', () => {
         ].forEach((item) => expect(contract?.textContent).toContain(item));
 
         const roles = section('human-ai-roles');
-        ['人間', 'ChatGPT', '親Agent', 'Specialist', 'Writer', 'Verifier', 'Reviewer'].forEach(
+        ['Human', 'Parent', 'Writer', 'Verifier', 'Reviewer'].forEach(
             (role) => expect(roles?.textContent).toContain(role),
         );
         [
             '親を含め同時writer最大1',
-            'normal working tree + linked worktree',
             'read-heavy独立作業だけを条件付き並列',
             'writer作業は直列',
             'Verifier / Reviewer中はwriter停止',
-            'opt-in',
-            'sequential physical isolation',
-            'commit-based integration',
-            'Parallel Writerではない',
         ].forEach((rule) => expect(roles?.textContent).toContain(rule));
+        [
+            '自分でAcceptanceを決めない',
+            'Verifierを兼ねたことにしない',
+            'Reviewerを兼ねたことにしない',
+            'Human judgmentを代替しない',
+        ].forEach((boundary) => expect(roles?.textContent).toContain(boundary));
+        expect(roles?.textContent).toContain('Capability');
+        expect(roles?.textContent).toContain('Operation Authority');
 
         const flow = section('ai-development-flow');
         expect(flow?.querySelectorAll('[data-flow-step]')).toHaveLength(8);
@@ -198,17 +219,28 @@ describe('DesignPhilosophyView', () => {
 
         const architecture = section('architecture');
         expect(architecture?.textContent).toContain('Action - Domain - Responder');
-        ['Technology', 'Capability', 'Integration', 'Role', 'Evidence'].forEach(
-            (item) => expect(architecture?.textContent).toContain(item),
-        );
-        expect(architecture?.textContent).toContain(
-            'Route → Controller → Request / Input DTO → Action → Service / Repository / Strategy → Output DTO / ListDTO → Responder → Page / Feature Component → Common Component',
-        );
+        [
+            '入口',
+            'use case',
+            'domain / rule',
+            'I/O',
+            'data contract',
+            'side effect',
+            'read side',
+            'presentation',
+        ].forEach((lane) => expect(architecture?.textContent).toContain(lane));
+        expect(architecture?.textContent).toContain('Repositoryに業務判断を置かない');
+        expect(architecture?.textContent).toContain('ServiceにDB都合を置かない');
+        expect(architecture?.textContent).toContain('Componentに業務判断を置かない');
 
         const stages = section('development-stages');
         ['IDEA BOARD', 'MOCK', 'PROTOTYPE', 'PRODUCT'].forEach((stage) =>
             expect(stages?.textContent).toContain(stage),
         );
+        ['確認する', 'まだ作らない', '次へ渡す'].forEach((label) =>
+            expect(stages?.textContent).toContain(label),
+        );
+        expect(stages?.textContent).toContain('自動昇格しない');
 
         const evidence = section('quality-gates');
         [
@@ -216,10 +248,19 @@ describe('DesignPhilosophyView', () => {
             'Installed',
             'Runtime',
             'Browser',
-            'independent Verifier / Reviewer',
+            'Verification / Review',
             'Human Review',
         ].forEach((kind) => expect(evidence?.textContent).toContain(kind));
         expect(evidence?.textContent).toContain('相互代替しない');
+        [
+            'Evidence不足',
+            'identity mismatch',
+            'stale / drift',
+            'permission不足',
+            '正本衝突',
+            'unknown state',
+            '人間判断が必要',
+        ].forEach((condition) => expect(evidence?.textContent).toContain(condition));
 
         const loop = section('improvement-loop');
         expect(loop?.querySelectorAll('[data-improvement-step]')).toHaveLength(8);
@@ -229,6 +270,14 @@ describe('DesignPhilosophyView', () => {
         ['Code', 'Test', 'Type', 'Docs', 'Policy', 'Checker', 'Sensors', 'Harness'].forEach(
             (destination) => expect(loop?.textContent).toContain(destination),
         );
+
+        const closing = section('closing');
+        expect(closing?.textContent).toContain(
+            '実行可能であることを、実行してよいことへ変換しない。',
+        );
+        expect(closing?.textContent).toContain('Capability');
+        expect(closing?.textContent).toContain('Operation Authority');
+        expect(closing?.textContent).toContain('Human Judgment');
     });
 
     it('ADR責務でHTTP入口とpresentationを分ける', () => {
@@ -245,12 +294,17 @@ describe('DesignPhilosophyView', () => {
                 .map((item) => item.textContent)
                 .join(' ');
 
-        expect(categoryText('entry')).toContain('Request / Controller');
+        expect(categoryText('entry')).toContain('Route / Controller / Request');
         expect(categoryText('entry')).not.toContain('Page / Feature Component');
-        expect(categoryText('application')).toContain('Action');
-        expect(categoryText('domain')).toContain('Service / Repository / DTO');
-        expect(categoryText('output')).toContain('Responder');
-        expect(categoryText('presentation')).toContain('Page / Feature Component');
+        expect(categoryText('application')).toContain('Command Action / Query Action');
+        expect(categoryText('domain')).toContain('Service / Strategy');
+        expect(categoryText('infrastructure')).toContain('Repository');
+        expect(categoryText('contract')).toContain('DTO / ListDTO');
+        expect(categoryText('side-effect')).toContain('Event / Listener / Job');
+        expect(categoryText('read-side')).toContain('Query Action / Output DTO');
+        expect(categoryText('presentation')).toContain(
+            'Responder / Page / Feature Component',
+        );
     });
 
     it('内部runtime情報は公開せずRuntime Evidenceという一般概念だけを表示する', () => {
@@ -524,13 +578,21 @@ describe('DesignPhilosophyView', () => {
         expect(base).toContain('--dp-font-body');
         expect(base).toContain('--dp-font-technical');
         expect(base).not.toMatch(/\.dp-dag[^}]*overflow-x:\s*auto/s);
-        expect(tablet).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
-        expect(desktop).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*repeat\(4,/s);
+        expect(base).toMatch(/\.dp-flow-list::before\s*\{[^}]*content:\s*""/s);
+        expect(base).toMatch(/\.dp-flow-list\s*>\s*li::after\s*\{[^}]*border/s);
+        expect(tablet).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*1fr/s);
+        expect(desktop).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
+        expect(desktop).toMatch(/\.dp-flow-list\s*>\s*li:nth-child\(2\)\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*2/s);
+        expect(desktop).toMatch(/\.dp-flow-list\s*>\s*li:nth-child\(8\)\s*\{[^}]*grid-column:\s*2[^}]*grid-row:\s*8/s);
         expect(desktop).toMatch(/\.dp-architecture-layers\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
-        expect(landscape).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
+        expect(base).toMatch(/\.dp-responsibility-grid::before\s*\{[^}]*content:\s*""/s);
+        expect(desktop).toMatch(/\.dp-improvement-map\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
+        expect(desktop).toMatch(/\.dp-improvement-map::before\s*\{[^}]*border:/s);
+        expect(landscape).toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*1fr/s);
+        expect(landscape).toMatch(/\.dp-flow-list\s*>\s*li:nth-child\(n\)\s*\{[^}]*grid-column:\s*auto[^}]*grid-row:\s*auto/s);
         expect(landscape).not.toMatch(/overflow-x:\s*auto/);
         expect(landscape).not.toMatch(/grid-auto-flow:\s*column/);
-        expect(landscape).toMatch(/\.dp-technical,[\s\S]*\.dp-layer-flow\s*\{[^}]*writing-mode:\s*horizontal-tb/s);
+        expect(landscape).toMatch(/\.dp-technical\s*\{[^}]*writing-mode:\s*horizontal-tb/s);
         expect(landscape).toMatch(/max-width:\s*559px[\s\S]*\.dp-flow-list,[\s\S]*grid-template-columns:\s*1fr/s);
         expect(css).toMatch(/prefers-reduced-motion:\s*reduce/);
     });
@@ -539,7 +601,17 @@ describe('DesignPhilosophyView', () => {
         setMotionPreferences(true);
         render(<DesignPhilosophyView sections={sections} />);
 
-        ['flow', 'dag', 'writer-lease', 'adr-flow', 'evidence', 'improvement'].forEach(
+        [
+            'hero-path',
+            'trust-frame',
+            'role-rail',
+            'flow',
+            'dag',
+            'writer-lease',
+            'adr-flow',
+            'evidence',
+            'improvement',
+        ].forEach(
             (motion) =>
                 expect(
                     container.querySelector(`[data-structure-motion="${motion}"]`),

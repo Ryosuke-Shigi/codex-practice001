@@ -21,6 +21,12 @@ export type DesignPhilosophySection = {
 export type TaskContractItem = {
     title: string;
     description: string;
+    group: 'intent' | 'boundary' | 'acceptance';
+};
+
+export type BlueprintNode = {
+    label: string;
+    description: string;
 };
 
 export type PublicRole = {
@@ -35,6 +41,7 @@ export type AiDevelopmentStep = {
     title: string;
     description: string;
     owner: string;
+    handoff: string;
 };
 
 export type TaskDependencyNode = {
@@ -58,7 +65,9 @@ export type ArchitectureResponsibility = {
         | 'application'
         | 'domain'
         | 'infrastructure'
-        | 'output'
+        | 'contract'
+        | 'side-effect'
+        | 'read-side'
         | 'presentation';
 };
 
@@ -69,8 +78,6 @@ export type DevelopmentStage = {
     includes: string[];
     excludes: string[];
     deliverable: string;
-    completion: string;
-    optional: boolean;
 };
 
 export type EvidenceType = {
@@ -81,11 +88,6 @@ export type EvidenceType = {
 
 export type ImprovementStep = {
     step: number;
-    title: string;
-    description: string;
-};
-
-export type NamedFact = {
     title: string;
     description: string;
 };

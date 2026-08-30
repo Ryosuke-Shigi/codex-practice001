@@ -1,9 +1,9 @@
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
 import {
+    architectureGuardrails,
     architectureLayers,
     architectureResponsibilities,
-    technologyComposition,
 } from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
@@ -47,48 +47,46 @@ export default function ArchitectureMap({
                     ))}
                 </div>
 
-                <RpgText
-                    as="p"
-                    className="dp-layer-flow"
+                <ol
+                    aria-label="ADR Patternの責務マップ"
+                    className="dp-responsibility-grid"
                     data-structure-motion="adr-flow"
                 >
-                    Route → Controller → Request / Input DTO → Action → Service / Repository / Strategy → Output DTO / ListDTO → Responder → Page / Feature Component → Common Component
-                </RpgText>
-
-                <div className="dp-responsibility-grid">
                     {architectureResponsibilities.map((responsibility, index) => (
-                        <article
-                            key={responsibility.value}
-                            className="dp-blueprint-panel"
-                            data-responsibility-category={responsibility.category}
-                        >
-                            <RpgText className="dp-card__index">
-                                {`R${String(index + 1).padStart(2, '0')}`}
-                            </RpgText>
-                            <RpgText as="h3">{responsibility.value}</RpgText>
-                            <RpgText as="strong">
-                                {responsibility.technicalLabel}
-                            </RpgText>
-                            <RpgText as="p">{responsibility.description}</RpgText>
-                        </article>
+                        <li key={responsibility.value}>
+                            <article
+                                className="dp-blueprint-panel"
+                                data-responsibility-category={responsibility.category}
+                            >
+                                <RpgText className="dp-card__index">
+                                    {`R${String(index + 1).padStart(2, '0')}`}
+                                </RpgText>
+                                <RpgText as="h3">{responsibility.value}</RpgText>
+                                <RpgText as="strong">
+                                    {responsibility.technicalLabel}
+                                </RpgText>
+                                <RpgText as="p">
+                                    {responsibility.description}
+                                </RpgText>
+                            </article>
+                        </li>
                     ))}
-                </div>
+                </ol>
 
-                <div className="dp-composition">
-                    <div className="dp-composition__heading">
+                <div className="dp-architecture-guardrails">
+                    <div>
                         <RpgText className="dp-technical">
-                            TECHNOLOGY COMPOSITION
+                            DEPENDENCY GUARDRAILS
                         </RpgText>
-                        <RpgText as="h3">Taskごとに必要な範囲だけ組む</RpgText>
+                        <RpgText as="h3">責務を、便利な層へ押し込まない</RpgText>
                     </div>
-                    <ol>
-                        {technologyComposition.map((item) => (
-                            <li key={item.title}>
-                                <RpgText as="strong">{item.title}</RpgText>
-                                <RpgText as="small">{item.description}</RpgText>
+                    <ul>
+                        {architectureGuardrails.map((guardrail) => (
+                            <li key={guardrail}>
+                                <RpgText>{guardrail}</RpgText>
                             </li>
                         ))}
-                    </ol>
+                    </ul>
                 </div>
             </div>
         </section>

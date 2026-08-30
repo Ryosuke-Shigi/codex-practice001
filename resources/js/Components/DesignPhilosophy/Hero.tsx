@@ -65,7 +65,7 @@ export default function Hero({ section }: { section: DesignPhilosophySection }) 
                         <Orbit aria-hidden="true" />
                         <RpgText>DRAWING DP-01</RpgText>
                         <RpgText as="strong">
-                            Human / Contract / Evidence
+                            Human Authority / Bounded Execution / Evidence
                         </RpgText>
                     </div>
                 </div>
