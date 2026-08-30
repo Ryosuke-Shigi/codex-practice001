@@ -21,22 +21,69 @@ export default function ImprovementLoop({
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
-                <ol
-                    className="dp-improvement-list"
-                    data-structure-motion="improvement"
+                <figure
+                    className="dp-improvement-map"
+                    data-diagram="feedback-loop"
                 >
-                    {improvementSteps.map((step) => (
-                        <li key={step.step} data-improvement-step>
-                            <RpgText className="dp-card__index">
-                                {String(step.step).padStart(2, '0')}
-                            </RpgText>
-                            <div>
-                                <RpgText as="h3">{step.title}</RpgText>
-                                <RpgText as="p">{step.description}</RpgText>
-                            </div>
-                        </li>
-                    ))}
-                </ol>
+                    <div className="dp-improvement-circuit">
+                        <ol
+                            className="dp-improvement-list"
+                            data-structure-motion="improvement"
+                        >
+                            {improvementSteps.map((step, index) => {
+                                const nextStep = improvementSteps[index + 1];
+
+                                return (
+                                    <li
+                                        key={step.step}
+                                        data-diagram-node={step.title}
+                                        data-improvement-step={String(step.step)}
+                                    >
+                                        <RpgText className="dp-card__index">
+                                            {String(step.step).padStart(2, '0')}
+                                        </RpgText>
+                                        <div>
+                                            <RpgText as="h3">{step.title}</RpgText>
+                                            <RpgText as="p">
+                                                {step.description}
+                                            </RpgText>
+                                        </div>
+                                        {nextStep && (
+                                            <span
+                                                aria-hidden="true"
+                                                className="dp-diagram-edge dp-diagram-edge--loop"
+                                                data-diagram-edge
+                                                data-edge-id={`improvement-edge-${step.step}`}
+                                                data-edge-from={String(step.step)}
+                                                data-edge-kind="forward"
+                                                data-edge-to={String(nextStep.step)}
+                                            />
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ol>
+                        <span
+                            aria-hidden="true"
+                            className="dp-improvement-return"
+                            data-diagram-edge
+                            data-edge-id="improvement-edge-8"
+                            data-edge-from="8"
+                            data-edge-kind="return"
+                            data-edge-to="1"
+                        />
+                    </div>
+                    <div className="dp-improvement-map__core">
+                        <RpgText className="dp-technical">RETURN TO SOURCE</RpgText>
+                        <RpgText as="strong">原因を所有する正本へ</RpgText>
+                        <RpgText as="small">何でもHarnessへ戻すわけではない</RpgText>
+                    </div>
+                    <figcaption className="dp-diagram-caption">
+                        <RpgText>
+                            FindingからFeedbackへ進み、原因を所有する正本に戻して次のFindingへつなぐ閉ループ。
+                        </RpgText>
+                    </figcaption>
+                </figure>
 
                 <div className="dp-feedback">
                     <RpgText className="dp-technical">FEEDBACK DESTINATIONS</RpgText>

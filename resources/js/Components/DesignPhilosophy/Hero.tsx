@@ -8,6 +8,7 @@ import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/desi
 export default function Hero({ section }: { section: DesignPhilosophySection }) {
     return (
         <header
+            id={section.key}
             aria-labelledby="design-philosophy-hero"
             className="dp-hero"
             data-rpg-section
@@ -65,7 +66,7 @@ export default function Hero({ section }: { section: DesignPhilosophySection }) 
                         <Orbit aria-hidden="true" />
                         <RpgText>DRAWING DP-01</RpgText>
                         <RpgText as="strong">
-                            Human / Contract / Evidence
+                            Human Authority / Bounded Execution / Evidence
                         </RpgText>
                     </div>
                 </div>

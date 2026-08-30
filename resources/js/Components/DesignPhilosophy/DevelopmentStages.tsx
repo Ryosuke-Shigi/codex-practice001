@@ -18,9 +18,10 @@ export default function DevelopmentStages({
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
+                <figure className="dp-stage-diagram" data-diagram="stage-gates">
                 <ol className="dp-stage-grid">
                     {developmentStages.map((stage, index) => (
-                        <li key={stage.key}>
+                        <li key={stage.key} data-diagram-node={stage.key}>
                             <article className="dp-paper-card dp-stage-card">
                                 <RpgText className="dp-card__index">
                                     {String(index + 1).padStart(2, '0')}
@@ -30,23 +31,45 @@ export default function DevelopmentStages({
                                 </RpgText>
                                 <RpgText as="h3">{stage.label}</RpgText>
                                 <RpgText as="p">{stage.purpose}</RpgText>
-                                <RpgText as="strong">
-                                    {stage.optional ? '必要時に選択' : '基本工程'}
-                                </RpgText>
                                 <dl>
                                     <div>
-                                        <RpgText as="dt">成果</RpgText>
-                                        <RpgText as="dd">{stage.deliverable}</RpgText>
+                                        <RpgText as="dt">確認する</RpgText>
+                                        <RpgText as="dd">{stage.includes.join(' / ')}</RpgText>
                                     </div>
                                     <div>
-                                        <RpgText as="dt">完了条件</RpgText>
-                                        <RpgText as="dd">{stage.completion}</RpgText>
+                                        <RpgText as="dt">まだ作らない</RpgText>
+                                        <RpgText as="dd">{stage.excludes.join(' / ')}</RpgText>
+                                    </div>
+                                    <div>
+                                        <RpgText as="dt">次へ渡す</RpgText>
+                                        <RpgText as="dd">{stage.deliverable}</RpgText>
                                     </div>
                                 </dl>
+                                <div className="dp-stage-card__gate">
+                                    <RpgText className="dp-technical">HUMAN GATE</RpgText>
+                                    <RpgText as="strong">
+                                        {stage.key === 'PRODUCT'
+                                            ? '受入条件で判断する'
+                                            : '次段階へ自動昇格しない'}
+                                    </RpgText>
+                                </div>
                             </article>
+                            {index < developmentStages.length - 1 && (
+                                <span
+                                    aria-hidden="true"
+                                    className="dp-diagram-edge dp-diagram-edge--gate"
+                                    data-diagram-edge
+                                />
+                            )}
                         </li>
                     ))}
                 </ol>
+                    <figcaption className="dp-diagram-caption">
+                        <RpgText>
+                            IDEA BOARDからPRODUCTまでの各段階は、Human Gateで契約と成果物を確認してのみ進む。
+                        </RpgText>
+                    </figcaption>
+                </figure>
             </div>
         </section>
     );
