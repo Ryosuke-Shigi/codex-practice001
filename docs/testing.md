@@ -457,7 +457,7 @@ Laravel:
 ```bash
 cd /var/www/api-discovery-hub
 docker compose run --rm composer format-check
-docker compose exec php-fpm php artisan test
+docker compose exec php-fpm vendor/bin/phpunit --no-progress --display-all-issues --colors=never
 docker compose exec php-fpm php artisan test tests/Unit
 docker compose exec php-fpm php artisan test tests/Feature
 docker compose exec php-fpm php artisan test tests/Unit/ExampleTest.php
@@ -470,6 +470,8 @@ cd /var/www/api-discovery-hub
 docker compose run --rm npm npm run test:run
 docker compose run --rm npm npm run build
 ```
+
+全体テストの通常経路は成功時のprogressを圧縮します。test scope、failure、warning、diagnostic、exit statusは維持し、成功testの名前や個別時間まで必要な場合は `docs/operations/command-registry.md` のverbose diagnostic routeを使います。
 
 TypeScript / TSXを変更した場合は、必要に応じて手元確認として次を実行します。
 

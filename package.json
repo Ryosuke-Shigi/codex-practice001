@@ -5,7 +5,7 @@
         "build": "vite build",
         "dev": "vite",
         "test": "vitest",
-        "test:run": "vitest run",
+        "test:run": "vitest run --reporter=dot --no-color",
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
