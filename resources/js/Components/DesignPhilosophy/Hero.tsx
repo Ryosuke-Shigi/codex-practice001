@@ -3,9 +3,15 @@ import { ArrowDownRight, ArrowRight, Orbit } from 'lucide-react';
 import HeroSystemCore from '@/Components/DesignPhilosophy/HeroSystemCore';
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import { heroSignals } from '@/Components/DesignPhilosophy/designPhilosophyData';
-import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+import type { DesignPhilosophySectionProps } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
-export default function Hero({ section }: { section: DesignPhilosophySection }) {
+export default function Hero({
+    section,
+    visibleSectionKeys,
+}: DesignPhilosophySectionProps) {
+    const hasFlowLink = visibleSectionKeys.has('ai-development-flow');
+    const hasArchitectureLink = visibleSectionKeys.has('architecture');
+
     return (
         <header
             id={section.key}
@@ -28,25 +34,31 @@ export default function Hero({ section }: { section: DesignPhilosophySection }) 
                         {section.body}
                     </RpgText>
 
-                    <nav
-                        aria-label="設計思想の主要セクション"
-                        className="dp-hero__actions"
-                    >
-                        <a
-                            className="dp-button dp-button--primary"
-                            href="#ai-development-flow"
+                    {(hasFlowLink || hasArchitectureLink) && (
+                        <nav
+                            aria-label="設計思想の主要セクション"
+                            className="dp-hero__actions"
                         >
-                            <RpgText>8段階フローを見る</RpgText>
-                            <ArrowDownRight aria-hidden="true" />
-                        </a>
-                        <a
-                            className="dp-button dp-button--secondary"
-                            href="#architecture"
-                        >
-                            <RpgText>ADR Patternを見る</RpgText>
-                            <ArrowRight aria-hidden="true" />
-                        </a>
-                    </nav>
+                            {hasFlowLink && (
+                                <a
+                                    className="dp-button dp-button--primary"
+                                    href="#ai-development-flow"
+                                >
+                                    <RpgText>8段階フローを見る</RpgText>
+                                    <ArrowDownRight aria-hidden="true" />
+                                </a>
+                            )}
+                            {hasArchitectureLink && (
+                                <a
+                                    className="dp-button dp-button--secondary"
+                                    href="#architecture"
+                                >
+                                    <RpgText>ADR Patternを見る</RpgText>
+                                    <ArrowRight aria-hidden="true" />
+                                </a>
+                            )}
+                        </nav>
+                    )}
 
                     <ul
                         aria-label="設計思想の特性"

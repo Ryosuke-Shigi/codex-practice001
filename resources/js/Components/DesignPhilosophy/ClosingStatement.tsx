@@ -1,15 +1,14 @@
 import { Link } from '@inertiajs/react';
 import { ArrowLeft, Layers3, RotateCcw } from 'lucide-react';
 
-import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
+import type { DesignPhilosophySectionProps } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import { closingAuthorityPath } from '@/Components/DesignPhilosophy/designPhilosophyData';
 
 export default function ClosingStatement({
     section,
-}: {
-    section: DesignPhilosophySection;
-}) {
+    visibleSectionKeys,
+}: DesignPhilosophySectionProps) {
     return (
         <footer
             id={section.key}
@@ -88,20 +87,24 @@ export default function ClosingStatement({
                             <ArrowLeft aria-hidden="true" />
                             <RpgText>戻る</RpgText>
                         </Link>
-                        <a
-                            className="dp-button dp-button--secondary"
-                            href="#architecture"
-                        >
-                            <Layers3 aria-hidden="true" />
-                            <RpgText>ADR Patternを再確認</RpgText>
-                        </a>
-                        <a
-                            className="dp-button dp-button--secondary"
-                            href="#improvement-loop"
-                        >
-                            <RotateCcw aria-hidden="true" />
-                            <RpgText>改善ループを見る</RpgText>
-                        </a>
+                        {visibleSectionKeys.has('architecture') && (
+                            <a
+                                className="dp-button dp-button--secondary"
+                                href="#architecture"
+                            >
+                                <Layers3 aria-hidden="true" />
+                                <RpgText>ADR Patternを再確認</RpgText>
+                            </a>
+                        )}
+                        {visibleSectionKeys.has('improvement-loop') && (
+                            <a
+                                className="dp-button dp-button--secondary"
+                                href="#improvement-loop"
+                            >
+                                <RotateCcw aria-hidden="true" />
+                                <RpgText>改善ループを見る</RpgText>
+                            </a>
+                        )}
                     </nav>
                 </div>
             </div>

@@ -3,9 +3,12 @@
 namespace App\Actions\DesignPhilosophy\Queries;
 
 use App\DTO\DesignPhilosophy\Sections\DesignPhilosophySectionDTO;
+use Illuminate\Contracts\Config\Repository;
 
 final readonly class GetDesignPhilosophySectionsAction
 {
+    public function __construct(private Repository $config) {}
+
     /**
      * @return array<int, DesignPhilosophySectionDTO>
      */
@@ -16,7 +19,7 @@ final readonly class GetDesignPhilosophySectionsAction
          * sort_order 順の DTO へ変換して Responder へ渡します。
          * 章内のカードや一覧は、Frontend表示契約に閉じた型付き固定データとして React 側が持ちます。
          */
-        $sections = config('design_philosophy.sections', []);
+        $sections = $this->config->get('design_philosophy.sections', []);
 
         if (! is_array($sections)) {
             return [];

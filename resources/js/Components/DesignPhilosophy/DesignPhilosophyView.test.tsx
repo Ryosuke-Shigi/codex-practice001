@@ -639,6 +639,8 @@ describe('DesignPhilosophyView', () => {
 
         const flowLink = container.querySelector('a[href="#ai-development-flow"]');
         const returnLink = container.querySelector('a[href="/"]');
+        expect(container.querySelectorAll('a[href="#architecture"]')).toHaveLength(2);
+        expect(container.querySelector('a[href="#improvement-loop"]')).not.toBeNull();
         expect(flowLink?.querySelector('[data-rpg-semantic]')?.textContent).toBe(
             '8段階フローを見る',
         );
@@ -653,6 +655,31 @@ describe('DesignPhilosophyView', () => {
         expect(returnLink?.querySelector('[data-rpg-visual]')?.textContent).toBe('戻る');
         expect(returnLink?.textContent).toBe('戻る戻る');
     });
+
+    it.each(['ai-development-flow', 'architecture', 'improvement-loop'])(
+        '表示対象外の章 %s へのリンクだけを表示しない',
+        (hiddenSection) => {
+            setMotionPreferences(true);
+            render(
+                <DesignPhilosophyView
+                    sections={sections.filter(({ key }) => key !== hiddenSection)}
+                />,
+            );
+
+            const links = Array.from(container.querySelectorAll('nav a'), (link) =>
+                link.getAttribute('href'),
+            );
+            expect(links).toEqual(
+                [
+                    '#ai-development-flow',
+                    '#architecture',
+                    '/',
+                    '#architecture',
+                    '#improvement-loop',
+                ].filter((href) => href !== `#${hiddenSection}`),
+            );
+        },
+    );
 
     it('和紙・墨・3書体とmobile-first再構成をCSS契約として持つ', () => {
         const tabletStart = css.indexOf('@media (min-width: 640px) {');

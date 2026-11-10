@@ -18,6 +18,11 @@ export type DesignPhilosophySection = {
     body: string;
 };
 
+export type DesignPhilosophySectionProps = {
+    section: DesignPhilosophySection;
+    visibleSectionKeys: ReadonlySet<DesignPhilosophySectionKey>;
+};
+
 export type TaskContractItem = {
     title: string;
     description: string;
