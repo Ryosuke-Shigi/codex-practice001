@@ -12,6 +12,7 @@ export default function DesignPhilosophyView({
     sections: DesignPhilosophySectionData[];
 }) {
     const rootRef = useRef<HTMLElement>(null);
+    const visibleSectionKeys = new Set(sections.map(({ key }) => key));
 
     useDesignPhilosophyMotion(rootRef);
 
@@ -28,6 +29,7 @@ export default function DesignPhilosophyView({
                 <DesignPhilosophySection
                     key={section.key}
                     section={section}
+                    visibleSectionKeys={visibleSectionKeys}
                 />
             ))}
         </article>

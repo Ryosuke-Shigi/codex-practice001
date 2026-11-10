@@ -13,17 +13,13 @@ import ImprovementLoop from '@/Components/DesignPhilosophy/ImprovementLoop';
 import Principles from '@/Components/DesignPhilosophy/Principles';
 import QualityGates from '@/Components/DesignPhilosophy/QualityGates';
 import type {
-    DesignPhilosophySection as DesignPhilosophySectionData,
     DesignPhilosophySectionKey,
+    DesignPhilosophySectionProps,
 } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
-
-type SectionRendererProps = {
-    section: DesignPhilosophySectionData;
-};
 
 const sectionRegistry: Record<
     DesignPhilosophySectionKey,
-    ComponentType<SectionRendererProps>
+    ComponentType<DesignPhilosophySectionProps>
 > = {
     hero: Hero,
     principles: Principles,
@@ -36,8 +32,6 @@ const sectionRegistry: Record<
     closing: ClosingStatement,
 };
 
-export default function DesignPhilosophySection({
-    section,
-}: SectionRendererProps) {
-    return createElement(sectionRegistry[section.key], { section });
+export default function DesignPhilosophySection(props: DesignPhilosophySectionProps) {
+    return createElement(sectionRegistry[props.section.key], props);
 }
