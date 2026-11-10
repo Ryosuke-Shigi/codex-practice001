@@ -4,14 +4,17 @@ namespace Tests\Unit\DesignPhilosophy;
 
 use App\Actions\DesignPhilosophy\Queries\GetDesignPhilosophySectionsAction;
 use App\DTO\DesignPhilosophy\Sections\DesignPhilosophySectionDTO;
-use Illuminate\Support\Facades\Config;
-use Tests\TestCase;
+use Illuminate\Config\Repository;
+use PHPUnit\Framework\TestCase;
 
 class GetDesignPhilosophySectionsActionTest extends TestCase
 {
     public function test_execute_returns_default_config_sections_in_display_order(): void
     {
-        $sections = app(GetDesignPhilosophySectionsAction::class)->execute();
+        $config = new Repository([
+            'design_philosophy' => require dirname(__DIR__, 3).'/config/design_philosophy.php',
+        ]);
+        $sections = (new GetDesignPhilosophySectionsAction($config))->execute();
 
         $this->assertSame([
             'hero',
@@ -31,14 +34,15 @@ class GetDesignPhilosophySectionsActionTest extends TestCase
 
     public function test_execute_returns_supported_enabled_sections_sorted_by_sort_order_as_dtos(): void
     {
-        Config::set('design_philosophy.sections', [
+        $config = new Repository;
+        $config->set('design_philosophy.sections', [
             $this->section('architecture', 30, true),
             $this->section('unknown-section', 15, true),
             $this->section('hero', 10, false),
             $this->section('principles', 20, true),
         ]);
 
-        $sections = app(GetDesignPhilosophySectionsAction::class)->execute();
+        $sections = (new GetDesignPhilosophySectionsAction($config))->execute();
 
         $this->assertCount(2, $sections);
         $this->assertContainsOnlyInstancesOf(DesignPhilosophySectionDTO::class, $sections);
