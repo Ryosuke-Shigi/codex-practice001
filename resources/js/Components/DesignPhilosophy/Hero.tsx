@@ -1,5 +1,6 @@
 import { ArrowDownRight, ArrowRight, Orbit } from 'lucide-react';
 
+import HeroEvidenceIllustration from '@/Components/DesignPhilosophy/HeroEvidenceIllustration';
 import HeroSystemCore from '@/Components/DesignPhilosophy/HeroSystemCore';
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import { heroSignals } from '@/Components/DesignPhilosophy/designPhilosophyData';
@@ -25,7 +26,11 @@ export default function Hero({
                         {section.eyebrow}
                     </RpgText>
                     <RpgText as="h1" id="design-philosophy-hero">
-                        {section.title}
+                        {section.title.split(/(判断)/u).map((part, index) =>
+                            part === '判断' ? (
+                                <span key={index} className="dp-hero__keep-word">{part}</span>
+                            ) : part,
+                        )}
                     </RpgText>
                     <RpgText as="p" className="dp-hero__lead">
                         {section.lead}
@@ -63,6 +68,7 @@ export default function Hero({
                     <ul
                         aria-label="設計思想の特性"
                         className="dp-hero__signals"
+                        data-scroll-reveal
                     >
                         {heroSignals.map((signal) => (
                             <li key={signal}>
@@ -73,6 +79,10 @@ export default function Hero({
                 </div>
 
                 <div className="dp-hero__visual">
+                    <HeroEvidenceIllustration />
+                </div>
+
+                <div className="dp-hero__detail">
                     <HeroSystemCore />
                     <div className="dp-hero__visual-caption">
                         <Orbit aria-hidden="true" />

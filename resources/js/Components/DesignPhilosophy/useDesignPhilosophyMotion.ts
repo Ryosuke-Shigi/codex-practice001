@@ -1,120 +1,55 @@
 import { useEffect, type RefObject } from 'react';
 
-const sectionSelector = '[data-rpg-section]';
-const textSelector = '[data-rpg-text]';
+const targetsSelector = '[data-rpg-section], [data-structure-motion], [data-scroll-reveal]';
+const seenAttribute = 'data-scroll-seen';
 
-function prefersReducedMotion() {
-    return (
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    );
-}
-
-function revealAll(sections: NodeListOf<HTMLElement>) {
-    sections.forEach((section) => {
-        delete section.dataset.rpgState;
-        delete section.dataset.motionState;
-    });
-}
-
-/**
- * Enables character reveal and structural motion only after every section has
- * been registered with IntersectionObserver. Sections remain observed so
- * activity can update offscreen without hiding already revealed copy.
- * The document remains complete when observer setup fails.
- */
+/** 表示を隠さず、画面に入った演出対象だけを一度強調します。 */
 export default function useDesignPhilosophyMotion(
     rootRef: RefObject<HTMLElement | null>,
 ) {
     useEffect(() => {
         const root = rootRef.current;
+        if (!root) return;
 
-        if (!root) {
+        const reducedMotion = typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reducedMotion || typeof window.IntersectionObserver !== 'function') return;
+
+        const targets = root.querySelectorAll<HTMLElement>(targetsSelector);
+        let observer: IntersectionObserver | undefined;
+        const clearSeen = () => targets.forEach((target) => target.removeAttribute(seenAttribute));
+
+        try {
+            observer = new window.IntersectionObserver((entries) => {
+                if (!observer) return;
+                for (const { target, isIntersecting } of entries) {
+                    if (!isIntersecting || target.hasAttribute(seenAttribute)) continue;
+
+                    target.setAttribute(seenAttribute, '');
+                    observer.unobserve(target);
+                }
+            }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+
+            for (const target of targets) observer.observe(target);
+        } catch {
+            observer?.disconnect();
+            observer = undefined;
+            clearSeen();
             return;
         }
 
-        const reducedMotion = prefersReducedMotion();
-        root.dataset.reducedMotion = reducedMotion ? 'true' : 'false';
-
-        const handleVisibilityChange = () => {
-            root.dataset.motionPaused = document.hidden ? 'true' : 'false';
+        const syncVisibility = () => {
+            root.toggleAttribute('data-motion-paused', document.hidden);
         };
-
-        handleVisibilityChange();
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        const sections = root.querySelectorAll<HTMLElement>(sectionSelector);
-        let observer: IntersectionObserver | undefined;
-        let candidateObserver: IntersectionObserver | undefined;
-
-        if (
-            !reducedMotion &&
-            sections.length > 0 &&
-            typeof window.IntersectionObserver === 'function'
-        ) {
-            try {
-                const activeObserver = new window.IntersectionObserver(
-                    (entries) => {
-                        entries.forEach((entry) => {
-                            const section = entry.target as HTMLElement;
-                            section.dataset.motionState = entry.isIntersecting
-                                ? 'active'
-                                : 'inactive';
-
-                            if (entry.isIntersecting) {
-                                section.dataset.rpgState = 'visible';
-                            }
-                        });
-                    },
-                    {
-                        rootMargin: '0px 0px -8% 0px',
-                        threshold: 0.06,
-                    },
-                );
-                candidateObserver = activeObserver;
-
-                sections.forEach((section) => {
-                    section.dataset.rpgState = 'pending';
-                    section.dataset.motionState = 'inactive';
-                    section
-                        .querySelectorAll<HTMLElement>(textSelector)
-                        .forEach((text, index) => {
-                            text.style.setProperty(
-                                '--dp-rpg-block-delay',
-                                `${Math.min(index * 55, 770)}ms`,
-                            );
-                        });
-                    activeObserver.observe(section);
-                });
-
-                observer = activeObserver;
-                root.dataset.rpgEnhanced = 'true';
-            } catch {
-                candidateObserver?.disconnect();
-                observer = undefined;
-                revealAll(sections);
-                delete root.dataset.rpgEnhanced;
-            }
-        }
+        syncVisibility();
+        document.addEventListener('visibilitychange', syncVisibility);
 
         return () => {
             observer?.disconnect();
-            document.removeEventListener(
-                'visibilitychange',
-                handleVisibilityChange,
-            );
-            sections.forEach((section) => {
-                delete section.dataset.rpgState;
-                delete section.dataset.motionState;
-                section
-                    .querySelectorAll<HTMLElement>(textSelector)
-                    .forEach((text) =>
-                        text.style.removeProperty('--dp-rpg-block-delay'),
-                    );
-            });
-            delete root.dataset.rpgEnhanced;
-            delete root.dataset.reducedMotion;
-            delete root.dataset.motionPaused;
+            observer = undefined;
+            document.removeEventListener('visibilitychange', syncVisibility);
+            root.removeAttribute('data-motion-paused');
+            clearSeen();
         };
     }, [rootRef]);
 }
