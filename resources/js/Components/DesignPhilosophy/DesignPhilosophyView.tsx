@@ -18,13 +18,6 @@ export default function DesignPhilosophyView({
 
     return (
         <article ref={rootRef} className="dp-page">
-            <div aria-hidden="true" className="dp-page__ambient">
-                <span className="dp-page__glow dp-page__glow--cyan" />
-                <span className="dp-page__glow dp-page__glow--emerald" />
-                <span className="dp-page__glow dp-page__glow--violet" />
-                <span className="dp-page__noise" />
-            </div>
-
             {sections.map((section) => (
                 <DesignPhilosophySection
                     key={section.key}

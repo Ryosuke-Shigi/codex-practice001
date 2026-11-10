@@ -1,8 +1,9 @@
+import DotsHandoff from '@/Components/DesignPhilosophy/DotsHandoff';
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
+import TaskDependencyGraph from '@/Components/DesignPhilosophy/TaskDependencyGraph';
 import {
     aiDevelopmentSteps,
-    taskDependencyNodes,
 } from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
 
@@ -35,6 +36,7 @@ export default function AiDevelopmentFlow({
                             key={step.step}
                             data-diagram-node={step.title}
                             data-flow-step={String(step.step)}
+                            data-scroll-reveal
                         >
                             <article className="dp-paper-card dp-flow-card">
                                 <div className="dp-flow-card__meta">
@@ -43,8 +45,10 @@ export default function AiDevelopmentFlow({
                                     </RpgText>
                                     <RpgText as="strong">{step.owner}</RpgText>
                                 </div>
-                                <RpgText as="h3">{step.title}</RpgText>
-                                <RpgText as="p">{step.description}</RpgText>
+                                <div className="dp-flow-card__copy">
+                                    <RpgText as="h3">{step.title}</RpgText>
+                                    <RpgText as="p">{step.description}</RpgText>
+                                </div>
                                 <div className="dp-flow-card__handoff">
                                     <RpgText className="dp-technical">HANDOFF EVIDENCE</RpgText>
                                     <RpgText as="strong">{step.handoff}</RpgText>
@@ -67,6 +71,8 @@ export default function AiDevelopmentFlow({
                     </figcaption>
                 </figure>
 
+                <DotsHandoff />
+
                 <div className="dp-dag" data-structure-motion="dag">
                     <div className="dp-dag__heading">
                         <RpgText className="dp-technical">
@@ -77,14 +83,7 @@ export default function AiDevelopmentFlow({
                             DAGはParallel Writer permissionではない
                         </RpgText>
                     </div>
-                    <ol className="dp-dag__nodes">
-                        {taskDependencyNodes.map((node) => (
-                            <li key={node.title} data-dag-lane={node.lane}>
-                                <RpgText as="strong">{node.title}</RpgText>
-                                <RpgText as="small">{node.dependency}</RpgText>
-                            </li>
-                        ))}
-                    </ol>
+                    <TaskDependencyGraph />
                 </div>
             </div>
         </section>
