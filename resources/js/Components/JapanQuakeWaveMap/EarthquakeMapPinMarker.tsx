@@ -22,6 +22,7 @@ type EarthquakeMapPinMarkerProps = {
     visual: EarthquakeMapPinMarkerVisual;
     selected: boolean;
     showIntensityLabel: boolean;
+    selectedLabelOnly?: boolean;
     onSelect: (pin: EarthquakeMapPin) => void;
 };
 
@@ -33,6 +34,7 @@ export default function EarthquakeMapPinMarker({
     visual,
     selected,
     showIntensityLabel,
+    selectedLabelOnly = false,
     onSelect,
 }: EarthquakeMapPinMarkerProps) {
     /*
@@ -47,6 +49,8 @@ export default function EarthquakeMapPinMarker({
         '--quake-pin-color': visual.color,
         left: `${xPercent}%`,
         top: `${yPercent}%`,
+        // 中央震度を隠しても PRODUCT のボタンと focus ring の実寸法を保ちます。
+        ...(selectedLabelOnly ? { height: visual.markerSize, width: visual.markerSize } : {}),
     } as CSSProperties;
 
     return (
@@ -82,7 +86,7 @@ export default function EarthquakeMapPinMarker({
                     {pin.maxIntensity ?? '?'}
                 </span>
             )}
-            {showIntensityLabel && (
+            {showIntensityLabel && (!selectedLabelOnly || selected) && (
                 <span className="absolute left-1/2 top-[calc(50%+18px)] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/45 bg-slate-950/58 px-2 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(2,24,45,0.28)]">
                     #{displayOrder} {visual.label}
                 </span>

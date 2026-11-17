@@ -8,6 +8,7 @@ type VerticalIntensitySwitchProps = {
     checked: boolean;
     onChange: (checked: boolean) => void;
     tone?: 'strong' | 'high' | 'middle' | 'low' | 'unknown';
+    compact?: boolean;
 };
 
 const toneClassNames = {
@@ -23,10 +24,11 @@ export default function VerticalIntensitySwitch({
     checked,
     onChange,
     tone = 'middle',
+    compact = false,
 }: VerticalIntensitySwitchProps) {
     return (
-        <div className="flex w-10 shrink-0 flex-col items-center gap-1 text-center">
-            <span className="min-h-4 text-[11px] font-bold leading-4 text-white">
+        <div className={`flex flex-col items-center gap-1 text-center ${compact ? 'w-full min-w-0 max-w-10' : 'w-10 shrink-0'}`}>
+            <span className={`min-h-4 text-[11px] font-bold leading-4 text-white ${compact ? 'whitespace-nowrap' : ''}`}>
                 {label}
             </span>
             <button

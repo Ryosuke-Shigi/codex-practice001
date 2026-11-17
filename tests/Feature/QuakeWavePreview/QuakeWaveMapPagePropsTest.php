@@ -96,10 +96,14 @@ class QuakeWaveMapPagePropsTest extends TestCase
         $this->assertStringContainsString('#164e63_0%,#0891b2_48%,#0e7490_100%', $source);
         $this->assertStringNotContainsString('rgba(255,255,255,0.72)', $source);
         $this->assertStringContainsString('showIntroduction={false}', $source);
-        $this->assertStringContainsString('compactRefreshPanel', $source);
+        $this->assertMatchesRegularExpression(
+            '/<footer\b[^>]*>(?:(?!<\/footer>).)*<MapRefreshPanel\s+action=\{refreshAction\}\s+compact\s*\/>(?:(?!<\/footer>).)*<\/footer>/s',
+            $source,
+        );
+        $this->assertStringContainsString('variant="product"', $source);
         $this->assertStringContainsString('detailPanelPlacement="below"', $source);
         $this->assertStringNotContainsString('detailPanelPlacement="afterControls"', $source);
-        $this->assertStringContainsString('mapBottomContent', $source);
+        $this->assertMatchesRegularExpression('/mapTopContent=\{\(\s*<QuakeDateRangeFilter\b/s', $source);
         $this->assertStringNotContainsString('title="地震情報可視化"', $source);
         $this->assertStringNotContainsString('DBに保存済みの地震情報を日本地図上へ重ね', $source);
     }

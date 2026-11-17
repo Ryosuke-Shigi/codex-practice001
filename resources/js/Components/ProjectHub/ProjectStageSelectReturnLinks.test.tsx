@@ -167,7 +167,17 @@ vi.mock('@/Pages/QuakeWavePreview/hooks/useQuakeWavePreviewSync', () => ({
     }),
 }));
 vi.mock('@/Pages/QuakeWavePreview/hooks/useQuakeMapRefresh', () => ({
-    useQuakeMapRefresh: () => ({ refreshAction: undefined }),
+    useQuakeMapRefresh: () => ({
+        refreshAction: {
+            buttonLabel: '更新',
+            disabledLabel: '更新中',
+            statusLabel: '最新です',
+            description: '更新のテスト用fixture',
+            isRefreshing: false,
+            errorMessage: null,
+            onRefresh: vi.fn(),
+        },
+    }),
 }));
 vi.mock('@/Pages/QuakeWavePreview/hooks/useVisibleEarthquakePins', () => ({
     useVisibleEarthquakePins: () => ({

@@ -11,6 +11,7 @@ type EarthquakeMapDetailPanelProps = {
     pin: EarthquakeMapPin | null;
     collapsible?: boolean;
     defaultOpen?: boolean;
+    variant?: 'default' | 'product';
 };
 
 function formatDepth(depthMeter: number | null) {
@@ -47,10 +48,29 @@ function coordinateValue(value: string | null) {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
+function formatOccurrenceTime(value: string | null) {
+    if (!value) {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    if (!Number.isFinite(date.getTime())) {
+        return null;
+    }
+
+    return new Intl.DateTimeFormat('ja-JP', {
+        timeZone: 'Asia/Tokyo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    }).format(date);
+}
+
 export default function EarthquakeMapDetailPanel({
     pin,
     collapsible = false,
     defaultOpen = true,
+    variant = 'default',
 }: EarthquakeMapDetailPanelProps) {
     /*
      * 詳細パネルは選択中 pin の表示専用です。
@@ -59,10 +79,12 @@ export default function EarthquakeMapDetailPanel({
      * DB の全項目をそのまま並べるだけのパネルにしないようにします。
      */
     const [isOpen, setIsOpen] = useState(defaultOpen);
+    // PRODUCT では選択や一時的な0件でユーザーの開閉操作をリセットしません。
+    const resetIdentity = variant === 'product' ? null : pinIdentity(pin);
 
     useEffect(() => {
         setIsOpen(defaultOpen);
-    }, [defaultOpen, pinIdentity(pin)]);
+    }, [defaultOpen, resetIdentity]);
 
     if (!pin) {
         return (
@@ -76,6 +98,7 @@ export default function EarthquakeMapDetailPanel({
     }
 
     const areaName = pin.areaName?.trim() || '発生場所未取得';
+    const occurrenceTime = formatOccurrenceTime(pin.occurredAt);
     const earthquakeStatement = pin.headline?.trim() || pin.comment?.trim() || null;
     const latitude = coordinateValue(pin.latitude);
     const longitude = coordinateValue(pin.longitude);
@@ -92,20 +115,31 @@ export default function EarthquakeMapDetailPanel({
     return (
         <aside className="w-full min-w-0 rounded-lg border border-white/25 bg-slate-950/40 p-4 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.2)] backdrop-blur-md">
             <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className={variant === 'product' ? 'min-w-0 flex-1 basis-40' : 'min-w-0'}>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/64">
                         SELECTED
                     </p>
-                    <h2 className="mt-1 text-xl font-semibold leading-7 text-white">
+                    <h2 className={`mt-1 text-xl font-semibold leading-7 text-white ${variant === 'product' ? 'break-words [overflow-wrap:anywhere]' : ''}`}>
                         {areaName}
                     </h2>
+                    {variant === 'product' && (
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold leading-6 text-cyan-50">
+                            <p>最大震度 {valueOrDash(pin.maxIntensity)}</p>
+                            <p className="min-w-0 break-words [overflow-wrap:anywhere]">
+                                発生日時{' '}
+                                {occurrenceTime && pin.occurredAt ? (
+                                    <time dateTime={pin.occurredAt}>{occurrenceTime}（JST）</time>
+                                ) : '未取得'}
+                            </p>
+                        </div>
+                    )}
                 </div>
                 {collapsible && (
                     <button
                         type="button"
                         aria-expanded={isOpen}
                         onClick={() => setIsOpen((current) => !current)}
-                        className="inline-flex min-h-9 items-center justify-center rounded-md border border-cyan-100/40 bg-cyan-100/14 px-3 text-xs font-bold text-cyan-50 transition hover:bg-cyan-100/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55"
+                        className={`inline-flex min-h-9 items-center justify-center rounded-md border border-cyan-100/40 bg-cyan-100/14 px-3 text-xs font-bold text-cyan-50 transition hover:bg-cyan-100/24 hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/55 ${variant === 'product' ? 'shrink-0' : ''}`}
                     >
                         {isOpen ? '詳細を閉じる' : '詳細を開く'}
                     </button>

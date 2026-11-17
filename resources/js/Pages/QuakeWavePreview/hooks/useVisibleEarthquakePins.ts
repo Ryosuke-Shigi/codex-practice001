@@ -6,6 +6,7 @@
 import { useMemo, useState } from 'react';
 
 import type { EarthquakeMapPin } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
+import { displayableMapPinCoordinate } from '@/Components/JapanQuakeWaveMap/displayableMapPinCoordinate';
 import { PIN_DISPLAY_LIMIT_INITIAL } from '@/Components/JapanQuakeWaveMap/PinDisplayLimitSlider';
 import {
     quakeIntensityKey,
@@ -62,7 +63,10 @@ export function pickVisiblePins(
     selectedIntensities: QuakeIntensityKey[],
     limit: number,
 ) {
-    const sortedPins = [...filteredPins].sort(comparePinsForDisplay);
+    // 無効座標で代表枠や件数枠を消費せず、有効な後続候補から選出します。
+    const sortedPins = filteredPins
+        .filter((pin) => displayableMapPinCoordinate(pin) !== null)
+        .sort(comparePinsForDisplay);
 
     /*
      * 震度が未選択、または全震度が選択されている場合は、代表選出を挟まず単純に上位 limit 件を
@@ -122,7 +126,8 @@ export function useVisibleEarthquakePins(pins: EarthquakeMapPin[]) {
          */
         const selectedSet = new Set(selectedIntensities);
 
-        return pins.filter((pin) => selectedSet.has(quakeIntensityKey(pin.maxIntensity)));
+        return pins.filter((pin) => displayableMapPinCoordinate(pin) !== null
+            && selectedSet.has(quakeIntensityKey(pin.maxIntensity)));
     }, [pins, selectedIntensities]);
     const visiblePins = useMemo(
         /*

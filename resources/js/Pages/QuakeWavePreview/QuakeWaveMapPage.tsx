@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import JapanQuakeWaveMap, {
     type EarthquakeMapPin,
 } from '@/Components/JapanQuakeWaveMap/JapanQuakeWaveMap';
+import MapRefreshPanel from '@/Components/JapanQuakeWaveMap/MapRefreshPanel';
 import PinDisplayLimitSlider from '@/Components/JapanQuakeWaveMap/PinDisplayLimitSlider';
 import QuakeDateRangeFilter, {
     type QuakeDateRange,
@@ -98,35 +99,20 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
         >
             <Head title="QuakeWave Map" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 pb-12 pt-4 sm:pt-8">
-                <header className="flex items-center justify-between gap-4">
-                    <Link
-                        href={quakeWaveMapReturn.href}
-                        aria-label={quakeWaveMapReturn.ariaLabel}
-                        title={quakeWaveMapReturn.title}
-                        className="rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
-                    >
-                        {quakeWaveMapReturn.label}
-                    </Link>
-                    <Link
-                        href="/quakewave-preview"
-                        className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-50/90 backdrop-blur-xl transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70"
-                    >
-                        Preview Tools
-                    </Link>
-                </header>
-
+            <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-7xl flex-col gap-8 pb-12 pt-4 sm:pt-8">
                 <JapanQuakeWaveMap
                     pins={visiblePins}
+                    variant="product"
                     showIntroduction={false}
                     mapOverlay={(
                         <PinDisplayLimitSlider
                             value={pinDisplayLimit}
                             availablePinCount={filteredPins.length}
+                            displayedPinCount={visiblePins.length}
                             onChange={setPinDisplayLimit}
                         />
                     )}
-                    mapBottomContent={(
+                    mapTopContent={(
                         <QuakeDateRangeFilter
                             value={dateRange}
                             onChange={reloadPinsByDateRange}
@@ -136,15 +122,33 @@ export default function QuakeWaveMapPage({ pins, filters }: QuakeWaveMapPageProp
                         <QuakeIntensitySwitchFilter
                             selectedIntensities={selectedIntensities}
                             onChange={setSelectedIntensities}
+                            layout="single-row"
                         />
                     )}
-                    refreshAction={refreshAction}
-                    compactRefreshPanel
-                    refreshPanelPlacement="controls"
                     detailPanelPlacement="below"
                     detailPanelCollapsible
                     detailPanelDefaultOpen={false}
                 />
+
+                <footer className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] items-start gap-2 sm:flex sm:justify-between sm:gap-4">
+                    <div className="min-w-0 [&_button]:w-full [&_button]:min-w-0 [&_button]:px-2 sm:[&_button]:min-w-28 sm:[&_button]:px-5">
+                        <MapRefreshPanel action={refreshAction} compact />
+                    </div>
+                    <Link
+                        href={quakeWaveMapReturn.href}
+                        aria-label={quakeWaveMapReturn.ariaLabel}
+                        title={quakeWaveMapReturn.title}
+                        className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-full border border-white/35 bg-white/15 px-2 text-xs font-semibold text-white shadow-[0_12px_28px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:px-4 sm:text-sm"
+                    >
+                        {quakeWaveMapReturn.label}
+                    </Link>
+                    <Link
+                        href="/quakewave-preview"
+                        className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-full border border-cyan-100/35 bg-cyan-50/15 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-50/90 backdrop-blur-xl transition hover:bg-cyan-50/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/70 sm:px-3 sm:text-xs sm:tracking-[0.22em]"
+                    >
+                        Preview Tools
+                    </Link>
+                </footer>
             </div>
         </PublicLayout>
     );
