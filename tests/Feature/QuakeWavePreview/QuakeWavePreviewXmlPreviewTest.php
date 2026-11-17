@@ -310,7 +310,11 @@ class QuakeWavePreviewXmlPreviewTest extends TestCase
         $this->assertStringNotContainsString('ON {selectedIntensities.length}件', $intensitySource);
         $this->assertStringContainsString('role="switch"', $verticalSwitchSource);
         $this->assertStringContainsString('PIN_DISPLAY_LIMIT_MAX = 45', $sliderSource);
-        $this->assertStringNotContainsString('occurred', $detailSource);
+        $this->assertStringContainsString('formatOccurrenceTime(pin.occurredAt)', $detailSource);
+        $this->assertMatchesRegularExpression(
+            '/\{variant === \'product\' && \(\s*<div\b(?:(?!<\/div>).)*発生日時(?:(?!<\/div>).)*<time\s+dateTime=\{pin\.occurredAt\}>/s',
+            $detailSource,
+        );
         $this->assertStringNotContainsString('reported', $detailSource);
         $this->assertStringContainsString('stroke="#fde047"', $plateSource);
     }
