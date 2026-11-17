@@ -11,12 +11,14 @@ export const PIN_DISPLAY_LIMIT_STEP = 1;
 type PinDisplayLimitSliderProps = {
     value: number;
     availablePinCount?: number;
+    displayedPinCount?: number;
     onChange: (value: number) => void;
 };
 
 export default function PinDisplayLimitSlider({
     value,
     availablePinCount,
+    displayedPinCount,
     onChange,
 }: PinDisplayLimitSliderProps) {
     /*
@@ -31,10 +33,14 @@ export default function PinDisplayLimitSlider({
      * left/top、パネル幅、縦レール長をひと回り小さくし、地図の視認性を残したまま件数変更だけは
      * 片手でも操作できるサイズにしています。sm以上は従来に近い大きさへ戻します。
      */
-    const effectiveMax = Math.min(
-        PIN_DISPLAY_LIMIT_MAX,
-        Math.max(PIN_DISPLAY_LIMIT_MIN, availablePinCount ?? PIN_DISPLAY_LIMIT_MAX),
-    );
+    // 最終対象件数を受け取る PRODUCT では、候補不足と設定上限を混同しません。
+    // 旧呼び出し元の available 件数による上限調整はそのまま維持します。
+    const effectiveMax = displayedPinCount === undefined
+        ? Math.min(
+            PIN_DISPLAY_LIMIT_MAX,
+            Math.max(PIN_DISPLAY_LIMIT_MIN, availablePinCount ?? PIN_DISPLAY_LIMIT_MAX),
+        )
+        : PIN_DISPLAY_LIMIT_MAX;
     const currentValue = Math.min(effectiveMax, Math.max(PIN_DISPLAY_LIMIT_MIN, value));
 
     return (
@@ -90,11 +96,16 @@ export default function PinDisplayLimitSlider({
 
             <div className="text-center">
                 <span className="block text-[10px] font-semibold leading-4 text-cyan-100/80 sm:text-[11px]">
-                    表示件数
+                    {displayedPinCount === undefined ? '表示件数' : '表示上限'}
                 </span>
                 <output className="mt-1 block text-xl font-bold leading-none text-white sm:text-2xl">
                     {currentValue}件
                 </output>
+                {displayedPinCount !== undefined && (
+                    <p aria-live="polite" className="mt-2 text-[10px] font-semibold leading-4 text-cyan-50 sm:text-[11px]">
+                        対象 {displayedPinCount}件
+                    </p>
+                )}
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -105,7 +116,7 @@ export default function PinDisplayLimitSlider({
                         max={effectiveMax}
                         step={PIN_DISPLAY_LIMIT_STEP}
                         value={currentValue}
-                        aria-label="地震ピン表示件数"
+                        aria-label={displayedPinCount === undefined ? '地震ピン表示件数' : '地震ピン表示上限'}
                         aria-orientation="vertical"
                         onChange={(event) => onChange(Number(event.currentTarget.value))}
                         style={{ writingMode: 'vertical-lr', direction: 'rtl' }}

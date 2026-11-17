@@ -20,6 +20,7 @@ type JapanSimpleMapProps = {
     layers: MapLayerVisibility;
     selectedPin: EarthquakeMapPin | null;
     onSelectPin: (pin: EarthquakeMapPin) => void;
+    variant?: 'default' | 'product';
 };
 
 type PinPlacement = {
@@ -188,6 +189,7 @@ export default function JapanSimpleMap({
     layers,
     selectedPin,
     onSelectPin,
+    variant = 'default',
 }: JapanSimpleMapProps) {
     /*
      * JapanSimpleMap は渡された pins を、SVG と同じ viewBox 比率で absolute 配置します。
@@ -294,6 +296,7 @@ export default function JapanSimpleMap({
                                     selected={selectedPin?.eventId === pin.eventId
                                         && selectedPin?.sourceEntryId === pin.sourceEntryId}
                                     showIntensityLabel={layers.showIntensityLabels}
+                                    selectedLabelOnly={variant === 'product'}
                                     onSelect={onSelectPin}
                                 />
                             )}
@@ -304,8 +307,18 @@ export default function JapanSimpleMap({
 
             {pinPlacements.length === 0 && (
                 <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 rounded-lg border border-white/25 bg-slate-950/42 px-4 py-5 text-center text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.18)] backdrop-blur-md">
-                    保存済みの地震ピンはありません。
+                    {variant === 'product' ? (
+                        <>
+                            <p>この表示条件に該当する地震はありません</p>
+                            <p className="mt-1 text-xs font-normal">日付範囲・震度フィルターを確認してください。</p>
+                        </>
+                    ) : '保存済みの地震ピンはありません。'}
                 </div>
+            )}
+            {variant === 'product' && pinPlacements.length > 0 && !layers.showPins && (
+                <p role="status" className="absolute right-3 top-3 rounded-md border border-white/25 bg-slate-950/60 px-3 py-2 text-xs font-semibold text-cyan-50">
+                    震源ピンは非表示です
+                </p>
             )}
         </div>
     );

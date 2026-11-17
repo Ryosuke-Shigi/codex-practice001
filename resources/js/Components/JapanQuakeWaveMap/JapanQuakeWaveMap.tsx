@@ -49,6 +49,7 @@ type JapanQuakeWaveMapProps = {
     detailPanelCollapsible?: boolean;
     detailPanelDefaultOpen?: boolean;
     showIntroduction?: boolean;
+    variant?: 'default' | 'product';
 };
 
 const defaultLayerVisibility: MapLayerVisibility = {
@@ -91,6 +92,7 @@ export default function JapanQuakeWaveMap({
     detailPanelCollapsible = false,
     detailPanelDefaultOpen = true,
     showIntroduction = true,
+    variant = 'default',
 }: JapanQuakeWaveMapProps) {
     /*
      * レイヤー表示状態は画面表示だけの状態として、このコンポーネント内に閉じます。
@@ -99,6 +101,10 @@ export default function JapanQuakeWaveMap({
      */
     const [layers, setLayers] = useState<MapLayerVisibility>(defaultLayerVisibility);
     const [selectedPin, setSelectedPin] = useState<EarthquakeMapPin | null>(pins[0] ?? null);
+    // PRODUCT の詳細は再取得後も、最終対象集合内にある現在のデータを表示します。
+    const currentSelectedPin = variant === 'product'
+        ? pins.find((pin) => pinIdentity(pin) === pinIdentity(selectedPin)) ?? pins[0] ?? null
+        : selectedPin;
 
     useEffect(() => {
         if (pins.length === 0) {
@@ -107,12 +113,14 @@ export default function JapanQuakeWaveMap({
         }
 
         const selectedKey = pinIdentity(selectedPin);
-        const selectedStillVisible = pins.some((pin) => pinIdentity(pin) === selectedKey);
+        const selectedMatch = pins.find((pin) => pinIdentity(pin) === selectedKey);
 
-        if (!selectedStillVisible) {
+        if (!selectedMatch) {
             setSelectedPin(pins[0]);
+        } else if (variant === 'product' && selectedMatch !== selectedPin) {
+            setSelectedPin(selectedMatch);
         }
-    }, [pins, selectedPin]);
+    }, [pins, selectedPin, variant]);
 
     /*
      * モバイル幅では、Grid/Flex の子要素が自身の内容幅を優先して親を押し広げることがあります。
@@ -159,7 +167,9 @@ export default function JapanQuakeWaveMap({
 
                     {pins.length === 0 && (
                         <div className="mt-6 max-w-xl rounded-lg border border-white/25 bg-slate-950/24 p-4 text-sm font-semibold leading-6 text-cyan-50 shadow-[0_18px_42px_rgba(2,24,45,0.16)] backdrop-blur-md">
-                            保存済みの地震ピンはありません。
+                            {variant === 'product'
+                                ? 'この表示条件に該当する地震はありません'
+                                : '保存済みの地震ピンはありません。'}
                         </div>
                     )}
                 </motion.div>
@@ -190,13 +200,15 @@ export default function JapanQuakeWaveMap({
                             <JapanSimpleMap
                                 pins={pins}
                                 layers={layers}
-                                selectedPin={selectedPin}
+                                selectedPin={currentSelectedPin}
                                 onSelectPin={setSelectedPin}
+                                variant={variant}
                             />
                             <EarthquakeMapDetailPanel
-                                pin={selectedPin}
+                                pin={currentSelectedPin}
                                 collapsible={detailPanelCollapsible}
                                 defaultOpen={detailPanelDefaultOpen}
+                                variant={variant}
                             />
                         </div>
                     </div>

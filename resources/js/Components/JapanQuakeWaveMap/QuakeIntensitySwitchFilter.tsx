@@ -26,6 +26,7 @@ type QuakeIntensityOption = {
 type QuakeIntensitySwitchFilterProps = {
     selectedIntensities: QuakeIntensityKey[];
     onChange: (selectedIntensities: QuakeIntensityKey[]) => void;
+    layout?: 'responsive' | 'single-row';
 };
 
 export const quakeIntensityOptions: QuakeIntensityOption[] = [
@@ -83,6 +84,7 @@ export function quakeIntensitySortRank(maxIntensity: string | null) {
 export default function QuakeIntensitySwitchFilter({
     selectedIntensities,
     onChange,
+    layout = 'responsive',
 }: QuakeIntensitySwitchFilterProps) {
     const selectedSet = new Set(selectedIntensities);
 
@@ -111,17 +113,19 @@ export default function QuakeIntensitySwitchFilter({
             </div>
 
             {/*
-                震度スイッチは10個すべてが同じ重要度の操作なので、スマホでも横スクロールには逃がさず
-                画面内で全体を見渡せる配置にします。5列 x 2段なら iPhone 幅でも各スイッチのタップ領域を
-                確保しつつ、「左から強い震度順」という読み方を崩さずに済みます。
+                PRODUCT は明示指定された横一列へ収め、MOCK 等の既存呼び出しでは
+                スマホ5列 x 2段を維持します。どちらも同じ10項目と操作寸法を使います。
             */}
-            <div className="mt-2 grid grid-cols-5 items-start justify-items-center gap-x-2 gap-y-3 sm:grid-cols-10">
+            <div className={`mt-2 grid items-start justify-items-center ${layout === 'single-row'
+                ? 'grid-cols-10 gap-x-1 gap-y-3'
+                : 'grid-cols-5 gap-x-2 gap-y-3 sm:grid-cols-10'}`}>
                 {quakeIntensityOptions.map((option) => (
                     <VerticalIntensitySwitch
                         key={option.key}
                         label={option.label}
                         tone={option.tone}
                         checked={selectedSet.has(option.key)}
+                        compact={layout === 'single-row'}
                         onChange={(checked) => toggleIntensity(option.key, checked)}
                     />
                 ))}
