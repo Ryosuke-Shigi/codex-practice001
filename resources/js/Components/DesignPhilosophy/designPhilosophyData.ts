@@ -99,31 +99,31 @@ export const taskContractItems: TaskContractItem[] = [
 export const publicRoles: PublicRole[] = [
     {
         label: 'AUTHORITY',
-        title: 'Human',
+        title: '開発者',
         description: '目的、優先順位、操作許可、採否、完成を判断します。',
         responsibility: '最終判断',
     },
     {
         label: 'INTEGRATE',
-        title: 'Parent',
+        title: '進行管理',
         description: '契約、依存関係、順序、停止条件を統合します。',
         responsibility: 'Task統合',
     },
     {
         label: 'IMPLEMENT',
-        title: 'Writer',
+        title: '実装担当',
         description: '固定された所有範囲を、同時最大1体で編集します。',
         responsibility: '単一の差分',
     },
     {
         label: 'VERIFY',
-        title: 'Verifier',
+        title: '検証担当',
         description: '登録された方法で結果と副作用を測定します。',
         responsibility: '実行結果の確認',
     },
     {
         label: 'REVIEW',
-        title: 'Reviewer',
+        title: 'レビュー担当',
         description: '指示、正本、差分、検証結果を独立して照合します。',
         responsibility: '完成前の照合',
     },
@@ -160,28 +160,28 @@ export const aiDevelopmentSteps: AiDevelopmentStep[] = [
         step: 1,
         title: '契約固定',
         description: '目的、範囲、禁止、停止、許可、検証経路を固定します。',
-        owner: 'Human / Parent',
+        owner: '開発者・進行管理',
         handoff: '固定済みTask Contract',
     },
     {
         step: 2,
         title: '証拠駆動調査',
         description: '正本、コード、テスト、実測を分けて確認します。',
-        owner: 'Read-only exploration',
+        owner: '調査担当',
         handoff: '出典つきEvidence',
     },
     {
         step: 3,
         title: '親統合 / Task分割',
         description: '依存関係と完了可能なTask境界を固定します。',
-        owner: 'Parent',
+        owner: '進行管理',
         handoff: '依存関係とTask境界',
     },
     {
         step: 4,
         title: 'Task実行ループ',
         description: '必要な専門性を選び、Single Writerで差分を作ります。',
-        owner: 'Specialist / Writer',
+        owner: '実装担当',
         handoff: '差分とTask内Evidence',
     },
     {
@@ -189,14 +189,14 @@ export const aiDevelopmentSteps: AiDevelopmentStep[] = [
         title: '検証済みTask checkpoint',
         description:
             'Task Contractで選択した検証主体が、Task単位の結果と未確認事項を確認します。',
-        owner: 'Task Contract',
+        owner: '作業条件で定めた担当',
         handoff: '検証済みcheckpoint',
     },
     {
         step: 6,
         title: '統合検証',
         description: '依存Taskを統合し、全体の回帰と副作用を確認します。',
-        owner: 'Parent / Verifier',
+        owner: '進行管理・検証担当',
         handoff: '統合Evidence',
     },
     {
@@ -204,14 +204,14 @@ export const aiDevelopmentSteps: AiDevelopmentStep[] = [
         title: 'Review / 改善評価',
         description:
             'Reviewerが指示、正本、差分、Evidence、Findingを照合し、改善候補は現在のTask Contract内で評価します。',
-        owner: 'Reviewer / Task Contract',
+        owner: 'レビュー担当',
         handoff: 'Findingと未確認事項',
     },
     {
         step: 8,
         title: '最終Acceptance',
         description: 'Evidenceと未確認事項を分け、人間が完成を判断します。',
-        owner: 'Human',
+        owner: '開発者',
         handoff: 'Acceptance / Stop',
     },
 ];
@@ -311,6 +311,8 @@ export const developmentStages: DevelopmentStage[] = [
         includes: ['目的', '利用場面', '未確定事項'],
         excludes: ['完成仕様の断定'],
         deliverable: '構想と問い',
+        input: '利用者の課題と目的',
+        transition: '目的・対象・未確定事項を整理し、人が画面試作の範囲を確認する。',
     },
     {
         key: 'MOCK',
@@ -319,6 +321,8 @@ export const developmentStages: DevelopmentStage[] = [
         includes: ['UI契約', '表示幅', '主要状態'],
         excludes: ['DB保存', '本番業務判断'],
         deliverable: '画面のUI契約',
+        input: '構想と、確認する画面の範囲',
+        transition: '表示・状態・操作・幅を確認し、人が導線検証の対象を決める。',
     },
     {
         key: 'PROTOTYPE',
@@ -327,6 +331,8 @@ export const developmentStages: DevelopmentStage[] = [
         includes: ['画面間接続', '仮データ', '状態の受け渡し'],
         excludes: ['本番業務ロジック', '正式DB設計'],
         deliverable: '導線と入出力候補',
+        input: '確認した画面のUI契約',
+        transition: '導線と入出力を確認し、人が本実装の仕様・責務・検証条件を固定する。',
     },
     {
         key: 'PRODUCT',
@@ -335,6 +341,8 @@ export const developmentStages: DevelopmentStage[] = [
         includes: ['本データ', '責務分離', '検証'],
         excludes: ['未確認仕様の補完', '仮処理の流用'],
         deliverable: '製品コードとEvidence',
+        input: '確認した振る舞い・入出力と確定仕様',
+        transition: 'テスト・実画面・独立照合の結果と未確認を示し、人が受入と公開を判断する。',
     },
 ];
 
@@ -412,4 +420,10 @@ export const feedbackDestinations = [
     'Checker',
     'Sensors',
     'Harness',
+] as const;
+
+export const codingPrinciples = [
+    { title: '手順とルールを分ける', description: 'Actionはユースケースの手順、Serviceは業務判断、Repositoryはデータ入出力、Responderは出力整形を担当します。' },
+    { title: '必要な構造だけ使う', description: 'Strategyやinterfaceは、処理差分・差し替え境界・依存方向に必要な場合に使います。単純な処理へ機械的に増やしません。' },
+    { title: '説明と実装を一致させる', description: 'PHPDocは目的・責務・入出力・成功条件・担当しない処理を必要に応じて補足し、コード・型・テストと照合します。コメントだけで責務の混在を取り繕いません。' },
 ] as const;

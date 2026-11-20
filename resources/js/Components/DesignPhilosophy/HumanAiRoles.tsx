@@ -3,6 +3,7 @@ import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
 import {
     authorityBoundaries,
     publicRoles,
+    taskContractItems,
     singleWriterRules,
     writerBoundaries,
 } from '@/Components/DesignPhilosophy/designPhilosophyData';
@@ -102,6 +103,26 @@ export default function HumanAiRoles({
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
+
+                <div className="dp-contract-heading">
+                    <RpgText className="dp-technical">TASK CONTRACT / 9 FIELDS</RpgText>
+                    <RpgText as="h3">AIが動く前に、境界を固定する</RpgText>
+                </div>
+                <div className="dp-contract-grid">
+                    {taskContractItems.map((item, index) => (
+                        <article
+                            key={item.title}
+                            className="dp-paper-card"
+                            data-contract-group={item.group}
+                        >
+                            <RpgText className="dp-card__index">
+                                {String(index + 1).padStart(2, '0')}
+                            </RpgText>
+                            <RpgText as="h3">{item.title}</RpgText>
+                            <RpgText as="p">{item.description}</RpgText>
+                        </article>
+                    ))}
+                </div>
 
                 <figure
                     className="dp-role-lanes"

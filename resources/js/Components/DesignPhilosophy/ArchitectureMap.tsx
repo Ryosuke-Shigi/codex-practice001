@@ -2,6 +2,7 @@ import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
 import {
     architectureGuardrails,
+    codingPrinciples,
     architectureLayers,
     architectureResponsibilities,
 } from '@/Components/DesignPhilosophy/designPhilosophyData';
@@ -92,6 +93,7 @@ export default function ArchitectureMap({
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
+                <div className="dp-coding-principles">{codingPrinciples.map(item => <article key={item.title}><h3>{item.title}</h3><p>{item.description}</p></article>)}</div>
 
                 <div className="dp-architecture-statement">
                     <RpgText className="dp-technical">CANONICAL PATTERN</RpgText>

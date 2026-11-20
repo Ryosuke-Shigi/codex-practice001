@@ -2,7 +2,6 @@ import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
 import {
     aiFailureModes,
-    taskContractItems,
     trustFrame,
 } from '@/Components/DesignPhilosophy/designPhilosophyData';
 import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
@@ -91,25 +90,7 @@ export default function Principles({
                     </figcaption>
                 </figure>
 
-                <div className="dp-contract-heading">
-                    <RpgText className="dp-technical">TASK CONTRACT / 9 FIELDS</RpgText>
-                    <RpgText as="h3">AIが動く前に、境界を固定する</RpgText>
-                </div>
-                <div className="dp-contract-grid">
-                    {taskContractItems.map((item, index) => (
-                        <article
-                            key={item.title}
-                            className="dp-paper-card"
-                            data-contract-group={item.group}
-                        >
-                            <RpgText className="dp-card__index">
-                                {String(index + 1).padStart(2, '0')}
-                            </RpgText>
-                            <RpgText as="h3">{item.title}</RpgText>
-                            <RpgText as="p">{item.description}</RpgText>
-                        </article>
-                    ))}
-                </div>
+
             </div>
         </section>
     );

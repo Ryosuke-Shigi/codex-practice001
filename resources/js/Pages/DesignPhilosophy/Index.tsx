@@ -17,11 +17,11 @@ export default function DesignPhilosophyIndex({
             className="design-philosophy-theme bg-[#eee3cb] text-[#2e2923]"
             withEffect={false}
         >
-            <Head title="CODEXゼロトラスト設計">
+            <Head title="設計思想">
                 <meta
                     head-key="description"
                     name="description"
-                    content="人間が判断し、AIはTask Contract、Single Writer、Evidence、Verificationの検証可能な境界で実行するCODEXゼロトラスト設計。"
+                    content="AIとつくる。品質は、仕組みで確かめる。ハーネスの構造、コーディング思想、大切にする原則、開発段階を図で紹介します。"
                 />
                 <meta
                     head-key="theme-color"
