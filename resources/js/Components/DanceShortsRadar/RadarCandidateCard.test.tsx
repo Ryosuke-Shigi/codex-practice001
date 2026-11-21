@@ -96,5 +96,8 @@ describe('Radar PRODUCT card', () => {
         act(() => root.render(<RadarCandidateCard candidate={{...rising, japan_view_count_delta: null, japan_status: '日本側は未観測'}} rank={6} sortKey="__rising" />));
         expect(container.textContent).toContain('未観測');
         expect(container.textContent).not.toContain('+0回');
+        act(() => root.render(<RadarCandidateCard candidate={{...rising, japan_view_count_delta: -5}} rank={6} sortKey="__rising" />));
+        expect(container.textContent).toContain('-5回');
+        expect(container.textContent).not.toContain('+-5回');
     });
 });

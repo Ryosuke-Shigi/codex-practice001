@@ -10,7 +10,8 @@ type Props = {
     contentTransitionKey?: number;
 };
 
-const number = new Intl.NumberFormat('ja-JP', { maximumFractionDigits: 1 });
+// 日本側差分は負値も有効です。符号は数値書式に任せ、欠測と+0は分けて表示します。
+const signedNumber = new Intl.NumberFormat('ja-JP', { maximumFractionDigits: 1, signDisplay: 'always' });
 const percent = new Intl.NumberFormat('ja-JP', { style: 'percent', maximumFractionDigits: 1 });
 
 /** PRODUCT専用の表示。候補判定・再集計・並び替えはサーバーに残します。 */
@@ -29,9 +30,9 @@ export default function RadarCandidateCard({ candidate, rank, sortKey, contentTr
                 {rising ? (
                     <>
                         <dl className="radar-candidate__metrics">
-                            <div><dt>海外側の視聴増加数</dt><dd>+{number.format(candidate.view_count_delta)}<small>回</small></dd></div>
+                            <div><dt>海外側の視聴増加数</dt><dd>{signedNumber.format(candidate.view_count_delta)}<small>回</small></dd></div>
                             <div><dt>海外側の増加率</dt><dd>{candidate.view_growth_rate === null ? '算出不可' : percent.format(candidate.view_growth_rate)}</dd></div>
-                            <div className="radar-candidate__japan"><dt>日本側</dt><dd>{candidate.japan_status}<span>{candidate.japan_view_count_delta === null || candidate.japan_view_count_delta === undefined ? '未観測' : `+${number.format(candidate.japan_view_count_delta)}回`}</span></dd></div>
+                            <div className="radar-candidate__japan"><dt>日本側</dt><dd>{candidate.japan_status}<span>{candidate.japan_view_count_delta === null || candidate.japan_view_count_delta === undefined ? '未観測' : `${signedNumber.format(candidate.japan_view_count_delta)}回`}</span></dd></div>
                         </dl>
                         <p className="radar-candidate__reason" title={candidate.observation_note}>{candidate.observation_note}</p>
                         {candidate.tags.length > 0 && <ul className="radar-candidate__tags">{candidate.tags.map(tag => <li key={tag}>{tag}</li>)}</ul>}

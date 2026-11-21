@@ -8,7 +8,8 @@
 .radar-product .radar-card-navigation { flex: none; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px; margin-top: 8px; border-radius: 12px; background: white; }
 .radar-product .radar-card-navigation button { height: 40px; min-width: 44px; background: #087caa; backdrop-filter: none; }
 .radar-product .radar-card-navigation button[aria-pressed="true"] { background: #c52b78; }
-.radar-product .radar-card-content { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; border-radius: 16px; background: white; }
+/* 補足情報も本文内の縦スクロールで読み、送り・停止は領域外のfooterに残します。 */
+.radar-product .radar-card-content { touch-action: pan-y; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; border-radius: 16px; background: white; }
 .radar-candidate { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 28px; min-width: 0; padding: 24px; color: #1e293b; background: white; }
 .radar-candidate__information { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .radar-candidate__media { grid-column: 1; grid-row: 1; min-width: 0; touch-action: none; }
@@ -35,7 +36,6 @@
     .radar-product__conditions { grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 7px; border-radius: 12px; }
     .radar-candidate { display: flex; flex-direction: column; align-items: stretch; gap: 14px; padding: 14px; }
     .radar-candidate__information { gap: 8px; }
-    .radar-candidate__metadata, .radar-candidate__tags { display: none; }
     .radar-candidate h3 { font-size: 16px; }
     .radar-candidate h3, .radar-candidate__reason { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
     .radar-candidate__rank { font-size: 25px; }
@@ -52,7 +52,6 @@
     .radar-candidate__metrics dd { font-size: 13px; }
     .radar-candidate__japan dd { font-size: 11px; }
     .radar-candidate__metadata, .radar-candidate__comparison-status { font-size: 10px; line-height: 1.3; }
-    .radar-candidate__metadata, .radar-candidate__tags { display: none; }
     .radar-candidate__reason { font-size: 11px; line-height: 1.4; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
     .radar-product .radar-card-navigation { margin-top: 5px; padding: 5px; }
 }
@@ -70,3 +69,7 @@
     .radar-conditions__wide { display: none; }
     .radar-conditions__compact { display: block; }
 }
+
+/* 白い条件面では半透明色を使わず、スマホ縦横の選択文字のコントラストを保ちます。 */
+.radar-conditions__compact button[aria-pressed="true"],
+.radar-conditions__compact button[aria-label^="選択ジャンル"] { background: #075985; color: white; border-color: #075985; }

@@ -59,7 +59,8 @@ export default function DanceShortsDisplayCardField({
     activeSelectGroup,
     presentation,
 }: DanceShortsDisplayCardFieldProps) {
-    const cardTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+    const cardTouchStartRef = useRef<{ x: number; y: number; allowVerticalSwipe: boolean } | null>(null);
+    const cardContentRef = useRef<HTMLDivElement>(null);
     const [cardFieldTransition, setCardFieldTransition] =
         useState<CardFieldTransitionState | null>(null);
 
@@ -107,6 +108,13 @@ export default function DanceShortsDisplayCardField({
     });
 
     useEffect(() => {
+        // 新しい候補では順位・主指標から読み直せるよう、本文だけを先頭へ戻します。
+        if (presentation === 'adopted' && cardContentRef.current !== null) {
+            cardContentRef.current.scrollTop = 0;
+        }
+    }, [activeCard, presentation]);
+
+    useEffect(() => {
         setCardFieldTransition(null);
         stopAutoSlide();
     }, [displayCardField, stopAutoSlide]);
@@ -143,9 +151,16 @@ export default function DanceShortsDisplayCardField({
         const touch = event.touches[0];
 
         stopAutoSlide();
+        const target = event.target instanceof Element ? event.target : null;
+        if (presentation === 'adopted' && target?.closest('.radar-card-navigation')) {
+            cardTouchStartRef.current = null;
+            return;
+        }
         cardTouchStartRef.current = {
             x: touch.clientX,
             y: touch.clientY,
+            // 公開本文は縦に読めるようにし、条件の縦swipeは動画面に残します。横swipeは本文全体で維持します。
+            allowVerticalSwipe: presentation !== 'adopted' || Boolean(target?.closest('.radar-candidate__media')),
         };
     };
 
@@ -163,7 +178,7 @@ export default function DanceShortsDisplayCardField({
         const deltaY = touch.clientY - start.y;
         const swipeDirection = detectCardSwipe(deltaX, deltaY);
 
-        if (swipeDirection === null) {
+        if (swipeDirection === null || ((swipeDirection === 'up' || swipeDirection === 'down') && !start.allowVerticalSwipe)) {
             return;
         }
 
@@ -239,7 +254,8 @@ export default function DanceShortsDisplayCardField({
             id="dance-shorts-card-field"
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="relative h-full min-h-0 touch-none overflow-hidden"
+            onTouchCancel={() => { cardTouchStartRef.current = null; }}
+            className={`relative h-full min-h-0 overflow-hidden ${presentation === 'adopted' ? 'touch-pan-y' : 'touch-none'}`}
             aria-busy={isWindowSwitching || isPrefetching}
         >
             <div className="flex h-full min-h-0 items-start justify-center">
@@ -267,7 +283,7 @@ export default function DanceShortsDisplayCardField({
                             onToggleAutoSlide={toggleAutoSlide}
                         >
                             {(thumbnailControls) => (
-                                <div className={presentation === 'adopted' ? 'radar-card-content' : 'w-full max-h-full min-h-0'}>
+                                <div ref={cardContentRef} tabIndex={presentation === 'adopted' ? 0 : undefined} role={presentation === 'adopted' ? 'region' : undefined} aria-label={presentation === 'adopted' ? 'カードの情報と動画' : undefined} className={presentation === 'adopted' ? 'radar-card-content' : 'w-full max-h-full min-h-0'}>
                                     <DanceShortsActiveCardRenderer
                                         presentation={presentation}
                                         currentWindow={currentWindow}

@@ -66,8 +66,8 @@ function expectRank(rank: number) {
 async function click(label: string) { await act(async () => button(label).click()); }
 async function key(value: string) { await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true }))); }
 async function tick() { await act(async () => { await vi.advanceTimersByTimeAsync(autoSlideIntervalMs); }); }
-async function swipe(deltaX: number, deltaY: number) {
-    const field = host.querySelector('#dance-shorts-card-field')!;
+async function swipe(deltaX: number, deltaY: number, target?: Element) {
+    const field = target ?? host.querySelector('#dance-shorts-card-field')!;
     await act(async () => {
         const start = new Event('touchstart', { bubbles: true, cancelable: true });
         Object.defineProperty(start, 'touches', { value: [{ clientX: 150, clientY: 150 }] });
@@ -79,6 +79,26 @@ async function swipe(deltaX: number, deltaY: number) {
 }
 
 describe('Radar adopted card interaction wiring with existing test windows', () => {
+    it('lets information scroll vertically while keeping horizontal swipes and media condition swipes', async () => {
+        const information = host.querySelector('.radar-candidate__information')!;
+        await click('自動右送りを切り替え');
+        await swipe(0, -100, information);
+        expect(get).not.toHaveBeenCalled();
+        expectRank(1);
+        expect(button('自動右送りを切り替え').getAttribute('aria-pressed')).toBe('false');
+        await swipe(-100, 0, information); expectRank(2);
+        await swipe(0, 100, host.querySelector('.radar-candidate__media')!);
+        expect(get).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts each new card at the top of its scrollable content', async () => {
+        const content = host.querySelector<HTMLDivElement>('.radar-card-content')!;
+        content.scrollTop = 120;
+        await click('次のカードへ移動');
+        expectRank(2);
+        expect(content.scrollTop).toBe(0);
+    });
+
     it('moves manually and with arrow keys across the five-card boundary in both directions', async () => {
         expectRank(1);
         expect(button('前のカードへ移動').disabled).toBe(true);
@@ -107,7 +127,8 @@ describe('Radar adopted card interaction wiring with existing test windows', () 
     it('keeps horizontal card swipes and vertical condition navigation wired once', async () => {
         await swipe(-100, 0); expectRank(2);
         await swipe(100, 0); expectRank(1);
-        await swipe(0, 100);
+        // 補足情報の縦読みに干渉せず、動画面の縦swipeは既存の条件変更へ進みます。
+        await swipe(0, 100, host.querySelector('.radar-candidate__media')!);
         expect(get).toHaveBeenCalledTimes(1);
         expect(get.mock.calls[0][0]).toBe('/dance-shorts-radar?comparisonDays=3');
         await click('自動右送りを切り替え');
