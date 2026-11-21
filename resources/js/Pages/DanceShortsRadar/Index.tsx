@@ -1,11 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-import BackgroundTraceEffect from '@/Components/Effects/BackgroundTraceEffect/BackgroundTraceEffect';
+import RadarLightTraceEffect from '@/Components/Effects/BackgroundTraceEffect/RadarLightTraceEffect';
+import '@/Components/DanceShortsRadar/radarProduct.css';
 import DanceShortsDisplayCardField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayCardField';
 import DanceShortsDisplayHeaderField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayHeaderField';
 import DanceShortsDisplayMessageField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplayMessageField';
-import DanceShortsDisplaySelectField from '@/Components/Lab/DanceShortsRadar/Fields/DanceShortsDisplaySelectField';
+import RadarConditions from '@/Components/DanceShortsRadar/RadarConditions';
 import { getStageProjectReturnLink } from '@/Components/ProjectHub/projectNavigation';
 import {
     createDanceShortsDisplaySelectGroups,
@@ -64,12 +65,12 @@ export default function DanceShortsRadarIndex({
     }, [activeSelectGroup, selectGroups]);
 
     return (
-        <PublicLayout className="relative h-dvh overflow-hidden px-2 py-2 sm:px-3 lg:px-5">
+        <PublicLayout className="radar-product" withEffect={false}>
             <Head title="Dance Shorts Radar" />
 
-            <BackgroundTraceEffect />
+            <RadarLightTraceEffect />
 
-            <main className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-1.5 overflow-hidden">
+            <main className="radar-product__main">
                 <header className="flex shrink-0 items-center justify-between gap-3">
                     <DanceShortsDisplayHeaderField
                         displayHeaderField={displayHeaderField}
@@ -84,9 +85,9 @@ export default function DanceShortsRadarIndex({
                     </Link>
                 </header>
 
-                <div className="mx-auto grid min-h-0 w-full max-w-5xl flex-1 grid-rows-[auto_minmax(0,1fr)] gap-1.5 overflow-hidden sm:gap-2 landscape:grid-cols-[minmax(14rem,0.78fr)_minmax(0,1fr)] landscape:grid-rows-[minmax(0,1fr)] landscape:items-start lg:max-w-6xl">
-                    <div className="grid min-h-0 content-start gap-1.5 overflow-hidden sm:gap-2">
-                        <DanceShortsDisplaySelectField
+                <div className="radar-product__workspace">
+                    <div className="radar-product__conditions">
+                        <RadarConditions
                             selectGroups={selectGroups}
                             activeSelectGroup={activeSelectGroup}
                             onActiveSelectGroupChange={setActiveSelectGroup}
@@ -98,8 +99,9 @@ export default function DanceShortsRadarIndex({
                             }
                         />
                     </div>
-                    <div className="min-h-0 overflow-hidden">
+                    <div className="radar-product__cards">
                         <DanceShortsDisplayCardField
+                            presentation="adopted"
                             displayCardField={displayCardField}
                             windowRequest={{
                                 tab: displaySelectField.selectedTab,

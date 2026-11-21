@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import RadarCandidateCard from '../../../DanceShortsRadar/RadarCandidateCard';
+
 import DanceShortsCandidateCard from '../DanceShortsCandidateCard';
 import DanceShortsRisingCandidateCard from '../DanceShortsRisingCandidateCard';
 import { DANCE_SHORTS_DISPLAY_CARD_FIELD_TYPES } from '../types';
@@ -8,6 +10,7 @@ import EmptyDisplayCardField from './EmptyDisplayCardField';
 import type { DanceShortsActiveDisplayCard } from './useDanceShortsCardWindow';
 
 type DanceShortsActiveCardRendererProps = {
+    presentation?: 'adopted';
     currentWindow: DanceShortsDisplayCardField;
     activeCard: DanceShortsActiveDisplayCard | undefined;
     sortKey: string;
@@ -33,11 +36,16 @@ export default function DanceShortsActiveCardRenderer({
     thumbnailControls,
     contentTransitionClassName,
     contentTransitionKey,
+    presentation,
 }: DanceShortsActiveCardRendererProps) {
     if (activeCard === undefined) {
         return (
             <EmptyDisplayCardField message="表示できるカードはまだありません。" />
         );
+    }
+
+    if (presentation === 'adopted') {
+        return <RadarCandidateCard candidate={activeCard} rank={rank} sortKey={sortKey} contentTransitionClassName={contentTransitionClassName} contentTransitionKey={contentTransitionKey} />;
     }
 
     if (

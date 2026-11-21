@@ -8,6 +8,7 @@ type DanceShortsCardThumbnailControls = {
 };
 
 type DanceShortsCardNavigationControlsProps = {
+    placement?: 'footer';
     canMovePrev: boolean;
     canMoveNext: boolean;
     isWindowSwitching: boolean;
@@ -52,6 +53,7 @@ export default function DanceShortsCardNavigationControls({
     onNext,
     onToggleAutoSlide,
     children,
+    placement,
 }: DanceShortsCardNavigationControlsProps) {
     const onAutoSlideButtonClick = (
         event: MouseEvent<HTMLButtonElement>,
@@ -91,6 +93,20 @@ export default function DanceShortsCardNavigationControls({
             </button>
         ),
     };
+
+    if (placement === 'footer') {
+        return (
+            <>
+                {children({ topRight: null, bottomLeft: null })}
+                <div className="radar-card-navigation" role="group" aria-label="カード送り">
+                    <button type="button" onClick={onPrevious} disabled={!canMovePrev || isWindowSwitching} aria-label="前のカードへ移動" className={autoSlideButtonClassName(-1, null)}><span aria-hidden="true">&lt;</span></button>
+                    {thumbnailControls.bottomLeft}
+                    {thumbnailControls.topRight}
+                    <button type="button" onClick={onNext} disabled={!canMoveNext || isWindowSwitching} aria-label="次のカードへ移動" className={autoSlideButtonClassName(1, null)}><span aria-hidden="true">&gt;</span></button>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>

@@ -25,7 +25,9 @@ export default function DanceShortsDisplayCardField({
     windowRequest,
     selectGroups,
     activeSelectGroup,
+    presentation,
 }: {
+    presentation?: 'adopted';
     displayCardField: DanceShortsDisplayCardFieldProps;
     windowRequest: DanceShortsDisplayCardWindowRequest;
     selectGroups: DanceShortsDisplaySelectGroup[];
@@ -33,6 +35,7 @@ export default function DanceShortsDisplayCardField({
 }) {
     return (
         <DanceShortsCardDisplayField
+            presentation={presentation}
             displayCardField={displayCardField}
             windowRequest={windowRequest}
             selectGroups={selectGroups}

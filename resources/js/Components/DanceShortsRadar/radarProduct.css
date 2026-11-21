@@ -1,0 +1,75 @@
+.radar-product { height: 100dvh; overflow: hidden; padding: 12px; }
+.radar-product__main { position: relative; z-index: 10; display: flex; flex-direction: column; gap: 12px; height: 100%; max-width: 1180px; margin: auto; min-height: 0; }
+.radar-product__workspace { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; flex: 1; min-height: 0; }
+.radar-product__conditions { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 10px; padding: 12px; border-radius: 16px; background: white; color: #1e293b; box-shadow: 0 8px 25px #50698c12; }
+.radar-product__cards { min-height: 0; }
+.radar-product__cards section:not(#dance-shorts-card-field) { background: white; }
+.radar-product .radar-card-window { display: flex; flex-direction: column; width: 100%; height: 100%; max-height: 100%; min-height: 0; }
+.radar-product .radar-card-navigation { flex: none; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px; margin-top: 8px; border-radius: 12px; background: white; }
+.radar-product .radar-card-navigation button { height: 40px; min-width: 44px; background: #087caa; backdrop-filter: none; }
+.radar-product .radar-card-navigation button[aria-pressed="true"] { background: #c52b78; }
+/* 補足情報も本文内の縦スクロールで読み、送り・停止は領域外のfooterに残します。 */
+.radar-product .radar-card-content { touch-action: pan-y; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; border-radius: 16px; background: white; }
+.radar-candidate { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: center; gap: 28px; min-width: 0; padding: 24px; color: #1e293b; background: white; }
+.radar-candidate__information { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.radar-candidate__media { grid-column: 1; grid-row: 1; min-width: 0; touch-action: none; }
+.radar-candidate__identity { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.radar-candidate__rank { display: flex; align-items: baseline; gap: 4px; font-size: 32px; line-height: 1; font-weight: 800; font-variant-numeric: tabular-nums; color: #116c91; }
+.radar-candidate__rank small { font-size: 12px; }
+.radar-candidate__region { font-size: 12px; font-weight: 700; }
+.radar-candidate h3 { font-size: 20px; line-height: 1.45; font-weight: 750; overflow-wrap: anywhere; }
+.radar-candidate__metrics { display: grid; gap: 8px; padding: 12px; background: #f0f8fc; border-radius: 10px; font-size: 12px; }
+.radar-candidate__metrics > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.radar-candidate__metrics dd { font-weight: 800; font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
+.radar-candidate__metrics small { margin-left: 3px; font-size: 12px; }
+.radar-candidate__japan dd { font-size: 12px; }
+.radar-candidate__japan span { display: block; }
+.radar-candidate__reason { font-size: 12px; line-height: 1.7; }
+.radar-candidate__tags { display: flex; flex-wrap: wrap; gap: 5px; font-size: 11px; }
+.radar-candidate__tags li { padding: 3px 8px; border-radius: 6px; background: #edf6fc; }
+.radar-candidate__metadata, .radar-candidate__comparison-status { font-size: 11px; line-height: 1.6; color: #64748b; overflow-wrap: anywhere; }
+.radar-product .radar-candidate dt { white-space: normal; overflow: visible; }
+.radar-product .radar-candidate__thumbnail { display: block; width: 100%; background: #f1f5f9; }
+@media (max-width: 767px) {
+    .radar-product { padding: 8px; }
+    .radar-product__main, .radar-product__workspace { gap: 8px; }
+    .radar-product__conditions { grid-template-columns: minmax(0, 1fr); gap: 5px; padding: 7px; border-radius: 12px; }
+    .radar-candidate { display: flex; flex-direction: column; align-items: stretch; gap: 14px; padding: 14px; }
+    .radar-candidate__information { gap: 8px; }
+    .radar-candidate h3 { font-size: 16px; }
+    .radar-candidate h3, .radar-candidate__reason { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .radar-candidate__rank { font-size: 25px; }
+    .radar-product .radar-card-navigation { gap: 12px; padding: 7px; margin-top: 6px; }
+}
+@media (orientation: landscape) and (max-height: 540px) and (max-width: 1023px) {
+    .radar-product__workspace { grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.8fr); grid-template-rows: minmax(0, 1fr); }
+    .radar-product__conditions { grid-template-columns: minmax(0, 1fr); max-height: 100%; overflow-y: auto; }
+    .radar-candidate { display: grid; grid-template-columns: minmax(100px, 0.7fr) minmax(0, 1fr); align-items: start; gap: 12px; padding: 10px; }
+    .radar-candidate__information { gap: 4px; }
+    .radar-candidate h3 { font-size: 14px; line-height: 1.3; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .radar-candidate__rank { font-size: 20px; }
+    .radar-candidate__metrics { padding: 6px; gap: 3px; font-size: 11px; }
+    .radar-candidate__metrics dd { font-size: 13px; }
+    .radar-candidate__japan dd { font-size: 11px; }
+    .radar-candidate__metadata, .radar-candidate__comparison-status { font-size: 10px; line-height: 1.3; }
+    .radar-candidate__reason { font-size: 11px; line-height: 1.4; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .radar-product .radar-card-navigation { margin-top: 5px; padding: 5px; }
+}
+
+.radar-product__main > header { background: white; border-radius: 12px; padding: 8px 12px; }
+.radar-conditions__compact { display: none; }
+.radar-conditions__wide { display: flex; flex-wrap: wrap; gap: 16px; }
+.radar-conditions__wide fieldset { flex: 1; min-width: 170px; }
+.radar-conditions__wide legend { padding-bottom: 6px; font-size: 12px; font-weight: 700; }
+.radar-conditions__options { display: flex; flex-wrap: wrap; gap: 4px; }
+.radar-conditions__options button { min-height: 36px; padding: 5px 10px; border-radius: 8px; background: #edf6fc; font-size: 12px; font-weight: 700; color: #334155; }
+.radar-conditions__options button[aria-pressed="true"] { background: #087caa; color: white; }
+.radar-conditions__options button:focus-visible { outline: 3px solid #d52f83; outline-offset: 2px; }
+@media (max-width: 767px), (orientation: landscape) and (max-height: 540px) and (max-width: 1023px) {
+    .radar-conditions__wide { display: none; }
+    .radar-conditions__compact { display: block; }
+}
+
+/* 白い条件面では半透明色を使わず、スマホ縦横の選択文字のコントラストを保ちます。 */
+.radar-conditions__compact button[aria-pressed="true"],
+.radar-conditions__compact button[aria-label^="選択ジャンル"] { background: #075985; color: white; border-color: #075985; }
