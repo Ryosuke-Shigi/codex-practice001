@@ -35,6 +35,7 @@ import useDanceShortsCardWindow, {
 } from './useDanceShortsCardWindow';
 
 type DanceShortsDisplayCardFieldProps = {
+    presentation?: 'adopted';
     displayCardField: DanceShortsDisplayCardField;
     windowRequest: DanceShortsDisplayCardWindowRequest;
     selectGroups: DanceShortsDisplaySelectGroup[];
@@ -56,6 +57,7 @@ export default function DanceShortsDisplayCardField({
     windowRequest,
     selectGroups,
     activeSelectGroup,
+    presentation,
 }: DanceShortsDisplayCardFieldProps) {
     const cardTouchStartRef = useRef<{ x: number; y: number } | null>(null);
     const [cardFieldTransition, setCardFieldTransition] =
@@ -244,8 +246,9 @@ export default function DanceShortsDisplayCardField({
                 {isWindowSwitching ? (
                     <LoadingDisplayCardField />
                 ) : (
-                    <div className="relative mx-auto max-h-full min-h-0 w-full max-w-md overflow-hidden landscape:max-w-sm sm:max-w-lg lg:max-w-xl lg:landscape:max-w-xl">
+                    <div className={presentation === 'adopted' ? 'radar-card-window' : 'relative mx-auto max-h-full min-h-0 w-full max-w-md overflow-hidden landscape:max-w-sm sm:max-w-lg lg:max-w-xl lg:landscape:max-w-xl'}>
                         <DanceShortsCardNavigationControls
+                            placement={presentation === 'adopted' ? 'footer' : undefined}
                             canMovePrev={canMovePrev}
                             canMoveNext={canMoveNext}
                             isWindowSwitching={isWindowSwitching}
@@ -264,8 +267,9 @@ export default function DanceShortsDisplayCardField({
                             onToggleAutoSlide={toggleAutoSlide}
                         >
                             {(thumbnailControls) => (
-                                <div className="w-full max-h-full min-h-0">
+                                <div className={presentation === 'adopted' ? 'radar-card-content' : 'w-full max-h-full min-h-0'}>
                                     <DanceShortsActiveCardRenderer
+                                        presentation={presentation}
                                         currentWindow={currentWindow}
                                         activeCard={activeCard}
                                         sortKey={windowRequest.sortKey}

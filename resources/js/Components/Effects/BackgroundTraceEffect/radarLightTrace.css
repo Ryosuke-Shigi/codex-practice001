@@ -1,0 +1,40 @@
+.radar-light-trace {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 12% 12%, #f2a9cf 0%, transparent 52%),
+        radial-gradient(ellipse at 86% 22%, #a5d4f1 0%, transparent 56%),
+        radial-gradient(ellipse at 84% 90%, #f8d988 0%, transparent 50%),
+        linear-gradient(140deg, #f3bfdc, #b6dbed 50%, #f6e0a6);
+}
+.radar-light-trace__routes { position: absolute; inset: 0; width: 100%; height: 100%; }
+.radar-light-trace__routes--mobile { display: none; }
+.radar-light-trace__light { --radar-duration: 13s; --radar-delay: -3s; color: #ee75b0; }
+.radar-light-trace__light--1 { --radar-duration: 14s; --radar-delay: -8s; color: #61bde9; }
+.radar-light-trace__light--2 { --radar-duration: 12s; --radar-delay: -1s; color: #eabc50; }
+.radar-light-trace__light--3 { --radar-duration: 15s; --radar-delay: -11s; color: #ee82b4; }
+.radar-light-trace__light path {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 5 115;
+    animation: radar-downflow var(--radar-duration) linear var(--radar-delay) infinite;
+}
+.radar-light-trace__glow { stroke-width: 9; opacity: 0.36; filter: blur(3px); }
+.radar-light-trace__core { stroke-width: 3.2; opacity: 0.9; }
+@keyframes radar-downflow {
+    from { stroke-dashoffset: 8; }
+    to { stroke-dashoffset: -112; }
+}
+@media (max-width: 640px) {
+    .radar-light-trace__routes--desktop { display: none; }
+    .radar-light-trace__routes--mobile { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .radar-light-trace__routes { display: none; }
+    .radar-light-trace__light path { animation: none; }
+}
