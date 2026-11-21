@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import DotsHandoff from '@/Components/DesignPhilosophy/DotsHandoff';
 import RpgText from '@/Components/DesignPhilosophy/RpgText';
 import SectionHeading from '@/Components/DesignPhilosophy/SectionHeading';
@@ -12,6 +13,7 @@ export default function AiDevelopmentFlow({
 }: {
     section: DesignPhilosophySection;
 }) {
+    const [playback, setPlayback] = useState(0);
     return (
         <section
             id={section.key}
@@ -21,9 +23,10 @@ export default function AiDevelopmentFlow({
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
+                <button className="dp-replay-button" type="button" onClick={() => setPlayback(playback + 1)}>8工程の動きを再生</button>
 
                 <figure
-                    className="dp-flow-diagram"
+                    className="dp-flow-diagram" key={playback}
                     data-diagram="evidence-flow"
                 >
                 <ol

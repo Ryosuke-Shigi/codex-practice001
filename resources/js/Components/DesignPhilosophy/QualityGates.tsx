@@ -34,7 +34,7 @@ export default function QualityGates({
                         <article
                             key={evidence.title}
                             className="dp-paper-card"
-                            data-diagram-node={evidence.title}
+                            data-diagram-node={evidence.title} data-evidence-type={evidence.title}
                             data-instrument-shape={['bars', 'scope', 'gate'][index % 3]}
                         >
                             <RpgText className="dp-card__index">

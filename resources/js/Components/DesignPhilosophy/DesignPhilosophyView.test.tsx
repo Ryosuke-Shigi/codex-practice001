@@ -1,775 +1,244 @@
 // @vitest-environment jsdom
-
-// @ts-expect-error Vitest runs in Node while the application tsconfig intentionally omits Node ambient types.
-import { readFileSync } from 'node:fs';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import DesignPhilosophyView from './DesignPhilosophyView';
+import type { DesignPhilosophySection } from './designPhilosophyTypes';
 
-import DesignPhilosophyView from '@/Components/DesignPhilosophy/DesignPhilosophyView';
-import type { DesignPhilosophySection } from '@/Components/DesignPhilosophy/designPhilosophyTypes';
-
-vi.mock('@inertiajs/react', () => ({
-    Link: ({ children, href, ...props }: { children?: ReactNode; href: string }) => (
-        <a {...props} data-inertia-link="true" href={href}>
-            {children}
-        </a>
-    ),
-}));
-
-const sections: DesignPhilosophySection[] = ([
-    ['hero', 'PORTFOLIO / CODEX ZERO TRUST', '人間が判断し、AIは検証可能な境界で実行する。'],
-    ['principles', '01 / VERIFY, THEN ACCEPT', 'AIを信用するのではなく、検証可能な構造を置く。'],
-    ['human-ai-roles', '02 / SEPARATION OF DUTIES', '実行・検証・Review・統合・判断を分離する。'],
-    ['ai-development-flow', '03 / EVIDENCE PIPELINE', 'Evidenceを手渡す8段階で、Acceptanceまで進む。'],
-    ['architecture', '04 / ADR PATTERN', 'Action - Domain - Responderで、責務と依存方向を描く。'],
-    ['development-stages', '05 / DEVELOPMENT STAGES', '段階を越えるときは、契約を渡して人間が判断する。'],
-    ['quality-gates', '06 / FAIL CLOSED', 'Evidenceは独立した計器で測り、不明なら閉じる。'],
-    ['improvement-loop', '07 / IMPROVEMENT LOOP', 'Findingを循環させ、適切な正本へ戻す。'],
-    ['closing', 'FINAL / HUMAN AUTHORITY', '実行可能であることを、実行してよいことへ変換しない。'],
-] as const).map(([key, eyebrow, title], index) => ({
-    key,
-    sortOrder: (index + 1) * 10,
-    eyebrow,
-    title,
-    lead: `${title}の説明`,
-    body: `${title}の本文`,
-}));
-
-let container: HTMLDivElement;
+vi.mock('@inertiajs/react', () => ({ Link: ({ children, href }: {children: ReactNode; href: string}) => <a href={href}>{children}</a> }));
+const keys = ['hero', 'principles', 'human-ai-roles', 'ai-development-flow', 'architecture', 'development-stages', 'quality-gates', 'improvement-loop', 'closing'] as const;
+const sections: DesignPhilosophySection[] = keys.map((key, index) => ({ key, sortOrder: index, eyebrow: key, title: `${key}の見出し`, lead: `${key}の要約`, body: `${key}の説明` }));
+let host: HTMLDivElement;
 let root: Root;
-const originalIntersectionObserver = window.IntersectionObserver;
+const originalObserver = window.IntersectionObserver;
 const originalMatchMedia = window.matchMedia;
-const css = readFileSync(
-    'resources/js/Components/DesignPhilosophy/designPhilosophy.css',
-    'utf8',
-);
+beforeEach(() => {
+    Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    host = document.createElement('div'); document.body.append(host); root = createRoot(host);
+    window.history.replaceState(null, '', '/design-philosophy');
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: true }) });
+});
+afterEach(() => {
+    act(() => root.unmount()); host.remove();
+    Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: originalObserver });
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia });
+});
+function render() { act(() => root.render(<DesignPhilosophyView sections={sections} />)); }
 
-function render(ui: ReactNode) {
-    act(() => root.render(ui));
-}
-
-function setIntersectionObserver(
-    implementation: typeof IntersectionObserver | undefined,
-) {
-    if (implementation === undefined) {
-        Reflect.deleteProperty(window, 'IntersectionObserver');
-        return;
-    }
-
-    Object.defineProperty(window, 'IntersectionObserver', {
-        configurable: true,
-        writable: true,
-        value: implementation,
+describe('設計思想の読み順と操作', () => {
+    it('冒頭と4節を表示し、技術情報は各詳細に残す', () => {
+        render();
+        expect(host.querySelectorAll('.dp-overview-section')).toHaveLength(4);
+        expect(host.querySelectorAll('h1')).toHaveLength(1);
+        expect(host.querySelectorAll('details')).toHaveLength(4);
+        expect([...host.querySelectorAll('details')].every(detail => !detail.open)).toBe(true);
+        expect([...host.querySelectorAll('summary')].every(summary => summary.textContent?.includes('詳しく見る'))).toBe(true);
+        expect(host.textContent).not.toMatch(/dots|エイダ|パールマン|\bADA\b/i);
+        for (const key of keys) expect(host.querySelector(`[id="${key}"]`)).not.toBeNull();
+        expect(host.querySelectorAll('[data-flow-step]')).toHaveLength(8);
+        expect(host.querySelectorAll('[data-evidence-type]')).toHaveLength(6);
+        expect(host.textContent).toContain('Action - Domain - Responder');
+        expect(host.querySelector('a[href="/projects"]')?.textContent).toContain('作品を見る');
     });
-}
-
-function setMotionPreferences(reducedMotion: boolean) {
-    Object.defineProperty(window, 'matchMedia', {
-        configurable: true,
-        writable: true,
-        value: (query: string) =>
-            ({
-                matches:
-                    query === '(prefers-reduced-motion: reduce)' &&
-                    reducedMotion,
-                media: query,
-                onchange: null,
-                addEventListener: () => undefined,
-                removeEventListener: () => undefined,
-                addListener: () => undefined,
-                removeListener: () => undefined,
-                dispatchEvent: () => false,
-            }) satisfies MediaQueryList,
+    it.each(keys.filter(key => key !== 'hero'))('旧章 #%s を直接開くと内容の詳細が開く', (key) => {
+        window.history.replaceState(null, '', `#${key}`); render();
+        const target = host.querySelector<HTMLElement>(`[id="${key}"]`);
+        const details = target?.closest('details');
+        expect(target).not.toBeNull(); expect(details?.open).toBe(true);
     });
-}
-
-function section(key: string) {
-    return container.querySelector(
-        `[aria-labelledby="design-philosophy-${key}"]`,
-    );
-}
-
-describe('DesignPhilosophyView', () => {
-    beforeEach(() => {
-        (
-            globalThis as typeof globalThis & {
-                IS_REACT_ACT_ENVIRONMENT: boolean;
-            }
-        ).IS_REACT_ACT_ENVIRONMENT = true;
-        container = document.createElement('div');
-        document.body.appendChild(container);
-        root = createRoot(container);
+    it('ページ内で旧章へ移動しても詳細が開く', () => {
+        render();
+        act(() => { window.location.hash = 'improvement-loop'; window.dispatchEvent(new Event('hashchange')); });
+        expect(host.querySelector('#improvement-loop')?.closest('details')?.open).toBe(true);
     });
-
-    afterEach(() => {
-        act(() => root.unmount());
-        container.remove();
-        setIntersectionObserver(originalIntersectionObserver);
-        Object.defineProperty(window, 'matchMedia', {
-            configurable: true,
-            writable: true,
-            value: originalMatchMedia,
-        });
+    it('領域ボタンで対応する層と説明を選択できる', () => {
+        render();
+        const buttons = [...host.querySelectorAll<HTMLButtonElement>('[data-structure-choice]')];
+        expect(buttons).toHaveLength(3);
+        act(() => buttons[2].click());
+        expect(buttons[2].getAttribute('aria-pressed')).toBe('true');
+        expect(host.querySelector('[data-structure-description]')?.textContent).toContain('Repository');
+        expect(host.querySelector('[data-structure-highlight="data"]')).not.toBeNull();
     });
-
-    it('現在の公開契約を固定9章の中へ描画する', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        expect(Array.from(container.querySelectorAll('[data-rpg-section]'),
-            (section) => section.id)).toEqual(sections.map(({ key }) => key));
-        expect(container.querySelectorAll('h1')).toHaveLength(1);
-        expect(container.querySelector('h1')?.textContent).toContain(
-            '人間が判断し、AIは検証可能な境界で実行する。',
-        );
-
-        const hero = section('hero');
-        [
-            'Human intent / authority',
-            'Task Contract',
-            'bounded Writer',
-            'Evidence',
-            'Verification / Review',
-            'Parent integration',
-            'Human judgment',
-        ].forEach((node) => expect(hero?.textContent).toContain(node));
-
-        const contract = section('principles');
-        ['誤読', '省略', '過剰実装', '誤報告'].forEach((risk) =>
-            expect(contract?.textContent).toContain(risk),
-        );
-        ['Claim', 'Evidence', 'Authority', 'Acceptance'].forEach((node) =>
-            expect(contract?.textContent).toContain(node),
-        );
-        expect(contract?.textContent).toContain('Claim ≠ Evidence');
-        [
-            '目的',
-            '範囲',
-            '変更対象',
-            '変更禁止',
-            '成功条件',
-            '失敗条件',
-            '停止条件',
-            '操作許可',
-            '検証 / Review経路',
-        ].forEach((item) => expect(contract?.textContent).toContain(item));
-
-        const roles = section('human-ai-roles');
-        ['Human', 'Parent', 'Writer', 'Verifier', 'Reviewer'].forEach(
-            (role) => expect(roles?.textContent).toContain(role),
-        );
-        [
-            '親を含め同時writer最大1',
-            'read-heavy独立作業だけを条件付き並列',
-            'writer作業は直列',
-            'Verifier / Reviewer中はwriter停止',
-        ].forEach((rule) => expect(roles?.textContent).toContain(rule));
-        [
-            '自分でAcceptanceを決めない',
-            'Verifierを兼ねたことにしない',
-            'Reviewerを兼ねたことにしない',
-            'Human judgmentを代替しない',
-        ].forEach((boundary) => expect(roles?.textContent).toContain(boundary));
-        expect(roles?.textContent).toContain('Capability');
-        expect(roles?.textContent).toContain('Operation Authority');
-
-        const flow = section('ai-development-flow');
-        expect(flow?.querySelectorAll('[data-flow-step]')).toHaveLength(8);
-        expect(
-            Array.from(
-                flow?.querySelectorAll(
-                    '[data-flow-step] h3 [data-rpg-semantic]',
-                ) ?? [],
-            ).map(
-                (heading) => heading.textContent,
-            ),
-        ).toEqual([
-            '契約固定',
-            '証拠駆動調査',
-            '親統合 / Task分割',
-            'Task実行ループ',
-            '検証済みTask checkpoint',
-            '統合検証',
-            'Review / 改善評価',
-            '最終Acceptance',
-        ]);
-        const flowSteps = Array.from(
-            flow?.querySelectorAll('[data-flow-step]') ?? [],
-        );
-        expect(flowSteps[4]?.textContent).toContain(
-            'Task Contractで選択した検証主体が、Task単位の結果と未確認事項を確認します。',
-        );
-        expect(flowSteps[4]?.textContent).not.toContain('Verifier');
-        expect(
-            flowSteps[4]?.querySelector(
-                '.dp-flow-card__meta strong [data-rpg-semantic]',
-            )?.textContent,
-        ).toBe('Task Contract');
-        expect(flowSteps[6]?.textContent).toContain(
-            'Reviewerが指示、正本、差分、Evidence、Findingを照合し、改善候補は現在のTask Contract内で評価します。',
-        );
-        expect(
-            flowSteps[6]?.querySelector(
-                '.dp-flow-card__meta strong [data-rpg-semantic]',
-            )?.textContent,
-        ).toBe('Reviewer / Task Contract');
-        ['基礎調査', 'Task分割', '実装Task A', '実装Task B', '統合検証'].forEach(
-            (task) => expect(flow?.textContent).toContain(task),
-        );
-        expect(flow?.textContent).toContain('DAGはParallel Writer permissionではない');
-
-        const architecture = section('architecture');
-        expect(architecture?.textContent).toContain('Action - Domain - Responder');
-        [
-            '入口',
-            'use case',
-            'domain / rule',
-            'I/O',
-            'data contract',
-            'side effect',
-            'read side',
-            'presentation',
-        ].forEach((lane) => expect(architecture?.textContent).toContain(lane));
-        expect(architecture?.textContent).toContain('Repositoryに業務判断を置かない');
-        expect(architecture?.textContent).toContain('ServiceにDB都合を置かない');
-        expect(architecture?.textContent).toContain('Componentに業務判断を置かない');
-
-        const stages = section('development-stages');
-        ['IDEA BOARD', 'MOCK', 'PROTOTYPE', 'PRODUCT'].forEach((stage) =>
-            expect(stages?.textContent).toContain(stage),
-        );
-        ['確認する', 'まだ作らない', '次へ渡す'].forEach((label) =>
-            expect(stages?.textContent).toContain(label),
-        );
-        expect(stages?.textContent).toContain('自動昇格しない');
-
-        const evidence = section('quality-gates');
-        [
-            'Static',
-            'Installed',
-            'Runtime',
-            'Browser',
-            'Verification / Review',
-            'Human Review',
-        ].forEach((kind) => expect(evidence?.textContent).toContain(kind));
-        expect(evidence?.textContent).toContain('相互代替しない');
-        [
-            'Evidence不足',
-            'identity mismatch',
-            'stale / drift',
-            'permission不足',
-            '正本衝突',
-            'unknown state',
-            '人間判断が必要',
-        ].forEach((condition) => expect(evidence?.textContent).toContain(condition));
-
-        const loop = section('improvement-loop');
-        expect(loop?.querySelectorAll('[data-improvement-step]')).toHaveLength(8);
-        ['Finding', 'Evidence', 'root cause', 'scope', 'owner', 'Fix', 'Verify', 'Feedback'].forEach(
-            (step) => expect(loop?.textContent).toContain(step),
-        );
-        ['Code', 'Test', 'Type', 'Docs', 'Policy', 'Checker', 'Sensors', 'Harness'].forEach(
-            (destination) => expect(loop?.textContent).toContain(destination),
-        );
-
-        const closing = section('closing');
-        expect(closing?.textContent).toContain(
-            '実行可能であることを、実行してよいことへ変換しない。',
-        );
-        expect(closing?.textContent).toContain('Capability');
-        expect(closing?.textContent).toContain('Operation Authority');
-        expect(closing?.textContent).toContain('Human Judgment');
+    it('モーション軽減とobserver不在でも本文と操作を利用できる', () => {
+        Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: undefined });
+        render();
+        expect(host.querySelector('h1')?.textContent).toBe('heroの見出し');
+        expect(host.querySelectorAll('.dp-overview-diagram')).toHaveLength(4);
+        const summary = host.querySelector('summary');
+        act(() => summary?.click());
+        expect(summary?.parentElement?.hasAttribute('open')).toBe(true);
     });
-
-    it('8段階図とDAGの間にdotsを介した受け渡しを1つだけ示す', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const panels = container.querySelectorAll('[data-diagram="dots-handoff"]');
-        expect(panels).toHaveLength(1);
-        const panel = panels[0];
-        expect(panel.previousElementSibling?.matches('[data-diagram="evidence-flow"]'))
-            .toBe(true);
-        expect(panel.nextElementSibling?.matches('.dp-dag')).toBe(true);
-        expect(panel.querySelector('h3 [data-rpg-semantic]')?.textContent)
-            .toBe('dotsを介した技術相談と開発');
-
-        const text = Array.from(panel.querySelectorAll('[data-rpg-semantic]'),
-            (element) => element.textContent);
-        expect(text).toEqual(expect.arrayContaining([
-            '相談の往復',
-            '本人への報告',
-            '本人 ↔ dots',
-            '方針・優先順位／進捗・残件',
-            'dots ↔ ChatGPT Work',
-            '相談事項／仕様・判断材料',
-            'dots ↔ Codex',
-            '作業依頼／調査・実装・検証結果',
-            '最終判断',
-            '本人とdotsが目的・優先順位・進行を確認します。ChatGPT Workは技術相談と仕様整理を担い、Codexは許可された範囲で調査・実装・検証します。dotsは相談と結果を中継し、確認できたこと、未確認事項、判断が必要な点を本人に要約します。開発上の採否は本人が判断し、操作に必要な許可は別途確認します。',
-        ]));
-        expect(panel.querySelector('figcaption [data-rpg-semantic]')?.textContent)
-            .toBe('Notionは経過をまとめて保存');
-    });
-
-    it('公開概念をノード・接続・方向を持つsemantic diagramで示す', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const diagrams = [
-            ['control-plane', 7, 6],
-            ['decision-circuit', 4, 3],
-            ['responsibility-lanes', 5, 6],
-            ['evidence-flow', 8, 7],
-            ['adr-dependency', 8, 8],
-            ['stage-gates', 4, 3],
-            ['evidence-instruments', 6, 6],
-            ['feedback-loop', 8, 8],
-            ['authority-boundary', 4, 3],
-        ] as const;
-
-        diagrams.forEach(([name, nodeCount, minimumEdgeCount]) => {
-            const diagram = container.querySelector(
-                `figure[data-diagram="${name}"]`,
-            );
-            expect(diagram, `${name} diagram`).not.toBeNull();
-            expect(diagram?.querySelector('figcaption')?.textContent?.trim())
-                .not.toBe('');
-            expect(diagram?.querySelectorAll('[data-diagram-node]')).toHaveLength(
-                nodeCount,
-            );
-            expect(
-                diagram?.querySelectorAll('[data-diagram-edge]').length,
-            ).toBeGreaterThanOrEqual(minimumEdgeCount);
-            diagram?.querySelectorAll('[data-diagram-edge]').forEach((edge) => {
-                expect(edge.getAttribute('aria-hidden')).toBe('true');
-                expect(edge.querySelector('[data-rpg-text]')).toBeNull();
-            });
-        });
-
-        const architecture = container.querySelector(
-            '[data-diagram="adr-dependency"]',
-        );
-        expect(
-            architecture?.querySelectorAll('[data-dependency-kind="main"]')
-                .length,
-        ).toBeGreaterThanOrEqual(5);
-        expect(
-            architecture?.querySelectorAll('[data-dependency-kind="branch"]')
-                .length,
-        ).toBeGreaterThanOrEqual(2);
-
-        const edgeSet = (diagramName: string) =>
-            new Set(
-                Array.from(
-                    container.querySelectorAll(
-                        `[data-diagram="${diagramName}"] [data-edge-from][data-edge-to]`,
-                    ),
-                ).map(
-                    (edge) =>
-                        `${edge.getAttribute('data-edge-from')}->${edge.getAttribute('data-edge-to')}:${edge.getAttribute('data-edge-kind')}`,
-                ),
-            );
-
-        expect(edgeSet('responsibility-lanes')).toEqual(
-            new Set([
-                'Human->Parent:authority',
-                'Parent->Writer:delegation',
-                'Writer->Verifier:verify-branch',
-                'Writer->Reviewer:review-branch',
-                'Verifier->Parent:verification-return',
-                'Reviewer->Parent:review-return',
-                'Parent->Human:judgment-return',
-            ]),
-        );
-        expect(edgeSet('adr-dependency')).toEqual(
-            new Set([
-                '入口->use case:main',
-                'use case->domain / rule:main',
-                'domain / rule->presentation:main',
-                'domain / rule->I/O:branch',
-                'domain / rule->data contract:branch',
-                'domain / rule->side effect:branch',
-                'use case->read side:query',
-                'read side->presentation:query',
-            ]),
-        );
-        expect(edgeSet('feedback-loop')).toEqual(
-            new Set([
-                '1->2:forward',
-                '2->3:forward',
-                '3->4:forward',
-                '4->5:forward',
-                '5->6:forward',
-                '6->7:forward',
-                '7->8:forward',
-                '8->1:return',
-            ]),
-        );
-
-        const feedbackReturn = container.querySelector(
-            '[data-diagram="feedback-loop"] [data-edge-kind="return"]',
-        );
-        expect(feedbackReturn?.getAttribute('aria-hidden')).toBe('true');
-    });
-
-    it('ADR責務でHTTP入口とpresentationを分ける', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const architecture = section('architecture');
-        const categoryText = (category: string) =>
-            Array.from(
-                architecture?.querySelectorAll(
-                    `[data-responsibility-category="${category}"]`,
-                ) ?? [],
-            )
-                .map((item) => item.textContent)
-                .join(' ');
-
-        expect(categoryText('entry')).toContain('Route / Controller / Request');
-        expect(categoryText('entry')).not.toContain('Page / Feature Component');
-        expect(categoryText('application')).toContain('Command Action / Query Action');
-        expect(categoryText('domain')).toContain('Service / Strategy');
-        expect(categoryText('infrastructure')).toContain('Repository');
-        expect(categoryText('contract')).toContain('DTO / ListDTO');
-        expect(categoryText('side-effect')).toContain('Event / Listener / Job');
-        expect(categoryText('read-side')).toContain('Query Action / Output DTO');
-        expect(categoryText('presentation')).toContain(
-            'Responder / Page / Feature Component',
-        );
-    });
-
-    it('内部runtime情報は公開せずRuntime Evidenceという一般概念だけを表示する', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const evidence = section('quality-gates');
-        expect(evidence?.textContent).toContain('Runtime');
-        expect(evidence?.textContent).toContain(
-            '実行中に観測したeffective stateやruntime metadataなどの実測結果。',
-        );
-        expect(evidence?.textContent).toContain(
-            '設定値やInstalledの確認から推測しない',
-        );
-        expect(evidence?.textContent).not.toContain(
-            '登録されたcommandを実行して得た結果。',
-        );
-        [
-            'resolved model',
-            'reasoning effort',
-            'effective sandbox',
-            'permission profile',
-            'session ID',
-            '18 SUBAGENTS',
-        ].forEach((privateCopy) =>
-            expect(container.textContent).not.toContain(privateCopy),
-        );
-    });
-
-    it('本文とラベルを一つの可視テキストとして即時表示する', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const nakedTextNodes: string[] = [];
-        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-        let node = walker.nextNode();
-
-        while (node) {
-            const value = node.textContent?.trim();
-            const parent = node.parentElement;
-            if (
-                value &&
-                !parent?.closest('[data-rpg-text]') &&
-                !parent?.closest('svg')
-            ) {
-                nakedTextNodes.push(value);
-            }
-            node = walker.nextNode();
-        }
-
-        expect(nakedTextNodes).toEqual([]);
-        const rpgTexts = container.querySelectorAll('[data-rpg-text]');
-        expect(rpgTexts.length).toBeGreaterThan(60);
-        rpgTexts.forEach((text) => {
-            const semantic = text.querySelector('[data-rpg-semantic]');
-            expect(semantic?.textContent?.length).toBeGreaterThan(0);
-            expect(semantic?.hasAttribute('aria-hidden')).toBe(false);
-            expect(text.textContent).toBe(semantic?.textContent);
-        });
-    });
-
-    it('工程と接続を初回進入時だけ強調し、逆スクロールでも本文を保持する', () => {
-        setMotionPreferences(false);
-        const observed: Element[] = [];
-        const unobserved: Element[] = [];
+    it('observerは表示を一度だけ強調し、逆スクロールで隠さない', () => {
         let callback: IntersectionObserverCallback | undefined;
-
-        class RecordingIntersectionObserver implements IntersectionObserver {
-            readonly root = null;
-            readonly rootMargin = '0px';
-            readonly thresholds = [0];
-
-            constructor(next: IntersectionObserverCallback) {
-                callback = next;
-            }
-            disconnect() {}
-            observe(target: Element) {
-                observed.push(target);
-            }
-            takeRecords() {
-                return [];
-            }
-            unobserve(target: Element) {
-                unobserved.push(target);
-            }
+        const unobserve = vi.fn(); const disconnect = vi.fn();
+        Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: false }) });
+        Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: class { constructor(cb: IntersectionObserverCallback) { callback = cb; } observe() {} unobserve = unobserve; disconnect = disconnect; } });
+        render();
+        const target = host.querySelector('[data-scroll-reveal]')!;
+        act(() => callback?.([{ target, isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver));
+        expect(target.hasAttribute('data-scroll-seen')).toBe(true);
+        act(() => callback?.([{ target, isIntersecting: false } as IntersectionObserverEntry], {} as IntersectionObserver));
+        expect(target.hasAttribute('data-scroll-seen')).toBe(true);
+        expect(unobserve).toHaveBeenCalledWith(target);
+    });
+});
+describe('引き継いだ技術情報と演出の回帰', () => {
+    it('詳細図のノード・方向・戻り経路を保持する', () => {
+        render();
+        for (const [name, nodes, edges] of [['decision-circuit', 4, 3], ['responsibility-lanes', 5, 7], ['evidence-flow', 8, 7], ['adr-dependency', 8, 8], ['stage-gates', 4, 3], ['evidence-instruments', 6, 6], ['feedback-loop', 8, 8]] as const) {
+            const figure = host.querySelector(`[data-diagram="${name}"]`);
+            expect(figure?.querySelectorAll('[data-diagram-node]')).toHaveLength(nodes);
+            expect(figure?.querySelectorAll('[data-diagram-edge]').length).toBeGreaterThanOrEqual(edges);
+            expect(figure?.querySelector('figcaption')?.textContent?.trim()).not.toBe('');
         }
-        setIntersectionObserver(RecordingIntersectionObserver);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const steps = Array.from(container.querySelectorAll('[data-flow-step]'));
-        const [firstStep, nextStep] = steps;
-        expect(steps).toHaveLength(8);
-        expect(observed.filter((item) => item.hasAttribute('data-flow-step'))).toHaveLength(8);
-        expect(observed.filter((item) => item.matches('.dp-dots-panel__exchange'))).toHaveLength(3);
-        expect(observed.some((item) => item.matches('.dp-dag'))).toBe(true);
-        expect(container.querySelector('h1')?.textContent).toBe(sections[0].title);
-        expect(firstStep.textContent).toContain('契約固定');
-        expect(nextStep.textContent).toContain('証拠駆動調査');
-        expect(container.querySelector('[data-scroll-seen]')).toBeNull();
-
-        const enter = (target: Element, isIntersecting: boolean) => {
-            act(() => callback?.(
-                [{ target, isIntersecting } as IntersectionObserverEntry],
-                {} as IntersectionObserver,
-            ));
-        };
-
-        enter(firstStep, true);
-        expect(firstStep.hasAttribute('data-scroll-seen')).toBe(true);
-        expect(nextStep.hasAttribute('data-scroll-seen')).toBe(false);
-        expect(unobserved).toEqual([firstStep]);
-
-        enter(firstStep, false);
-        enter(firstStep, true);
-        expect(unobserved).toEqual([firstStep]);
-        expect(firstStep.hasAttribute('data-scroll-seen')).toBe(true);
-        expect(firstStep.textContent).toContain('契約固定');
+        const edgeSet = (name: string) => new Set([...host.querySelectorAll(`[data-diagram="${name}"] [data-edge-from][data-edge-to]`)].map(edge => `${edge.getAttribute('data-edge-from')}->${edge.getAttribute('data-edge-to')}:${edge.getAttribute('data-edge-kind')}`));
+        expect(edgeSet('adr-dependency')).toEqual(new Set(['入口->use case:main', 'use case->domain / rule:main', 'domain / rule->presentation:main', 'domain / rule->I/O:branch', 'domain / rule->data contract:branch', 'domain / rule->side effect:branch', 'use case->read side:query', 'read side->presentation:query']));
+        expect(edgeSet('feedback-loop')).toEqual(new Set(['1->2:forward', '2->3:forward', '3->4:forward', '4->5:forward', '5->6:forward', '6->7:forward', '7->8:forward', '8->1:return']));
     });
-
-    it('document hidden中はmotionを停止しcleanupで監視状態を除去する', () => {
-        setMotionPreferences(false);
-        let disconnected = false;
-
-        class CleanupIntersectionObserver implements IntersectionObserver {
-            readonly root = null;
-            readonly rootMargin = '0px';
-            readonly thresholds = [0];
-
-            disconnect() {
-                disconnected = true;
-            }
-            observe() {}
-            takeRecords() {
-                return [];
-            }
-            unobserve() {}
+    it('HTTP入口・表示・業務判断・データ境界を別々に示す', () => {
+        render();
+        const text = (category: string) => host.querySelector(`#architecture [data-responsibility-category="${category}"]`)?.textContent;
+        expect(text('entry')).toContain('Route / Controller / Request');
+        expect(text('entry')).not.toContain('Page / Feature Component');
+        expect(text('presentation')).toContain('Responder / Page / Feature Component');
+        expect(text('domain')).toContain('Service / Strategy');
+        expect(text('infrastructure')).toContain('Repository');
+        expect(text('contract')).toContain('DTO / ListDTO');
+        expect(text('side-effect')).toContain('Event / Listener / Job');
+    });
+    it('各段階の入力・対象外・出力・移行条件を詳細に残す', () => {
+        render();
+        const stages = [...host.querySelectorAll('#development-stages .dp-stage-card')];
+        expect(stages).toHaveLength(4);
+        for (const stage of stages) for (const label of ['入力', 'まだ作らない', '次へ渡す', '移行・受入条件']) expect(stage.textContent).toContain(label);
+        expect(stages[2].textContent).toContain('人が本実装の仕様・責務・検証条件を固定');
+    });
+    it('内部環境情報を公開せず実測と期待を区別する', () => {
+        render();
+        expect(host.querySelector('#quality-gates')?.textContent).toContain('設定値やInstalledの確認から推測しない');
+        for (const text of ['resolved model', 'reasoning effort', 'effective sandbox', 'permission profile', 'session ID']) expect(host.textContent).not.toContain(text);
+    });
+    it('observerの構築・登録が失敗しても本文と詳細操作を残す', () => {
+        Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: false }) });
+        for (const phase of ['constructor', 'observe']) {
+            Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: class { constructor() { if (phase === 'constructor') throw new Error(phase); } observe() { throw new Error(phase); } disconnect() {} } });
+            expect(render).not.toThrow();
+            expect(host.querySelector('h1')?.textContent).toBe('heroの見出し');
+            expect(host.querySelectorAll('summary')).toHaveLength(4);
+            act(() => root.unmount()); root = createRoot(host);
         }
-        setIntersectionObserver(CleanupIntersectionObserver);
-
-        render(<DesignPhilosophyView sections={sections} />);
-        const page = container.querySelector('.dp-page');
-
-        Object.defineProperty(document, 'hidden', {
-            configurable: true,
-            value: true,
-        });
-        act(() => document.dispatchEvent(new Event('visibilitychange')));
-        expect(page?.hasAttribute('data-motion-paused')).toBe(true);
-
-        act(() => root.unmount());
-        expect(disconnected).toBe(true);
-        expect(page?.hasAttribute('data-motion-paused')).toBe(false);
-        expect(page?.querySelector('[data-scroll-seen]')).toBeNull();
-        root = createRoot(container);
-
-        Object.defineProperty(document, 'hidden', {
-            configurable: true,
-            value: false,
-        });
     });
-
-    it('reduced motionとobserver失敗では全文を即時表示する', () => {
-        setMotionPreferences(true);
-        let constructorCalls = 0;
-        const CountingIntersectionObserver = function () {
-            constructorCalls += 1;
-        } as unknown as typeof IntersectionObserver;
-        setIntersectionObserver(CountingIntersectionObserver);
-
-        render(<DesignPhilosophyView sections={sections} />);
-
-        expect(constructorCalls).toBe(0);
-        expect(container.querySelector('[data-scroll-seen]')).toBeNull();
-        expect(container.querySelector('h1')?.textContent).toBe(sections[0].title);
-
-        act(() => root.unmount());
-        root = createRoot(container);
-        setMotionPreferences(false);
-        const ThrowingIntersectionObserver = function () {
-            throw new Error('constructor failure');
-        } as unknown as typeof IntersectionObserver;
-        setIntersectionObserver(ThrowingIntersectionObserver);
-
-        expect(() => render(<DesignPhilosophyView sections={sections} />)).not.toThrow();
-        expect(container.querySelector('[data-scroll-seen]')).toBeNull();
-        expect(container.querySelector('h1')?.textContent).toBe(sections[0].title);
+});
+describe('採用案の構造と動き', () => {
+    it('構造図は7項目と11接続を持ち、選択に関係する線だけを強調する', () => {
+        render();
+        expect(host.querySelectorAll('[data-harness-node]')).toHaveLength(7);
+        expect(host.querySelectorAll('[data-harness-edge]')).toHaveLength(11);
+        const review = host.querySelector<HTMLButtonElement>('[data-harness-node="review"]')!;
+        act(() => review.click());
+        expect(review.getAttribute('aria-pressed')).toBe('true');
+        expect(host.querySelectorAll('[data-harness-edge][data-related="true"]')).toHaveLength(3);
+        expect(host.querySelector('[data-harness-connections]')?.textContent).toContain('指摘・未確認事項');
+        expect(host.querySelector('[data-harness-edge="review-writer"]')).toBeNull();
     });
-
-    it('observer登録失敗でも全文とCTAを残す', () => {
-        setMotionPreferences(false);
-        class ObserveThrowingIntersectionObserver
-            implements IntersectionObserver
-        {
-            readonly root = null;
-            readonly rootMargin = '0px';
-            readonly thresholds = [0];
-
-            disconnect() {}
-            observe() {
-                throw new Error('observe failure');
-            }
-            takeRecords() {
-                return [];
-            }
-            unobserve() {}
+    it('原則の詳細を03へ集め、4要素を工程矢印なしで選択する', () => {
+        render();
+        expect(host.querySelector('#principles')?.closest('.dp-overview-section')?.id).toBe('checks');
+        expect(host.querySelectorAll('#roles [data-contract-group]')).toHaveLength(9);
+        expect(host.querySelectorAll('#checks [data-contract-group]')).toHaveLength(0);
+        expect(host.querySelector('#closing')?.closest('.dp-overview-section')?.id).toBe('checks');
+        const choices = host.querySelectorAll<HTMLButtonElement>('[data-principle-choice]');
+        expect(choices).toHaveLength(4);
+        act(() => choices[2].click());
+        expect(choices[2].getAttribute('aria-pressed')).toBe('true');
+        expect(host.querySelector('[data-principle-description]')?.textContent).toContain('操作');
+    });
+    it('文字は全文を保持し、動きを止めても内容と操作が残る', () => {
+        render();
+        expect(host.querySelectorAll('[data-ink-text]').length).toBeGreaterThan(4);
+        const toggle = host.querySelector<HTMLButtonElement>('[data-motion-toggle]')!;
+        act(() => toggle.click());
+        expect(host.querySelector('.dp-page')?.hasAttribute('data-motion-off')).toBe(true);
+        expect(host.querySelector('h1')?.textContent).toBe('heroの見出し');
+        expect(host.querySelectorAll('summary')).toHaveLength(4);
+        act(() => toggle.click());
+        expect(host.querySelector('.dp-page')?.hasAttribute('data-motion-off')).toBe(false);
+    });
+    it('コーディング詳細で手順・パターン・説明の一致を示す', () => {
+        render();
+        const detail = host.querySelector('#architecture');
+        for (const copy of ['手順とルールを分ける', '必要な構造だけ使う', '説明と実装を一致させる', 'PHPDoc', 'interface']) expect(detail?.textContent).toContain(copy);
+    });
+});
+describe('詳細演出の中断とフォーカス', () => {
+    function animatedDetail() {
+        Object.defineProperty(window, 'matchMedia', { configurable: true, value: () => ({ matches: false }) });
+        render();
+        const details = host.querySelector<HTMLDetailsElement>('details')!;
+        const frames: { cancel: ReturnType<typeof vi.fn>; onfinish: null | (() => void) }[] = [];
+        Object.defineProperty(details, 'animate', { value: vi.fn(() => {
+            const frame = { cancel: vi.fn(), onfinish: null as null | (() => void) };
+            frames.push(frame); return frame as unknown as Animation;
+        }) });
+        return { details, summary: details.querySelector('summary')!, frames };
+    }
+    it('開閉連打は前の演出を中断し、閉じた内容にフォーカスを残さない', () => {
+        const { details, summary, frames } = animatedDetail();
+        act(() => summary.click());
+        act(() => summary.click());
+        act(() => summary.click());
+        expect(frames[0].cancel).toHaveBeenCalled();
+        expect(frames[1].cancel).toHaveBeenCalled();
+        act(() => frames[1].onfinish?.());
+        expect(details.open).toBe(true);
+        act(() => frames[2].onfinish?.());
+        act(() => summary.click());
+        const inside = details.querySelector<HTMLButtonElement>('.dp-replay-button')!;
+        inside.focus();
+        act(() => frames[3].onfinish?.());
+        expect(details.open).toBe(false);
+        expect(document.activeElement).toBe(summary);
+    });
+    it('演出中の停止と旧hash到達は終了を待たずに反映する', () => {
+        const { details, summary, frames } = animatedDetail();
+        act(() => summary.click());
+        act(() => summary.click());
+        act(() => host.querySelector<HTMLButtonElement>('[data-motion-toggle]')!.click());
+        expect(details.open).toBe(false);
+        expect(frames[1].cancel).toHaveBeenCalled();
+        act(() => { window.location.hash = 'ai-development-flow'; window.dispatchEvent(new Event('hashchange')); });
+        expect(details.open).toBe(true);
+        act(() => frames[1].onfinish?.());
+        expect(details.open).toBe(true);
+    });
+});
+it('モーション軽減時は開閉の描画APIを呼ばず即時に結果を表示する', () => {
+    render();
+    const detail = host.querySelector<HTMLDetailsElement>('details')!;
+    const animate = vi.fn();
+    Object.defineProperty(detail, 'animate', { value: animate });
+    const summary = detail.querySelector('summary')!;
+    act(() => summary.click());
+    expect(detail.open).toBe(true);
+    act(() => summary.click());
+    expect(detail.open).toBe(false);
+    expect(animate).not.toHaveBeenCalled();
+});
+describe('表示設定の除外と詳細リンク', () => {
+    it.each(['human-ai-roles', 'architecture', 'quality-gates', 'development-stages'] as const)('%sを無効にしても他の有効な章を隠さない', (disabled) => {
+        const enabled = sections.filter(section => section.key !== disabled);
+        act(() => root.render(<DesignPhilosophyView sections={enabled} />));
+        for (const section of enabled) expect(host.querySelector(`[id="${section.key}"]`)).not.toBeNull();
+        expect(host.querySelector(`[id="${disabled}"]`)).toBeNull();
+        for (const anchor of host.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
+            expect(host.querySelector(`[id="${anchor.hash.slice(1)}"]`)).not.toBeNull();
         }
-        setIntersectionObserver(ObserveThrowingIntersectionObserver);
-
-        expect(() => render(<DesignPhilosophyView sections={sections} />)).not.toThrow();
-        expect(container.querySelector('[data-scroll-seen]')).toBeNull();
-        expect(container.querySelector('h1')?.textContent).toBe(sections[0].title);
-        expect(container.querySelector('a[href="#architecture"]')).not.toBeNull();
     });
-
-    it('CTAのaccessible nameを全文のまま維持する', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        const flowLink = container.querySelector('a[href="#ai-development-flow"]');
-        const returnLink = container.querySelector('a[href="/"]');
-        expect(container.querySelectorAll('a[href="#architecture"]')).toHaveLength(2);
-        expect(container.querySelector('a[href="#improvement-loop"]')).not.toBeNull();
-        expect(flowLink?.querySelector('[data-rpg-semantic]')?.textContent).toBe(
-            '8段階フローを見る',
-        );
-        expect(container.querySelector('a[href="/projects"]')).toBeNull();
-        expect(returnLink).not.toBeNull();
-        expect(returnLink?.getAttribute('aria-label')).toBeNull();
-        expect(returnLink?.getAttribute('title')).toBeNull();
-        expect(returnLink?.querySelector('[data-rpg-semantic]')?.textContent).toBe('戻る');
-        expect(returnLink?.textContent).toBe('戻る');
-    });
-
-    it.each(['ai-development-flow', 'architecture', 'improvement-loop'])(
-        '表示対象外の章 %s へのリンクだけを表示しない',
-        (hiddenSection) => {
-            setMotionPreferences(true);
-            render(
-                <DesignPhilosophyView
-                    sections={sections.filter(({ key }) => key !== hiddenSection)}
-                />,
-            );
-
-            const links = Array.from(container.querySelectorAll('nav a'), (link) =>
-                link.getAttribute('href'),
-            );
-            expect(links).toEqual(
-                [
-                    '#ai-development-flow',
-                    '#architecture',
-                    '/',
-                    '#architecture',
-                    '#improvement-loop',
-                ].filter((href) => href !== `#${hiddenSection}`),
-            );
-        },
-    );
-
-    it('和紙・墨・3書体とmobile-first再構成をCSS契約として持つ', () => {
-        const tabletStart = css.indexOf('@media (min-width: 640px) {');
-        const desktopStart = css.indexOf('@media (min-width: 900px) {');
-        const landscapeStart = css.indexOf(
-            '@media (orientation: landscape) and (max-height: 620px) {',
-        );
-        expect(tabletStart).toBeGreaterThan(0);
-        expect(desktopStart).toBeGreaterThan(tabletStart);
-        expect(landscapeStart).toBeGreaterThan(desktopStart);
-
-        const base = css.slice(0, tabletStart);
-        const desktop = css.slice(desktopStart, landscapeStart);
-        const landscape = css.slice(
-            landscapeStart,
-            css.indexOf('@media (prefers-reduced-motion: reduce)'),
-        );
-
-        expect(base).toContain("url('/images/design-philosophy/washi-b.png')");
-        expect(base).toMatch(/background-repeat:\s*repeat/);
-        expect(base).toContain('--dp-font-heading');
-        expect(base).toContain('--dp-font-body');
-        expect(base).toContain('--dp-font-technical');
-        expect(base).not.toMatch(/\.dp-dag[^}]*overflow-x:\s*auto/s);
-        expect(base).toMatch(/\[data-diagram-edge\]\s*\{[^}]*pointer-events:\s*none/s);
-        expect(base).toMatch(/\.dp-diagram-caption\s*\{[^}]*position:\s*absolute/s);
-        expect(base).toMatch(/\.dp-flow-card\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s);
-        expect(desktop).toMatch(/\.dp-flow-card\s*\{[^}]*grid-template-columns:[^}]*\.62fr[^}]*1\.65fr/s);
-        expect(desktop).not.toMatch(/\.dp-flow-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,/s);
-        expect(base).toMatch(/\.dp-dag__edge--wide\s*\{[^}]*display:\s*none/s);
-        expect(desktop).toMatch(/\.dp-dag__edge--compact\s*\{[^}]*display:\s*none/s);
-        expect(base).toMatch(/\.dp-hero__keep-word\s*\{[^}]*white-space:\s*nowrap/s);
-        expect(desktop).toMatch(/\.dp-architecture-layers\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
-        expect(base).toMatch(/\.dp-responsibility-grid,\s*\n\.dp-stage-grid,[\s\S]*grid-template-columns:\s*1fr/);
-        expect(desktop).toMatch(/\.dp-improvement-list\s*\{[^}]*grid-template-columns:\s*repeat\(3,/s);
-        expect(base).toMatch(/\.dp-improvement-return\s*\{[^}]*top:[^}]*bottom:[^}]*border-right:/s);
-        expect(desktop).toMatch(/\.dp-improvement-return\s*\{[^}]*height:\s*34%[^}]*border-left:/s);
-        expect(landscape).not.toMatch(/overflow-x:\s*auto/);
-        expect(landscape).not.toMatch(/grid-auto-flow:\s*column/);
-        expect(landscape).toMatch(/\.dp-technical\s*\{[^}]*writing-mode:\s*horizontal-tb/s);
-        expect(css).toMatch(/prefers-reduced-motion:\s*reduce/);
-    });
-
-    it('図の構造と初回進入時の短い演出を維持する', () => {
-        setMotionPreferences(true);
-        render(<DesignPhilosophyView sections={sections} />);
-
-        [
-            'hero-path',
-            'trust-frame',
-            'role-rail',
-            'flow',
-            'dag',
-            'writer-lease',
-            'adr-flow',
-            'evidence',
-            'improvement',
-        ].forEach(
-            (motion) =>
-                expect(
-                    container.querySelector(`[data-structure-motion="${motion}"]`),
-                ).not.toBeNull(),
-        );
-
-        expect(css).toContain('@keyframes dp-scroll-trace');
-        expect(css).toContain('@keyframes dp-scroll-phrase');
-        expect(css).not.toContain('data-rpg-state="pending"');
-        expect(css).not.toMatch(/animation:\s*dp-scroll-[^;]*\binfinite\b/);
-        expect(css).toMatch(/data-motion-paused[\s\S]*animation-play-state:\s*paused/);
-        expect(css).toMatch(/prefers-reduced-motion:\s*reduce[\s\S]*animation:\s*none/);
-        expect(container.querySelector('.dp-hero-illustration[role="img"]')).not.toBeNull();
-        expect(container.querySelector('.dp-hero__keep-word')?.textContent).toBe('判断');
-        expect(container.querySelectorAll('.dp-dag__node')).toHaveLength(5);
-        expect(Array.from(container.querySelectorAll('[data-dag-edge]'),
-            (edge) => edge.getAttribute('data-dag-edge'))).toEqual(['next', 'fork', 'join']);
+    it('結びだけが有効な場合も存在しない章へのリンクを出さない', () => {
+        act(() => root.render(<DesignPhilosophyView sections={sections.filter(section => section.key === 'closing')} />));
+        expect(host.querySelector('#closing')).not.toBeNull();
+        expect(host.querySelector('a[href="#architecture"]')).toBeNull();
+        expect(host.querySelector('a[href="#improvement-loop"]')).toBeNull();
     });
 });

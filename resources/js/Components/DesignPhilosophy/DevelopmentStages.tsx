@@ -32,6 +32,7 @@ export default function DevelopmentStages({
                                 <RpgText as="h3">{stage.label}</RpgText>
                                 <RpgText as="p">{stage.purpose}</RpgText>
                                 <dl>
+                                    <div><RpgText as="dt">入力</RpgText><RpgText as="dd">{stage.input}</RpgText></div>
                                     <div>
                                         <RpgText as="dt">確認する</RpgText>
                                         <RpgText as="dd">{stage.includes.join(' / ')}</RpgText>
@@ -44,6 +45,7 @@ export default function DevelopmentStages({
                                         <RpgText as="dt">次へ渡す</RpgText>
                                         <RpgText as="dd">{stage.deliverable}</RpgText>
                                     </div>
+                                    <div><RpgText as="dt">移行・受入条件</RpgText><RpgText as="dd">{stage.transition}</RpgText></div>
                                 </dl>
                                 <div className="dp-stage-card__gate">
                                     <RpgText className="dp-technical">HUMAN GATE</RpgText>

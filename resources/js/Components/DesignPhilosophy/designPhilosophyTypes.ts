@@ -83,6 +83,8 @@ export type DevelopmentStage = {
     includes: string[];
     excludes: string[];
     deliverable: string;
+    input: string;
+    transition: string;
 };
 
 export type EvidenceType = {
