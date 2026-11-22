@@ -93,6 +93,18 @@ export default function ArchitectureMap({
         >
             <div className="dp-shell">
                 <SectionHeading section={section} />
+
+                <div className="dp-section-heading">
+                    <div className="dp-section-heading__copy">
+                        <RpgText as="p">
+                            DanceShortsAnalyzerでは、計算処理を保ちながら、動画名・観測時刻・値を追いやすい表示に改めました。欠測をゼロで埋めず、動画ごとの比較区間や、小さな変化が丸められて「0.00 / h」と表示される場合も伝えています。同じ入力に対する既存の数値を、新旧の表示用データで照合しました。
+                        </RpgText>
+                        <RpgText as="p">
+                            API Catalogでは、裏側で一覧データを取り直す処理を、利用者の検索や画面移動から分けました。遅れて届いた応答が、入力中の検索条件や移動先を上書きしないことを、操作が重なる状況を再現したテストで確かめています。
+                        </RpgText>
+                    </div>
+                </div>
+
                 <div className="dp-coding-principles">{codingPrinciples.map(item => <article key={item.title}><h3>{item.title}</h3><p>{item.description}</p></article>)}</div>
 
                 <div className="dp-architecture-statement">

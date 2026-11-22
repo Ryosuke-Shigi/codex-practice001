@@ -25,6 +25,46 @@ afterEach(() => {
 });
 function render() { act(() => root.render(<DesignPhilosophyView sections={sections} />)); }
 
+describe('公開事例の掲載位置', () => {
+    const examples = [
+        {
+            sectionKey: 'human-ai-roles',
+            groupId: 'roles',
+            paragraphs: [
+                'DanceShortsRadarでは、実装後の別担当による確認で、補足情報への到達や数値の符号、選択状態の色に問題が見つかりました。指摘された箇所を修正し、確認した条件で再検証しました。',
+                '開発環境の導入手順では、設定例と導入後の確認方法を文書に残しました。内容レビューと自動検査がそれぞれ別の不足を捉え、説明と既存の検査が整合するように修正しました。',
+            ],
+        },
+        {
+            sectionKey: 'architecture',
+            groupId: 'structure',
+            paragraphs: [
+                'DanceShortsAnalyzerでは、計算処理を保ちながら、動画名・観測時刻・値を追いやすい表示に改めました。欠測をゼロで埋めず、動画ごとの比較区間や、小さな変化が丸められて「0.00 / h」と表示される場合も伝えています。同じ入力に対する既存の数値を、新旧の表示用データで照合しました。',
+                'API Catalogでは、裏側で一覧データを取り直す処理を、利用者の検索や画面移動から分けました。遅れて届いた応答が、入力中の検索条件や移動先を上書きしないことを、操作が重なる状況を再現したテストで確かめています。',
+            ],
+        },
+    ] as const;
+
+    it.each(examples)('$groupId の詳細だけに公開事例を原文で各1回表示する', ({ sectionKey, groupId, paragraphs }) => {
+        render();
+        const detailParagraphs = [...host.querySelectorAll(`#${groupId} details #${sectionKey} p`)];
+        for (const paragraph of paragraphs) {
+            expect(detailParagraphs.filter(element => element.textContent === paragraph), paragraph).toHaveLength(1);
+            expect(host.textContent?.split(paragraph), paragraph).toHaveLength(2);
+        }
+    });
+
+    it.each(examples)('$sectionKey を無効にすると対応する公開事例だけを隠す', ({ sectionKey, paragraphs }) => {
+        const enabled = sections.filter(section => section.key !== sectionKey);
+        act(() => root.render(<DesignPhilosophyView sections={enabled} />));
+
+        for (const paragraph of paragraphs) expect(host.textContent).not.toContain(paragraph);
+        for (const example of examples.filter(example => example.sectionKey !== sectionKey)) {
+            for (const paragraph of example.paragraphs) expect(host.textContent).toContain(paragraph);
+        }
+    });
+});
+
 describe('設計思想の読み順と操作', () => {
     it('冒頭と4節を表示し、技術情報は各詳細に残す', () => {
         render();
