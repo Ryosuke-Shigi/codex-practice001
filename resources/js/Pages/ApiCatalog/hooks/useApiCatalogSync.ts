@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
     apiCatalogSyncStatusMessage,
-    isApiCatalogPagination,
+    isApiCatalogRefreshProps,
     shouldShowSyncResult,
 } from '../apiCatalogIndexUtils';
 import type {
     ApiCatalogPagination,
+    ApiCatalogItem,
+    ApiCatalogIndexProps,
     ApiCatalogSyncStatus,
     ApiCatalogSyncStatusResponse,
 } from '../types';
@@ -30,7 +32,9 @@ function isOlderSyncStatus(current: ApiCatalogSyncStatus, next: ApiCatalogSyncSt
 type UseApiCatalogSyncArgs = {
     initialSyncStatus: ApiCatalogSyncStatus | null;
     getReturnUrl: () => string;
-    onPaginationReloaded: (pagination: ApiCatalogPagination) => void;
+    pageComponent: string;
+    pageVersion: string | null;
+    onCatalogReloaded: (items: ApiCatalogItem[], pagination: ApiCatalogPagination) => boolean;
     isSearchPending?: boolean;
 };
 
@@ -42,7 +46,9 @@ type UseApiCatalogSyncArgs = {
 export function useApiCatalogSync({
     initialSyncStatus,
     getReturnUrl,
-    onPaginationReloaded,
+    pageComponent,
+    pageVersion,
+    onCatalogReloaded,
     isSearchPending = false,
 }: UseApiCatalogSyncArgs) {
     const [syncStatus, setSyncStatus] = useState<ApiCatalogSyncStatus | null>(initialSyncStatus);
@@ -224,36 +230,45 @@ export function useApiCatalogSync({
         const refreshUrl = getReturnUrl();
         if (new URL(refreshUrl, window.location.origin).pathname !== listPath) { setReloadRequest(0); return; }
         let isActive = true;
-        let finished = false;
-        let cancelled = false;
-        let cancel: (() => void) | null = null;
-        // reload() は async:true を強制するため、検索GETと同じ取消可能なstreamを明示します。
-        // 検索未確定中は延期し、確定後の現在URLだけで部分再取得します。
-        router.visit(refreshUrl, {
-            method: 'get', async: false, replace: true, preserveState: true, preserveScroll: true,
-            headers: { 'Cache-Control': 'no-cache' },
-            only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
-            onCancelToken: token => { cancel = () => token.cancel(); cancelRefresh.current = cancel; },
-            onCancel: () => { cancelled = true; },
-            onSuccess: page => {
-                if (!isActive || cancelled || reloadGeneration.current !== reloadRequest) return;
-                finished = true;
-                if (isApiCatalogPagination(page.props.pagination)) onPaginationReloaded(page.props.pagination);
-                setReloadRequest(current => current === reloadRequest ? 0 : current);
+        const controller = new AbortController();
+        const cancel = () => controller.abort();
+        cancelRefresh.current = cancel;
+        const canApply = () => isActive && !controller.signal.aborted
+            && reloadGeneration.current === reloadRequest && outgoingVisits.current.size === 0
+            && window.location.pathname === listPath && getReturnUrl() === refreshUrl;
+        // Inertiaのresponse queueへ渡すと、取消後も受信済み応答が履歴を上書きし得ます。
+        // 同じ部分GETを取得だけに使い、URL/履歴に触れず現在の一覧データへ反映します。
+        void axios.get<{
+            component: string; version: string | null;
+            props: Pick<ApiCatalogIndexProps, 'filters' | 'apiCatalogItems' | 'pagination' | 'syncStatus'>;
+        }>(refreshUrl, {
+            signal: controller.signal,
+            headers: {
+                Accept: 'text/html, application/xhtml+xml', 'X-Requested-With': 'XMLHttpRequest',
+                'X-Inertia': 'true', 'X-Inertia-Partial-Component': pageComponent,
+                'X-Inertia-Partial-Data': 'filters,apiCatalogItems,pagination,syncStatus',
+                ...(pageVersion ? { 'X-Inertia-Version': pageVersion } : {}),
+                'Cache-Control': 'no-cache',
             },
-            onFinish: () => {
-                if (isActive && !finished && !cancelled && reloadGeneration.current === reloadRequest) {
-                    setSyncPollingError('カタログ表示の更新に失敗しました。ページを再読み込みしてください。');
-                    setReloadRequest(current => current === reloadRequest ? 0 : current);
-                }
-            },
+        }).then(response => {
+            if (!canApply()) return;
+            const page = response.data;
+            if (!response.headers?.['x-inertia'] || page?.component !== pageComponent || page.version !== pageVersion
+                || !isApiCatalogRefreshProps(page.props)) throw new Error('Invalid catalog refresh');
+            if (!onCatalogReloaded(page.props.apiCatalogItems, page.props.pagination)) return;
+            acceptStatus(page.props.syncStatus);
+            setReloadRequest(current => current === reloadRequest ? 0 : current);
+        }).catch(() => {
+            if (!canApply()) return;
+            setSyncPollingError('カタログ表示の更新に失敗しました。ページを再読み込みしてください。');
+            setReloadRequest(current => current === reloadRequest ? 0 : current);
         });
         return () => {
             isActive = false;
-            if (!finished) cancel?.();
+            cancel();
             if (cancelRefresh.current === cancel) cancelRefresh.current = null;
         };
-    }, [reloadRequest, isSearchPending, isStartingSync, syncStatus?.isRunning, isNavigatingAway, listPath, getReturnUrl, onPaginationReloaded]);
+    }, [reloadRequest, isSearchPending, isStartingSync, syncStatus?.isRunning, isNavigatingAway, listPath, getReturnUrl, pageComponent, pageVersion, onCatalogReloaded, acceptStatus]);
 
     return {
         syncStatus,

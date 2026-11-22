@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
+    usePage: () => ({ component: 'ApiCatalog/Index', version: null }),
     Link: ({
         href,
         children,

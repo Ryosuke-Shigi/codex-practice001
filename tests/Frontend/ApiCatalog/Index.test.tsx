@@ -3,7 +3,7 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { ApiCatalogIndexProps } from '@/Pages/ApiCatalog/types';
-const { get, post, reload, visit, axiosGet } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), reload: vi.fn(), visit: vi.fn(), axiosGet: vi.fn() }));
+const { get, post, reload, visit, axiosGet, axiosRefresh } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), reload: vi.fn(), visit: vi.fn(), axiosGet: vi.fn(), axiosRefresh: vi.fn() }));
 const { listeners, on } = vi.hoisted(() => {
     const listeners = new Map<string, (event: { detail: { visit: object } }) => void>();
     return { listeners, on: vi.fn((name: string, callback: (event: { detail: { visit: object } }) => void) => {
@@ -11,10 +11,10 @@ const { listeners, on } = vi.hoisted(() => {
     }) };
 });
 vi.mock('@inertiajs/react', () => ({
-    Head: () => null, router: { get, reload, visit, on },
+    Head: () => null, usePage: () => ({ component: 'ApiCatalog/Index', version: 'test-v1' }), router: { get, reload, visit, on },
     Link: ({ children, ...props }: { children: ReactNode; href: string }) => <a {...props}>{children}</a>,
 }));
-vi.mock('axios', () => ({ default: { post, get: axiosGet } }));
+vi.mock('axios', () => ({ default: { post, get: (url: string, ...args: unknown[]) => (url === '/api-catalog/sync/status' ? axiosGet(url, ...args) : axiosRefresh(url, ...args)) } }));
 vi.mock('@/Layouts/PublicLayout', () => ({ default: ({ children }: { children: ReactNode }) => <main>{children}</main> }));
 import Index from '@/Pages/ApiCatalog/Index';
 let host: HTMLDivElement; let root: Root;
@@ -26,7 +26,7 @@ const base: ApiCatalogIndexProps = {
         providerKey: 'adyen.com', serviceKey: 'payments', preferredVersion: 'v1', openapiVersion: '3.1.0', isActive: true }],
 };
 beforeEach(async () => {
-    vi.clearAllMocks(); listeners.clear(); Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    vi.clearAllMocks(); axiosGet.mockReset(); axiosRefresh.mockReset(); axiosRefresh.mockImplementation(() => new Promise(() => {})); listeners.clear(); Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
     window.history.replaceState({}, '', '/api-catalog?keyword=webhooks&provider_key=adyen.com&domain=com&sort=name_asc&page=2');
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
     await act(async () => root.render(<Index {...base} />));
@@ -112,7 +112,30 @@ it('retries the failed page request with the original page and conditions', asyn
     expect(get.mock.calls[1][1].page).toBe(3);
 });
 
-it('keeps new input while an older refresh is already queued and refreshes only the confirmed new URL', async () => {
+it('blocks both pagination keys and background swipes after failure until the exact page is retried', async () => {
+    await click('次のページ');
+    const failed = get.mock.calls[0][2];
+    await act(async () => { failed.onError({}); failed.onFinish(); });
+    expect(host.querySelector('[aria-label="一覧のページ送り"]')).toBeNull();
+    await act(async () => {
+        for (const key of ['ArrowLeft', 'ArrowRight']) window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+        for (const endX of [80, 320]) {
+            const start = new Event('touchstart', { bubbles: true });
+            Object.defineProperty(start, 'touches', { value: [{ clientX: 200, clientY: 200 }] });
+            host.querySelector('main')!.dispatchEvent(start);
+            const end = new Event('touchend', { bubbles: true });
+            Object.defineProperty(end, 'changedTouches', { value: [{ clientX: endX, clientY: 200 }] });
+            host.querySelector('main')!.dispatchEvent(end);
+        }
+    });
+    expect(get).toHaveBeenCalledTimes(1);
+    await act(async () => Array.from(host.querySelectorAll('button')).find(button => button.textContent === '再試行')!.click());
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[1][1]).toEqual(get.mock.calls[0][1]);
+    expect(get.mock.calls[1][1].page).toBe(3);
+});
+
+it('keeps new input against old props and refreshes only the confirmed new URL', async () => {
     vi.useFakeTimers();
     const queued = { id: 9, status: 'queued' as const, isRunning: true, isStale: false,
         result: { totalCount: 0, insertedCount: 0, updatedCount: 0, skippedCount: 0, inactiveCount: 0, failedCount: 0 },
@@ -121,11 +144,9 @@ it('keeps new input while an older refresh is already queued and refreshes only 
     axiosGet.mockResolvedValueOnce({ data: { syncStatus: completed } });
     await act(async () => root.render(<Index {...base} syncStatus={queued} />));
     await act(async () => vi.advanceTimersByTimeAsync(2500));
-    const oldRefresh = visit.mock.calls[0][1];
-    const cancelOld = vi.fn(); oldRefresh.onCancelToken({ cancel: cancelOld });
-    expect(oldRefresh.async).toBe(false);
-    await input('transfer'); expect(cancelOld).toHaveBeenCalledTimes(1);
-    // Inertiaの直列response queueへ既に入ったAはBより先にpropsを適用し得ます。
+    const oldSignal = axiosRefresh.mock.calls[0][1].signal;
+    await input('transfer'); expect(oldSignal.aborted).toBe(true);
+    // 別の古い部分更新が到着しても、未確定の入力を巻き戻しません。
     const stale = { ...base, pagination: { ...base.pagination, totalItems: 99 }, syncStatus: completed };
     await act(async () => root.render(<Index {...stale} />));
     expect(host.querySelector<HTMLInputElement>('input')!.value).toBe('transfer');
@@ -134,8 +155,7 @@ it('keeps new input while an older refresh is already queued and refreshes only 
         pagination: { ...base.pagination, currentPage: 1, totalItems: 3, totalPages: 1, from: 1, to: 3 } };
     window.history.replaceState({}, '', '/api-catalog?keyword=transfer&provider_key=adyen.com&domain=com&sort=name_asc&page=1');
     await act(async () => { root.render(<Index {...next} />); get.mock.calls[0][2].onSuccess({ props: next }); get.mock.calls[0][2].onFinish(); });
-    expect(visit.mock.calls[1][0]).toBe(window.location.pathname + window.location.search);
-    await act(async () => oldRefresh.onSuccess({ props: stale }));
+    expect(axiosRefresh.mock.calls[1][0]).toBe(window.location.pathname + window.location.search);
     expect(host.querySelector<HTMLInputElement>('input')!.value).toBe('transfer');
     expect(host.textContent).toContain('検索結果 3件');
 });
@@ -165,7 +185,7 @@ it('keeps a failed page retry available when import completes, then refreshes th
     const next = { ...base, syncStatus: completed, pagination: { ...base.pagination, currentPage: 3, from: 13, to: 16 } };
     window.history.replaceState({}, '', '/api-catalog?keyword=webhooks&domain=com&provider_key=adyen.com&sort=name_asc&page=3');
     await act(async () => { root.render(<Index {...next} />); get.mock.calls[1][2].onSuccess({ props: next }); get.mock.calls[1][2].onFinish(); });
-    expect(visit.mock.calls[0][0]).toBe(window.location.pathname + window.location.search);
+    expect(axiosRefresh.mock.calls[0][0]).toBe(window.location.pathname + window.location.search);
 });
 it('does not navigate from the import breakdown control, but allows a list background swipe', async () => {
     const completed = { id: 1, status: 'completed' as const, isRunning: false, isStale: false,
@@ -202,4 +222,58 @@ it('does not steal input focus when a page request is superseded by typing', asy
     const next = { ...base, filters: { ...base.filters, keyword: 'transfer' }, pagination: { ...base.pagination, currentPage: 1, from: 1, to: 6 } };
     await act(async () => { root.render(<Index {...next} />); get.mock.calls[1][2].onSuccess({ props: next }); get.mock.calls[1][2].onFinish(); });
     expect(document.activeElement).toBe(field);
+});
+
+it('refreshes only the current list data, replaces it with new props, and preserves cached history restoration', async () => {
+    vi.useFakeTimers();
+    const queued = { id: 20, status: 'queued' as const, isRunning: true, isStale: false,
+        result: { totalCount: 0, insertedCount: 0, updatedCount: 0, skippedCount: 0, inactiveCount: 0, failedCount: 0 },
+        errorMessage: null, startedAt: null, finishedAt: null, createdAt: null, updatedAt: null };
+    const completed = { ...queued, status: 'completed' as const, isRunning: false };
+    const refreshed = { ...base, syncStatus: completed,
+        pagination: { ...base.pagination, totalItems: 24, totalPages: 4 },
+        apiCatalogItems: [{ ...base.apiCatalogItems[0], title: 'Refreshed payment events' }] };
+    axiosGet.mockResolvedValueOnce({ data: { syncStatus: completed } });
+    axiosRefresh.mockResolvedValueOnce({ headers: { 'x-inertia': 'true' }, data: {
+        component: 'ApiCatalog/Index', version: 'test-v1', props: refreshed,
+    } });
+    const url = window.location.href;
+    const replace = vi.spyOn(window.history, 'replaceState');
+    await act(async () => root.render(<Index {...base} syncStatus={queued} />));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    expect(host.textContent).toContain('Refreshed payment events');
+    expect(host.textContent).toContain('検索結果 24件');
+    expect(window.location.href).toBe(url); expect(replace).not.toHaveBeenCalled();
+    expect(visit).not.toHaveBeenCalled(); expect(get).not.toHaveBeenCalled();
+    const next = { ...base, apiCatalogItems: [{ ...base.apiCatalogItems[0], title: 'New server props' }] };
+    await act(async () => root.render(<Index {...next} />));
+    expect(host.textContent).toContain('New server props');
+    expect(host.textContent).not.toContain('Refreshed payment events');
+    // Inertia履歴は書き換えないため、Backの再mountでは保存済み一覧propsを表示します。
+    await act(async () => root.render(<div>detail</div>));
+    await act(async () => root.render(<Index {...base} />));
+    expect(host.textContent).toContain('Payment webhooks'); expect(host.textContent).toContain('検索結果 16件');
+    replace.mockRestore();
+});
+
+it('cancels a received refresh when newer props arrive at the same URL', async () => {
+    vi.useFakeTimers();
+    let release!: (value: unknown) => void;
+    axiosRefresh.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+    const queued = { id: 21, status: 'queued' as const, isRunning: true, isStale: false,
+        result: { totalCount: 0, insertedCount: 0, updatedCount: 0, skippedCount: 0, inactiveCount: 0, failedCount: 0 },
+        errorMessage: null, startedAt: null, finishedAt: null, createdAt: null, updatedAt: null };
+    const completed = { ...queued, status: 'completed' as const, isRunning: false };
+    axiosGet.mockResolvedValueOnce({ data: { syncStatus: completed } });
+    await act(async () => root.render(<Index {...base} syncStatus={queued} />));
+    await act(async () => vi.advanceTimersByTimeAsync(2500));
+    const signal = axiosRefresh.mock.calls[0][1].signal;
+    const next = { ...base, apiCatalogItems: [{ ...base.apiCatalogItems[0], title: 'Newer server props' }] };
+    await act(async () => root.render(<Index {...next} />));
+    expect(signal.aborted).toBe(true); expect(axiosRefresh).toHaveBeenCalledTimes(2);
+    await act(async () => release({ headers: { 'x-inertia': 'true' }, data: {
+        component: 'ApiCatalog/Index', version: 'test-v1', props: { ...base, pagination: { ...base.pagination, totalItems: 99 } },
+    } }));
+    expect(host.textContent).toContain('Newer server props'); expect(host.textContent).not.toContain('検索結果 99件');
+    expect(visit).not.toHaveBeenCalled();
 });

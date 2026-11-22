@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useRef } from 'react';
 
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
@@ -54,13 +54,14 @@ export default function Index({
     syncStatus: initialSyncStatus,
 }: ApiCatalogIndexProps) {
     const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+    const { component: pageComponent, version: pageVersion } = usePage();
     const focusAfterPage = useRef(false);
-    const { keyword, providerKey, domain, sortKey, visiblePagination, setVisiblePagination,
+    const { keyword, providerKey, domain, sortKey, visiblePagination, visibleItems, applySyncRefresh,
         isSearching, isUnconfirmed, searchError, canMovePrevious, canMoveNext, hasActiveFilters,
         updateKeyword, updateProviderKey, updateDomain, updateSortKey, clearFilters,
-        moveToPreviousPage, moveToNextPage, retrySearch } = useApiCatalogSearch(filters, pagination);
+        moveToPreviousPage, moveToNextPage, retrySearch } = useApiCatalogSearch(filters, pagination, apiCatalogItems);
     const { syncStatus, isSyncButtonDisabled, syncMessage, showSyncResult, startPoolSync } = useApiCatalogSync({
-        initialSyncStatus, getReturnUrl: currentListUrl, onPaginationReloaded: setVisiblePagination,
+        initialSyncStatus, getReturnUrl: currentListUrl, pageComponent, pageVersion, onCatalogReloaded: applySyncRefresh,
         isSearchPending: isSearching || isUnconfirmed || searchError !== null,
     });
     const hasUnresolvedSearch = isUnconfirmed || searchError !== null;
@@ -193,7 +194,7 @@ export default function Index({
                 {searchError && <div role="alert" className="rounded-2xl bg-slate-950/80 p-4 text-white">
                     <p>{searchError}</p><button type="button" onClick={retrySearch} className="mt-2 min-h-11 rounded-xl border px-4">再試行</button>
                 </div>}
-                <ApiCatalogList items={hasUnresolvedSearch ? [] : apiCatalogItems.map(item => toApiCatalogListItem(item, returnUrl))}
+                <ApiCatalogList items={hasUnresolvedSearch ? [] : visibleItems.map(item => toApiCatalogListItem(item, returnUrl))}
                     isLoading={isSearching || hasUnresolvedSearch} loadingMessage={searchError ? '条件を変更するか、再試行してください' : '検索結果を更新しています'} />
 
                 {!isSearching && !hasUnresolvedSearch && <ApiCatalogPagination pagination={visiblePagination}
