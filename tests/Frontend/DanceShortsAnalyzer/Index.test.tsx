@@ -7,10 +7,11 @@ vi.mock('@inertiajs/react', () => ({Head: () => null, Link: ({children, href, ..
 vi.mock('@/Layouts/PublicLayout', () => ({default: ({children}: {children: ReactNode}) => <main>{children}</main>}));
 vi.mock('@/Components/Effects/BackgroundTraceEffect/BackgroundTraceEffect', () => ({default: () => null}));
 import Index from '@/Pages/DanceShortsAnalyzer/Index';
+import type { DanceShortsAnalyzerCardsFieldProps } from '@/Pages/DanceShortsAnalyzer/Fields/CardsField';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const searchField = {keyword: 'dance', action: '/dance-shorts-analyzer', analyze_action: '/dance-shorts-analyzer/analyze', placeholder: '', button_label: 'Search'};
 const videos = Array.from({length: 20}, (_, i) => ({video_id: i + 1, youtube_video_id: `youtube-${i + 1}`, title: `動画${i + 1}`, channel_title: null, thumbnail_url: null, published_at: null, youtube_url: '', tracking_status: 'active'}));
-const cardsField = {videos, empty_message: null, end_message: null, has_searched: true, has_more: true, next_page: 2, current_page: 1, per_page: 20, sort: 'published_desc' as const, sort_options: [{value: 'published_desc' as const, label: '登録日 ↓'}, {value: 'published_asc' as const, label: '登録日 ↑'}]};
+const cardsField: DanceShortsAnalyzerCardsFieldProps = {videos, empty_message: null, end_message: null, has_searched: true, has_more: true, next_page: 2, current_page: 1, per_page: 20, sort: 'published_desc' as const, sort_options: [{value: 'published_desc' as const, label: '登録日 ↓'}, {value: 'published_asc' as const, label: '登録日 ↑'}]};
 let host: HTMLDivElement;
 let root: ReturnType<typeof createRoot>;
 async function render(cards = cardsField) {
@@ -22,7 +23,7 @@ afterEach(async () => {await act(async () => root?.unmount()); host?.remove(); h
 describe('Analyzer search selection contract', () => {
     it('explains the search before selection and keeps analyze next to the count', async () => {
         await render();
-        expect(host.textContent).toContain('保存済みのダンス動画を検索して、最大5件の推移を比較');
+        expect(host.querySelector('form')!.parentElement!.textContent).toContain('保存済みのダンス動画を検索して、最大5件の推移を比較');
         expect(host.querySelector('a[href*="/analyze?"]')).toBeNull();
         expect(host.querySelector('input')!.compareDocumentPosition(host.querySelector('h2')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
@@ -59,10 +60,10 @@ describe('Analyzer search selection contract', () => {
         expect(host.querySelector('#analyzer-search-status')!.textContent).toBe('検索中です。');
         expect(host.querySelector('input')!.disabled).toBe(true);
         await act(async () => options.onFinish());
-        await render({...cardsField, videos: [], has_searched: true});
-        expect(host.querySelector('#analyzer-search-status')!.textContent).toContain('該当する保存済み動画はありません');
-        await render({...cardsField, videos: [], has_searched: false});
-        expect(host.querySelector('#analyzer-search-status')!.textContent).toContain('キーワードを入力');
+        await render({...cardsField, videos: [], has_searched: true, empty_message: 'サーバー由来の該当なし案内'});
+        expect(host.querySelector('#analyzer-search-status')!.textContent).toContain('サーバー由来の該当なし案内');
+        await render({...cardsField, videos: [], has_searched: false, empty_message: 'サーバー由来の未検索案内'});
+        expect(host.querySelector('#analyzer-search-status')!.textContent).toContain('サーバー由来の未検索案内');
     });
 
 });

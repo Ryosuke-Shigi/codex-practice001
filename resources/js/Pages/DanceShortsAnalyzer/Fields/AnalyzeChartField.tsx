@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import EChartsViewer from '@/Components/Common/Visualizations/Charts/EChartsViewer';
-import type { DanceShortsAnalyzerChart } from './AnalyzeField';
+import type { DanceShortsAnalyzerComparisonChart } from './AnalyzeField';
 
 type AnalyzeChartFieldProps = {
-    charts: Record<string, DanceShortsAnalyzerChart>;
+    charts: Record<string, DanceShortsAnalyzerComparisonChart>;
     activeMetric: string;
 };
 

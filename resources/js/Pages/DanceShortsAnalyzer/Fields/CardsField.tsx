@@ -101,13 +101,6 @@ export default function CardsField({
                 </div>
             )}
 
-            {videos.length === 0 ? (
-                <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-white/18 bg-white/8 px-4 py-10 text-center text-sm font-semibold leading-6 text-slate-200/78">
-                    {loading
-                        ? '検索中です。'
-                        : cardsField.empty_message ?? '表示できる動画はありません。'}
-                </div>
-            ) : (
                 <div className="min-w-0">
                     <div className="grid min-w-0 gap-2 pb-1">
                         {videos.map((video) => {
@@ -154,7 +147,6 @@ export default function CardsField({
                         </p>
                     )}
                 </div>
-            )}
         </section>
     );
 }

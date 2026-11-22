@@ -32,6 +32,7 @@ export default function SearchField({
 }: SearchFieldProps) {
     return (
         <section className="shrink-0 rounded-lg border border-white/14 bg-slate-900 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.24)] backdrop-blur-xl sm:p-4">
+            <p className="mb-3 text-sm font-semibold leading-6 text-white">保存済みのダンス動画を検索して、最大5件の推移を比較</p>
             <form className="flex min-w-0 flex-col gap-2 sm:flex-row" onSubmit={onSubmit}>
                 <label className="sr-only" htmlFor="analyzer-keyword">検索キーワード</label>
                 <input

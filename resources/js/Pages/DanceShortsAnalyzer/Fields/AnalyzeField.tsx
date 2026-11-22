@@ -55,6 +55,9 @@ export type DanceShortsAnalyzerMetricCard = {
 export type DanceShortsAnalyzerChart = {
     title: string;
     option: EChartsOption;
+};
+
+export type DanceShortsAnalyzerComparisonChart = DanceShortsAnalyzerChart & {
     observations: {
         collected_at_label: string;
         videos: (DanceShortsAnalyzerComparisonColumn & { value_label: string })[];
@@ -96,12 +99,14 @@ export type DanceShortsAnalyzerComparisonColumn = {
 
 export type DanceShortsAnalyzerComparisonCell = {
     video_id: number;
+    period_label: string | null;
     value_label: string;
 };
 
 export type DanceShortsAnalyzerComparisonRow = {
     row_id: number;
     period_label: string;
+    current_collected_at_label: string;
     cells: DanceShortsAnalyzerComparisonCell[];
 };
 
@@ -113,7 +118,7 @@ export type DanceShortsAnalyzerComparisonTable = {
 
 export type DanceShortsAnalyzerComparisonPeriod = {
     label: string;
-    charts: Record<string, DanceShortsAnalyzerChart>;
+    charts: Record<string, DanceShortsAnalyzerComparisonChart>;
     tables: {
         delta: Record<string, DanceShortsAnalyzerComparisonTable>;
         per_hour: Record<string, DanceShortsAnalyzerComparisonTable>;
@@ -245,7 +250,7 @@ export default function AnalyzeField({ analyzeField }: AnalyzeFieldProps) {
                     <AnalyzeChartField key={`${activeMetric}-${activePeriod}`} charts={activeComparison?.charts ?? {}} activeMetric={activeMetric} />
                     <div>
                         <h2 className="mb-3 text-base font-bold text-white">区間ごとの変化</h2>
-                        <p className="mb-3 text-xs text-slate-300">「-」は欠測・計算不能、0は実測値です。各表は同じ区間・動画順で比較できます。</p>
+                        <p className="mb-3 text-xs text-slate-300">「-」は欠測・計算不能、増加量0は変化なしです。終了時刻を揃え、各値の実区間を示します。1時間あたりは小数2桁の丸め値で、0.00 / hにも小さな変化を含む場合があります。</p>
                         <div className="grid min-w-0 gap-4 [@media(min-width:768px)_and_(min-height:600px)]:grid-cols-2">
                             {activeDeltaTable !== null && <AnalyzeDeltaTableField table={activeDeltaTable} />}
                             {activePerHourTable !== null && <AnalyzePerHourTableField table={activePerHourTable} />}

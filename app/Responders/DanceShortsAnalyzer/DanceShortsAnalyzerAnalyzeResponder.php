@@ -161,20 +161,27 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             array_values($axisSnapshots),
         );
         $series = array_map(
-            fn (DanceShortsAnalyzerVideoAnalysisDTO $analysis): array => [
-                'id' => (string) $analysis->video->videoId,
-                'name' => $analysis->video->title,
-                'showSymbol' => true,
-                'itemStyle' => ['color' => $this->chartColorForVideo($result, $analysis->video->videoId)],
-                'type' => 'line',
-                'smooth' => true,
-                'symbolSize' => 7,
-                'lineStyle' => [
-                    'color' => $this->chartColorForVideo($result, $analysis->video->videoId),
-                    'width' => 3,
-                ],
-                'data' => $this->comparisonChartValues($analysis, $metricKey, $axisTimestamps),
-            ],
+            function (DanceShortsAnalyzerVideoAnalysisDTO $analysis) use ($result, $metricKey, $axisTimestamps): array {
+                $values = $this->comparisonChartValues($analysis, $metricKey, $axisTimestamps);
+                $hasSinglePoint = count(array_filter($values, fn (?int $value): bool => $value !== null)) === 1;
+
+                return [
+                    'id' => (string) $analysis->video->videoId,
+                    'name' => $analysis->video->title,
+                    'showSymbol' => true,
+                    // 密な共通横軸でも、線分を持たない唯一の点を省略させない。
+                    'showAllSymbol' => $hasSinglePoint ? true : 'auto',
+                    'itemStyle' => ['color' => $this->chartColorForVideo($result, $analysis->video->videoId)],
+                    'type' => 'line',
+                    'smooth' => true,
+                    'symbolSize' => 7,
+                    'lineStyle' => [
+                        'color' => $this->chartColorForVideo($result, $analysis->video->videoId),
+                        'width' => 3,
+                    ],
+                    'data' => $values,
+                ];
+            },
             $videoAnalyses,
         );
 
@@ -363,9 +370,13 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             $rows[] = [
                 'row_id' => $timestamp,
                 'period_label' => $this->periodLabel($periodLabelRow->previousSnapshot, $periodLabelRow->snapshot),
+                'current_collected_at_label' => $periodLabelRow->snapshot->collectedAt->format('Y-m-d H:i:s'),
                 'cells' => array_map(
                     fn (DanceShortsAnalyzerSelectedVideoDTO $video): array => [
                         'video_id' => $video->videoId,
+                        'period_label' => isset($rowsByVideoId[$video->videoId])
+                            ? $this->comparisonCellPeriodLabel($rowsByVideoId[$video->videoId])
+                            : null,
                         'value_label' => $this->comparisonMetricCellLabel(
                             $rowsByVideoId[$video->videoId] ?? null,
                             $metricKey,
@@ -392,6 +403,15 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
         }
 
         return false;
+    }
+
+    private function comparisonCellPeriodLabel(DanceShortsAnalyzerDeltaRowDTO|DanceShortsAnalyzerPerHourRowDTO $row): ?string
+    {
+        if ($row->previousSnapshot === null) {
+            return null;
+        }
+
+        return $row->previousSnapshot->collectedAt->format('Y-m-d H:i:s').' → '.$row->snapshot->collectedAt->format('Y-m-d H:i:s');
     }
 
     private function comparisonMetricCellLabel(
@@ -520,7 +540,7 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
                 ];
             }
             $observations[] = [
-                'collected_at_label' => $snapshot->collectedAt->format('Y-m-d H:i'),
+                'collected_at_label' => $snapshot->collectedAt->format('Y-m-d H:i:s'),
                 'videos' => $videos,
             ];
         }

@@ -235,12 +235,11 @@ export default function DanceShortsAnalyzerIndex({
                         </div>
                     </div>
                 </header>
-                <p className="px-1 text-sm font-semibold leading-6 text-white">保存済みのダンス動画を検索して、最大5件の推移を比較</p>
                 <SearchField
                     searchField={searchField}
                     keyword={keyword}
                     loading={loading}
-                    statusMessage={loading ? '検索中です。' : !currentCardsField.has_searched ? 'キーワードを入力してください。' : videos.length === 0 ? '該当する保存済み動画はありません。' : `${videos.length}件を表示中。比較する動画を選択してください。`}
+                    statusMessage={loading ? '検索中です。' : !currentCardsField.has_searched || videos.length === 0 ? currentCardsField.empty_message ?? '表示できる動画はありません。' : `${videos.length}件を表示中。比較する動画を選択してください。`}
                     onKeywordChange={setKeyword}
                     onSubmit={handleSubmit}
                 />
