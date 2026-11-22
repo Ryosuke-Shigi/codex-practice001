@@ -6,6 +6,7 @@ export type EChartsViewerProps = {
     height?: number | string;
     className?: string;
     renderer?: 'canvas' | 'svg';
+    onEvents?: Record<string, (event: unknown) => void>;
 };
 
 /**
@@ -18,6 +19,7 @@ export default function EChartsViewer({
     height = 360,
     className = '',
     renderer = 'canvas',
+    onEvents,
 }: EChartsViewerProps) {
     const chartRef = useRef<HTMLDivElement | null>(null);
 
@@ -37,6 +39,9 @@ export default function EChartsViewer({
         let resizeFrame: number | null = null;
 
         chart.setOption(option);
+        Object.entries(onEvents ?? {}).forEach(([name, handler]) => {
+            chart.on(name, handler);
+        });
 
         const resize = () => {
             if (resizeFrame !== null) {
@@ -70,7 +75,7 @@ export default function EChartsViewer({
             window.removeEventListener('resize', resize);
             chart.dispose();
         };
-    }, [option, renderer]);
+    }, [option, renderer, onEvents]);
 
     return (
         <div
