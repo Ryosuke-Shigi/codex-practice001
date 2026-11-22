@@ -1,30 +1,8 @@
-/**
- * API Catalog 一覧 filter panel の表示 Component です。
- *
- * keyword / provider / domain / sort の入力 UI を担当し、検索対象や件数補正は Page / backend 境界へ委譲します。
- */
 import { useId, useState } from 'react';
-
 import ApiCatalogSortSelect from './ApiCatalogSortSelect';
 import type { ApiCatalogSortKey } from './apiCatalogSort';
 
-export type ApiCatalogFilterSelectOption = {
-    value: string;
-    label: string;
-};
-
-const PROVIDER_ALL_VALUE = '';
-const DOMAIN_ALL_VALUE = '';
-const KEYWORD_PLACEHOLDER = 'title / description / provider / service';
-
-function shouldOpenFilterPanelByDefault() {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-        return true;
-    }
-
-    return window.matchMedia('(min-width: 768px)').matches;
-}
-
+export type ApiCatalogFilterSelectOption = { value: string; label: string };
 type ApiCatalogFilterPanelProps = {
     keyword: string;
     providerKey: string;
@@ -39,122 +17,72 @@ type ApiCatalogFilterPanelProps = {
     onSortKeyChange: (value: ApiCatalogSortKey) => void;
     onClear: () => void;
 };
+const fieldClass = 'h-11 w-full min-w-0 rounded-xl border border-slate-400 bg-white px-3 text-sm text-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-4 focus:ring-cyan-300';
 
-/**
- * APIカタログ一覧の検索・絞り込みUIをまとめる Feature Component です。
- *
- * keyword / provider / domain / sort の入力状態を表示し、変更イベントを親Pageへ通知します。
- * 候補の取得やDB検索条件の解決は行わず、モックと本番で共通に使う操作UIに責務を絞ります。
- */
+/** 検索条件の入力と候補の表示を担当し、一覧への適用は親へ通知します。 */
 export default function ApiCatalogFilterPanel({
-    keyword,
-    providerKey,
-    providerOptions,
-    domain,
-    domainOptions,
-    sortKey,
-    hasActiveFilters,
-    onKeywordChange,
-    onProviderKeyChange,
-    onDomainChange,
-    onSortKeyChange,
-    onClear,
+    keyword, providerKey, providerOptions, domain, domainOptions, sortKey,
+    hasActiveFilters, onKeywordChange, onProviderKeyChange, onDomainChange,
+    onSortKeyChange, onClear,
 }: ApiCatalogFilterPanelProps) {
-    const [isExpanded, setIsExpanded] = useState(shouldOpenFilterPanelByDefault);
+    const [isExpanded, setIsExpanded] = useState(() =>
+        typeof window === 'undefined' || typeof window.matchMedia !== 'function'
+            || window.matchMedia('(min-width: 768px)').matches);
+    const [providerQuery, setProviderQuery] = useState('');
     const panelId = useId();
+    // 候補検索はローカル表示だけ。現在の選択肢は絞り込み後も維持します。
+    const matchingProviders = providerOptions.filter(option =>
+        option.label.toLowerCase().includes(providerQuery.trim().toLowerCase()));
+    const visibleProviders = providerOptions.filter(option =>
+        option.value === providerKey || matchingProviders.includes(option));
 
-    /*
-     * 本番とモックの検索UIは同じComponentで描画します。
-     * domain は専用DBカラムではなく、provider_key から抽出済みの候補を props で受け取ります。
-     * 画面ごとの差は provider/domain 候補配列という入力データだけです。
-     */
     return (
-        <section className="rounded-2xl border border-white/35 bg-slate-950/32 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl">
+        <section aria-label="検索・絞り込み" className="rounded-2xl border border-white/40 bg-slate-950/75 p-4 text-white shadow-xl sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <h2 className="text-sm font-bold text-white">検索・絞り込み</h2>
-                    {hasActiveFilters && (
-                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/18 px-2.5 py-1 text-[0.68rem] font-bold text-cyan-50">
-                            絞り込み中
-                        </span>
-                    )}
+                <h2 className="text-base font-bold">APIを探す</h2>
+                <button type="button" onClick={() => setIsExpanded(current => !current)}
+                    aria-expanded={isExpanded} aria-controls={panelId}
+                    className="min-h-11 rounded-xl border border-cyan-100/50 px-4 text-sm font-bold hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300">
+                    {isExpanded ? '追加条件を閉じる' : '追加条件を開く'}
+                </button>
+            </div>
+            <label className="mt-3 grid min-w-0 gap-2 text-sm font-semibold">
+                <span>キーワード</span>
+                <input type="search" value={keyword} onChange={event => onKeywordChange(event.target.value)}
+                    placeholder="API名・用途・提供元・メモから検索" className={fieldClass} />
+            </label>
+            <div id={panelId} hidden={!isExpanded}>
+                <div className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid min-w-0 content-start gap-2 sm:col-span-2 lg:col-span-1">
+                        <label className="grid min-w-0 gap-2 text-sm font-semibold">
+                            <span>Provider候補を絞る</span>
+                            <input type="search" aria-label="Provider候補を絞る" value={providerQuery}
+                                onChange={event => setProviderQuery(event.target.value)}
+                                placeholder="例: adyen" className={fieldClass} />
+                        </label>
+                        <label className="grid min-w-0 gap-2 text-sm font-semibold">
+                            <span>Provider</span>
+                            <select aria-label="Provider" value={providerKey} onChange={event => onProviderKeyChange(event.target.value)} className={fieldClass}>
+                                <option value="">すべてのProvider</option>
+                                {visibleProviders.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                        </label>
+                        <p className="text-xs text-cyan-100" aria-live="polite">候補 {matchingProviders.length}件。選択すると一覧に適用します。</p>
+                    </div>
+                    <label className="grid min-w-0 content-start gap-2 text-sm font-semibold">
+                        <span>Domain</span>
+                        <select value={domain} onChange={event => onDomainChange(event.target.value)} className={fieldClass}>
+                            <option value="">すべてのDomain</option>
+                            {domainOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                        </select>
+                    </label>
+                    <ApiCatalogSortSelect value={sortKey} onChange={onSortKeyChange} />
                 </div>
-
-                <button
-                    type="button"
-                    onClick={() => setIsExpanded((current) => !current)}
-                    aria-expanded={isExpanded}
-                    aria-controls={panelId}
-                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/35 bg-white/18 px-4 text-sm font-bold text-white shadow-[0_12px_26px_rgba(2,24,45,0.16)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
-                >
-                    {isExpanded ? '閉じる' : '開く'}
-                </button>
             </div>
-
-            {!isExpanded && (
-                <p className="mt-2 text-xs font-semibold text-cyan-50/72">
-                    {hasActiveFilters ? '条件を保持しています' : '条件なし'}
-                </p>
-            )}
-
-            <div
-                id={panelId}
-                className={`${isExpanded ? 'mt-4 grid' : 'hidden'} gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(11rem,0.68fr)_minmax(10rem,0.58fr)_minmax(12rem,0.74fr)_auto] lg:items-end`}
-            >
-                <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                    <span>Keyword</span>
-                    <input
-                        type="search"
-                        value={keyword}
-                        onChange={(event) => onKeywordChange(event.target.value)}
-                        placeholder={KEYWORD_PLACEHOLDER}
-                        className="h-11 rounded-xl border border-white/30 bg-white/18 px-4 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.34)] outline-none backdrop-blur-xl placeholder:text-cyan-50/55 focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                    />
-                </label>
-
-                <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                    <span>Provider</span>
-                    <select
-                        value={providerKey}
-                        onChange={(event) => onProviderKeyChange(event.target.value)}
-                        className="h-11 rounded-xl border border-white/30 bg-white/18 px-3 text-sm text-white outline-none backdrop-blur-xl focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                    >
-                        <option value={PROVIDER_ALL_VALUE}>All providers</option>
-                        {providerOptions.map((provider) => (
-                            <option key={provider.value} value={provider.value}>
-                                {provider.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-
-                <label className="grid gap-2 text-sm font-semibold text-cyan-50">
-                    <span>Domain</span>
-                    <select
-                        value={domain}
-                        onChange={(event) => onDomainChange(event.target.value)}
-                        className="h-11 rounded-xl border border-white/30 bg-white/18 px-3 text-sm text-white outline-none backdrop-blur-xl focus:border-cyan-100/80 focus:ring-4 focus:ring-cyan-100/25"
-                    >
-                        <option value={DOMAIN_ALL_VALUE}>All domains</option>
-                        {domainOptions.map((domainOption) => (
-                            <option key={domainOption.value} value={domainOption.value}>
-                                {domainOption.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-
-                <ApiCatalogSortSelect value={sortKey} onChange={onSortKeyChange} />
-
-                <button
-                    type="button"
-                    onClick={onClear}
-                    disabled={!hasActiveFilters}
-                    className="h-11 rounded-xl border border-white/35 bg-white/18 px-5 text-sm font-bold text-white shadow-[0_12px_26px_rgba(2,24,45,0.18)] backdrop-blur-xl transition hover:bg-white/28 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35 disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                    Clear
-                </button>
-            </div>
+            <button type="button" onClick={onClear} disabled={!hasActiveFilters}
+                className="mt-4 min-h-11 rounded-xl border border-cyan-100/50 px-4 text-sm font-semibold hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300 disabled:opacity-50">
+                条件をすべて解除
+            </button>
         </section>
     );
 }

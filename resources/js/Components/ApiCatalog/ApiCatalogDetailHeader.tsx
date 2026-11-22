@@ -33,14 +33,15 @@ export default function ApiCatalogDetailHeader({
      * このComponent自身は履歴を参照せず、呼び出し元が明示した returnUrl へだけ遷移します。
      */
     return (
-        <header className="flex flex-wrap items-start justify-between gap-3">
+        <header className="flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-slate-950/80 p-4">
             <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
+                <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-50">
                     {modeLabel}
                 </span>
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
+                <span className="text-xs text-cyan-100">外部で関連情報を検索 ↗</span>
                 <SearchButtons
                     title={searchTarget.title}
                     providerKey={searchTarget.providerKey}
