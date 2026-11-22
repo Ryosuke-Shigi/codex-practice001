@@ -20,7 +20,8 @@ it('keeps keyword visible when additional filters are closed and filters provide
         domainOptions={[]} hasActiveFilters onKeywordChange={vi.fn()} onProviderKeyChange={change}
         onDomainChange={vi.fn()} onSortKeyChange={vi.fn()} onClear={vi.fn()} />));
     const keyword = host.querySelector('input[type="search"]')!;
-    expect(keyword.closest('.hidden')).toBeNull();
+    expect(keyword.closest('[hidden]')).toBeNull();
+    expect(host.querySelector('select[aria-label=\"Provider\"]')!.closest('[hidden]')).not.toBeNull();
     const toggle = host.querySelector<HTMLButtonElement>('[aria-expanded]')!;
     await act(async () => toggle.click());
     const candidateInput = host.querySelector<HTMLInputElement>('[aria-label="Provider候補を絞る"]')!;

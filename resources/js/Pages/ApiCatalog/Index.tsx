@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import ApiCatalogFilterPanel from '@/Components/ApiCatalog/ApiCatalogFilterPanel';
 import ApiCatalogList from '@/Components/ApiCatalog/ApiCatalogList';
@@ -53,15 +53,25 @@ export default function Index({
     pagination,
     syncStatus: initialSyncStatus,
 }: ApiCatalogIndexProps) {
+    const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+    const focusAfterPage = useRef(false);
     const { keyword, providerKey, domain, sortKey, visiblePagination, setVisiblePagination,
         isSearching, isUnconfirmed, searchError, canMovePrevious, canMoveNext, hasActiveFilters,
         updateKeyword, updateProviderKey, updateDomain, updateSortKey, clearFilters,
         moveToPreviousPage, moveToNextPage, retrySearch } = useApiCatalogSearch(filters, pagination);
     const { syncStatus, isSyncButtonDisabled, syncMessage, showSyncResult, startPoolSync } = useApiCatalogSync({
         initialSyncStatus, getReturnUrl: currentListUrl, onPaginationReloaded: setVisiblePagination,
+        isSearchPending: isSearching || isUnconfirmed || searchError !== null,
     });
     const returnUrl = currentListUrl();
     const domainFilterOptions = domains.length > 0 ? domains : createProviderDomainOptions(providers);
+
+    useEffect(() => {
+        if (!isSearching && !isUnconfirmed && focusAfterPage.current) {
+            focusAfterPage.current = false;
+            resultHeadingRef.current?.focus();
+        }
+    }, [isSearching, isUnconfirmed]);
 
     useSwipeNavigation({
         // 左スワイプでは次のページへ進みます。
@@ -168,6 +178,7 @@ export default function Index({
                 <ApiCatalogSyncNotice message={syncMessage} status={syncStatus} showResult={showSyncResult} />
 
                 <ApiCatalogResultsSummary keyword={keyword} providerKey={providerKey} domain={domain} sortKey={sortKey}
+                    resultHeadingRef={resultHeadingRef}
                     totalItems={visiblePagination.totalItems} isUpdating={isSearching} isUnconfirmed={isUnconfirmed}
                     onKeywordRemove={() => updateKeyword('')} onProviderRemove={() => updateProviderKey('')}
                     onDomainRemove={() => updateDomain('')} />
@@ -179,7 +190,8 @@ export default function Index({
                     isLoading={isSearching || isUnconfirmed} loadingMessage={searchError ? '条件を変更するか、再試行してください' : '検索結果を更新しています'} />
 
                 {!isSearching && !isUnconfirmed && <ApiCatalogPagination pagination={visiblePagination}
-                    onPrevious={moveToPreviousPage} onNext={moveToNextPage} />}
+                    onPrevious={() => { focusAfterPage.current = true; moveToPreviousPage(); }}
+                    onNext={() => { focusAfterPage.current = true; moveToNextPage(); }} />}
 
             </div>
         </PublicLayout>

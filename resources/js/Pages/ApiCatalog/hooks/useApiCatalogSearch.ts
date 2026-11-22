@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { normalizeApiCatalogSortKey, type ApiCatalogSortKey } from '@/Components/ApiCatalog/apiCatalogSort';
-import { buildApiCatalogQueryParams, isApiCatalogPagination } from '../apiCatalogIndexUtils';
+import { buildApiCatalogQueryParams, isApiCatalogFilters, isApiCatalogPagination } from '../apiCatalogIndexUtils';
 import type { ApiCatalogFilters, ApiCatalogPagination } from '../types';
 
 /** 入力と確定済み検索結果を分け、Inertia GETの完了前に件数やページを確定しません。 */
@@ -15,6 +15,7 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
     const [searchError, setSearchError] = useState<string | null>(null);
     const requestId = useRef(0);
     const isRequestPending = useRef(false);
+    const lastRequest = useRef<[string, string, string, ApiCatalogSortKey, number] | null>(null);
 
     const isUnconfirmed = keyword.trim() !== (filters.keyword ?? '').trim()
         || providerKey !== (filters.providerKey ?? '') || domain !== (filters.domain ?? '')
@@ -24,6 +25,7 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
         nextDomain: string, nextSortKey: ApiCatalogSortKey, page: number) => {
         const id = ++requestId.current;
         let succeeded = false;
+        lastRequest.current = [nextKeyword, nextProviderKey, nextDomain, nextSortKey, page];
         isRequestPending.current = true;
         setIsSearching(true);
         setSearchError(null);
@@ -32,8 +34,14 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
             only: ['filters', 'apiCatalogItems', 'pagination'],
             onSuccess: response => {
                 succeeded = true;
-                if (id === requestId.current && isApiCatalogPagination(response.props.pagination)) {
-                    setVisiblePagination(response.props.pagination);
+                if (id === requestId.current) {
+                    if (isApiCatalogPagination(response.props.pagination)) setVisiblePagination(response.props.pagination);
+                    if (isApiCatalogFilters(response.props.filters)) {
+                        setKeyword(response.props.filters.keyword ?? '');
+                        setProviderKey(response.props.filters.providerKey ?? '');
+                        setDomain(response.props.filters.domain ?? '');
+                        setSortKey(normalizeApiCatalogSortKey(response.props.filters.sortKey));
+                    }
                 }
             },
             onError: () => {
@@ -64,6 +72,8 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
     }, [canMoveNext, keyword, providerKey, domain, sortKey, visiblePagination.currentPage, visitList]);
 
     useEffect(() => {
+        // 既に応答queueへ入っていた同期再取得のpropsでも、入力中の新しい条件を戻しません。
+        if (isRequestPending.current) return;
         setKeyword(filters.keyword ?? '');
         setProviderKey(filters.providerKey ?? '');
         setDomain(filters.domain ?? '');
@@ -77,5 +87,5 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
         hasActiveFilters: keyword.trim() !== '' || providerKey !== '' || domain !== '',
         updateKeyword, updateProviderKey, updateDomain, updateSortKey, clearFilters,
         moveToPreviousPage, moveToNextPage,
-        retrySearch: () => visitList(keyword, providerKey, domain, sortKey, 1) };
+        retrySearch: () => { if (lastRequest.current) visitList(...lastRequest.current); } };
 }

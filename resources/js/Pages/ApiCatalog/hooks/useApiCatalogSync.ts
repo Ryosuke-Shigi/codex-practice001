@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
     apiCatalogSyncStatusMessage,
@@ -19,6 +19,7 @@ type UseApiCatalogSyncArgs = {
     initialSyncStatus: ApiCatalogSyncStatus | null;
     getReturnUrl: () => string;
     onPaginationReloaded: (pagination: ApiCatalogPagination) => void;
+    isSearchPending?: boolean;
 };
 
 /**
@@ -30,10 +31,14 @@ export function useApiCatalogSync({
     initialSyncStatus,
     getReturnUrl,
     onPaginationReloaded,
+    isSearchPending = false,
 }: UseApiCatalogSyncArgs) {
     const [syncStatus, setSyncStatus] = useState<ApiCatalogSyncStatus | null>(initialSyncStatus);
     const [isStartingSync, setIsStartingSync] = useState(false);
     const [syncPollingError, setSyncPollingError] = useState<string | null>(null);
+    const [reloadRequest, setReloadRequest] = useState(0);
+    const reloadGeneration = useRef(0);
+    const cancelRefresh = useRef<(() => void) | null>(null);
 
     const isSyncButtonDisabled = isStartingSync || (syncStatus?.isRunning ?? false);
     const syncMessage = apiCatalogSyncStatusMessage(syncStatus, isStartingSync, syncPollingError);
@@ -48,6 +53,7 @@ export function useApiCatalogSync({
             return;
         }
 
+        cancelRefresh.current?.();
         setIsStartingSync(true);
         setSyncPollingError(null);
 
@@ -118,16 +124,7 @@ export function useApiCatalogSync({
                     setSyncPollingError(null);
 
                     if (!nextStatus.isRunning) {
-                        router.reload({
-                            only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
-                            onSuccess: (page) => {
-                                const nextPagination = page.props.pagination;
-
-                                if (isApiCatalogPagination(nextPagination)) {
-                                    onPaginationReloaded(nextPagination);
-                                }
-                            },
-                        });
+                        setReloadRequest(++reloadGeneration.current);
 
                         return;
                     }
@@ -155,7 +152,41 @@ export function useApiCatalogSync({
                 window.clearTimeout(timeoutId);
             }
         };
-    }, [onPaginationReloaded, syncStatus?.id, syncStatus?.isRunning]);
+    }, [syncStatus?.id, syncStatus?.isRunning]);
+
+    useEffect(() => {
+        if (reloadRequest === 0 || isSearchPending || isStartingSync || syncStatus?.isRunning) return;
+        let isActive = true;
+        let finished = false;
+        let cancelled = false;
+        let cancel: (() => void) | null = null;
+        // reload() は async:true を強制するため、検索GETと同じ取消可能なstreamを明示します。
+        // 検索未確定中は延期し、確定後の現在URLだけで部分再取得します。
+        router.visit(getReturnUrl(), {
+            method: 'get', async: false, replace: true, preserveState: true, preserveScroll: true,
+            headers: { 'Cache-Control': 'no-cache' },
+            only: ['filters', 'apiCatalogItems', 'pagination', 'syncStatus'],
+            onCancelToken: token => { cancel = () => token.cancel(); cancelRefresh.current = cancel; },
+            onCancel: () => { cancelled = true; },
+            onSuccess: page => {
+                if (!isActive || cancelled || reloadGeneration.current !== reloadRequest) return;
+                finished = true;
+                if (isApiCatalogPagination(page.props.pagination)) onPaginationReloaded(page.props.pagination);
+                setReloadRequest(current => current === reloadRequest ? 0 : current);
+            },
+            onFinish: () => {
+                if (isActive && !finished && !cancelled && reloadGeneration.current === reloadRequest) {
+                    setSyncPollingError('カタログ表示の更新に失敗しました。ページを再読み込みしてください。');
+                    setReloadRequest(current => current === reloadRequest ? 0 : current);
+                }
+            },
+        });
+        return () => {
+            isActive = false;
+            if (!finished) cancel?.();
+            if (cancelRefresh.current === cancel) cancelRefresh.current = null;
+        };
+    }, [reloadRequest, isSearchPending, isStartingSync, syncStatus?.isRunning, getReturnUrl, onPaginationReloaded]);
 
     return {
         syncStatus,

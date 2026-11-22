@@ -1,3 +1,4 @@
+import { apiCatalogDescriptionExcerpt } from './apiCatalogDescription';
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it, vi } from 'vitest';
@@ -45,7 +46,12 @@ it('distinguishes all eight import states and keeps the normal completion breakd
     expect(new Set(messages).size).toBe(8);
     expect(renderToStaticMarkup(<ApiCatalogSyncNotice message={null} status={null} showResult={false} />)).toBe('');
     const html = renderToStaticMarkup(<ApiCatalogSyncNotice message={messages[4]} status={status} showResult />);
-    expect(html).toContain('aria-live="polite"'); expect(html).toContain('<details ');
-    expect(html).not.toContain('<details open'); expect(html).not.toContain('<form');
+    expect(html).toContain('aria-live="polite"'); expect(html).toContain('aria-expanded="false"');
+    expect(html).toContain('hidden=""'); expect(html).not.toContain('<form');
     expect(html).toContain('新規: 1件'); expect(html).toContain('更新: 2件');
+});
+
+it('preserves language names, successor identifiers, and a URL-only description', () => {
+    expect(apiCatalogDescriptionExcerpt('Deprecated: use payments_v2 for C# clients.')).toBe('Deprecated: use payments_v2 for C# clients.');
+    expect(apiCatalogDescriptionExcerpt('https://example.com/docs')).toBe('https://example.com/docs');
 });

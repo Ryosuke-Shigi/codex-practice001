@@ -1,5 +1,5 @@
 import { apiCatalogSortOptions, type ApiCatalogSortKey } from './apiCatalogSort';
-import { useRef } from 'react';
+import { useRef, type RefObject } from 'react';
 
 type Props = {
     keyword: string;
@@ -12,12 +12,14 @@ type Props = {
     onKeywordRemove: () => void;
     onProviderRemove: () => void;
     onDomainRemove: () => void;
+    resultHeadingRef?: RefObject<HTMLHeadingElement | null>;
 };
 
 /** 件数はサーバー確定値だけを表示し、入力変更中は確定件数を出しません。 */
 export default function ApiCatalogResultsSummary({ keyword, providerKey, domain, sortKey,
-    totalItems, isUpdating = false, isUnconfirmed = false, onKeywordRemove, onProviderRemove, onDomainRemove }: Props) {
-    const headingRef = useRef<HTMLHeadingElement>(null);
+    totalItems, isUpdating = false, isUnconfirmed = false, onKeywordRemove, onProviderRemove, onDomainRemove, resultHeadingRef }: Props) {
+    const fallbackHeadingRef = useRef<HTMLHeadingElement>(null);
+    const headingRef = resultHeadingRef ?? fallbackHeadingRef;
     const conditions = [
         { label: 'キーワード', value: keyword.trim(), remove: onKeywordRemove },
         { label: 'Provider', value: providerKey, remove: onProviderRemove },

@@ -4,7 +4,14 @@ import {
     type ApiCatalogSortKey,
 } from '@/Components/ApiCatalog/apiCatalogSort';
 
-import type { ApiCatalogItem, ApiCatalogPagination, ApiCatalogSyncStatus } from './types';
+import type { ApiCatalogFilters, ApiCatalogItem, ApiCatalogPagination, ApiCatalogSyncStatus } from './types';
+
+export function isApiCatalogFilters(value: unknown): value is ApiCatalogFilters {
+    if (typeof value !== 'object' || value === null) return false;
+    const candidate = value as Partial<ApiCatalogFilters>;
+    return [candidate.keyword, candidate.providerKey, candidate.domain].every(field => field === null || typeof field === 'string')
+        && ['updated_desc', 'updated_asc', 'name_asc', 'name_desc'].includes(candidate.sortKey ?? '');
+}
 
 export function isApiCatalogPagination(value: unknown): value is ApiCatalogPagination {
     /*
