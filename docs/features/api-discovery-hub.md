@@ -2,7 +2,7 @@
 
 - Status: active
 - Scope: API Discovery Hub
-- Last reviewed: 2026-06-10
+- Last reviewed: 2026-11-22
 - Canonical source: this document for feature-specific intent and constraints; current code, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
@@ -66,6 +66,17 @@ Repositoryは外部API通信・DB取得保存を担当し、差分の意味づ�
 - `return_url` 制御
 
 権限・所有可否はService等で判断し、Repositoryは対象データの取得・保存・削除を担当します。
+
+## 公開一覧・詳細の表示契約
+
+- キーワードは常時表示し、追加条件を閉じても条件の個別解除、並び順、検索結果件数に到達できます。
+- Provider候補の文字絞り込みは候補表示だけに適用し、Providerを選択した時だけ既存の完全一致条件で検索します。
+- 入力・選択は既存のInertia GETで適用し、条件・並び順変更で1ページ目へ戻ります。全条件解除でも選択した並び順を維持します。
+- 応答待ちは確定件数・候補・ページ送りを出さず、検索完了後にサーバーの件数と候補を表示します。検索失敗は再試行できます。
+- カードではAPI名、Provider・Service、用途、API版・OpenAPI版を表示し、詳細と4種類の外部検索を分けます。本文のある保存メモは最大2件と残数を表示します。
+- 詳細は用途・提供元の原文、技術情報、調査メモの順に読みます。提供済みのHTTP(S)仕様書URLだけをリンク表示し、仕様本文を自動取得しません。MOCK詳細の技術情報開閉と非永続化を維持します。
+- 公開詳細の戻り先は公開一覧の条件・並び順・ページを保持します。ページ送りは一覧内に置き、フォーム操作中の矢印キーやスワイプをページ移動に使いません。
+- 同期の進行は専用Hookが扱い、検索とは別の取り込み状況として表示します。停止後の内訳は開閉だけで確認でき、開閉では通信・再同期しません。
 
 ## 出力
 
