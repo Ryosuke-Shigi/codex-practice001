@@ -205,14 +205,14 @@ export default function DanceShortsAnalyzerIndex({
     return (
         <PublicLayout
             effectIntensity="subtle"
-            className="overflow-x-hidden bg-slate-950/44 px-3 py-3 sm:px-5"
+            className="overflow-x-hidden bg-slate-950/70 px-3 py-3 sm:px-5"
         >
             <Head title="DanceShortsAnalyzer" />
 
             <BackgroundTraceEffect />
 
-            <article className="relative z-10 mx-auto flex h-[calc(100dvh-1.5rem)] min-w-0 max-w-6xl flex-col gap-2 overflow-hidden">
-                <header className="min-w-0 shrink-0 rounded-lg border border-white/14 bg-white/10 p-2 backdrop-blur-xl sm:p-3">
+            <article className="relative z-10 mx-auto flex min-h-[calc(100dvh-1.5rem)] min-w-0 max-w-6xl flex-col gap-3">
+                <header className="min-w-0 shrink-0 rounded-lg border border-white/14 bg-gradient-to-r from-pink-900/80 to-blue-900/80 p-3 sm:p-4">
                     <div className="flex min-w-0 items-center justify-between gap-3">
                         <div className="min-w-0">
                             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/78">
@@ -231,31 +231,24 @@ export default function DanceShortsAnalyzerIndex({
                             >
                                 {danceShortsAnalyzerReturn.label}
                             </Link>
-                            {selectedVideoIds.length > 0 && (
-                                <Link
-                                    href={buildAnalyzeHref(
-                                        searchField.analyze_action,
-                                        selectedVideoIds,
-                                    )}
-                                    className="inline-flex min-h-10 max-w-[38vw] shrink-0 items-center justify-center rounded-lg border border-yellow-100 bg-yellow-300 px-3 text-center text-xs font-black leading-4 text-slate-950 shadow-[0_10px_22px_rgba(234,179,8,0.24)] transition hover:bg-yellow-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-100 sm:max-w-none sm:whitespace-nowrap sm:px-4 sm:text-sm"
-                                >
-                                    Analyze
-                                </Link>
-                            )}
+
                         </div>
                     </div>
                 </header>
-                <SelectedField
-                    selectedVideos={selectedVideos}
-                    maxSelectedVideos={maxSelectedVideos}
-                    onRemoveVideo={handleRemoveVideo}
-                />
+                <p className="px-1 text-sm font-semibold leading-6 text-white">保存済みのダンス動画を検索して、最大5件の推移を比較</p>
                 <SearchField
                     searchField={searchField}
                     keyword={keyword}
                     loading={loading}
+                    statusMessage={loading ? '検索中です。' : !currentCardsField.has_searched ? 'キーワードを入力してください。' : videos.length === 0 ? '該当する保存済み動画はありません。' : `${videos.length}件を表示中。比較する動画を選択してください。`}
                     onKeywordChange={setKeyword}
                     onSubmit={handleSubmit}
+                />
+                <SelectedField
+                    selectedVideos={selectedVideos}
+                    maxSelectedVideos={maxSelectedVideos}
+                    analyzeHref={selectedVideoIds.length > 0 ? buildAnalyzeHref(searchField.analyze_action, selectedVideoIds) : null}
+                    onRemoveVideo={handleRemoveVideo}
                 />
                 <CardsField
                     cardsField={currentCardsField}

@@ -17,6 +17,7 @@ type SearchFieldProps = {
     searchField: DanceShortsAnalyzerSearchFieldProps;
     keyword: string;
     loading: boolean;
+    statusMessage: string;
     onKeywordChange: (keyword: string) => void;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -25,17 +26,17 @@ export default function SearchField({
     searchField,
     keyword,
     loading,
+    statusMessage,
     onKeywordChange,
     onSubmit,
 }: SearchFieldProps) {
-    /*
-     * 画面上には Field 名や補足説明を出さず、MOCK の流れに合わせて入力と
-     * Search 操作だけを置きます。検索実行後の表示判断は CardsField 側へ渡します。
-     */
     return (
-        <section className="shrink-0 rounded-lg border border-white/14 bg-slate-950/54 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.24)] backdrop-blur-xl sm:p-4">
+        <section className="shrink-0 rounded-lg border border-white/14 bg-slate-900 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.24)] backdrop-blur-xl sm:p-4">
             <form className="flex min-w-0 flex-col gap-2 sm:flex-row" onSubmit={onSubmit}>
+                <label className="sr-only" htmlFor="analyzer-keyword">検索キーワード</label>
                 <input
+                    id="analyzer-keyword"
+                    aria-describedby="analyzer-search-help analyzer-search-status"
                     type="search"
                     aria-label="検索キーワード"
                     value={keyword}
@@ -52,6 +53,8 @@ export default function SearchField({
                     {loading ? '検索中' : searchField.button_label}
                 </button>
             </form>
+            <p id="analyzer-search-help" className="mt-2 text-xs leading-5 text-slate-300">保存済み動画のID・タイトル・説明・チャンネル名・タグを検索できます。</p>
+            <p id="analyzer-search-status" role="status" aria-live="polite" className="mt-2 text-sm text-slate-100">{statusMessage}</p>
         </section>
     );
 }

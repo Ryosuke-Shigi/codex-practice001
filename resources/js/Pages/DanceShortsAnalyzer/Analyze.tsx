@@ -29,8 +29,8 @@ export default function DanceShortsAnalyzerAnalyze({
             <BackgroundTraceEffect />
             <div aria-hidden="true" className="fixed inset-0 z-[2] bg-slate-950/86" />
 
-            <article className="relative z-10 mx-auto flex h-[calc(100dvh-1.5rem)] min-w-0 max-w-6xl flex-col gap-2 overflow-hidden">
-                <header className="min-w-0 shrink-0 rounded-lg border border-white/14 bg-white/10 p-2 backdrop-blur-xl sm:p-3">
+            <article className="relative z-10 mx-auto flex min-h-[calc(100dvh-1.5rem)] min-w-0 max-w-6xl flex-col gap-3">
+                <header className="min-w-0 shrink-0 rounded-lg border border-white/14 bg-gradient-to-r from-pink-900/80 to-blue-900/80 p-3 sm:p-4">
                     <div className="flex min-w-0 items-center justify-between gap-3">
                         <div className="min-w-0">
                             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-100/78">

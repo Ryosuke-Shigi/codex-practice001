@@ -40,6 +40,7 @@ export type DanceShortsAnalyzerSelectedVideo = {
     is_active: boolean;
     active_url: string;
     chart_color: string;
+    comparison_number: number;
     latest_snapshot: DanceShortsAnalyzerSnapshot | null;
 };
 
@@ -54,6 +55,10 @@ export type DanceShortsAnalyzerMetricCard = {
 export type DanceShortsAnalyzerChart = {
     title: string;
     option: EChartsOption;
+    observations: {
+        collected_at_label: string;
+        videos: (DanceShortsAnalyzerComparisonColumn & { value_label: string })[];
+    }[];
 };
 
 export type DanceShortsAnalyzerDeltaRow = {
@@ -85,6 +90,8 @@ export type DanceShortsAnalyzerPerHourRow = {
 export type DanceShortsAnalyzerComparisonColumn = {
     video_id: number;
     title: string;
+    comparison_number: number;
+    chart_color: string;
 };
 
 export type DanceShortsAnalyzerComparisonCell = {
@@ -217,69 +224,36 @@ export default function AnalyzeField({ analyzeField }: AnalyzeFieldProps) {
         activeComparison?.tables.per_hour[activeMetric] ?? null;
 
     return (
-        <>
-            <section className="min-w-0 shrink-0 rounded-lg border border-white/14 bg-slate-950/46 px-3 py-2 backdrop-blur-xl">
-                <div className="flex flex-wrap gap-2">
-                    {metricTabs.map((metric) => {
-                        const isActive = activeMetric === metric.key;
-
-                        return (
-                            <button
-                                key={metric.key}
-                                type="button"
-                                aria-pressed={isActive}
-                                onClick={() => setActiveMetric(metric.key)}
-                                className={[
-                                    'min-h-8 rounded-full border px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 sm:text-sm',
-                                    isActive
-                                        ? 'border-blue-200 bg-blue-500 text-white'
-                                        : 'border-white/16 bg-white/8 text-blue-50 hover:bg-white/14',
-                                ].join(' ')}
-                            >
-                                {metric.label}
-                            </button>
-                        );
-                    })}
+        <section className="min-w-0 space-y-4 rounded-xl border border-white/15 bg-slate-950 p-3 sm:p-5">
+            <AnalyzeSelectedVideoField selectedVideos={analyzeField.selected_videos} />
+            <div className="space-y-3 rounded-lg bg-slate-900 p-3">
+                <div aria-label="指標" className="flex flex-wrap gap-2">
+                    {metricTabs.map((metric) => (
+                        <button key={metric.key} type="button" aria-pressed={activeMetric === metric.key}
+                            onClick={() => setActiveMetric(metric.key)}
+                            className={`min-h-11 rounded-lg border px-3 text-sm font-bold focus-visible:ring-2 focus-visible:ring-blue-100 ${activeMetric === metric.key ? 'border-blue-200 bg-blue-600 text-white' : 'border-slate-600 bg-slate-900 text-slate-200'}`}>
+                            {metric.label}
+                        </button>
+                    ))}
                 </div>
-            </section>
-
-            <section className="min-h-0 min-w-0 flex-1 overflow-x-hidden rounded-lg border border-white/16 bg-slate-950/58 p-2 text-left shadow-[0_16px_40px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-4">
-                <div className="grid h-full min-h-0 min-w-0 gap-1.5 overflow-hidden max-sm:landscape:grid-cols-[60px_minmax(0,1fr)]">
-                    <AnalyzeSelectedVideoField
-                        selectedVideos={analyzeField.selected_videos}
-                    />
-
-                    {analyzeField.no_snapshot_message !== null ? (
-                        <div className="rounded-lg border border-dashed border-white/18 bg-white/8 px-4 py-5 text-sm font-semibold leading-6 text-slate-200/78">
-                            {analyzeField.no_snapshot_message}
+                <PeriodTabsField activePeriod={activePeriod} onChangePeriod={setActivePeriod} />
+            </div>
+            {analyzeField.no_snapshot_message !== null ? (
+                <p role="status" className="rounded-lg border border-dashed border-slate-600 p-4 text-sm text-slate-200">{analyzeField.no_snapshot_message}</p>
+            ) : (
+                <>
+                    <AnalyzeChartField key={`${activeMetric}-${activePeriod}`} charts={activeComparison?.charts ?? {}} activeMetric={activeMetric} />
+                    <div>
+                        <h2 className="mb-3 text-base font-bold text-white">区間ごとの変化</h2>
+                        <p className="mb-3 text-xs text-slate-300">「-」は欠測・計算不能、0は実測値です。各表は同じ区間・動画順で比較できます。</p>
+                        <div className="grid min-w-0 gap-4 [@media(min-width:768px)_and_(min-height:600px)]:grid-cols-2">
+                            {activeDeltaTable !== null && <AnalyzeDeltaTableField table={activeDeltaTable} />}
+                            {activePerHourTable !== null && <AnalyzePerHourTableField table={activePerHourTable} />}
                         </div>
-                    ) : (
-                        <div className="flex min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden">
-                            <PeriodTabsField
-                                activePeriod={activePeriod}
-                                onChangePeriod={setActivePeriod}
-                            />
-                            <AnalyzeChartField
-                                charts={activeComparison?.charts ?? {}}
-                                activeMetric={activeMetric}
-                            />
-                            <div className="grid min-h-0 min-w-0 flex-1 gap-1.5 overflow-y-auto overflow-x-hidden md:grid-cols-2">
-                                {activeDeltaTable !== null && (
-                                    <AnalyzeDeltaTableField
-                                        table={activeDeltaTable}
-                                    />
-                                )}
-                                {activePerHourTable !== null && (
-                                    <AnalyzePerHourTableField
-                                        table={activePerHourTable}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </section>
-        </>
+                    </div>
+                </>
+            )}
+        </section>
     );
 }
 
@@ -302,7 +276,7 @@ function PeriodTabsField({
                         aria-pressed={isActive}
                         onClick={() => onChangePeriod(period.key)}
                         className={[
-                            'min-h-6 rounded-md border px-2 text-[11px] font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100',
+                            'min-h-11 rounded-lg border px-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100',
                             isActive
                                 ? 'border-blue-100 bg-blue-500 text-white'
                                 : 'border-white/16 bg-white/8 text-blue-50 hover:bg-white/14',

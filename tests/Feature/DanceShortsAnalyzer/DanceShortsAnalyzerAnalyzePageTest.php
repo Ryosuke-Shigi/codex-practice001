@@ -343,6 +343,37 @@ class DanceShortsAnalyzerAnalyzePageTest extends TestCase
             );
     }
 
+    public function test_comparison_identity_and_observation_labels_survive_missing_snapshots(): void
+    {
+        $region = $this->region();
+        $missing = $this->video(['youtube_video_id' => 'missing']);
+        $video = $this->video(['youtube_video_id' => 'observed', 'title' => '<long> title {c0}']);
+        foreach ([['2026-06-01 00:00:00', 10, 2], ['2026-06-01 11:00:00', 10, 1]] as [$time, $views, $likes]) {
+            DanceShortVideoSnapshot::query()->create([
+                'video_id' => $video->getKey(), 'region_id' => $region->getKey(),
+                'view_count' => $views, 'like_count' => $likes, 'comment_count' => null,
+                'collected_at' => $time,
+            ]);
+        }
+        $this->get('/dance-shorts-analyzer/analyze?'.http_build_query(['video_ids' => [$missing->getKey(), $video->getKey()]]))
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('analyzeField.selected_videos.1.comparison_number', 2)
+            ->has('analyzeField.comparison.periods.day.charts.view_count.option.series', 1)
+            ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.0.itemStyle.color', '#22c55e')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.collected_at_label', '2026-06-01 11:00')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.videos.0.value_label', '-')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.videos.1.value_label', '10 回')
+            ->where('analyzeField.comparison.periods.day.charts.like_count.observations.1.videos.1.value_label', '1 件')
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.columns.1.comparison_number', 2)
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.columns.1.chart_color', '#22c55e')
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.rows.0.cells.0.value_label', '-')
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.rows.0.cells.1.value_label', '-1')
+            ->where('analyzeField.comparison.periods.day.tables.per_hour.like_count.rows.0.cells.1.value_label', '-0.09 / h')
+            ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.1.value_label', '0')
+            ->where('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows.0.cells.1.value_label', '0.00 / h')
+            );
+    }
+
     /**
      * @param  array<string, mixed>  $overrides
      */
