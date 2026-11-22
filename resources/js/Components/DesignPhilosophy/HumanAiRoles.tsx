@@ -104,6 +104,17 @@ export default function HumanAiRoles({
             <div className="dp-shell">
                 <SectionHeading section={section} />
 
+                <div className="dp-section-heading">
+                    <div className="dp-section-heading__copy">
+                        <RpgText as="p">
+                            DanceShortsRadarでは、実装後の別担当による確認で、補足情報への到達や数値の符号、選択状態の色に問題が見つかりました。指摘された箇所を修正し、確認した条件で再検証しました。
+                        </RpgText>
+                        <RpgText as="p">
+                            開発環境の導入手順では、設定例と導入後の確認方法を文書に残しました。内容レビューと自動検査がそれぞれ別の不足を捉え、説明と既存の検査が整合するように修正しました。
+                        </RpgText>
+                    </div>
+                </div>
+
                 <div className="dp-contract-heading">
                     <RpgText className="dp-technical">TASK CONTRACT / 9 FIELDS</RpgText>
                     <RpgText as="h3">AIが動く前に、境界を固定する</RpgText>
