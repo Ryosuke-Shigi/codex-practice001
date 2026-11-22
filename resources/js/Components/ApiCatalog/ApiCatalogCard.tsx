@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 
 import type { ApiCatalogNoteItem } from './ApiCatalogNotesPanel';
 import SearchButtons from './SearchButtons';
+import { apiCatalogDescriptionExcerpt } from './apiCatalogDescription';
 
 export type ApiCatalogCardItem = {
     apiKey?: string;
@@ -42,9 +43,7 @@ export default function ApiCatalogCard({ item, index }: ApiCatalogCardProps) {
 
     return (
         <motion.article
-            className={`group relative flex min-h-[260px] flex-col rounded-2xl border border-white/35 bg-slate-950/38 p-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.38),0_18px_38px_rgba(2,24,45,0.22)] backdrop-blur-2xl transition hover:border-cyan-100/55 hover:bg-slate-900/48 ${
-                item.detailHref ? 'cursor-pointer' : ''
-            }`}
+            className="group relative flex min-w-0 flex-col rounded-2xl border border-white/40 bg-slate-950/80 p-5 text-white shadow-xl"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -54,32 +53,23 @@ export default function ApiCatalogCard({ item, index }: ApiCatalogCardProps) {
             }}
             whileHover={{ y: -3 }}
         >
-            {/* detailHref を渡した一覧だけ、カード全体を詳細へのクリック領域にします。 */}
-            {item.detailHref && (
-                <Link
-                    href={item.detailHref}
-                    aria-label={`${title} の詳細を開く`}
-                    className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/35"
-                />
-            )}
-
-            <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
                 <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-cyan-100/70">
-                        {displayValue(item.providerKey)} / {displayValue(item.serviceKey)}
-                    </p>
-                    <h2 className="mt-1 line-clamp-2 text-lg font-semibold leading-tight text-white">
+                    <h2 className="break-words text-lg font-semibold leading-7 text-white">
                         {title}
                     </h2>
+                    <p className="mt-2 break-all text-xs leading-5 text-cyan-100">
+                        Provider: {displayValue(item.providerKey)}<br />Service: {displayValue(item.serviceKey)}
+                    </p>
                 </div>
-
-                <span className="shrink-0 rounded-full border border-cyan-100/35 bg-cyan-50/15 px-2.5 py-1 text-[0.68rem] font-semibold text-cyan-50">
-                    {displayValue(item.preferredVersion)}
-                </span>
             </div>
 
             <p className="mt-3 line-clamp-3 text-sm leading-6 text-cyan-50/86">
-                {displayValue(item.description)}
+                {apiCatalogDescriptionExcerpt(item.description)}
+            </p>
+
+            <p className="mt-3 break-words text-xs leading-6 text-cyan-100">
+                API版: {displayValue(item.preferredVersion)} / OpenAPI版: {displayValue(item.openapiVersion)}
             </p>
 
             {visibleSavedNotes.length > 0 && (
@@ -106,14 +96,16 @@ export default function ApiCatalogCard({ item, index }: ApiCatalogCardProps) {
             )}
 
             <div className="mt-auto pt-4">
-                <div className="min-w-0 text-xs font-semibold text-cyan-100/68">
-                    <p className="truncate">OpenAPI {displayValue(item.openapiVersion)}</p>
-                </div>
+                {item.detailHref && <Link href={item.detailHref} aria-label={`${title} の詳細を開く`}
+                    className="inline-flex min-h-11 items-center rounded-xl border border-cyan-200 bg-cyan-50 px-4 text-sm font-bold text-slate-950 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300">
+                    仕様・詳細を見る →
+                </Link>}
 
                 {/*
                     カードはモック/本番の両一覧で共通利用します。
                     外部検索URLはpropsで渡さず、SearchButtons側でAPI名/provider名から毎回生成します。
                 */}
+                <p className="mt-4 text-xs font-semibold text-cyan-100">外部で関連情報を検索 ↗</p>
                 <SearchButtons
                     title={item.title}
                     providerKey={item.providerKey}

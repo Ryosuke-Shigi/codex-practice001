@@ -4,7 +4,46 @@ import {
     type ApiCatalogSortKey,
 } from '@/Components/ApiCatalog/apiCatalogSort';
 
-import type { ApiCatalogItem, ApiCatalogPagination, ApiCatalogSyncStatus } from './types';
+import type { ApiCatalogFilters, ApiCatalogIndexProps, ApiCatalogItem, ApiCatalogPagination, ApiCatalogSyncStatus } from './types';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+function isNullableString(value: unknown) {
+    return value === null || typeof value === 'string';
+}
+
+/** 取得専用の部分応答は、React描画へ渡す前に各候補・メモ・同期状態まで検査します。 */
+export function isApiCatalogRefreshProps(value: unknown): value is Pick<ApiCatalogIndexProps,
+    'filters' | 'apiCatalogItems' | 'pagination' | 'syncStatus'> {
+    if (!isRecord(value) || !isApiCatalogFilters(value.filters) || !isApiCatalogPagination(value.pagination)
+        || !Array.isArray(value.apiCatalogItems)) return false;
+    const validItems = value.apiCatalogItems.every(item => isRecord(item)
+        && typeof item.id === 'number' && Number.isFinite(item.id)
+        && ['apiKey', 'title', 'description', 'providerKey'].every(key => typeof item[key] === 'string')
+        && ['serviceKey', 'preferredVersion', 'openapiVersion'].every(key => isNullableString(item[key]))
+        && typeof item.isActive === 'boolean'
+        && (item.notes === undefined || (Array.isArray(item.notes) && item.notes.every(note => isRecord(note)
+            && typeof note.id === 'number' && Number.isFinite(note.id) && typeof note.body === 'string'
+            && ['title', 'createdAt', 'updatedAt'].every(key => isNullableString(note[key]))))));
+    if (!validItems) return false;
+    const status = value.syncStatus;
+    const result = isRecord(status) ? status.result : null;
+    return status === null || (isRecord(status) && typeof status.id === 'number' && Number.isFinite(status.id)
+        && ['queued', 'running', 'completed', 'failed'].includes(status.status as string)
+        && typeof status.isRunning === 'boolean' && typeof status.isStale === 'boolean'
+        && ['errorMessage', 'startedAt', 'finishedAt', 'createdAt', 'updatedAt'].every(key => isNullableString(status[key]))
+        && isRecord(result) && ['totalCount', 'insertedCount', 'updatedCount', 'skippedCount', 'inactiveCount', 'failedCount']
+            .every(key => typeof result[key] === 'number' && Number.isFinite(result[key])));
+}
+
+export function isApiCatalogFilters(value: unknown): value is ApiCatalogFilters {
+    if (typeof value !== 'object' || value === null) return false;
+    const candidate = value as Partial<ApiCatalogFilters>;
+    return [candidate.keyword, candidate.providerKey, candidate.domain].every(field => field === null || typeof field === 'string')
+        && ['updated_desc', 'updated_asc', 'name_asc', 'name_desc'].includes(candidate.sortKey ?? '');
+}
 
 export function isApiCatalogPagination(value: unknown): value is ApiCatalogPagination {
     /*

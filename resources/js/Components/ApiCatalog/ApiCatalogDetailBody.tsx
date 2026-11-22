@@ -1,13 +1,8 @@
-/**
- * API Catalog 詳細ページ本文の表示 Component です。
- *
- * 技術行と notes panel の表示枠だけを担当し、API仕様本文の取得や保存メモ操作は別 Component / backend に委譲します。
- */
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
+import { apiCatalogDescriptionExcerpt } from './apiCatalogDescription';
 
 export type ApiCatalogDetailTechnicalRow = [label: string, value: string | null];
-
-type ApiCatalogDetailBodyProps = {
+type Props = {
     title: string;
     description: string | null;
     notesPanel: ReactNode;
@@ -15,74 +10,60 @@ type ApiCatalogDetailBodyProps = {
     isTechnicalCollapsible?: boolean;
     defaultTechnicalOpen?: boolean;
 };
-
-function displayValue(value: string | null) {
-    return value && value.trim() !== '' ? value : 'n/a';
+const labels: Record<string, string> = {
+    apiKey: 'API識別子', providerKey: 'Provider', serviceKey: 'Service', domain: 'Domain',
+    preferredVersion: 'API版', openapiVersion: 'OpenAPI版',
+    openapiJsonUrl: '仕様書 JSON', openapiYamlUrl: '仕様書 YAML', sourceLatestUpdatedAt: 'ソース更新日',
+};
+function safeSpecUrl(label: string, value: string | null) {
+    if (!['openapiJsonUrl', 'openapiYamlUrl'].includes(label) || !value) return null;
+    try {
+        const url = new URL(value);
+        return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+    } catch { return null; }
 }
 
-export default function ApiCatalogDetailBody({
-    title,
-    description,
-    notesPanel,
-    technicalRows,
-    isTechnicalCollapsible = false,
-    defaultTechnicalOpen = false,
-}: ApiCatalogDetailBodyProps) {
+/** 用途・原文・技術情報を調査メモより先に配置します。仕様本文の取得やメモ保存は行いません。 */
+export default function ApiCatalogDetailBody({ title, description, notesPanel, technicalRows,
+    isTechnicalCollapsible = false, defaultTechnicalOpen = false }: Props) {
     const [isTechnicalOpen, setIsTechnicalOpen] = useState(defaultTechnicalOpen);
-
-    /*
-     * 本文と技術情報の表示だけを担当します。
-     * NotesPanel の保存可否や保存URLは呼び出し元から完成済みのReactNodeとして受け取り、
-     * このComponentにはDB取得・保存判断を入れません。
-     */
-    const technicalRowsContent = (
-        <dl className="mt-4 grid gap-2 text-sm">
-            {technicalRows.map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-white/15 bg-black/18 p-3">
-                    <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100/56">
-                        {label}
-                    </dt>
-                    <dd className="mt-1 break-all font-mono text-xs leading-5 text-cyan-50/88">
-                        {displayValue(value)}
-                    </dd>
-                </div>
-            ))}
+    const technicalId = useId();
+    const technicalContent = (
+        <dl id={technicalId} className="mt-4 grid gap-3 sm:grid-cols-2">
+            {technicalRows.map(([label, value]) => {
+                const href = safeSpecUrl(label, value);
+                return (
+                    <div key={label} className="min-w-0 rounded-xl border border-white/25 bg-black/20 p-3">
+                        <dt className="text-xs font-semibold text-cyan-100">{labels[label] ?? label}</dt>
+                        <dd className="mt-1 break-all text-sm leading-6 text-white">
+                            {href ? <a href={href} target="_blank" rel="noreferrer" className="inline-block min-h-11 py-2 font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300">{labels[label]}を開く ↗</a> : value?.trim() || '未登録'}
+                        </dd>
+                    </div>
+                );
+            })}
         </dl>
     );
-
     return (
-        <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
-            <section className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">
-                <h2 className="text-2xl font-semibold text-white">{title}</h2>
-                <p className="mt-4 text-sm leading-7 text-cyan-50/86">
-                    {displayValue(description)}
-                </p>
-
-                {notesPanel}
+        <div className="grid min-w-0 gap-4">
+            <section aria-label="用途と説明" className="min-w-0 rounded-2xl border border-white/40 bg-slate-950/80 p-5 text-white sm:p-6">
+                <h2 className="text-xl font-semibold">用途・提供元の説明</h2>
+                <p className="mt-3 break-words text-sm leading-7 text-cyan-50">{apiCatalogDescriptionExcerpt(description).slice(0, 420)}{apiCatalogDescriptionExcerpt(description).length > 420 ? '…' : ''}</p>
+                <details className="mt-4">
+                    <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-cyan-100 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300">提供元の原文・注意事項を読む</summary>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 [overflow-wrap:anywhere]">{description?.trim() || '説明は登録されていません。'}</p>
+                </details>
             </section>
-
-            <aside className="rounded-2xl border border-white/35 bg-slate-950/36 p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.36),0_18px_40px_rgba(2,24,45,0.20)] backdrop-blur-2xl sm:p-6">
-                {isTechnicalCollapsible ? (
-                    <>
-                        <button
-                            type="button"
-                            onClick={() => setIsTechnicalOpen((current) => !current)}
-                            className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-cyan-100/35 bg-cyan-50/15 px-4 text-left text-sm font-bold text-cyan-50 transition hover:bg-cyan-50/24 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-100/30"
-                            aria-expanded={isTechnicalOpen}
-                        >
-                            <span>{isTechnicalOpen ? '技術情報を隠す' : '技術情報を表示'}</span>
-                            <span aria-hidden="true">{isTechnicalOpen ? '↑' : '↓'}</span>
-                        </button>
-
-                        {isTechnicalOpen && technicalRowsContent}
-                    </>
-                ) : (
-                    <>
-                        <h2 className="text-lg font-semibold text-white">技術情報</h2>
-                        {technicalRowsContent}
-                    </>
-                )}
-            </aside>
+            <section aria-label="技術情報" className="min-w-0 rounded-2xl border border-white/40 bg-slate-950/80 p-5 text-white sm:p-6">
+                {isTechnicalCollapsible ? <>
+                    <button type="button" onClick={() => setIsTechnicalOpen(current => !current)}
+                        aria-expanded={isTechnicalOpen} aria-controls={technicalId}
+                        className="min-h-11 rounded-xl border border-white/40 px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300">
+                        {isTechnicalOpen ? '技術情報を隠す' : '技術情報を表示'}
+                    </button>
+                    {isTechnicalOpen && technicalContent}
+                </> : <><h2 className="text-xl font-semibold">版・仕様書・ソース情報</h2>{technicalContent}</>}
+            </section>
+            <section aria-label={`${title}の調査メモ`} className="min-w-0 rounded-2xl border border-white/40 bg-slate-950/80 p-5 text-white sm:p-6">{notesPanel}</section>
         </div>
     );
 }

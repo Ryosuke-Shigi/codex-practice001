@@ -1,3 +1,4 @@
+import ApiCatalogResultsSummary from '@/Components/ApiCatalog/ApiCatalogResultsSummary';
 /**
  * API Discovery Hub モック一覧の Page Component です。
  *
@@ -61,7 +62,7 @@ function shouldIgnorePaginationKey(target: EventTarget | null) {
      * 一覧画面は ArrowLeft / ArrowRight でページ送りします。
      * 検索 input や select 操作中の矢印キーはフォーム側へ渡します。
      */
-    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
+    return target.closest('input, textarea, select, button, a, summary, [contenteditable="true"]') !== null;
 }
 
 function buildPagination(totalItems: number, currentPage: number): ApiCatalogPagination {
@@ -224,7 +225,7 @@ export default function MockIndex() {
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (shouldIgnorePaginationKey(event.target)) {
+            if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || shouldIgnorePaginationKey(event.target)) {
                 return;
             }
 
@@ -251,9 +252,9 @@ export default function MockIndex() {
             <Head title="API Catalog Mock" />
 
             <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 pb-5">
-                <header className="flex flex-wrap items-start justify-between gap-3">
+                <header className="flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-slate-950/80 p-4 text-white">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-950/70">
+                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
                             API Discovery Hub
                         </p>
                         <h1 className="mt-2 text-3xl font-semibold text-white drop-shadow-[0_8px_26px_rgba(3,25,48,0.34)] sm:text-4xl">
@@ -266,7 +267,7 @@ export default function MockIndex() {
                         開発段階選択へ戻る導線なので、一覧操作とは分けて扱います。
                     */}
                     <div className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-950/70 backdrop-blur-xl">
+                        <span className="rounded-full border border-cyan-100/35 bg-cyan-50/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100 backdrop-blur-xl">
                             Mock
                         </span>
                         <Link
@@ -315,6 +316,12 @@ export default function MockIndex() {
                     onSortKeyChange={updateSortKey}
                     onClear={() => updateFilters(defaultFilters)}
                 />
+
+                <ApiCatalogResultsSummary keyword={filters.keyword} providerKey={filters.providerKey} domain={filters.domain}
+                    sortKey={sortKey} totalItems={pagination.totalItems}
+                    onKeywordRemove={() => updateFilters({ ...filters, keyword: '' })}
+                    onProviderRemove={() => updateFilters({ ...filters, providerKey: '' })}
+                    onDomainRemove={() => updateFilters({ ...filters, domain: '' })} />
 
                 <ApiCatalogList
                     items={apiCatalogItems.map((item) => toApiCatalogListItem(item, returnUrl))}

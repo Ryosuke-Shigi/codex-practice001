@@ -18,7 +18,7 @@ const sizeClassNames = {
      * カード内と詳細ヘッダーで同じComponentを使うため、余白だけをsizeで切り替えます。
      * 検索リンク生成やボタン種別はここで分岐させず、見た目の差だけに留めます。
      */
-    compact: 'min-h-8 px-2.5 text-[0.72rem]',
+    compact: 'min-h-11 px-2.5 text-[0.72rem]',
     comfortable: 'min-h-10 px-4 text-sm',
 };
 
@@ -42,11 +42,7 @@ export default function SearchButtons({
     });
 
     return (
-        /*
-         * ApiCatalogCard ではカード全体に詳細リンクのoverlayがあります。
-         * relative z-20 をここで持つことで、検索ボタンだけは詳細遷移ではなく外部検索を優先できます。
-         */
-        <div className={`relative z-20 flex flex-wrap items-center gap-2 ${className}`}>
+        <div className={`flex flex-wrap items-center gap-2 ${className}`}>
             {links.map((link) => (
                 <a
                     key={link.key}

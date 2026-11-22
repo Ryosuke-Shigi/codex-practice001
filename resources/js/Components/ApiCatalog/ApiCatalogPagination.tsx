@@ -36,7 +36,7 @@ export default function ApiCatalogPagination({
     const canMoveNext = display.currentPage < display.totalPages;
 
     return (
-        <footer className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/30 bg-slate-950/28 px-4 py-3 text-sm text-cyan-50/82 backdrop-blur-2xl">
+        <footer aria-label="一覧のページ送り" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/40 bg-slate-950/80 px-4 py-3 text-sm text-cyan-50">
             {/*
                 件数 summary は mock / 本番で完全共通にします。
                 ページ送りボタン側では同じ display state だけを参照し、別々の page 計算を増やさないようにします。
