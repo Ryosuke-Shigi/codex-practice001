@@ -63,15 +63,19 @@ export default function Index({
         initialSyncStatus, getReturnUrl: currentListUrl, onPaginationReloaded: setVisiblePagination,
         isSearchPending: isSearching || isUnconfirmed || searchError !== null,
     });
+    const hasUnresolvedSearch = isUnconfirmed || searchError !== null;
+    const changeConditions = (change: () => void) => { focusAfterPage.current = false; change(); };
     const returnUrl = currentListUrl();
     const domainFilterOptions = domains.length > 0 ? domains : createProviderDomainOptions(providers);
 
     useEffect(() => {
-        if (!isSearching && !isUnconfirmed && focusAfterPage.current) {
+        if (!isSearching && focusAfterPage.current) {
             focusAfterPage.current = false;
-            resultHeadingRef.current?.focus();
+            const active = document.activeElement;
+            const anotherControl = active instanceof HTMLElement && active.closest('input, select, textarea, button, a, summary, [contenteditable=\"true\"]');
+            if (!hasUnresolvedSearch && !anotherControl) resultHeadingRef.current?.focus();
         }
-    }, [isSearching, isUnconfirmed]);
+    }, [isSearching, hasUnresolvedSearch]);
 
     useSwipeNavigation({
         // 左スワイプでは次のページへ進みます。
@@ -109,7 +113,10 @@ export default function Index({
         <PublicLayout className="px-4 py-5 sm:px-6 lg:px-8">
             <Head title="API Catalog" />
 
-            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 pb-5">
+            <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 pb-5"
+                onFocusCapture={event => {
+                    if (event.target instanceof HTMLElement && !event.target.closest('[aria-label="一覧のページ送り"]')) focusAfterPage.current = false;
+                }}>
                 <header className="flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-slate-950/80 p-4 text-white">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100">
@@ -168,28 +175,28 @@ export default function Index({
                     }))}
                     sortKey={sortKey}
                     hasActiveFilters={hasActiveFilters}
-                    onKeywordChange={updateKeyword}
-                    onProviderKeyChange={updateProviderKey}
-                    onDomainChange={updateDomain}
-                    onSortKeyChange={updateSortKey}
-                    onClear={clearFilters}
+                    onKeywordChange={value => changeConditions(() => updateKeyword(value))}
+                    onProviderKeyChange={value => changeConditions(() => updateProviderKey(value))}
+                    onDomainChange={value => changeConditions(() => updateDomain(value))}
+                    onSortKeyChange={value => changeConditions(() => updateSortKey(value))}
+                    onClear={() => changeConditions(clearFilters)}
                 />
 
                 <ApiCatalogSyncNotice message={syncMessage} status={syncStatus} showResult={showSyncResult} />
 
                 <ApiCatalogResultsSummary keyword={keyword} providerKey={providerKey} domain={domain} sortKey={sortKey}
                     resultHeadingRef={resultHeadingRef}
-                    totalItems={visiblePagination.totalItems} isUpdating={isSearching} isUnconfirmed={isUnconfirmed}
-                    onKeywordRemove={() => updateKeyword('')} onProviderRemove={() => updateProviderKey('')}
-                    onDomainRemove={() => updateDomain('')} />
+                    totalItems={visiblePagination.totalItems} isUpdating={isSearching} isUnconfirmed={hasUnresolvedSearch}
+                    onKeywordRemove={() => changeConditions(() => updateKeyword(''))} onProviderRemove={() => changeConditions(() => updateProviderKey(''))}
+                    onDomainRemove={() => changeConditions(() => updateDomain(''))} />
 
                 {searchError && <div role="alert" className="rounded-2xl bg-slate-950/80 p-4 text-white">
                     <p>{searchError}</p><button type="button" onClick={retrySearch} className="mt-2 min-h-11 rounded-xl border px-4">再試行</button>
                 </div>}
-                <ApiCatalogList items={isUnconfirmed ? [] : apiCatalogItems.map(item => toApiCatalogListItem(item, returnUrl))}
-                    isLoading={isSearching || isUnconfirmed} loadingMessage={searchError ? '条件を変更するか、再試行してください' : '検索結果を更新しています'} />
+                <ApiCatalogList items={hasUnresolvedSearch ? [] : apiCatalogItems.map(item => toApiCatalogListItem(item, returnUrl))}
+                    isLoading={isSearching || hasUnresolvedSearch} loadingMessage={searchError ? '条件を変更するか、再試行してください' : '検索結果を更新しています'} />
 
-                {!isSearching && !isUnconfirmed && <ApiCatalogPagination pagination={visiblePagination}
+                {!isSearching && !hasUnresolvedSearch && <ApiCatalogPagination pagination={visiblePagination}
                     onPrevious={() => { focusAfterPage.current = true; moveToPreviousPage(); }}
                     onNext={() => { focusAfterPage.current = true; moveToNextPage(); }} />}
 

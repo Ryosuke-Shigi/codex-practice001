@@ -54,4 +54,5 @@ it('distinguishes all eight import states and keeps the normal completion breakd
 it('preserves language names, successor identifiers, and a URL-only description', () => {
     expect(apiCatalogDescriptionExcerpt('Deprecated: use payments_v2 for C# clients.')).toBe('Deprecated: use payments_v2 for C# clients.');
     expect(apiCatalogDescriptionExcerpt('https://example.com/docs')).toBe('https://example.com/docs');
+    expect(apiCatalogDescriptionExcerpt('[ ](https://example.com/docs)')).toBe('[ ](https://example.com/docs)');
 });

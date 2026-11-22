@@ -15,6 +15,7 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
     const [searchError, setSearchError] = useState<string | null>(null);
     const requestId = useRef(0);
     const isRequestPending = useRef(false);
+    const hasFailedRequest = useRef(false);
     const lastRequest = useRef<[string, string, string, ApiCatalogSortKey, number] | null>(null);
 
     const isUnconfirmed = keyword.trim() !== (filters.keyword ?? '').trim()
@@ -27,6 +28,7 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
         let succeeded = false;
         lastRequest.current = [nextKeyword, nextProviderKey, nextDomain, nextSortKey, page];
         isRequestPending.current = true;
+        hasFailedRequest.current = false;
         setIsSearching(true);
         setSearchError(null);
         router.get('/api-catalog', buildApiCatalogQueryParams(nextKeyword, nextProviderKey, nextDomain, nextSortKey, page), {
@@ -35,6 +37,7 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
             onSuccess: response => {
                 succeeded = true;
                 if (id === requestId.current) {
+                    hasFailedRequest.current = false;
                     if (isApiCatalogPagination(response.props.pagination)) setVisiblePagination(response.props.pagination);
                     if (isApiCatalogFilters(response.props.filters)) {
                         setKeyword(response.props.filters.keyword ?? '');
@@ -45,13 +48,19 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
                 }
             },
             onError: () => {
-                if (id === requestId.current) setSearchError('検索結果を更新できませんでした。再試行するか条件を変更してください。');
+                if (id === requestId.current) {
+                    hasFailedRequest.current = true;
+                    setSearchError('検索結果を更新できませんでした。再試行するか条件を変更してください。');
+                }
             },
             onFinish: () => {
                 if (id === requestId.current) {
                     isRequestPending.current = false;
                     setIsSearching(false);
-                    if (!succeeded) setSearchError('検索結果を更新できませんでした。再試行するか条件を変更してください。');
+                    if (!succeeded) {
+                        hasFailedRequest.current = true;
+                        setSearchError('検索結果を更新できませんでした。再試行するか条件を変更してください。');
+                    }
                 }
             },
         });
@@ -72,8 +81,8 @@ export function useApiCatalogSearch(filters: ApiCatalogFilters, pagination: ApiC
     }, [canMoveNext, keyword, providerKey, domain, sortKey, visiblePagination.currentPage, visitList]);
 
     useEffect(() => {
-        // 既に応答queueへ入っていた同期再取得のpropsでも、入力中の新しい条件を戻しません。
-        if (isRequestPending.current) return;
+        // 旧propsでも入力中・未解決の失敗要求を戻しません。履歴復元はInertiaの再mountで初期化します。
+        if (isRequestPending.current || hasFailedRequest.current) return;
         setKeyword(filters.keyword ?? '');
         setProviderKey(filters.providerKey ?? '');
         setDomain(filters.domain ?? '');

@@ -4,8 +4,14 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { ApiCatalogIndexProps } from '@/Pages/ApiCatalog/types';
 const { get, post, reload, visit, axiosGet } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), reload: vi.fn(), visit: vi.fn(), axiosGet: vi.fn() }));
+const { listeners, on } = vi.hoisted(() => {
+    const listeners = new Map<string, (event: { detail: { visit: object } }) => void>();
+    return { listeners, on: vi.fn((name: string, callback: (event: { detail: { visit: object } }) => void) => {
+        listeners.set(name, callback); return () => { listeners.delete(name); };
+    }) };
+});
 vi.mock('@inertiajs/react', () => ({
-    Head: () => null, router: { get, reload, visit },
+    Head: () => null, router: { get, reload, visit, on },
     Link: ({ children, ...props }: { children: ReactNode; href: string }) => <a {...props}>{children}</a>,
 }));
 vi.mock('axios', () => ({ default: { post, get: axiosGet } }));
@@ -20,7 +26,7 @@ const base: ApiCatalogIndexProps = {
         providerKey: 'adyen.com', serviceKey: 'payments', preferredVersion: 'v1', openapiVersion: '3.1.0', isActive: true }],
 };
 beforeEach(async () => {
-    vi.clearAllMocks(); Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+    vi.clearAllMocks(); listeners.clear(); Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
     window.history.replaceState({}, '', '/api-catalog?keyword=webhooks&provider_key=adyen.com&domain=com&sort=name_asc&page=2');
     host = document.createElement('div'); document.body.append(host); root = createRoot(host);
     await act(async () => root.render(<Index {...base} />));
@@ -62,6 +68,8 @@ it('keeps the latest request pending, reports failed application, and allows con
     expect(host.textContent).toContain('検索条件が未適用');
     expect(host.textContent).not.toContain('検索結果 16件');
     expect(host.querySelector('[role="alert"]')).not.toBeNull();
+});
+it('allows a single condition to be removed from zero results', async () => {
     const zero = { ...base, pagination: { ...base.pagination, currentPage: 1, totalItems: 0, totalPages: 1, from: null, to: null }, apiCatalogItems: [] };
     await act(async () => root.render(<Index {...zero} />));
     expect(host.textContent).toContain('検索結果 0件');
@@ -175,4 +183,23 @@ it('does not navigate from the import breakdown control, but allows a list backg
     await act(async () => { control.click(); swipe(control); });
     expect(get).not.toHaveBeenCalled(); expect(post).not.toHaveBeenCalled(); expect(visit).not.toHaveBeenCalled();
     await act(async () => swipe(host.querySelector('main')!)); expect(get).toHaveBeenCalledTimes(1);
+});
+
+it('preserves failed search B against queued old props and retries B without showing old results', async () => {
+    await input('transfer'); const options = get.mock.calls[0][2];
+    await act(async () => { options.onError({}); options.onFinish(); });
+    await act(async () => root.render(<Index {...base} pagination={{ ...base.pagination, totalItems: 99 }} />));
+    expect(host.querySelector<HTMLInputElement>('input')!.value).toBe('transfer');
+    expect(host.textContent).not.toContain('検索結果 99件'); expect(host.querySelector('article')).toBeNull();
+    const retry = Array.from(host.querySelectorAll('button')).find(b => b.textContent === '再試行')!;
+    expect(retry).toBeDefined(); await act(async () => retry.click());
+    expect(get.mock.calls[1][1]).toEqual(get.mock.calls[0][1]);
+});
+it('does not steal input focus when a page request is superseded by typing', async () => {
+    await click('次のページ');
+    const field = host.querySelector<HTMLInputElement>('input')!;
+    await act(async () => field.focus()); await input('transfer');
+    const next = { ...base, filters: { ...base.filters, keyword: 'transfer' }, pagination: { ...base.pagination, currentPage: 1, from: 1, to: 6 } };
+    await act(async () => { root.render(<Index {...next} />); get.mock.calls[1][2].onSuccess({ props: next }); get.mock.calls[1][2].onFinish(); });
+    expect(document.activeElement).toBe(field);
 });
