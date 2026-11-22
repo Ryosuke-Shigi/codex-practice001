@@ -10,6 +10,7 @@ use App\Models\DanceShortRegion;
 use App\Models\DanceShortVideo;
 use App\Models\DanceShortVideoSnapshot;
 use App\Repositories\DanceShortsRadar\YouTubeVideoApiRepositoryInterface;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use RuntimeException;
@@ -188,6 +189,9 @@ class DanceShortsAnalyzerAnalyzePageTest extends TestCase
                 ->has('analyzeField.comparison.periods.day.tables.delta.view_count.rows', 1)
                 ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.0.value_label', '60')
                 ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.1.value_label', '120')
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.current_collected_at_label', '2026-06-01 03:00:00')
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.0.period_label', '2026-06-01 00:00:00 → 2026-06-01 03:00:00')
+                ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.1.period_label', '2026-06-01 01:00:00 → 2026-06-01 03:00:00')
                 ->where('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows.0.cells.0.value_label', '20.00 / h')
                 ->where('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows.0.cells.1.value_label', '60.00 / h')
             );
@@ -340,6 +344,80 @@ class DanceShortsAnalyzerAnalyzePageTest extends TestCase
                 ->where('analyzeField.no_snapshot_message', 'この動画には保存済みsnapshotがありません。')
                 ->where('analyzeField.active_video.youtube_video_id', 'no-snapshot-video')
                 ->has('analyzeField.regions', 0)
+            );
+    }
+
+    public function test_comparison_identity_and_observation_labels_survive_missing_snapshots(): void
+    {
+        $region = $this->region();
+        $missing = $this->video(['youtube_video_id' => 'missing']);
+        $video = $this->video(['youtube_video_id' => 'observed', 'title' => '<long> title {c0}']);
+        foreach ([['2026-06-01 00:00:00', 10, 2], ['2026-06-01 11:00:00', 10, 1]] as [$time, $views, $likes]) {
+            DanceShortVideoSnapshot::query()->create([
+                'video_id' => $video->getKey(), 'region_id' => $region->getKey(),
+                'view_count' => $views, 'like_count' => $likes, 'comment_count' => null,
+                'collected_at' => $time,
+            ]);
+        }
+        $this->get('/dance-shorts-analyzer/analyze?'.http_build_query(['video_ids' => [$missing->getKey(), $video->getKey()]]))
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('analyzeField.selected_videos.1.comparison_number', 2)
+            ->has('analyzeField.comparison.periods.day.charts.view_count.option.series', 1)
+            ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.0.itemStyle.color', '#22c55e')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.collected_at_label', '2026-06-01 11:00:00')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.videos.0.value_label', '-')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.videos.1.value_label', '10 回')
+            ->where('analyzeField.comparison.periods.day.charts.like_count.observations.1.videos.1.value_label', '1 件')
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.columns.1.comparison_number', 2)
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.columns.1.chart_color', '#22c55e')
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.rows.0.cells.0.value_label', '-')
+            ->where('analyzeField.comparison.periods.day.tables.delta.like_count.rows.0.cells.1.value_label', '-1')
+            ->where('analyzeField.comparison.periods.day.tables.per_hour.like_count.rows.0.cells.1.value_label', '-0.09 / h')
+            ->where('analyzeField.comparison.periods.day.tables.delta.view_count.rows.0.cells.1.value_label', '0')
+            ->where('analyzeField.comparison.periods.day.tables.per_hour.view_count.rows.0.cells.1.value_label', '0.00 / h')
+            );
+    }
+
+    public function test_dense_axis_keeps_a_single_valid_point_and_distinguishes_seconds(): void
+    {
+        $region = $this->region();
+        $dense = $this->video(['youtube_video_id' => 'dense']);
+        $single = $this->video(['youtube_video_id' => 'single']);
+        foreach (range(0, 60) as $minute) {
+            DanceShortVideoSnapshot::query()->create([
+                'video_id' => $dense->getKey(), 'region_id' => $region->getKey(),
+                'view_count' => 100 + $minute, 'like_count' => null,
+                'collected_at' => CarbonImmutable::parse('2026-06-01 12:00:05')->addMinutes($minute),
+            ]);
+        }
+        DanceShortVideoSnapshot::query()->create([
+            'video_id' => $single->getKey(), 'region_id' => $region->getKey(),
+            'view_count' => 0, 'like_count' => null, 'collected_at' => '2026-06-01 12:00:45',
+        ]);
+        $this->get('/dance-shorts-analyzer/analyze?'.http_build_query(['video_ids' => [$dense->getKey(), $single->getKey()]]))
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('analyzeField.comparison.periods.day.charts.view_count.option.series.1.showAllSymbol', true)
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.0.collected_at_label', '2026-06-01 12:00:05')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.collected_at_label', '2026-06-01 12:00:45')
+            ->where('analyzeField.comparison.periods.day.charts.view_count.observations.1.videos.1.value_label', '0 回')
+            );
+    }
+
+    public function test_small_positive_change_retains_rounded_per_hour_zero_and_actual_interval(): void
+    {
+        $region = $this->region();
+        $video = $this->video();
+        foreach ([['2026-06-01 00:00:00', 100], ['2026-06-11 00:00:00', 101]] as [$time, $views]) {
+            DanceShortVideoSnapshot::query()->create([
+                'video_id' => $video->getKey(), 'region_id' => $region->getKey(),
+                'view_count' => $views, 'collected_at' => $time,
+            ]);
+        }
+        $this->get('/dance-shorts-analyzer/analyze?'.http_build_query(['video_ids' => [$video->getKey()]]))
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('analyzeField.comparison.periods.all.tables.delta.view_count.rows.0.cells.0.value_label', '1')
+            ->where('analyzeField.comparison.periods.all.tables.per_hour.view_count.rows.0.cells.0.value_label', '0.00 / h')
+            ->where('analyzeField.comparison.periods.all.tables.per_hour.view_count.rows.0.cells.0.period_label', '2026-06-01 00:00:00 → 2026-06-11 00:00:00')
             );
     }
 

@@ -71,8 +71,10 @@ export default function CardsField({
         cardsField.end_message !== null;
     const showSortControls = cardsField.has_searched && videos.length > 0;
 
+    if (videos.length === 0) return null;
+
     return (
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border border-white/14 bg-slate-950/46 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:p-4">
+        <section className="flex min-w-0 flex-col rounded-lg border border-white/14 bg-slate-900 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:p-4">
             {showSortControls && (
                 <div className="mb-2 flex min-w-0 shrink-0 justify-end gap-1">
                     {cardsField.sort_options.map((sortOption) => {
@@ -83,6 +85,7 @@ export default function CardsField({
                                 key={sortOption.value}
                                 type="button"
                                 aria-pressed={isActive}
+                                disabled={loading}
                                 onClick={() => onSortChange(sortOption.value)}
                                 className={[
                                     'min-h-9 rounded-lg border px-3 text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100',
@@ -98,15 +101,7 @@ export default function CardsField({
                 </div>
             )}
 
-            {videos.length === 0 ? (
-                <div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-white/18 bg-white/8 px-4 py-10 text-center text-sm font-semibold leading-6 text-slate-200/78">
-                    {loading
-                        ? '検索中です。'
-                        : cardsField.empty_message ?? '表示できる動画はありません。'}
-                </div>
-            ) : (
-                <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
-                    {/* モバイルでも1画面内に収めるため、CardsField 内だけを縦スクロールにします。 */}
+                <div className="min-w-0">
                     <div className="grid min-w-0 gap-2 pb-1">
                         {videos.map((video) => {
                             const isSelected = selectedVideoIds.includes(
@@ -152,7 +147,6 @@ export default function CardsField({
                         </p>
                     )}
                 </div>
-            )}
         </section>
     );
 }
@@ -183,7 +177,7 @@ function VideoCard({
                 'min-w-0 rounded-lg border p-2 text-left shadow-[0_8px_20px_rgba(15,23,42,0.18)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-45',
                 isSelected
                     ? 'border-blue-100 bg-blue-600/55 shadow-[0_0_0_2px_rgba(147,197,253,0.34),0_12px_26px_rgba(29,78,216,0.28)]'
-                    : 'border-white/14 bg-white/9 hover:border-white/28 hover:bg-white/12',
+                    : 'border-slate-700 bg-slate-950 hover:border-slate-500',
             ].join(' ')}
         >
             <div className="flex min-w-0 gap-2">
@@ -202,6 +196,7 @@ function VideoCard({
                     )}
                 </div>
                 <div className="min-w-0 flex-1 py-0.5">
+                    <p className="mb-1 text-xs font-bold text-blue-100">{isSelected ? '✓ 選択中・押すと解除' : canSelect ? '選択する' : '選択上限'}</p>
                     <h2 className="line-clamp-2 text-sm font-black leading-5 text-white">
                         {video.title}
                     </h2>

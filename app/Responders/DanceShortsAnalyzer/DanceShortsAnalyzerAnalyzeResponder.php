@@ -87,6 +87,7 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             'is_active' => $video->videoId === $result->activeVideoId,
             'active_url' => $this->analyzeUrl($result, $video->videoId),
             'chart_color' => $this->chartColorForVideo($result, $video->videoId),
+            'comparison_number' => $this->comparisonNumberForVideo($result, $video->videoId),
             'latest_snapshot' => $video->latestSnapshot === null
                 ? null
                 : $this->snapshotProps($video->latestSnapshot),
@@ -104,7 +105,7 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             $videoAnalyses = $result->comparisonPeriodVideoAnalyses[$periodKey] ?? [];
             $periods[$periodKey] = [
                 'label' => $periodDefinition['label'],
-                'charts' => $this->comparisonChartProps($videoAnalyses, $periodKey),
+                'charts' => $this->comparisonChartProps($result, $videoAnalyses, $periodKey),
                 'tables' => [
                     'delta' => $this->comparisonMetricTables($result, $videoAnalyses, 'delta'),
                     'per_hour' => $this->comparisonMetricTables($result, $videoAnalyses, 'per_hour'),
@@ -121,14 +122,16 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
      * @param  array<int, DanceShortsAnalyzerVideoAnalysisDTO>  $videoAnalyses
      * @return array<string, array<string, mixed>>
      */
-    private function comparisonChartProps(array $videoAnalyses, string $periodKey): array
+    private function comparisonChartProps(DanceShortsAnalyzerAnalyzePageResultDTO $result, array $videoAnalyses, string $periodKey): array
     {
         $charts = [];
 
         foreach ($this->metricDefinitions() as $metricKey => $metricDefinition) {
             $charts[$metricKey] = [
                 'title' => $metricDefinition['chart_label'],
+                'observations' => $this->comparisonObservations($result, $videoAnalyses, $metricKey),
                 'option' => $this->comparisonChartOption(
+                    $result,
                     $videoAnalyses,
                     $metricKey,
                     $metricDefinition['chart_label'],
@@ -145,6 +148,7 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
      * @return array<string, mixed>
      */
     private function comparisonChartOption(
+        DanceShortsAnalyzerAnalyzePageResultDTO $result,
         array $videoAnalyses,
         string $metricKey,
         string $metricLabel,
@@ -157,16 +161,27 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             array_values($axisSnapshots),
         );
         $series = array_map(
-            fn (DanceShortsAnalyzerVideoAnalysisDTO $analysis): array => [
-                'name' => $analysis->video->title,
-                'type' => 'line',
-                'smooth' => true,
-                'symbolSize' => 7,
-                'lineStyle' => [
-                    'width' => 3,
-                ],
-                'data' => $this->comparisonChartValues($analysis, $metricKey, $axisTimestamps),
-            ],
+            function (DanceShortsAnalyzerVideoAnalysisDTO $analysis) use ($result, $metricKey, $axisTimestamps): array {
+                $values = $this->comparisonChartValues($analysis, $metricKey, $axisTimestamps);
+                $hasSinglePoint = count(array_filter($values, fn (?int $value): bool => $value !== null)) === 1;
+
+                return [
+                    'id' => (string) $analysis->video->videoId,
+                    'name' => $analysis->video->title,
+                    'showSymbol' => true,
+                    // 密な共通横軸でも、線分を持たない唯一の点を省略させない。
+                    'showAllSymbol' => $hasSinglePoint ? true : 'auto',
+                    'itemStyle' => ['color' => $this->chartColorForVideo($result, $analysis->video->videoId)],
+                    'type' => 'line',
+                    'smooth' => true,
+                    'symbolSize' => 7,
+                    'lineStyle' => [
+                        'color' => $this->chartColorForVideo($result, $analysis->video->videoId),
+                        'width' => 3,
+                    ],
+                    'data' => $values,
+                ];
+            },
             $videoAnalyses,
         );
 
@@ -176,6 +191,8 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             'tooltip' => [
                 'trigger' => 'axis',
                 'confine' => true,
+                // 観測詳細は描画領域の外で全文と値を表示し、狭幅でも隠さない。
+                'showContent' => false,
                 'backgroundColor' => 'rgba(15, 23, 42, 0.94)',
                 'borderColor' => 'rgba(96, 165, 250, 0.32)',
                 'textStyle' => [
@@ -294,6 +311,8 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
                     fn (DanceShortsAnalyzerSelectedVideoDTO $video): array => [
                         'video_id' => $video->videoId,
                         'title' => $video->title,
+                        'comparison_number' => $this->comparisonNumberForVideo($result, $video->videoId),
+                        'chart_color' => $this->chartColorForVideo($result, $video->videoId),
                     ],
                     $result->selectedVideos,
                 ),
@@ -351,9 +370,13 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
             $rows[] = [
                 'row_id' => $timestamp,
                 'period_label' => $this->periodLabel($periodLabelRow->previousSnapshot, $periodLabelRow->snapshot),
+                'current_collected_at_label' => $periodLabelRow->snapshot->collectedAt->format('Y-m-d H:i:s'),
                 'cells' => array_map(
                     fn (DanceShortsAnalyzerSelectedVideoDTO $video): array => [
                         'video_id' => $video->videoId,
+                        'period_label' => isset($rowsByVideoId[$video->videoId])
+                            ? $this->comparisonCellPeriodLabel($rowsByVideoId[$video->videoId])
+                            : null,
                         'value_label' => $this->comparisonMetricCellLabel(
                             $rowsByVideoId[$video->videoId] ?? null,
                             $metricKey,
@@ -380,6 +403,15 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
         }
 
         return false;
+    }
+
+    private function comparisonCellPeriodLabel(DanceShortsAnalyzerDeltaRowDTO|DanceShortsAnalyzerPerHourRowDTO $row): ?string
+    {
+        if ($row->previousSnapshot === null) {
+            return null;
+        }
+
+        return $row->previousSnapshot->collectedAt->format('Y-m-d H:i:s').' → '.$row->snapshot->collectedAt->format('Y-m-d H:i:s');
     }
 
     private function comparisonMetricCellLabel(
@@ -468,6 +500,52 @@ final readonly class DanceShortsAnalyzerAnalyzeResponder
     private function chartColors(): array
     {
         return ['#60a5fa', '#22c55e', '#f97316', '#a78bfa', '#facc15'];
+    }
+
+    private function comparisonNumberForVideo(DanceShortsAnalyzerAnalyzePageResultDTO $result, int $videoId): int
+    {
+        foreach ($result->selectedVideos as $index => $video) {
+            if ($video->videoId === $videoId) {
+                return $index + 1;
+            }
+        }
+
+        throw new \LogicException('Comparison video must be selected.');
+    }
+
+    /**
+     * @param  array<int, DanceShortsAnalyzerVideoAnalysisDTO>  $videoAnalyses
+     * @return array<int, array<string, mixed>>
+     */
+    private function comparisonObservations(DanceShortsAnalyzerAnalyzePageResultDTO $result, array $videoAnalyses, string $metricKey): array
+    {
+        $snapshotsByVideo = [];
+        foreach ($videoAnalyses as $analysis) {
+            foreach ($analysis->snapshots as $snapshot) {
+                $snapshotsByVideo[$analysis->video->videoId][$snapshot->collectedAt->getTimestamp()] = $snapshot;
+            }
+        }
+
+        $observations = [];
+        foreach ($this->comparisonChartAxisSnapshots($videoAnalyses) as $timestamp => $snapshot) {
+            $videos = [];
+            foreach ($result->selectedVideos as $video) {
+                $value = $this->snapshotMetricValue($snapshotsByVideo[$video->videoId][$timestamp] ?? null, $metricKey);
+                $videos[] = [
+                    'video_id' => $video->videoId,
+                    'title' => $video->title,
+                    'comparison_number' => $this->comparisonNumberForVideo($result, $video->videoId),
+                    'chart_color' => $this->chartColorForVideo($result, $video->videoId),
+                    'value_label' => $value === null ? '-' : $this->formatInteger($value).($metricKey === 'view_count' ? ' 回' : ' 件'),
+                ];
+            }
+            $observations[] = [
+                'collected_at_label' => $snapshot->collectedAt->format('Y-m-d H:i:s'),
+                'videos' => $videos,
+            ];
+        }
+
+        return $observations;
     }
 
     private function chartColorForVideo(DanceShortsAnalyzerAnalyzePageResultDTO $result, int $videoId): string
