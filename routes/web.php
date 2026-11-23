@@ -12,7 +12,7 @@ use App\Http\Controllers\DanceShortsRadarController;
 use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\DesignPhilosophyController;
-use App\Http\Controllers\LinksLanchar\ShowLinksLancharController;
+use App\Http\Controllers\LinksLauncher\ShowLinksLauncherController;
 use App\Http\Controllers\LumiLabProjectMockController;
 use App\Http\Controllers\Portfolio\PortfolioProjectEntryController;
 use App\Http\Controllers\ProjectLogsController;
@@ -37,12 +37,26 @@ Route::get('/projects', function () {
     return Inertia::render('Projects/Select');
 })->name('projects.select');
 
-Route::get('/portfolio/links-lanchar', PortfolioProjectEntryController::class)
-    ->name('portfolio.links-lanchar.show');
+Route::get('/portfolio/links-launcher', PortfolioProjectEntryController::class)
+    ->name('portfolio.links-launcher.show');
 
-Route::get('/links-lanchars/{linksLancharKey}', ShowLinksLancharController::class)
-    ->whereUuid('linksLancharKey')
-    ->name('links-lanchars.show');
+Route::get('/links-launchers/{linksLauncherKey}', ShowLinksLauncherController::class)
+    ->whereUuid('linksLauncherKey')
+    ->name('links-launchers.show');
+
+$redirectLegacyLauncher = static function (Request $request, ?string $linksLauncherKey = null) {
+    $url = $linksLauncherKey === null
+        ? route('portfolio.links-launcher.show', absolute: false)
+        : route('links-launchers.show', ['linksLauncherKey' => $linksLauncherKey], absolute: false);
+    // 同名のqueryで経路UUIDを上書きせず、重複キーやエンコードも元のまま引き継ぐ。
+    $query = $request->server('QUERY_STRING', '');
+
+    return redirect()->to($query === '' ? $url : $url.'?'.$query);
+};
+
+Route::get('/portfolio/links-lanchar', $redirectLegacyLauncher);
+Route::get('/links-lanchars/{linksLauncherKey}', $redirectLegacyLauncher)
+    ->whereUuid('linksLauncherKey');
 
 Route::get('/projects/logs', ProjectLogsController::class)
     ->name('projects.logs');
