@@ -50,7 +50,11 @@ type ProjectThemeStyle = CSSProperties & {
 
 const STAGE_TRANSITION_MS = 280;
 
-export default function ProjectSelectView() {
+type StageHistory = {
+    canGoBack: boolean;
+};
+
+export default function ProjectSelectView({ stageHistory }: { stageHistory?: StageHistory } = {}) {
     const { url: pageUrl } = usePage();
     const projectSelectUrl = getProjectSelectRuntimeUrl(pageUrl);
     const initialUrl = useRef(parseProjectSelectUrl(projectSelectUrl)).current;
@@ -62,6 +66,7 @@ export default function ProjectSelectView() {
     const [isStageMounted, setIsStageMounted] = useState(
         initialUrl.state.screen === 'stage-select',
     );
+    const [openedStageInPlace, setOpenedStageInPlace] = useState(false);
     const [visibleDescription, setVisibleDescription] = useState(
         projects[initialSelectedIndex].description,
     );
@@ -90,6 +95,7 @@ export default function ProjectSelectView() {
         [selectedProject],
     );
     const isProjectSelectable = screen === 'project-select';
+    const usesStageHistory = stageHistory !== undefined && !openedStageInPlace;
     const depthActionStatus = getDepthActionStatus(
         selectedProject.name,
         hasStages,
@@ -105,7 +111,7 @@ export default function ProjectSelectView() {
 
     const replaceProjectUrl = useCallback((href: string) => {
         internalPageUrlRef.current = href;
-        router.replace({ url: href });
+        router.replace({ url: href, preserveState: true });
     }, []);
 
     const selectProject = useCallback(
@@ -138,6 +144,7 @@ export default function ProjectSelectView() {
         }
 
         clearTransitionTimer();
+        setOpenedStageInPlace(true);
         setIsStageMounted(true);
 
         if (selectedProject.kind === 'staged') {
@@ -169,6 +176,13 @@ export default function ProjectSelectView() {
             return;
         }
 
+        if (usesStageHistory) {
+            if (stageHistory?.canGoBack) {
+                window.history.back();
+            }
+            return;
+        }
+
         clearTransitionTimer();
         replaceProjectUrl(
             buildProjectSelectHref(selectedProject.id, 'project'),
@@ -193,6 +207,8 @@ export default function ProjectSelectView() {
         replaceProjectUrl,
         screen,
         selectedProject.id,
+        stageHistory?.canGoBack,
+        usesStageHistory,
     ]);
 
     const visitStage = useCallback(
@@ -251,6 +267,7 @@ export default function ProjectSelectView() {
 
         clearTransitionTimer();
         navigatingHrefRef.current = null;
+        setOpenedStageInPlace(false);
         setSelectedIndex(getProjectIndex(parsedUrl.state.projectId));
         setScreen(parsedUrl.state.screen);
         setIsStageMounted(parsedUrl.state.screen === 'stage-select');
@@ -366,14 +383,16 @@ export default function ProjectSelectView() {
             <div className="project-select-backdrop" aria-hidden="true" />
 
             <header className="project-select-header">
-                <Link
-                    href="/"
-                    className="project-nav-link"
-                    aria-label="Portfolioへ戻る"
-                    title="Portfolioへ戻る"
-                >
-                    戻る
-                </Link>
+                {(!isStageMounted || !usesStageHistory) && (
+                    <Link
+                        href="/"
+                        className="project-nav-link"
+                        aria-label="Portfolioへ戻る"
+                        title="Portfolioへ戻る"
+                    >
+                        戻る
+                    </Link>
+                )}
             </header>
 
             <div className="project-select-main">
@@ -453,17 +472,19 @@ export default function ProjectSelectView() {
                         }
                     >
                         <div className="project-depth-select-heading">
-                            <button
-                                type="button"
-                                className="project-stage-back-button"
-                                disabled={screen !== 'stage-select'}
-                                onClick={returnToProjectSelection}
-                                aria-label="PROJECT選択へ戻る"
-                                title="PROJECT選択へ戻る"
-                            >
-                                <ArrowLeft aria-hidden="true" size={18} />
-                                戻る
-                            </button>
+                            {(!usesStageHistory || stageHistory?.canGoBack) && (
+                                <button
+                                    type="button"
+                                    className="project-stage-back-button"
+                                    disabled={screen !== 'stage-select'}
+                                    onClick={returnToProjectSelection}
+                                    aria-label={usesStageHistory ? '前の画面へ戻る' : 'PROJECT選択へ戻る'}
+                                    title={usesStageHistory ? '前の画面へ戻る' : 'PROJECT選択へ戻る'}
+                                >
+                                    <ArrowLeft aria-hidden="true" size={18} />
+                                    戻る
+                                </button>
+                            )}
                             <p>
                                 {hasStages
                                     ? 'Development stages'

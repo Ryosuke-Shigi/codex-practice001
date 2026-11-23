@@ -174,7 +174,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(container.textContent).toContain('IDEA BOARD');
         expect(container.textContent).not.toContain('PROTOTYPE');
         expect(routerReplace).toHaveBeenCalledWith(
-            { url: '/projects?project=api-discovery-hub&view=stages' },
+            { url: '/projects?project=api-discovery-hub&view=stages', preserveState: true },
         );
     });
 
@@ -295,6 +295,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         );
         expect(routerReplace).toHaveBeenLastCalledWith({
             url: '/projects?project=dance-shorts-radar',
+            preserveState: true,
         });
 
         pressKeyOn(selectedSphere(), 'ArrowLeft');
@@ -304,6 +305,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         );
         expect(routerReplace).toHaveBeenLastCalledWith({
             url: '/projects?project=api-discovery-hub',
+            preserveState: true,
         });
     });
 
@@ -351,6 +353,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(routerReplace).toHaveBeenCalledTimes(1);
         expect(routerReplace).toHaveBeenCalledWith({
             url: '/projects?project=api-discovery-hub&view=stages',
+            preserveState: true,
         });
     });
 
@@ -552,7 +555,7 @@ describe('ProjectSelectView two-stage project navigation', () => {
         act(() => buttonWithText('戻る').click());
 
         expect(routerReplace).toHaveBeenCalledWith(
-            { url: '/projects?project=dance-shorts-radar' },
+            { url: '/projects?project=dance-shorts-radar', preserveState: true },
         );
         expect(document.activeElement).toBe(selectedSphere());
     });

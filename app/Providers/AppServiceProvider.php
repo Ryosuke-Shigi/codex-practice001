@@ -49,12 +49,19 @@ use App\Repositories\Earthquake\EarthquakeMapPinSyncRunRepositoryInterface;
 use App\Repositories\Earthquake\EarthquakeXmlRepositoryInterface;
 use App\Repositories\Earthquake\JmaEarthquakeDetailXmlRepository;
 use App\Repositories\Earthquake\JmaEarthquakeXmlRepository;
+use App\Repositories\LinksLanchar\LinksLancharRepository;
+use App\Repositories\LinksLanchar\LinksLancharRepositoryInterface;
 use App\Repositories\Operations\ServerHealth\DiskUsageRepository;
 use App\Repositories\Operations\ServerHealth\DiskUsageRepositoryInterface;
 use App\Repositories\Operations\ServerHealth\MySqlUsageRepository;
 use App\Repositories\Operations\ServerHealth\MySqlUsageRepositoryInterface;
 use App\Repositories\Storage\FileStorageRepositoryInterface;
 use App\Repositories\Storage\LaravelFileStorageRepository;
+use App\Responders\LinksLanchar\LinkDestinationUrlSelector;
+use App\Responders\LinksLanchar\LinksLancharDestinationUrlResolver;
+use App\Responders\LinksLanchar\LinksLancharResponder;
+use App\Responders\LinksLanchar\PageDestinationUrlResolver;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -65,6 +72,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(LinksLancharRepositoryInterface::class, LinksLancharRepository::class);
+        $this->app->bind(LinkDestinationUrlSelector::class, static fn (Application $app): LinkDestinationUrlSelector => new LinkDestinationUrlSelector(
+            $app->make(LinksLancharDestinationUrlResolver::class),
+            $app->make(PageDestinationUrlResolver::class),
+        ));
+        $this->app->when(LinksLancharResponder::class)
+            ->needs('$topUrl')
+            ->give(static fn (): string => route('welcome', absolute: false));
+
         /*
          * ApiCatalog 側は API Discovery Hub 本体用の依存です。
          * Preview 側の Repository / DTO / Responder とは切り離します。
