@@ -2,7 +2,7 @@
 
 // @ts-expect-error Vitest runs in Node while the application tsconfig omits Node ambient types.
 import { readFileSync } from 'node:fs';
-import { act } from 'react';
+import { act, type ComponentProps } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AxiosHeaders } from 'axios';
@@ -34,6 +34,7 @@ const inertia = vi.hoisted(() => ({
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
+    Link: ({ children, ...props }: ComponentProps<'a'>) => <a {...props}>{children}</a>,
     router: {
         visit: inertia.visit,
         replace: inertia.replace,
@@ -92,7 +93,7 @@ function makeLink(
     };
 }
 
-function render(links: readonly VisibleLink[], selectedLinkKey: string | null = null) {
+function render(links: readonly VisibleLink[], selectedLinkKey: string | null = null, topUrl = '/fixture-site/top') {
     act(() =>
         root.render(
             <LinksLancharView
@@ -103,6 +104,7 @@ function render(links: readonly VisibleLink[], selectedLinkKey: string | null = 
                 }}
                 selectedLinkKey={selectedLinkKey}
                 linkList={{ links }}
+                navigation={{ topUrl }}
             />,
         ),
     );
@@ -261,6 +263,30 @@ describe('LinksLancharView', () => {
         host.remove();
         window.history.replaceState(null, '', '/');
         vi.unstubAllGlobals();
+    });
+
+    it('offers the site-provided TOP on a direct empty untitled launcher without inventing history Back', () => {
+        render([]);
+
+        const top = host.querySelector<HTMLAnchorElement>('a');
+        expect(top?.textContent).toBe('TOPへ');
+        expect(top?.getAttribute('href')).toBe('/fixture-site/top');
+        expect(findButton('戻る')).toBeNull();
+    });
+
+    it('keeps site TOP separate from the previous-history Back action', () => {
+        inertia.remembered.set('LinksLanchar:arrival', { url: launcherUrl });
+        render([makeLink(firstKey, '最初', '/projects/logs')], null, '/another-site/top');
+
+        expect(host.querySelector('a')?.getAttribute('href')).toBe('/another-site/top');
+        const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+        try {
+            click(getButton('戻る'));
+            expect(back).toHaveBeenCalledTimes(1);
+            expect(inertia.visit).not.toHaveBeenCalled();
+        } finally {
+            back.mockRestore();
+        }
     });
 
     it('shows the empty message when the launcher has no visible links', () => {

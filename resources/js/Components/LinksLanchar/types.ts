@@ -24,6 +24,7 @@ export type LinksLancharLink = {
 };
 
 export type LinksLancharPageProps = {
+    readonly navigation: { readonly topUrl: string };
     readonly linksLanchar: {
         readonly linksLancharKey: string;
         readonly title: string | null;

@@ -59,6 +59,7 @@ use App\Repositories\Storage\FileStorageRepositoryInterface;
 use App\Repositories\Storage\LaravelFileStorageRepository;
 use App\Responders\LinksLanchar\LinkDestinationUrlSelector;
 use App\Responders\LinksLanchar\LinksLancharDestinationUrlResolver;
+use App\Responders\LinksLanchar\LinksLancharResponder;
 use App\Responders\LinksLanchar\PageDestinationUrlResolver;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Event;
@@ -76,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
             $app->make(LinksLancharDestinationUrlResolver::class),
             $app->make(PageDestinationUrlResolver::class),
         ));
+        $this->app->when(LinksLancharResponder::class)
+            ->needs('$topUrl')
+            ->give(static fn (): string => route('welcome', absolute: false));
 
         /*
          * ApiCatalog 側は API Discovery Hub 本体用の依存です。

@@ -42,6 +42,7 @@ Migrationは `database/migrations/2026_11_23_000000_create_links_lanchar_tables.
 | app/Responders/LinksLanchar/LinksLancharResponder.php | 状態別HTTP応答・Inertia props |
 | 同ディレクトリのLinkDisplayResolver.php | 一覧単位の球体色割当と表示値の補完 |
 | 同ディレクトリのURL ResolverとSelector | 同じinterfaceの2実装を注入し、一箇所で選択 |
+| app/Providers/AppServiceProvider.php | サイト側で指定したTOPの相対URLを共通Responderへ遅延注入 |
 | resources/js/Pages/LinksLanchar/ | props・metaの入口と専用非公開画面 |
 | resources/js/Components/LinksLanchar/ | 型・画像／球体・背景・説明・選択と遷移のUI状態 |
 | resources/js/Hooks/useLinksLancharHistory.ts | 履歴項目ごとの到着印・再読込復元 |
@@ -54,7 +55,8 @@ URL解決はLinkDestinationUrlResolverに対するLinksLancharDestinationUrlReso
 
 ## DTO・素材・操作
 
-propsはlinksLanchar、selectedLinkKey、linkList.links。LinkDTOはlinkKey、解決済みdestinationUrl、displayValues。表示フラグ・内部ID・参照ID・生の日時・ModelをReactへ渡さず、DTOとReactで取得・再ソート・URL生成をやり直さない。
+propsはlinksLanchar、selectedLinkKey、linkList.links、navigation.topUrl。LinkDTOはlinkKey、解決済みdestinationUrl、displayValues。表示フラグ・内部ID・参照ID・生の日時・ModelをReactへ渡さず、DTOとReactで取得・再ソート・URL生成をやり直さない。
+サイトTOPはサイト側のDIで指定し、現在のPortfolioでは名前付きwelcomeルートの相対URLを使う。共通本体はnavigation.topUrlを受け取り、PortfolioのURLを固定しない。TOPの指定をDB・query・referrer・履歴から推測しない。
 選択画像を最優先し、画像では球体・重ねアイコン・球体影を出さない。球体は指定色か一覧単位の補完色、アイコン画像・指定Lucide・既定Linkアイコンの順に使う。補完タイトル・色・影・既定値をDBへ書き戻さない。
 素材はpublic/images/links-lanchar/portfolio/<作品ID>/に同梱。4作品の背景・選択はGIF、アイコンは透過PNG。動きを減らす設定では明示されたPNG静止版へ切り替え、浮遊・タイピング・背景演出を止める。ファイル名から静止版を推測しない。主画像なしなら静止版だけで画像表示を有効にしない。
 隣接プレビューは静止版を優先し、通常設定で静止版がなければ主画像を使う。動きを減らす設定で静止版がなければ、枠内の静的タイトルを表示する。
@@ -62,6 +64,7 @@ propsはlinksLanchar、selectedLinkKey、linkList.links。LinkDTOはlinkKey、�
 一覧内の選択変更は履歴置換、行き先へは同一タブで履歴追加。URLなしはpointer・Enter・Spaceで遷移しない。中央focusを維持し、左右キー・前後ボタン・左右swipeを使う。縦scrollや操作ボタンを奪わない。
 同一originはInertiaで開き、当該GETに対応する正常なHTML応答だけ通常の文書遷移へ切り替える。visitごとの識別値・元URL・応答形式を照合し、他の通信へ干渉しない。購読は応答処理・終了・取消・画面破棄時に解除する。
 新一覧と独立した段階選択の戻るはhistory.back()。既存作品内のリンクから段階選択へ入った場合も対象とし、直開きでは画面内戻るなし。旧一覧内から段階へ切り替えた場合の従来操作は残し、各作品内部の戻りリンクは変えない。旧一覧内のURL置換ではInertiaの状態を保持し、段階へ進んだ経緯と選択を失わない。
+公開一覧の「TOPへ」は履歴の「戻る」と独立したリンクで、直開き・公開0件・タイトルと説明なしでも表示する。履歴がある場合は両方を表示し、TOPリンクにもキーボードfocusと既存の戻るに相当する操作領域を確保する。
 履歴印はInertia remembered stateとその項目のURLで判定し、履歴長・referrerだけでは判断しない。実応答のbeforeUpdateと同じPageのnavigateを組にして履歴追加を認定し、同じPageのsuccessで到着印を1回保存する。初期表示・先読み・履歴復帰だけで新しい印を付けない。reload前の印を取得し、同URLの初回navigateにだけ復元する。対象Pageの判定と起動時の接続はapp.tsxに置き、共通HookへPage名を持たせない。
 
 ## 初期データと削除
@@ -74,10 +77,10 @@ propsはlinksLanchar、selectedLinkKey、linkList.links。LinkDTOはlinkKey、�
 [テスト正本](../testing.md)・[コマンド正本](../operations/command-registry.md)に従う。
 
 - tests/Feature/LinksLanchar/LinksLancharSchemaTest.php: 制約・UUID・削除境界。
-- tests/Feature/LinksLanchar/ShowLinksLancharTest.php: HTTP・props・所属・順序・状態・URL・補完。
+- tests/Feature/LinksLanchar/ShowLinksLancharTest.php: HTTP・props・所属・順序・状態・URL・補完・両入口のサイトTOP注入と差し替え。
 - tests/Feature/LinksLanchar/PortfolioLinksLancharSeederTest.php: 初期8項目・素材・再実行・明示削除。
 - tests/Unit/LinksLanchar/LinkDisplayResolverTest.php: 一覧単位の補完色・指定色の保持・画像の除外。
-- resources/js/Components/LinksLanchar/LinksLancharView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除。
+- resources/js/Components/LinksLanchar/LinksLancharView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除・TOPと履歴の戻るの独立性。
 - resources/js/Hooks/useLinksLancharHistory.test.tsx: アプリ内到着・直開き・先読み・置換・履歴復帰・購読解除。
 - resources/js/Hooks/useLinksLancharHistory.integration.test.tsx: 実Inertia・固定HTTP応答で、表示とブラウザ相当の履歴項目への保存を区別して検査。
 - resources/js/Components/ProjectHub/ProjectSelectView.integration.test.tsx: 実InertiaとProjects Pageで、旧一覧から段階選択への両戻る表示・同じ作品への復帰・focusを通常表示と動き軽減で検査。

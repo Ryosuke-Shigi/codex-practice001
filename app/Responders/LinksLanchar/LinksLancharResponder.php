@@ -15,6 +15,7 @@ final readonly class LinksLancharResponder
     public function __construct(
         private LinkDisplayResolver $display,
         private LinkDestinationUrlSelector $destinationUrls,
+        private string $topUrl,
     ) {}
 
     public function __invoke(Request $request, ShowLinksLancharResultDTO $result): Response
@@ -46,6 +47,7 @@ final readonly class LinksLancharResponder
             ],
             'selectedLinkKey' => $result->selectedLinkKey,
             'linkList' => (new LinkListDTO($links))->toArray(),
+            'navigation' => ['topUrl' => $this->topUrl],
         ])->toResponse($request);
     }
 }

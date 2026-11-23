@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
     useCallback,
@@ -77,21 +78,22 @@ export default function LinksLancharView(props: LinksLancharPageProps) {
         <main className="links-lanchar-page" style={theme}>
             {display && <LinksLancharBackground display={display} reducedMotion={reducedMotion} />}
 
-            {(canGoBack || linksLanchar.title !== null || linksLanchar.description !== null) && (
-                <header className="links-lanchar-header">
-                    {canGoBack && (
-                        <button
-                            className="links-lanchar-back"
-                            type="button"
-                            onClick={() => window.history.back()}
-                        >
-                            戻る
-                        </button>
-                    )}
-                    {linksLanchar.title !== null && <h1>{linksLanchar.title}</h1>}
-                    {linksLanchar.description !== null && <p>{linksLanchar.description}</p>}
-                </header>
-            )}
+            <header className="links-lanchar-header">
+                <Link className="links-lanchar-top" href={props.navigation.topUrl}>
+                    TOPへ
+                </Link>
+                {canGoBack && (
+                    <button
+                        className="links-lanchar-back"
+                        type="button"
+                        onClick={() => window.history.back()}
+                    >
+                        戻る
+                    </button>
+                )}
+                {linksLanchar.title !== null && <h1>{linksLanchar.title}</h1>}
+                {linksLanchar.description !== null && <p>{linksLanchar.description}</p>}
+            </header>
 
             {selected === null ? (
                 <p className="links-lanchar-empty">表示できるリンクはありません</p>

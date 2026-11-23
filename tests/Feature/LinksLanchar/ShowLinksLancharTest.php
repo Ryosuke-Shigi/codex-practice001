@@ -5,6 +5,8 @@ namespace Tests\Feature\LinksLanchar;
 use App\Models\Link;
 use App\Models\LinkPage;
 use App\Models\LinksLanchar;
+use App\Responders\LinksLanchar\LinksLancharResponder;
+use App\Support\Portfolio\PortfolioLinksLancharDefinition;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -28,6 +30,40 @@ class ShowLinksLancharTest extends TestCase
 
         $migration = require database_path('migrations/2026_11_23_000000_create_links_lanchar_tables.php');
         $migration->up();
+    }
+
+    public function test_both_public_entries_supply_the_site_top_even_for_an_empty_untitled_launcher(): void
+    {
+        $launcher = LinksLanchar::query()->create([
+            'links_lanchar_key' => PortfolioLinksLancharDefinition::LINKS_LANCHAR_KEY,
+        ]);
+
+        foreach (['/portfolio/links-lanchar', '/links-lanchars/'.$launcher->links_lanchar_key] as $url) {
+            $this->get($url.'?topUrl=https%3A%2F%2Fexample.invalid')
+                ->assertOk()
+                ->assertInertia(fn (Assert $props) => $props
+                    ->where('navigation.topUrl', '/')
+                    ->where('linksLanchar.title', null)
+                    ->where('linksLanchar.description', null)
+                    ->has('linkList.links', 0)
+                    ->etc()
+                );
+        }
+    }
+
+    public function test_the_host_binding_can_supply_a_different_top_without_changing_common_code(): void
+    {
+        $this->app->when(LinksLancharResponder::class)
+            ->needs('$topUrl')
+            ->give(static fn (): string => '/fixture-site/top');
+        $launcher = LinksLanchar::query()->create();
+
+        $this->get('/links-lanchars/'.$launcher->links_lanchar_key)
+            ->assertOk()
+            ->assertInertia(fn (Assert $props) => $props
+                ->where('navigation.topUrl', '/fixture-site/top')
+                ->etc()
+            );
     }
 
     public function test_a_visible_link_exposes_its_saved_page_url(): void
@@ -146,6 +182,7 @@ class ShowLinksLancharTest extends TestCase
                 ->missing('linksLanchar')
                 ->missing('selectedLinkKey')
                 ->missing('linkList')
+                ->missing('navigation')
                 ->etc()
             );
     }

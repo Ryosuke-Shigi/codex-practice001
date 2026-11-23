@@ -66,6 +66,7 @@
     font-size: 0.875rem;
 }
 
+.links-lanchar-top,
 .links-lanchar-back,
 .links-lanchar-arrow {
     display: grid;
@@ -79,15 +80,18 @@
     font-weight: 700;
 }
 
+.links-lanchar-top,
 .links-lanchar-back {
     padding-inline: 0.85rem;
 }
 
+.links-lanchar-top:hover,
 .links-lanchar-back:hover,
 .links-lanchar-arrow:hover {
     background: rgba(2, 6, 23, 0.86);
 }
 
+.links-lanchar-top:focus-visible,
 .links-lanchar-page button:focus-visible {
     outline: 3px solid var(--links-lanchar-accent);
     outline-offset: 4px;
