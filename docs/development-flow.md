@@ -40,7 +40,7 @@ PRODUCT
 
 ## Project Select / アプリログ専用ページ
 
-既存TOPのSTART後の正規入口は Project Select です。
+TOPのSTARTは [Portfolio版LinksLauncher](features/links-launcher.md) を開きます。旧 `/projects` の Project Select と段階選択は維持します。
 
 Project Select は同一画面内で PROJECT を選択してから、その PROJECT の Stage を選択する2段階の入口です。通常PROJECTのStageはすべて直接routeを持ち、Project SelectのStage選択からそのrouteへ遷移します。
 

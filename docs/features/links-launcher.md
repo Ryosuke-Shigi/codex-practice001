@@ -7,7 +7,7 @@
 ## 目的と入口
 
 DBの導線を `LinksLauncher → Link → LinksLauncher または page` として扱うPRODUCT実装。段数を固定せず、Portfolioの作品定義を共通本体へ埋め込まない。LumiLab専用版は含めない。
-旧TOPのSTART・旧作品選択は維持し、確認入口を `/portfolio/links-launcher` に追加している。START切替と本人確認後の旧専用コード撤去は別工程。
+TOPのSTARTは `/portfolio/links-launcher` を開く。旧 `/projects` の作品選択・段階選択と互換URLは維持し、START以外の既存導線は変えない。本人確認後の旧専用コード撤去は別工程。
 
 | Route | 役割 |
 | --- | --- |

@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -31,11 +33,16 @@ vi.mock('jquery.ripples', () => ({}));
 import Welcome from '@/Pages/Welcome';
 
 describe('Welcome entrypoint', () => {
-    it('uses Project Select as the START entrypoint', () => {
+    it('opens the portfolio LinksLauncher from START and keeps the other entrypoints', () => {
         const markup = renderToStaticMarkup(<Welcome />);
+        const container = document.createElement('div');
+        container.innerHTML = markup;
+        const links = Array.from(container.querySelectorAll('a'));
 
-        expect(markup).toContain('href="/projects"');
-        expect(markup).toContain('href="/design-philosophy"');
+        expect(links.map((link) => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([
+            ['START', '/portfolio/links-launcher'],
+            ['設計思想', '/design-philosophy'],
+        ]);
         expect(markup).not.toContain('href="/lab"');
     });
 });
