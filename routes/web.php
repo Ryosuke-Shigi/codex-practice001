@@ -12,7 +12,9 @@ use App\Http\Controllers\DanceShortsRadarController;
 use App\Http\Controllers\DanceShortsRadarDisplayCardWindowController;
 use App\Http\Controllers\DanceShortsRadarMockController;
 use App\Http\Controllers\DesignPhilosophyController;
+use App\Http\Controllers\LinksLanchar\ShowLinksLancharController;
 use App\Http\Controllers\LumiLabProjectMockController;
+use App\Http\Controllers\Portfolio\PortfolioProjectEntryController;
 use App\Http\Controllers\ProjectLogsController;
 use App\Http\Controllers\QuakeWavePreviewController;
 use App\Http\Controllers\QuakeWavePreviewFeedEntrySyncController;
@@ -34,6 +36,13 @@ Route::get('/', function () {
 Route::get('/projects', function () {
     return Inertia::render('Projects/Select');
 })->name('projects.select');
+
+Route::get('/portfolio/links-lanchar', PortfolioProjectEntryController::class)
+    ->name('portfolio.links-lanchar.show');
+
+Route::get('/links-lanchars/{linksLancharKey}', ShowLinksLancharController::class)
+    ->whereUuid('linksLancharKey')
+    ->name('links-lanchars.show');
 
 Route::get('/projects/logs', ProjectLogsController::class)
     ->name('projects.logs');
