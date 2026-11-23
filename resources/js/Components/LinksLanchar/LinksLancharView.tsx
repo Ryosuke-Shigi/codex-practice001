@@ -99,7 +99,12 @@ export default function LinksLancharView(props: LinksLancharPageProps) {
                 <p className="links-lanchar-empty">表示できるリンクはありません</p>
             ) : (
                 <>
-                    <div className="links-lanchar-stage" role="group" aria-label="リンクの選択">
+                    <div
+                        className={'links-lanchar-stage'
+                            + (selected.displayValues.selectionDisplayType === 'image' ? ' links-lanchar-stage--image' : '')}
+                        role="group"
+                        aria-label="リンクの選択"
+                    >
                         {previous && (
                             <div className="links-lanchar-neighbor links-lanchar-neighbor--previous" aria-hidden="true">
                                 <LinkSelectionVisual display={previous.displayValues} reducedMotion={reducedMotion} preview />

@@ -230,6 +230,14 @@
     right: 0;
 }
 
+/* Short landscape screens inherit the lateral layout and its full artwork height. */
+@media not all and (orientation: landscape) and (max-height: 540px) {
+    .links-lanchar-stage--image .links-lanchar-selection--image {
+        width: min(84vw, 48rem);
+        height: min(70vw, 68dvh, 40rem);
+    }
+}
+
 .links-lanchar-message {
     grid-row: 3;
     min-width: 0;
@@ -288,6 +296,7 @@
     .links-lanchar-selection { height: clamp(7rem, 55dvh, 16rem); }
     .links-lanchar-selection--sphere { height: auto; }
     .links-lanchar-message { min-height: 0; }
+
 }
 
 @media (prefers-reduced-motion: reduce) {
