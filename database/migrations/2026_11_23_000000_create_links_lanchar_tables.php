@@ -9,9 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('links_lanchars', function (Blueprint $table) {
+        Schema::create('links_launchers', function (Blueprint $table) {
             $table->id();
-            $table->uuid('links_lanchar_key')->unique();
+            $table->uuid('links_launcher_key')->unique();
             $table->string('title')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
@@ -27,7 +27,7 @@ return new class extends Migration
         Schema::create('links', function (Blueprint $table) {
             $table->id();
             $table->uuid('link_key')->unique();
-            $table->uuid('owner_links_lanchar_key');
+            $table->uuid('owner_links_launcher_key');
             $table->string('title')->nullable();
             $table->text('description')->nullable();
             $table->text('selection_image_reference')->nullable();
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->text('background_image_poster_reference')->nullable();
             $table->string('background_image_entrance_animation_name', 64)->nullable();
             $table->string('background_effect_name')->nullable();
-            $table->uuid('destination_links_lanchar_key')->nullable();
+            $table->uuid('destination_links_launcher_key')->nullable();
             $table->foreignId('destination_page_id')->nullable()->constrained('link_pages')->nullOnDelete();
             $table->integer('priority')->nullable();
             $table->boolean('is_visible')->default(true);
@@ -48,17 +48,17 @@ return new class extends Migration
             $table->dateTime('updated_at');
             $table->softDeletes();
 
-            $table->foreign('owner_links_lanchar_key', 'links_owner_launcher_fk')
-                ->references('links_lanchar_key')
-                ->on('links_lanchars')
+            $table->foreign('owner_links_launcher_key', 'links_owner_launcher_fk')
+                ->references('links_launcher_key')
+                ->on('links_launchers')
                 ->restrictOnDelete();
-            $table->foreign('destination_links_lanchar_key', 'links_destination_launcher_fk')
-                ->references('links_lanchar_key')
-                ->on('links_lanchars')
+            $table->foreign('destination_links_launcher_key', 'links_destination_launcher_fk')
+                ->references('links_launcher_key')
+                ->on('links_launchers')
                 ->nullOnDelete();
 
-            $table->index(['owner_links_lanchar_key', 'is_visible', 'deleted_at'], 'links_owner_visibility_idx');
-            $table->index('destination_links_lanchar_key', 'links_destination_launcher_idx');
+            $table->index(['owner_links_launcher_key', 'is_visible', 'deleted_at'], 'links_owner_visibility_idx');
+            $table->index('destination_links_launcher_key', 'links_destination_launcher_idx');
             $table->index('destination_page_id', 'links_destination_page_idx');
         });
 
@@ -67,7 +67,7 @@ return new class extends Migration
         DB::statement(<<<'SQL'
             ALTER TABLE links ADD COLUMN destination_reference_count INTEGER
                 GENERATED ALWAYS AS (
-                    (destination_links_lanchar_key IS NOT NULL) + (destination_page_id IS NOT NULL)
+                    (destination_links_launcher_key IS NOT NULL) + (destination_page_id IS NOT NULL)
                 ) VIRTUAL
                 CONSTRAINT links_at_most_one_destination CHECK (destination_reference_count <= 1)
             SQL);
@@ -77,6 +77,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('links');
         Schema::dropIfExists('link_pages');
-        Schema::dropIfExists('links_lanchars');
+        Schema::dropIfExists('links_launchers');
     }
 };

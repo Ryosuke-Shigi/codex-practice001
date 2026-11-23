@@ -21,7 +21,7 @@ class Link extends Model
 
     protected $fillable = [
         'link_key',
-        'owner_links_lanchar_key',
+        'owner_links_launcher_key',
         'title',
         'description',
         'selection_image_reference',
@@ -34,7 +34,7 @@ class Link extends Model
         'background_image_poster_reference',
         'background_image_entrance_animation_name',
         'background_effect_name',
-        'destination_links_lanchar_key',
+        'destination_links_launcher_key',
         'destination_page_id',
         'priority',
         'is_visible',
@@ -84,19 +84,19 @@ class Link extends Model
     }
 
     /**
-     * @return BelongsTo<LinksLanchar, $this>
+     * @return BelongsTo<LinksLauncher, $this>
      */
-    public function ownerLinksLanchar(): BelongsTo
+    public function ownerLinksLauncher(): BelongsTo
     {
-        return $this->belongsTo(LinksLanchar::class, 'owner_links_lanchar_key', 'links_lanchar_key');
+        return $this->belongsTo(LinksLauncher::class, 'owner_links_launcher_key', 'links_launcher_key');
     }
 
     /**
-     * @return BelongsTo<LinksLanchar, $this>
+     * @return BelongsTo<LinksLauncher, $this>
      */
-    public function destinationLinksLanchar(): BelongsTo
+    public function destinationLinksLauncher(): BelongsTo
     {
-        return $this->belongsTo(LinksLanchar::class, 'destination_links_lanchar_key', 'links_lanchar_key');
+        return $this->belongsTo(LinksLauncher::class, 'destination_links_launcher_key', 'links_launcher_key');
     }
 
     /**

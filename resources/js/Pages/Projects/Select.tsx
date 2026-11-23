@@ -1,8 +1,8 @@
 import ProjectSelectView from '@/Components/ProjectHub/ProjectSelectView';
-import useLinksLancharHistory from '@/Hooks/useLinksLancharHistory';
+import useLinksLauncherHistory from '@/Hooks/useLinksLauncherHistory';
 
 export default function Select() {
-    const canGoBack = useLinksLancharHistory();
+    const canGoBack = useLinksLauncherHistory();
 
     return <ProjectSelectView stageHistory={{ canGoBack }} />;
 }

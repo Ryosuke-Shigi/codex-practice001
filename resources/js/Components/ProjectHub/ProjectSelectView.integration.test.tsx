@@ -6,7 +6,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-import { observeLinksLancharArrivals } from '@/Hooks/useLinksLancharHistory';
+import { observeLinksLauncherArrivals } from '@/Hooks/useLinksLauncherHistory';
 import Select from '@/Pages/Projects/Select';
 
 vi.mock('@/Components/Effects/AquaParticlesBackground', () => ({ default: () => null }));
@@ -60,7 +60,7 @@ async function boot(url: string, reduced: boolean) {
         await createInertiaApp({
             id: host!.id, page: pageFixture(url), resolve: () => Select, progress: false,
             setup({ el, App, props }) {
-                stopObserving = observeLinksLancharArrivals((page) => page.component === 'Projects/Select'
+                stopObserving = observeLinksLauncherArrivals((page) => page.component === 'Projects/Select'
                     && new URL(page.url, window.location.origin).searchParams.get('view') === 'stages');
                 root = createRoot(el);
                 root.render(<App {...props} />);
