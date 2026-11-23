@@ -61,7 +61,7 @@ propsはlinksLanchar、selectedLinkKey、linkList.links。LinkDTOはlinkKey、�
 選択GIFは矩形containで全景を保ち、説明は暗い下地で可読性を確保。画像なしは現行配色・標準球体・Lucideを使う。
 一覧内の選択変更は履歴置換、行き先へは同一タブで履歴追加。URLなしはpointer・Enter・Spaceで遷移しない。中央focusを維持し、左右キー・前後ボタン・左右swipeを使う。縦scrollや操作ボタンを奪わない。
 同一originはInertiaで開き、当該GETに対応する正常なHTML応答だけ通常の文書遷移へ切り替える。visitごとの識別値・元URL・応答形式を照合し、他の通信へ干渉しない。購読は応答処理・終了・取消・画面破棄時に解除する。
-新一覧と独立した段階選択の戻るはhistory.back()。既存作品内のリンクから段階選択へ入った場合も対象とし、直開きでは画面内戻るなし。旧一覧内から段階へ切り替えた場合の従来操作は残し、各作品内部の戻りリンクは変えない。
+新一覧と独立した段階選択の戻るはhistory.back()。既存作品内のリンクから段階選択へ入った場合も対象とし、直開きでは画面内戻るなし。旧一覧内から段階へ切り替えた場合の従来操作は残し、各作品内部の戻りリンクは変えない。旧一覧内のURL置換ではInertiaの状態を保持し、段階へ進んだ経緯と選択を失わない。
 履歴印はInertia remembered stateとその項目のURLで判定し、履歴長・referrerだけでは判断しない。実応答のbeforeUpdateと同じPageのnavigateを組にして履歴追加を認定し、同じPageのsuccessで到着印を1回保存する。初期表示・先読み・履歴復帰だけで新しい印を付けない。reload前の印を取得し、同URLの初回navigateにだけ復元する。対象Pageの判定と起動時の接続はapp.tsxに置き、共通HookへPage名を持たせない。
 
 ## 初期データと削除
@@ -80,6 +80,7 @@ propsはlinksLanchar、selectedLinkKey、linkList.links。LinkDTOはlinkKey、�
 - resources/js/Components/LinksLanchar/LinksLancharView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除。
 - resources/js/Hooks/useLinksLancharHistory.test.tsx: アプリ内到着・直開き・先読み・置換・履歴復帰・購読解除。
 - resources/js/Hooks/useLinksLancharHistory.integration.test.tsx: 実Inertia・固定HTTP応答で、表示とブラウザ相当の履歴項目への保存を区別して検査。
+- resources/js/Components/ProjectHub/ProjectSelectView.integration.test.tsx: 実InertiaとProjects Pageで、旧一覧から段階選択への両戻る表示・同じ作品への復帰・focusを通常表示と動き軽減で検査。
 - 既存ProjectHubのPHP・React: 旧入口と作品URLの回帰。
 
 Compose rootから新規Migrationと専用Seederだけを適用する。fresh／refresh／resetや全Seeder実行を初期導入手順にしない。

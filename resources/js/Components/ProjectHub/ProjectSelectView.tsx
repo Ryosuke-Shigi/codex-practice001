@@ -111,7 +111,7 @@ export default function ProjectSelectView({ stageHistory }: { stageHistory?: Sta
 
     const replaceProjectUrl = useCallback((href: string) => {
         internalPageUrlRef.current = href;
-        router.replace({ url: href });
+        router.replace({ url: href, preserveState: true });
     }, []);
 
     const selectProject = useCallback(
