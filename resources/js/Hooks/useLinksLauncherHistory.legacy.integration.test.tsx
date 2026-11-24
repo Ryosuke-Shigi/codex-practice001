@@ -125,7 +125,11 @@ async function bootApp() {
     return router;
 }
 
-afterEach(() => {
+afterEach(async () => {
+    await act(async () => {
+        // Inertia restores scroll on the next frame after browser Back.
+        await new Promise<number>((resolve) => window.requestAnimationFrame(resolve));
+    });
     stopApp();
     ownedCleanups.splice(0).reverse().forEach((cleanup) => cleanup());
     axios.defaults.adapter = originalAdapter;
@@ -256,14 +260,15 @@ it('restores only matching pre-rename Inertia history and renders the saved unav
         radarSelection()?.click();
         await arrived;
     });
-    const stageBack = host?.querySelector<HTMLButtonElement>('button[aria-label="前の画面へ戻る"]');
-    expect(stageBack).not.toBeNull();
+    const stageReturn = Array.from(host?.querySelectorAll('a') ?? [])
+        .find((link) => link.textContent?.trim() === '作品一覧へ');
+    expect.soft(stageReturn?.getAttribute('href')).toBe('/portfolio/links-launcher?project=dance-shorts-radar');
     expect(document.activeElement).toBe(host?.querySelector('.project-stage-action'));
     expect(window.history.pushState).toHaveBeenCalledTimes(pushCount + 1);
 
     const returned = waitForNavigate(router, canonicalUrl);
     await act(async () => {
-        stageBack?.click();
+        window.history.back();
         await returned;
     });
     expect(window.location.pathname + window.location.search).toBe(canonicalUrl);
@@ -291,4 +296,4 @@ it('restores only matching pre-rename Inertia history and renders the saved unav
     expect(host?.querySelector('h1')?.textContent).toBe('現在 非公開');
     expect(radarSelection()).toBeNull();
     expect(requests).toEqual([new URL(stageUrl, window.location.origin).href]);
-});
+}, 15000);

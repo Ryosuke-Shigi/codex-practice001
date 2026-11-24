@@ -1,4 +1,4 @@
-import type { Page, PendingVisit } from '@inertiajs/core';
+import type { Page, PageProps, PendingVisit } from '@inertiajs/core';
 import { router, usePage } from '@inertiajs/react';
 import { useEffect, useSyncExternalStore } from 'react';
 
@@ -8,7 +8,8 @@ const historyChangedEvent = 'links-launcher:history-changed';
 const launcherRoute = /^\/(?:portfolio\/links-(?:lanchar|launcher)|links-(?:lanchars|launchers)\/[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12})(?=[?#]|$)/;
 
 type Arrival = {
-    url: string;
+    readonly url: string;
+    readonly sourceUrl?: string;
 };
 
 // remember直後はReactのPageに書き込みが反映されていない。復元値とpropsの両方で同じ書き込みを確認する。
@@ -35,7 +36,8 @@ function isArrival(value: unknown): value is Arrival {
     return typeof value === 'object'
         && value !== null
         && 'url' in value
-        && typeof value.url === 'string';
+        && typeof value.url === 'string'
+        && (!('sourceUrl' in value) || typeof value.sourceUrl === 'string');
 }
 
 function historyPath(href: string): string | null {
@@ -55,71 +57,97 @@ function rememberedMarker(key: string, page?: Page): unknown {
     return page.rememberedState?.[key];
 }
 
-function hasLegacyArrival(path: string, page?: Page): boolean {
+function readLegacyArrival(path: string, page?: Page): Arrival | null {
     const arrival = rememberedMarker(legacyHistoryKey, page);
     if (!isArrival(arrival)) {
-        return false;
+        return null;
     }
 
     const launcher = canonicalLauncherHistoryUrl(arrival.url);
     if (launcher !== null) {
-        return launcher === path;
+        return launcher === path ? arrival : null;
     }
 
-    return localPath(arrival.url) === path && path.startsWith('/projects?')
+    const isStage = localPath(arrival.url) === path && path.startsWith('/projects?')
         && new URL(path, window.location.origin).searchParams.get('view') === 'stages';
+    return isStage ? arrival : null;
 }
 
-function hasArrival(page?: Page): boolean {
+/** URL置換と再読込では、戻るの表示有無に関係なく現在の履歴項目の印を引き継ぐ。 */
+export function readLinksLauncherArrival(page?: Page): Arrival | null {
     const path = historyPath(window.location.href);
     if (path === null) {
-        return false;
+        return null;
     }
     const arrival = rememberedMarker(historyKey, page);
 
-    return arrival === undefined || arrival === null
-        ? hasLegacyArrival(path, page)
-        : isArrival(arrival) && arrival.url === path;
+    if (arrival === undefined || arrival === null) {
+        return readLegacyArrival(path, page);
+    }
+
+    return isArrival(arrival) && arrival.url === path ? arrival : null;
 }
 
 /** アプリ内で遷移してできた履歴項目に、画面内で戻れる状態を残します。 */
-export function rememberLinksLauncherArrival(page: Page): void {
+export function rememberLinksLauncherArrival(page: Page, sourceUrl?: string): void {
     const url = historyPath(page.url);
 
     if (url === null || url !== historyPath(window.location.href)) {
         return;
     }
 
-    const arrival = { url };
+    const source = sourceUrl === undefined ? null : historyPath(sourceUrl);
+    const arrival: Arrival = source === null ? { url } : { url, sourceUrl: source };
     lastWrite = { props: page.props, arrival };
     router.remember(arrival, historyKey);
     window.dispatchEvent(new Event(historyChangedEvent));
 }
 
+function matchesReloadPageUrl(browserUrl: string, responseUrl: string): boolean {
+    const browserPath = canonicalLauncherHistoryUrl(browserUrl);
+    const responsePath = canonicalLauncherHistoryUrl(responseUrl);
+    if (browserPath === null || responsePath === null) {
+        return false;
+    }
+
+    const browser = new URL(browserPath, window.location.origin);
+    const response = new URL(responsePath, window.location.origin);
+    // サーバーによるキー順・符号化の違いを許容し、同名キーの値の順序と件数は保つ。
+    browser.searchParams.sort();
+    response.searchParams.sort();
+
+    return browser.pathname === response.pathname && browser.search === response.search
+        && (response.hash === '' || response.hash === browser.hash);
+}
+
 /**
  * Inertiaは再読込時にrememberedStateを消すため、初期化より前に現在の項目を読みます。
- * 再読込直後の同じURLに限り、アプリ内で遷移したときの状態を復元します。
+ * 同じ公開一覧の応答なら、初期化時に新しい項目が増えないようブラウザーのURL表記を保ちます。
  */
-export function prepareLinksLauncherHistoryReload(): void {
+export function prepareLinksLauncherHistoryReload<TProps extends PageProps>(initialPage: Page<TProps>): Page<TProps> {
     const navigation = performance.getEntriesByType('navigation')[0];
 
     if (!(navigation && 'type' in navigation && navigation.type === 'reload')
-        || window.history.state === null) {
-        return;
+        || !window.history.state?.page) {
+        return initialPage;
     }
 
-    const initialUrl = historyPath(window.location.href);
+    const initialUrl = localPath(window.location.href);
     // createInertiaAppがsetupの前に履歴を復号します。Appの描画でrouter.initが走る前に取得します。
-    if (initialUrl === null || !hasArrival()) {
-        return;
+    const arrival = readLinksLauncherArrival();
+    if (initialUrl === null || arrival === null || !matchesReloadPageUrl(initialUrl, initialPage.url)) {
+        return initialPage;
     }
 
     const stop = router.on('navigate', ({ detail: { page } }) => {
         stop();
-        if (historyPath(page.url) === initialUrl) {
-            rememberLinksLauncherArrival(page);
+        if (page.component === initialPage.component && page.props === initialPage.props
+            && localPath(page.url) === initialUrl) {
+            rememberLinksLauncherArrival(page, arrival.sourceUrl);
         }
     });
+
+    return { ...initialPage, url: initialUrl };
 }
 
 /**
@@ -131,7 +159,7 @@ export function observeStaleLauncherArrival(version: Page['version'], legacyShow
         entry: unknown;
         source: string;
         target: string;
-        marked: Promise<boolean>;
+        arrival: Promise<Arrival | null>;
         visit?: PendingVisit;
         response?: Page;
         succeeded?: boolean;
@@ -142,18 +170,19 @@ export function observeStaleLauncherArrival(version: Page['version'], legacyShow
         clear();
         const source = localPath(window.location.href);
         const target = canonicalLauncherHistoryUrl(window.location.href);
-        if (!version || source === null || target === null || source === target || !window.history.state?.page) {
+        if (!version || source === null || target === null || !window.history.state?.page) {
             return;
         }
 
-        const marked = router.decryptHistory().then((saved) => {
-            const marker = saved.rememberedState?.[legacyHistoryKey];
-            return saved.component === legacyShow && typeof saved.url === 'string'
+        const arrival = router.decryptHistory().then((saved) => {
+            const legacy = source !== target;
+            const marker = saved.rememberedState?.[legacy ? legacyHistoryKey : historyKey];
+            return saved.component === (legacy ? legacyShow : currentShow) && typeof saved.url === 'string'
                 && typeof saved.version === 'string' && saved.version.length > 0 && saved.version !== version
                 && localPath(saved.url) === source && isArrival(marker)
-                && localPath(marker.url) === source;
-        }, () => false);
-        refresh = { entry: window.history.state, source, target, marked };
+                && localPath(marker.url) === source ? marker : null;
+        }, () => null);
+        refresh = { entry: window.history.state, source, target, arrival };
     };
 
     window.addEventListener('popstate', capture);
@@ -173,6 +202,13 @@ export function observeStaleLauncherArrival(version: Page['version'], legacyShow
             if (refresh?.visit && refresh.entry === window.history.state && page.component === currentShow
                 && page.version === version
                 && localPath(page.url)?.split(/[?#]/, 1)[0] === refresh.target.split(/[?#]/, 1)[0]) {
+                // preserveStateでInertiaが複製した印は、元の項目に対応することを確認してから戻す。
+                if (page.rememberedState && (historyKey in page.rememberedState || legacyHistoryKey in page.rememberedState)) {
+                    const rememberedState = { ...page.rememberedState };
+                    delete rememberedState[historyKey];
+                    delete rememberedState[legacyHistoryKey];
+                    page.rememberedState = rememberedState;
+                }
                 refresh.response = page;
             } else {
                 clear();
@@ -194,17 +230,17 @@ export function observeStaleLauncherArrival(version: Page['version'], legacyShow
                 return;
             }
             const freshEntry = window.history.state;
-            void pending.marked.then((marked) => {
+            void pending.arrival.then((arrival) => {
                 if (refresh !== pending) {
                     return;
                 }
-                if (!marked || freshEntry !== window.history.state || localPath(window.location.href) !== localPath(page.url)) {
+                if (arrival === null || freshEntry !== window.history.state || localPath(window.location.href) !== localPath(page.url)) {
                     clear();
                     return;
                 }
                 if (localPath(page.url) === pending.target) {
                     clear();
-                    rememberLinksLauncherArrival(page);
+                    rememberLinksLauncherArrival(page, arrival.sourceUrl);
                     return;
                 }
 
@@ -216,7 +252,7 @@ export function observeStaleLauncherArrival(version: Page['version'], legacyShow
                     onSuccess: (updated) => {
                         if (refresh === pending && updated.component === currentShow && updated.version === version
                             && updated.props === page.props && localPath(updated.url) === pending.target) {
-                            rememberLinksLauncherArrival(updated);
+                            rememberLinksLauncherArrival(updated, arrival.sourceUrl);
                         }
                     },
                     onFinish: () => {
@@ -245,11 +281,14 @@ export function observeStaleLauncherArrival(version: Page['version'], legacyShow
 export function observeLinksLauncherArrivals(
     isTargetPage: (page: { component: string; url: string }) => boolean,
 ): () => void {
-    let candidate: { page: { component: string; url: string }; pushed: boolean } | null = null;
+    let candidate: { page: Page; sourceUrl?: string; pushed: boolean } | null = null;
 
     const stops = [
         router.on('beforeUpdate', ({ detail: { page } }) => {
-            candidate = isTargetPage(page) ? { page, pushed: false } : null;
+            // beforeUpdateはpush前なので、その履歴項目から実際に戻るURLを取得できる。
+            candidate = isTargetPage(page)
+                ? { page, sourceUrl: historyPath(window.location.href) ?? undefined, pushed: false }
+                : null;
         }),
         router.on('navigate', ({ detail: { page } }) => {
             if (candidate?.page === page) {
@@ -261,11 +300,11 @@ export function observeLinksLauncherArrivals(
                 return;
             }
 
-            const { pushed } = candidate;
+            const { pushed, sourceUrl } = candidate;
             candidate = null;
             // navigate中に履歴へ書くとInertiaが処理中のPage参照が変わるため、成功時まで待ちます。
             if (pushed) {
-                rememberLinksLauncherArrival(page);
+                rememberLinksLauncherArrival(page, sourceUrl);
             }
         }),
         router.on('error', () => {
@@ -289,18 +328,27 @@ function subscribe(listener: () => void): () => void {
     };
 }
 
-export default function useLinksLauncherHistory(): boolean {
+export default function useLinksLauncherHistory(topUrl?: string): boolean {
     const page = usePage();
-    const canGoBack = useSyncExternalStore(subscribe, () => hasArrival(page), () => false);
+    const showHistoryBack = useSyncExternalStore(subscribe, () => {
+        const arrival = readLinksLauncherArrival(page);
+        if (arrival === null) {
+            return false;
+        }
+        const topPath = topUrl === undefined ? null : historyPath(topUrl);
+        return topPath === null || arrival.sourceUrl === undefined || historyPath(arrival.sourceUrl) !== topPath;
+    }, () => false);
 
     useEffect(() => {
         // 旧Pageのreplaceより先にrememberすると、Inertiaが旧URLを履歴へ書き戻す。
         const url = historyPath(window.location.href);
-        if (canGoBack && url !== null && localPath(page.url) === url
-            && rememberedMarker(historyKey, page) == null && hasLegacyArrival(url, page)) {
-            rememberLinksLauncherArrival(page);
+        if (url !== null && localPath(page.url) === url && rememberedMarker(historyKey, page) == null) {
+            const arrival = readLegacyArrival(url, page);
+            if (arrival !== null) {
+                rememberLinksLauncherArrival(page, arrival.sourceUrl);
+            }
         }
-    }, [page, canGoBack]);
+    }, [page]);
 
-    return canGoBack;
+    return showHistoryBack;
 }

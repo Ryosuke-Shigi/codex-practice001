@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import useLinksLauncherHistory, {
     canonicalLauncherHistoryUrl,
+    readLinksLauncherArrival,
     rememberLinksLauncherArrival,
 } from '@/Hooks/useLinksLauncherHistory';
 
@@ -33,9 +34,10 @@ export default function useLinksLauncherNavigation({
     linksLauncher,
     selectedLinkKey,
     linkList: { links },
+    navigation: { topUrl },
 }: LinksLauncherPageProps) {
-    const { url: pageUrl } = usePage();
-    const canGoBack = useLinksLauncherHistory();
+    const page = usePage();
+    const showHistoryBack = useLinksLauncherHistory(topUrl);
     const [selection, setSelection] = useState<Selection | null>(null);
     const [isNavigating, setIsNavigating] = useState(false);
     const navigating = useRef(false);
@@ -62,23 +64,29 @@ export default function useLinksLauncherNavigation({
         }
 
         const next = links[(selectedIndex + offset + links.length) % links.length];
-        const url = new URL(canonicalLauncherHistoryUrl(pageUrl) ?? pageUrl, window.location.origin);
+        const url = new URL(canonicalLauncherHistoryUrl(page.url) ?? page.url, window.location.origin);
         url.searchParams.set('selectedLinkKey', next.linkKey);
         const href = url.pathname + url.search + url.hash;
+        const arrival = readLinksLauncherArrival(page);
+        let replacementProps: typeof page.props | undefined;
 
         setSelection({ launcherKey, serverKey: selectedLinkKey, linkKey: next.linkKey });
         router.replace({
             url: href,
-            props: (currentProps) => ({ ...currentProps, selectedLinkKey: next.linkKey }),
+            props: (currentProps) => {
+                replacementProps = { ...currentProps, selectedLinkKey: next.linkKey };
+                return replacementProps;
+            },
             preserveScroll: true,
             preserveState: true,
-            onSuccess: (page) => {
-                if (canGoBack) {
-                    rememberLinksLauncherArrival(page);
+            onSuccess: (replaced) => {
+                // 同じURLの別の履歴項目へ戻った場合は、その項目に印を移さない。
+                if (arrival !== null && replaced.url === href && replaced.props === replacementProps) {
+                    rememberLinksLauncherArrival(replaced, arrival.sourceUrl);
                 }
             },
         });
-    }, [canGoBack, canSwitch, launcherKey, links, pageUrl, selectedIndex, selectedLinkKey]);
+    }, [canSwitch, launcherKey, links, page, selectedIndex, selectedLinkKey]);
 
     const openSelected = useCallback(() => {
         if (!selected?.destinationUrl || navigating.current) {
@@ -138,7 +146,7 @@ export default function useLinksLauncherNavigation({
     }, [clearInvalidListener, selected]);
 
     return {
-        canGoBack,
+        showHistoryBack,
         canSwitch,
         isNavigating,
         openSelected,

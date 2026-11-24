@@ -37,6 +37,7 @@ vi.mock('./usePrefersReducedMotion', () => ({
 }));
 
 import ProjectSelectView from './ProjectSelectView';
+import { getStageProjectReturnLink } from './projectNavigation';
 
 let container: HTMLDivElement;
 let root: Root;
@@ -137,6 +138,37 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(portfolioLink?.getAttribute('title')).toBe('Portfolioへ戻る');
     });
 
+    it.each([
+        ['api-discovery-hub', ['/api-catalog', '/api-catalog/mock', '/lab/api-discovery-hub-idea-board']],
+        ['dance-shorts-radar', ['/dance-shorts-radar', '/lab/dance-shorts-radar-mock', '/lab/dance-shorts-radar-idea-board']],
+        ['dance-shorts-analyzer', ['/dance-shorts-analyzer', '/lab/dance-shorts-analyzer-mock', '/lab/dance-shorts-analyzer-idea-board']],
+        ['japan-quake-wave-map', ['/quakewave-preview/map', '/quakewave-preview', '/lab/quake-wave-map-idea-board']],
+        ['lumilab', ['/lab/lumilab-project-mock', '/lab/lumilab-project-idea-board']],
+        ['construction-order', ['/lab/construction-order-workflow-mock', '/lab/construction-order-workflow-idea-board']],
+        ['event-card-calendar', ['/lab/event-card-calendar-idea-board']],
+    ] as const)('offers the selected work on a direct stage entry for %s and keeps its stage routes', (projectId, destinations) => {
+        const stageUrl = `/projects?project=${projectId}&view=stages`;
+        pageUrl.value = stageUrl;
+        window.history.replaceState(null, '', stageUrl);
+        render();
+
+        const listReturn = Array.from(container.querySelectorAll('a'))
+            .find((link) => link.textContent?.trim() === '作品一覧へ');
+        expect.soft(listReturn?.getAttribute('href')).toBe(`/portfolio/links-launcher?project=${projectId}`);
+        expect(getStageProjectReturnLink(projectId).href).toBe(stageUrl);
+
+        const stageButtons = container.querySelectorAll<HTMLButtonElement>('.project-stage-action');
+        expect(stageButtons).toHaveLength(destinations.length);
+        expect(document.activeElement).toBe(stageButtons[0]);
+        for (const button of stageButtons) {
+            act(() => button.click());
+            const visit = routerVisit.mock.calls[routerVisit.mock.calls.length - 1];
+            expect(visit?.[1]?.onFinish).toBeTypeOf('function');
+            act(() => visit?.[1].onFinish());
+        }
+        expect(routerVisit.mock.calls.map(([href]) => href)).toEqual(destinations);
+    });
+
     it('renders the exact dedicated application logs action contract', () => {
         pageUrl.value = '/projects?project=logs';
         render();
@@ -202,7 +234,9 @@ describe('ProjectSelectView two-stage project navigation', () => {
         expect(container.querySelector('.project-stage-grid')).not.toBeNull();
         expect(container.querySelector('.project-select-arrow')).toBeNull();
         expect(container.querySelector('.project-side-bubble')).toBeNull();
-        expect(buttonWithText('戻る')).toHaveProperty('disabled', false);
+        const listReturn = Array.from(container.querySelectorAll('a')).find((link) =>
+            link.textContent?.trim() === '作品一覧へ');
+        expect(listReturn?.getAttribute('href')).toBe('/portfolio/links-launcher?project=dance-shorts-radar');
     });
 
     it('safely normalizes unknown, invalid, and logs stage URLs to initial project selection', () => {

@@ -21,11 +21,9 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
-        const stopObserving = observeLinksLauncherArrivals(({ component, url }) =>
+        const stopObserving = observeLinksLauncherArrivals(({ component }) =>
             component === 'LinksLauncher/Show'
-            || component === 'LinksLanchar/Show'
-            || (component === 'Projects/Select'
-                && new URL(url, window.location.origin).searchParams.get('view') === 'stages'),
+            || component === 'LinksLanchar/Show',
         );
         import.meta.hot?.dispose(stopObserving);
         const stopStaleArrival = observeStaleLauncherArrival(
@@ -33,12 +31,11 @@ createInertiaApp({
         );
         import.meta.hot?.dispose(stopStaleArrival);
 
-        if (props.initialPage.component === 'LinksLauncher/Show'
-            || props.initialPage.component === 'LinksLanchar/Show'
-            || props.initialPage.component === 'Projects/Select') {
-            prepareLinksLauncherHistoryReload();
+        let initialPage = props.initialPage;
+        if (initialPage.component === 'LinksLauncher/Show' || initialPage.component === 'LinksLanchar/Show') {
+            initialPage = prepareLinksLauncherHistoryReload(initialPage);
         }
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(<App {...props} initialPage={initialPage} />);
     },
     progress: {
         color: '#67e8f9',

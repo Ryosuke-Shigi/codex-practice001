@@ -25,6 +25,7 @@ import {
 } from './projectData';
 import { resolveProjectIcon } from './projectIcons';
 import {
+    buildPortfolioProjectListHref,
     buildProjectSelectHref,
     parseProjectSelectUrl,
 } from './projectNavigation';
@@ -50,11 +51,7 @@ type ProjectThemeStyle = CSSProperties & {
 
 const STAGE_TRANSITION_MS = 280;
 
-type StageHistory = {
-    canGoBack: boolean;
-};
-
-export default function ProjectSelectView({ stageHistory }: { stageHistory?: StageHistory } = {}) {
+export default function ProjectSelectView() {
     const { url: pageUrl } = usePage();
     const projectSelectUrl = getProjectSelectRuntimeUrl(pageUrl);
     const initialUrl = useRef(parseProjectSelectUrl(projectSelectUrl)).current;
@@ -95,7 +92,9 @@ export default function ProjectSelectView({ stageHistory }: { stageHistory?: Sta
         [selectedProject],
     );
     const isProjectSelectable = screen === 'project-select';
-    const usesStageHistory = stageHistory !== undefined && !openedStageInPlace;
+    const portfolioListHref = !openedStageInPlace && selectedProject.kind === 'staged'
+        ? buildPortfolioProjectListHref(selectedProject.id)
+        : null;
     const depthActionStatus = getDepthActionStatus(
         selectedProject.name,
         hasStages,
@@ -176,13 +175,6 @@ export default function ProjectSelectView({ stageHistory }: { stageHistory?: Sta
             return;
         }
 
-        if (usesStageHistory) {
-            if (stageHistory?.canGoBack) {
-                window.history.back();
-            }
-            return;
-        }
-
         clearTransitionTimer();
         replaceProjectUrl(
             buildProjectSelectHref(selectedProject.id, 'project'),
@@ -207,8 +199,6 @@ export default function ProjectSelectView({ stageHistory }: { stageHistory?: Sta
         replaceProjectUrl,
         screen,
         selectedProject.id,
-        stageHistory?.canGoBack,
-        usesStageHistory,
     ]);
 
     const visitStage = useCallback(
@@ -383,7 +373,7 @@ export default function ProjectSelectView({ stageHistory }: { stageHistory?: Sta
             <div className="project-select-backdrop" aria-hidden="true" />
 
             <header className="project-select-header">
-                {(!isStageMounted || !usesStageHistory) && (
+                {(!isStageMounted || portfolioListHref === null) && (
                     <Link
                         href="/"
                         className="project-nav-link"
@@ -472,14 +462,29 @@ export default function ProjectSelectView({ stageHistory }: { stageHistory?: Sta
                         }
                     >
                         <div className="project-depth-select-heading">
-                            {(!usesStageHistory || stageHistory?.canGoBack) && (
+                            {portfolioListHref !== null ? (
+                                <Link
+                                    className="project-stage-back-button"
+                                    href={portfolioListHref}
+                                    aria-disabled={screen !== 'stage-select' || undefined}
+                                    tabIndex={screen === 'stage-select' ? undefined : -1}
+                                    onClick={(event) => {
+                                        if (screen !== 'stage-select' || navigatingHrefRef.current !== null) {
+                                            event.preventDefault();
+                                        }
+                                    }}
+                                >
+                                    <ArrowLeft aria-hidden="true" size={18} />
+                                    作品一覧へ
+                                </Link>
+                            ) : (
                                 <button
                                     type="button"
                                     className="project-stage-back-button"
                                     disabled={screen !== 'stage-select'}
                                     onClick={returnToProjectSelection}
-                                    aria-label={usesStageHistory ? '前の画面へ戻る' : 'PROJECT選択へ戻る'}
-                                    title={usesStageHistory ? '前の画面へ戻る' : 'PROJECT選択へ戻る'}
+                                    aria-label="PROJECT選択へ戻る"
+                                    title="PROJECT選択へ戻る"
                                 >
                                     <ArrowLeft aria-hidden="true" size={18} />
                                     戻る

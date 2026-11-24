@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import type { Page } from '@inertiajs/core';
 import { createInertiaApp, router } from '@inertiajs/react';
 import axios, { AxiosError, AxiosHeaders } from 'axios';
 import { act } from 'react';
@@ -22,11 +23,13 @@ const launcherKey = '839ef2e9-2997-4cc8-8612-3a2f42005163';
 const selectedKey = '167e7070-2ee9-4cb0-abb1-47e24ec65470';
 const query = '?selectedLinkKey=' + selectedKey;
 const oldUrl = '/links-lanchars/' + launcherKey + query;
-const newUrl = '/links-launchers/' + launcherKey + query;
+const canonicalPath = '/links-launchers/' + launcherKey;
+const newUrl = canonicalPath + query;
 const unsortedQuery = '?z=1&selectedLinkKey=' + selectedKey;
 const oldUrlWithUnsortedQuery = '/links-lanchars/' + launcherKey + unsortedQuery;
+const newUrlWithUnsortedQuery = canonicalPath + unsortedQuery;
 const oldUrlWithFragment = oldUrlWithUnsortedQuery + '#section';
-const newUrlWithFragment = '/links-launchers/' + launcherKey + unsortedQuery + '#section';
+const newUrlWithFragment = newUrlWithUnsortedQuery + '#section';
 const sortedResponseUrl = newUrl + '&z=1';
 const oldTitle = '改名前の保存済み作品';
 const freshTitle = '現在公開されている作品';
@@ -72,7 +75,11 @@ const launcherProps = {
     },
 };
 
-function staleEntry(marker: string | null, url = oldUrl) {
+type StaleEntry = {
+    page: Pick<Page, 'component' | 'url' | 'version' | 'props' | 'rememberedState'>;
+};
+
+function staleEntry(marker: string | null, url = oldUrl): StaleEntry {
     return {
         page: {
             component: 'LinksLanchar/Show',
@@ -83,6 +90,20 @@ function staleEntry(marker: string | null, url = oldUrl) {
                 linksLanchar: { linksLancharKey: launcherKey, title: oldTitle, description: null },
             },
             rememberedState: marker === null ? {} : { 'LinksLanchar:arrival': { url: marker } },
+        },
+    };
+}
+
+function staleCanonicalEntry(sourceUrl: string): StaleEntry {
+    return {
+        page: {
+            ...currentPage(true, newUrl),
+            version: previousVersion,
+            props: {
+                ...launcherProps,
+                linksLauncher: { linksLauncherKey: launcherKey, title: oldTitle, description: null },
+            },
+            rememberedState: { 'LinksLauncher:arrival': { url: newUrl, sourceUrl } },
         },
     };
 }
@@ -130,8 +151,10 @@ it('keeps matching arrival when stale history is replaced by the current public 
         // As with a same-origin 302 followed by XHR, Inertia receives the terminal
         // canonical response. The legacy redirect itself is covered by the PHP test.
         // Laravel serializes the Inertia Page URL with sorted query keys and no fragment.
-        const serverPageUrl = config.url === new URL(oldUrlWithUnsortedQuery, window.location.origin).href
-            ? sortedResponseUrl : newUrl;
+        const requestedPath = new URL(String(config.url), window.location.origin);
+        const receivesSortedQuery = [oldUrlWithUnsortedQuery, newUrlWithUnsortedQuery]
+            .includes(requestedPath.pathname + requestedPath.search);
+        const serverPageUrl = receivesSortedQuery ? sortedResponseUrl : newUrl;
         const response = {
             config,
             data: JSON.stringify(currentPage(isPublic, serverPageUrl)),
@@ -139,7 +162,7 @@ it('keeps matching arrival when stale history is replaced by the current public 
             status: isPublic ? 200 : 404,
             statusText: isPublic ? 'OK' : 'Not Found',
             request: { responseURL: new URL(
-                serverPageUrl === sortedResponseUrl ? '/links-launchers/' + launcherKey + unsortedQuery : newUrl,
+                receivesSortedQuery ? newUrlWithUnsortedQuery : newUrl,
                 window.location.origin,
             ).href },
         };
@@ -175,11 +198,11 @@ it('keeps matching arrival when stale history is replaced by the current public 
 
     const backButton = () => Array.from(host.querySelectorAll('button')).find((button) => button.textContent === '戻る');
     const selection = () => host.querySelector('button[aria-label="Dance Shorts Radar"]');
-    const replayStaleEntry = (marker: string | null, url = oldUrl) => waitForFinishedRequest(() => {
-        const state = staleEntry(marker, url);
-        window.history.replaceState(state, '', url);
+    const replayEntry = (state: StaleEntry) => waitForFinishedRequest(() => {
+        window.history.replaceState(state, '', state.page.url);
         window.dispatchEvent(new PopStateEvent('popstate', { state }));
     });
+    const replayStaleEntry = (marker: string | null, url = oldUrl) => replayEntry(staleEntry(marker, url));
 
     try {
         window.history.replaceState(staleEntry(oldUrl), '', oldUrl);
@@ -239,8 +262,46 @@ it('keeps matching arrival when stale history is replaced by the current public 
         });
         expect.soft(backButton(), 'Back should survive a normalized response URL').toBeDefined();
 
+        const otherLauncher = '/links-launchers/00000000-0000-4000-8000-000000000001';
+        for (const [sourceUrl, showsBack] of [[otherLauncher, true], ['/', false]] as const) {
+            await replayEntry(staleCanonicalEntry(sourceUrl));
+            expect(host.querySelector('h1')?.textContent).toBe(freshTitle);
+            expect(document.activeElement).toBe(selection());
+            expect.soft(Boolean(backButton()), `Back visibility after updating an entry from ${sourceUrl}`).toBe(showsBack);
+            expect.soft(window.history.state.page.rememberedState?.['LinksLauncher:arrival'])
+                .toMatchObject({ url: newUrl, sourceUrl });
+        }
+
+        // Inertia preserves state when the viewed and refreshed components match.
+        // A marker for the sorted response never belonged to this unsorted history entry.
+        await replayEntry({
+            page: {
+                ...staleCanonicalEntry(otherLauncher).page,
+                url: newUrlWithUnsortedQuery,
+                rememberedState: {
+                    'LinksLauncher:arrival': { url: sortedResponseUrl, sourceUrl: otherLauncher },
+                    'LinksLanchar:arrival': { url: sortedResponseUrl },
+                    'Fixture:remembered': { value: 'keep' },
+                },
+            },
+        });
+        expect(host.querySelector('h1')?.textContent).toBe(freshTitle);
+        expect.soft(backButton(), 'The sorted response must not activate a mismatched saved mark').toBeUndefined();
+        const persisted = window.history.state.page.rememberedState;
+        expect.soft(persisted).not.toHaveProperty('LinksLauncher:arrival');
+        expect.soft(persisted).not.toHaveProperty('LinksLanchar:arrival');
+        expect.soft(persisted?.['Fixture:remembered']).toEqual({ value: 'keep' });
+
+        isPublic = false;
+        await replayEntry(staleCanonicalEntry(otherLauncher));
+        expect(host.querySelector('h1')?.textContent).toBe('現在 非公開');
+        expect(backButton()).toBeUndefined();
+
         expect(staleContentMounted).toBe(false);
-        expect(requests).toEqual([...Array.from({ length: 7 }, () => oldUrl), oldUrlWithUnsortedQuery].map((url) => ({
+        expect(requests).toEqual([
+            ...Array.from({ length: 7 }, () => oldUrl),
+            oldUrlWithUnsortedQuery, newUrl, newUrl, newUrlWithUnsortedQuery, newUrl,
+        ].map((url) => ({
             url: new URL(url, window.location.origin).href,
             method: 'get',
             version: currentVersion,
@@ -251,7 +312,10 @@ it('keeps matching arrival when stale history is replaced by the current public 
     } finally {
         observer.disconnect();
         const root = createRoot.mock.results[0]?.value;
-        if (root) act(() => root.unmount());
+        await act(async () => {
+            root?.unmount();
+            await new Promise<number>((resolve) => window.requestAnimationFrame(resolve));
+        });
         for (const [type, listener, options] of windowAdds.mock.calls) {
             window.removeEventListener(type, listener, options);
         }
@@ -264,4 +328,4 @@ it('keeps matching arrival when stale history is replaced by the current public 
         vi.unstubAllGlobals();
         window.history.replaceState(null, '', '/');
     }
-});
+}, 15000);

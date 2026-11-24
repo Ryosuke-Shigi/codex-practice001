@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 
+import type { Page } from '@inertiajs/core';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import useLinksLauncherHistory, { observeLinksLauncherArrivals } from './useLinksLauncherHistory';
+import useLinksLauncherHistory, {
+    observeLinksLauncherArrivals,
+    prepareLinksLauncherHistoryReload,
+} from './useLinksLauncherHistory';
 
 const inertia = vi.hoisted(() => ({
     remembered: new Map<string, unknown>(),
@@ -140,4 +144,65 @@ describe('LinksLauncher history arrival observation', () => {
             expect(host.textContent).toBe('戻れない');
         },
     );
+});
+
+describe('LinksLauncher reload arrival boundary', () => {
+    const path = '/portfolio/links-launcher';
+    const browserUrl = path + '?z=%20&tag=one&tag=two#section';
+    const normalizedResponse = path + '?tag=one&tag=two&z=+';
+    const arrivalKey = 'LinksLauncher:arrival';
+    let originalGetEntries: PropertyDescriptor | undefined;
+
+    beforeEach(() => {
+        originalGetEntries = Object.getOwnPropertyDescriptor(window.performance, 'getEntriesByType');
+        Object.defineProperty(window.performance, 'getEntriesByType', {
+            configurable: true,
+            value: () => [{ type: 'reload' }],
+        });
+    });
+
+    afterEach(() => {
+        if (originalGetEntries) {
+            Object.defineProperty(window.performance, 'getEntriesByType', originalGetEntries);
+        } else {
+            Reflect.deleteProperty(window.performance, 'getEntriesByType');
+        }
+        inertia.remembered.clear();
+        window.history.replaceState(null, '', '/');
+    });
+
+    it.each([
+        ['another launcher', '/links-launchers/00000000-0000-4000-8000-000000000001?tag=one&tag=two&z=+', browserUrl],
+        ['a different selection value', path + '?tag=one&tag=three&z=+', browserUrl],
+        ['a different order of values for the same key', path + '?tag=two&tag=one&z=+', browserUrl],
+        ['a different count of values for the same key', path + '?tag=one&z=+', browserUrl],
+        ['a different explicit fragment', normalizedResponse + '#different', browserUrl],
+        ['a mark matching only the normalized URL', normalizedResponse, normalizedResponse + '#section'],
+    ])('keeps the fresh response and drops the arrival for %s', (_, responseUrl, markedUrl) => {
+        const initialPage: Page = {
+            component: 'LinksLauncher/Show',
+            url: responseUrl,
+            version: 'current-build',
+            clearHistory: false,
+            encryptHistory: false,
+            props: { errors: {} },
+            flash: {},
+            rememberedState: {},
+        };
+        const mark = { url: markedUrl, sourceUrl: '/another-screen' };
+        window.history.replaceState({
+            page: { ...initialPage, url: browserUrl, rememberedState: { [arrivalKey]: mark } },
+        }, '', browserUrl);
+        inertia.remembered.set(arrivalKey, mark);
+
+        const prepared = prepareLinksLauncherHistoryReload(initialPage);
+
+        // Inertia clears remembered state before its first navigate on reload.
+        inertia.remembered.clear();
+        window.history.replaceState({ page: prepared }, '', prepared.url);
+        document.dispatchEvent(new CustomEvent('inertia:navigate', { detail: { page: prepared } }));
+
+        expect(prepared.url).toBe(responseUrl);
+        expect(inertia.remembered.has(arrivalKey)).toBe(false);
+    });
 });

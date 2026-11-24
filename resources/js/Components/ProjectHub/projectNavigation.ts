@@ -24,6 +24,7 @@ export type ParsedProjectSelectUrl = {
 };
 
 const projectSelectPath = '/projects';
+const portfolioProjectListPath = '/portfolio/links-launcher';
 const allowedQueryKeys = new Set(['project', 'view']);
 
 /**
@@ -127,6 +128,10 @@ export function getStageProjectReturnLink(projectId: StageProjectId): {
         ariaLabel: destinationLabel,
         title: destinationLabel,
     };
+}
+
+export function buildPortfolioProjectListHref(projectId: StageProjectId): string {
+    return `${portfolioProjectListPath}?project=${projectId}`;
 }
 
 function invalidProjectSelectUrl(): ParsedProjectSelectUrl {

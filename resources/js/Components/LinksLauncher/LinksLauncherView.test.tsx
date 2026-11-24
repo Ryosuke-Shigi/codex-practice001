@@ -289,6 +289,20 @@ describe('LinksLauncherView', () => {
         }
     });
 
+    it('omits Back only when the saved source matches the configured site TOP', () => {
+        const topUrl = '/fixture-site/top';
+        const links = [makeLink(firstKey, '最初', '/projects/logs')];
+        inertia.remembered.set('LinksLauncher:arrival', { url: launcherUrl, sourceUrl: topUrl });
+
+        render(links, null, topUrl);
+        expect(host.querySelector('a')?.getAttribute('href')).toBe(topUrl);
+        expect(findButton('戻る')).toBeNull();
+
+        render(links, null, '/another-site/top');
+        expect(host.querySelector('a')?.getAttribute('href')).toBe('/another-site/top');
+        expect(findButton('戻る')).toBeInstanceOf(HTMLButtonElement);
+    });
+
     it('shows the empty message when the launcher has no visible links', () => {
         render([]);
 
