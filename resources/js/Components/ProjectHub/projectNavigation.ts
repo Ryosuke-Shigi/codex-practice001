@@ -7,9 +7,9 @@ import {
     type StageProjectId,
 } from './projectData';
 
-export type ProjectSelectUrlState =
+type ProjectSelectUrlState =
     | {
-          screen: 'project-select';
+          screen: 'portfolio-list';
           projectId: ProjectId | null;
       }
     | {
@@ -17,7 +17,7 @@ export type ProjectSelectUrlState =
           projectId: StageProjectId;
       };
 
-export type ParsedProjectSelectUrl = {
+type ParsedProjectSelectUrl = {
     state: ProjectSelectUrlState;
     canonicalHref: string;
     shouldCanonicalize: boolean;
@@ -27,10 +27,7 @@ const projectSelectPath = '/projects';
 const portfolioProjectListPath = '/portfolio/links-launcher';
 const allowedQueryKeys = new Set(['project', 'view']);
 
-/**
- * 呼び出し元から渡された URL だけを入力に、Project Select の復元状態を決めます。
- * parser 自身は DOM やブラウザ履歴へ依存せず、direct access と画面内遷移で同じ規則を使えます。
- */
+/** 旧URLを段階画面または新作品一覧へ振り分けます。不正な指定では作品を選択しません。 */
 export function parseProjectSelectUrl(url: string): ParsedProjectSelectUrl {
     const parsedUrl = new URL(url, 'https://project-select.local');
     const projectValues = parsedUrl.searchParams.getAll('project');
@@ -46,66 +43,32 @@ export function parseProjectSelectUrl(url: string): ParsedProjectSelectUrl {
         projectValues.length > 1 ||
         viewValues.length > 1
     ) {
-        return invalidProjectSelectUrl();
+        return portfolioListUrl();
     }
 
     const projectId = projectValues[0];
     const view = viewValues[0];
 
-    if (projectId === undefined && view === undefined) {
-        return {
-            state: { screen: 'project-select', projectId: null },
-            canonicalHref: projectSelectPath,
-            shouldCanonicalize: parsedUrl.search !== '',
-        };
+    if (projectId === undefined || !isProjectId(projectId)) {
+        return portfolioListUrl();
     }
 
-    if (
-        projectId === undefined ||
-        !isProjectId(projectId) ||
-        (view !== undefined && view !== 'stages')
-    ) {
-        return invalidProjectSelectUrl();
+    if (view === undefined) {
+        return portfolioListUrl(projectId);
     }
 
-    if (view === 'stages') {
-        if (!isStageProjectId(projectId)) {
-            return invalidProjectSelectUrl();
-        }
-
-        const canonicalHref = buildProjectSelectHref(projectId, 'stages');
-
-        return {
-            state: { screen: 'stage-select', projectId },
-            canonicalHref,
-            shouldCanonicalize:
-                `${parsedUrl.pathname}${parsedUrl.search}` !== canonicalHref,
-        };
+    if (view !== 'stages' || !isStageProjectId(projectId)) {
+        return portfolioListUrl();
     }
 
-    const canonicalHref = buildProjectSelectHref(projectId, 'project');
+    const canonicalHref = getProjectStageSelectHref(projectId);
 
     return {
-        state: { screen: 'project-select', projectId },
+        state: { screen: 'stage-select', projectId },
         canonicalHref,
         shouldCanonicalize:
             `${parsedUrl.pathname}${parsedUrl.search}` !== canonicalHref,
     };
-}
-
-export function buildProjectSelectHref(
-    projectId?: ProjectId | null,
-    view: 'project' | 'stages' = 'project',
-): string {
-    if (projectId === undefined || projectId === null) {
-        return projectSelectPath;
-    }
-
-    if (view === 'stages') {
-        return getProjectStageSelectHref(projectId);
-    }
-
-    return `${projectSelectPath}?project=${projectId}`;
 }
 
 export function getStageProjectReturnLink(projectId: StageProjectId): {
@@ -115,7 +78,6 @@ export function getStageProjectReturnLink(projectId: StageProjectId): {
     title: string;
 } {
     const project = getProjectById(projectId);
-
     if (project === null || project.kind !== 'staged') {
         throw new Error(`Stage Project が見つかりません: ${projectId}`);
     }
@@ -130,14 +92,16 @@ export function getStageProjectReturnLink(projectId: StageProjectId): {
     };
 }
 
-export function buildPortfolioProjectListHref(projectId: StageProjectId): string {
-    return `${portfolioProjectListPath}?project=${projectId}`;
+export function buildPortfolioProjectListHref(projectId: ProjectId | null = null): string {
+    return projectId === null
+        ? portfolioProjectListPath
+        : `${portfolioProjectListPath}?project=${projectId}`;
 }
 
-function invalidProjectSelectUrl(): ParsedProjectSelectUrl {
+function portfolioListUrl(projectId: ProjectId | null = null): ParsedProjectSelectUrl {
     return {
-        state: { screen: 'project-select', projectId: null },
-        canonicalHref: projectSelectPath,
+        state: { screen: 'portfolio-list', projectId },
+        canonicalHref: buildPortfolioProjectListHref(projectId),
         shouldCanonicalize: true,
     };
 }

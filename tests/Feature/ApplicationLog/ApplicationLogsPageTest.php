@@ -4,6 +4,9 @@ namespace Tests\Feature\ApplicationLog;
 
 use App\Models\ApplicationErrorLog;
 use App\Models\ApplicationIntegrationLog;
+use App\Models\LinksLauncher;
+use App\Support\Portfolio\PortfolioLinksLauncherDefinition;
+use Database\Seeders\PortfolioLinksLauncherSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -57,13 +60,24 @@ class ApplicationLogsPageTest extends TestCase
             );
     }
 
-    public function test_project_select_and_dedicated_logs_entry_are_available(): void
+    public function test_portfolio_logs_selection_and_dedicated_logs_entry_are_available(): void
     {
+        $this->seed(PortfolioLinksLauncherSeeder::class);
+        $logsLinkKey = LinksLauncher::query()
+            ->where('links_launcher_key', PortfolioLinksLauncherDefinition::LINKS_LAUNCHER_KEY)
+            ->sole()
+            ->links()
+            ->where('title', 'アプリログ')
+            ->sole()
+            ->link_key;
+
         $this
-            ->get('/projects')
+            ->get('/portfolio/links-launcher?project=logs')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Select', false)
+                ->component('LinksLauncher/Show', false)
+                ->where('selectedLinkKey', $logsLinkKey)
+                ->etc()
             );
 
         $this

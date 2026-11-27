@@ -61,12 +61,9 @@ describe('ProjectLogsView', () => {
         expect(markup).toContain('時間');
         expect(markup).toContain('内容');
         expect(markup).toContain('[成功]');
-        expect(markup).toContain('href="/projects"');
-        expect(markup).toContain('aria-label="PROJECT選択へ戻る"');
-        expect(markup).toContain('title="PROJECT選択へ戻る"');
-        expect(markup).toContain(
-            'href="/projects" class="project-nav-link" aria-label="PROJECT選択へ戻る" title="PROJECT選択へ戻る"><svg',
-        );
+        expect(markup).toContain('href="/portfolio/links-launcher?project=logs"');
+        expect(markup).toContain('aria-label="作品一覧へ戻る"');
+        expect(markup).toContain('title="作品一覧へ戻る"');
         expect(markup).toContain(
             'href="/" class="project-nav-link project-nav-link--quiet" aria-label="Portfolioへ戻る" title="Portfolioへ戻る">戻る</a>',
         );

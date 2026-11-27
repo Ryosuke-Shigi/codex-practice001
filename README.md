@@ -19,7 +19,7 @@ Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境�
 
 ## 公開プロジェクト
 
-`/projects` では8つの選択肢を表示します。7つのプロジェクトには合計17のStageがあり、アプリログはStageを持たない専用操作として分けています。
+Portfolio版LinksLauncherでは7つのプロジェクトに合計17のStageがあり、アプリログも独立した選択肢として開けます。`/projects` の旧作品一覧URLは互換入口として対応するPortfolio一覧へ接続し、段階URLは維持します。
 
 | プロジェクト | 公開Stage・操作 | 現在の内容 |
 |---|---|---|
@@ -30,7 +30,7 @@ Docker Compose、nginx、php-fpm、MySQL、Redisなどの開発・実行環境�
 | LumiLab | MOCK / IDEA BOARD | 案件システムの画面構成、一覧、詳細、写真・ファイル操作を固定データで確認する |
 | 工事発注管理 | MOCK / IDEA BOARD | 案件、作業カード、見積・請求・領収の流れと画面を固定データで確認する |
 | イベント・カードカレンダー | IDEA BOARD | イベントを生成元として、入金・出金・請求カードを扱う構想を整理する |
-| アプリログ | 専用操作 | API連携ログとエラーログを表示し、エラーログの対応済み操作を行う |
+| アプリログ | ログ | API連携ログとエラーログを表示し、エラーログの対応済み操作を行う |
 
 ## 開発段階
 
@@ -110,7 +110,7 @@ DanceShortsRadarで保存した動画とsnapshotを使い、複数動画を横�
 
 ### アプリログ
 
-外部API連携とアプリケーションエラーをDBへ保存し、`/projects/logs` で確認する機能です。
+外部API連携とアプリケーションエラーをDBへ保存し、Portfolio版LinksLauncherの`logs`選択から確認する機能です。旧 `/projects/logs` URLも維持します。
 
 - API連携ログとエラーログを別テーブルで保存
 - Eventで発生事実を表現

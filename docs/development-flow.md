@@ -38,15 +38,15 @@ PRODUCT
 
 ただし、MOCKで確認した画面単体のUI構造と、PROTOTYPEで確認した画面間の導線は、`docs/ui-development-flow.md` に従ってProductへ引き継ぎます。
 
-## Project Select / アプリログ専用ページ
+## 旧Project Select互換 / アプリログページ
 
-TOPのSTARTは [Portfolio版LinksLauncher](features/links-launcher.md) を開きます。旧 `/projects` の Project Select と段階選択は維持します。
+TOPのSTARTは [Portfolio版LinksLauncher](features/links-launcher.md) を開きます。`/projects` の旧作品一覧は互換入口として維持し、新しい作品選択はPortfolio版LinksLauncherで行います。有効な段階URLは独立した段階画面として維持します。
 
-Project Select は同一画面内で PROJECT を選択してから、その PROJECT の Stage を選択する2段階の入口です。通常PROJECTのStageはすべて直接routeを持ち、Project SelectのStage選択からそのrouteへ遷移します。
+Portfolio版LinksLauncherの選択から作品の段階へ進みます。旧 `/projects` の段階URLは直接表示・履歴復元とも段階画面へ接続し、各段階は既存の直接routeを開きます。段階画面の「作品一覧へ」は作品を選択したPortfolio一覧へ戻ります。
 
-Project / Stage の定義は `resources/js/Components/ProjectHub/projectData.ts` の静的TypeScriptデータで管理し、Project Selectはその定義の表示・選択のためにDB/APIへ接続しません。通常PROJECTは1件以上のStageを持ち、アプリログはStageを持たない専用操作として `/projects/logs` へ接続します。
+7作品のStageは `resources/js/Components/ProjectHub/projectData.ts` の静的TypeScriptデータで定義し、合計17段階の順序・routeを保ちます。`/projects` は実URLのquery・hashを検査する互換入口です。有効な `project=<作品ID>&view=stages` だけが段階画面に留まり、それ以外はPortfolio一覧の最新Pageとpropsを取得します。旧Page・propsを含む保存済みInertia履歴もこの経路で一覧へ接続します。アプリログは `/projects/logs` を維持し、Portfolio一覧の`logs`選択からも開けます。
 
-DanceShortsRadarとDanceShortsAnalyzerは別PROJECTとして扱い、Project Selectでも別々に表示します。現時点ではPROTOTYPE stageは本番dataに存在しないため表示しません。旧Lab入口、旧Project選択、旧MOCK選択は Project Select と各Stageのdirect routeへ整理済みです。
+DanceShortsRadarとDanceShortsAnalyzerは別作品として扱います。現時点ではPROTOTYPE stageは表示しません。旧Project Selectの一覧内選択・開閉操作はなく、作品選択はPortfolio一覧、段階表示は各段階URLが担います。旧Lab入口やStageのdirect routeは維持します。
 
 現在のdirect routeは次の通りです。
 
@@ -60,7 +60,7 @@ DanceShortsRadarとDanceShortsAnalyzerは別PROJECTとして扱い、Project Sel
 | 工事発注管理 | - | `/lab/construction-order-workflow-mock` | `/lab/construction-order-workflow-idea-board` |
 | イベント・カードカレンダー | - | - | `/lab/event-card-calendar-idea-board` |
 
-`/projects/{projectId}` の汎用routeは持ちません。`/projects/logs` だけがアプリログ用の専用ページです。
+`/projects/{projectId}` の汎用routeは持ちません。`/projects/logs` は互換URLとしてアプリログページを維持します。
 
 ## IDEA BOARD
 

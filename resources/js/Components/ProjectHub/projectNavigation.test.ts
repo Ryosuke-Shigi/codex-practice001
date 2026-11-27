@@ -1,127 +1,56 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-    buildProjectSelectHref,
-    parseProjectSelectUrl,
-    type ParsedProjectSelectUrl,
-} from './projectNavigation';
-
-type ParseCase = {
-    name: string;
-    url: string;
-    expected: ParsedProjectSelectUrl;
-};
-
-const parseCases: ParseCase[] = [
-    {
-        name: 'base Project Select URL',
-        url: '/projects',
-        expected: {
-            state: { screen: 'project-select', projectId: null },
-            canonicalHref: '/projects',
-            shouldCanonicalize: false,
-        },
-    },
-    {
-        name: 'valid selected project URL',
-        url: '/projects?project=dance-shorts-radar',
-        expected: {
-            state: {
-                screen: 'project-select',
-                projectId: 'dance-shorts-radar',
-            },
-            canonicalHref: '/projects?project=dance-shorts-radar',
-            shouldCanonicalize: false,
-        },
-    },
-    {
-        name: 'valid staged project URL',
-        url: '/projects?project=api-discovery-hub&view=stages',
-        expected: {
-            state: {
-                screen: 'stage-select',
-                projectId: 'api-discovery-hub',
-            },
-            canonicalHref:
-                '/projects?project=api-discovery-hub&view=stages',
-            shouldCanonicalize: false,
-        },
-    },
-    {
-        name: 'unknown project',
-        url: '/projects?project=unknown',
-        expected: invalidUrl(),
-    },
-    {
-        name: 'duplicate project',
-        url: '/projects?project=api-discovery-hub&project=lumilab',
-        expected: invalidUrl(),
-    },
-    {
-        name: 'duplicate view',
-        url: '/projects?project=lumilab&view=stages&view=stages',
-        expected: invalidUrl(),
-    },
-    {
-        name: 'invalid view',
-        url: '/projects?project=lumilab&view=modules',
-        expected: invalidUrl(),
-    },
-    {
-        name: 'view without project',
-        url: '/projects?view=stages',
-        expected: invalidUrl(),
-    },
-    {
-        name: 'unknown query key',
-        url: '/projects?project=lumilab&tab=stages',
-        expected: invalidUrl(),
-    },
-    {
-        name: 'non-canonical valid query order',
-        url: '/projects?view=stages&project=lumilab',
-        expected: {
-            state: { screen: 'stage-select', projectId: 'lumilab' },
-            canonicalHref: '/projects?project=lumilab&view=stages',
-            shouldCanonicalize: true,
-        },
-    },
-];
+import { parseProjectSelectUrl } from './projectNavigation';
 
 describe('Project Select URL contract', () => {
-    it.each(parseCases)('parses $name', ({ url, expected }) => {
-        expect(parseProjectSelectUrl(url)).toEqual(expected);
+    it.each([
+        ['/projects', null],
+        ['/projects?project=api-discovery-hub', 'api-discovery-hub'],
+        ['/projects?project=dance-shorts-radar', 'dance-shorts-radar'],
+        ['/projects?project=dance-shorts-analyzer', 'dance-shorts-analyzer'],
+        ['/projects?project=japan-quake-wave-map', 'japan-quake-wave-map'],
+        ['/projects?project=lumilab', 'lumilab'],
+        ['/projects?project=construction-order', 'construction-order'],
+        ['/projects?project=event-card-calendar', 'event-card-calendar'],
+        ['/projects?project=logs', 'logs'],
+    ])('routes %s to the Portfolio list', (url, projectId) => {
+        expect(parseProjectSelectUrl(url)).toEqual({
+            state: { screen: 'portfolio-list', projectId },
+            canonicalHref: projectId === null
+                ? '/portfolio/links-launcher'
+                : '/portfolio/links-launcher?project=' + projectId,
+            shouldCanonicalize: true,
+        });
     });
 
     it.each([
-        {
-            name: 'base URL',
-            projectId: null,
-            view: 'project' as const,
-            expected: '/projects',
-        },
-        {
-            name: 'selected project URL',
-            projectId: 'dance-shorts-analyzer' as const,
-            view: 'project' as const,
-            expected: '/projects?project=dance-shorts-analyzer',
-        },
-        {
-            name: 'staged project URL in canonical query order',
-            projectId: 'event-card-calendar' as const,
-            view: 'stages' as const,
-            expected:
-                '/projects?project=event-card-calendar&view=stages',
-        },
-    ])('builds $name', ({ projectId, view, expected }) => {
-        expect(buildProjectSelectHref(projectId, view)).toBe(expected);
+        '/projects?project=unknown',
+        '/projects?project=api-discovery-hub&project=lumilab',
+        '/projects?project=lumilab&view=stages&view=stages',
+        '/projects?project=lumilab&view=modules',
+        '/projects?view=stages',
+        '/projects?project=lumilab&tab=stages',
+        '/projects?project=lumilab#stage',
+        '/projects?project=lumilab&view=stages#stage',
+        '/projects?project=logs&view=stages',
+        '/projects?project[]=lumilab',
+        '/projects/unknown?project=lumilab',
+    ])('rejects %s and falls back to the unselected Portfolio list', (url) => {
+        expect(parseProjectSelectUrl(url)).toEqual({
+            state: { screen: 'portfolio-list', projectId: null },
+            canonicalHref: '/portfolio/links-launcher',
+            shouldCanonicalize: true,
+        });
+    });
+
+    it.each([
+        ['/projects?project=lumilab&view=stages', false],
+        ['/projects?view=stages&project=lumilab', true],
+    ])('keeps the stage selection for %s', (url, shouldCanonicalize) => {
+        expect(parseProjectSelectUrl(url)).toEqual({
+            state: { screen: 'stage-select', projectId: 'lumilab' },
+            canonicalHref: '/projects?project=lumilab&view=stages',
+            shouldCanonicalize,
+        });
     });
 });
-
-function invalidUrl(): ParsedProjectSelectUrl {
-    return {
-        state: { screen: 'project-select', projectId: null },
-        canonicalHref: '/projects',
-        shouldCanonicalize: true,
-    };
-}
