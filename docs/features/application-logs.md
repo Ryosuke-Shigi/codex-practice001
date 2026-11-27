@@ -7,13 +7,13 @@
 
 ## このドキュメントの目的
 
-Project Select の `logs` 専用操作、API連携ログとエラーログのDB保存、表示、対応済み管理の仕様をまとめます。
+Portfolio版LinksLauncherの`logs`選択から開くアプリログページについて、API連携ログとエラーログのDB保存、表示、対応済み管理の仕様をまとめます。旧 `/projects/logs` URLは維持し、ページからの一覧戻りはPortfolio版LinksLauncherのログ選択へ接続します。
 
 共通責務は `docs/architecture.md`、共通ログ方針は `docs/logging.md`、共通テスト方針は `docs/testing.md` に従います。
 
 ## 機能概要
 
-`logs` は Project選択画面の独立した選択肢です。
+`logs` はPortfolio版LinksLauncherの独立した選択肢です。`/portfolio/links-launcher?project=logs`で選択でき、旧 `/projects/logs` から開いたページの戻り先にも使います。
 
 `/projects/logs` では、同じ表示Field内に次の2タブを置きます。
 

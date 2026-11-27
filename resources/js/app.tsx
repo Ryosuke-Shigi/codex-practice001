@@ -5,6 +5,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
+import { deferProjectSelectNavigation } from '@/Components/ProjectHub/projectSelectInitialization';
 import {
     observeLinksLauncherArrivals,
     observeStaleLauncherArrival,
@@ -34,6 +35,15 @@ createInertiaApp({
         let initialPage = props.initialPage;
         if (initialPage.component === 'LinksLauncher/Show' || initialPage.component === 'LinksLanchar/Show') {
             initialPage = prepareLinksLauncherHistoryReload(initialPage);
+        } else if (initialPage.component === 'Projects/Select') {
+            const { pathname, search, hash } = window.location;
+            if (pathname === '/projects') {
+                // Inertiaの初期履歴書き込み前に、Laravelで正規化される前のqueryを保ちます。
+                initialPage = { ...initialPage, url: `${pathname}${search}${hash}` };
+            }
+
+            const stopDeferring = deferProjectSelectNavigation();
+            import.meta.hot?.dispose(stopDeferring);
         }
         createRoot(el).render(<App {...props} initialPage={initialPage} />);
     },

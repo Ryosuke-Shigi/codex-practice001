@@ -28,13 +28,27 @@ use App\Http\Controllers\QuakeWavePreviewXmlController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Inertia\Response;
+use Inertia\ResponseFactory;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('welcome');
 
-Route::get('/projects', function () {
-    return Inertia::render('Projects/Select');
+Route::get('/projects', function (ResponseFactory $inertia): Response {
+    // この応答だけで、ブラウザーのURL判定に必要なqueryの重複と順序を保つ。
+    $projects = clone $inertia;
+    $projects->resolveUrlUsing(static function (Request $request): string {
+        if ($request->getPathInfo() !== '/projects') {
+            return '/projects';
+        }
+
+        $query = $request->server('QUERY_STRING', '');
+
+        return $query === '' ? '/projects' : '/projects?'.$query;
+    });
+
+    return $projects->render('Projects/Select');
 })->name('projects.select');
 
 Route::get('/portfolio/links-launcher', PortfolioProjectEntryController::class)

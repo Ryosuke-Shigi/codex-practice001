@@ -4,6 +4,10 @@ import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import Select from '@/Pages/Projects/Select';
+
+vi.mock('@/Components/Effects/AquaParticlesBackground', () => ({ default: () => null }));
+
 type StageKind = 'product' | 'prototype' | 'mock' | 'idea-board';
 
 type StageFixture = {
@@ -39,59 +43,21 @@ vi.mock('@inertiajs/react', () => ({
         visit: vi.fn(),
         replace: vi.fn(),
     },
-    usePage: () => ({ url: '/projects' }),
+    usePage: () => ({ url: '/projects?project=api-discovery-hub&view=stages' }),
 }));
 
-vi.mock('./projectData', () => ({
-    getAdjacentProjectIndex: () => 0,
-    projects: [
-        {
-            get kind() {
-                return fixtureState.stages.length === 0
-                    ? 'dedicated'
-                    : 'staged';
-            },
-            id: 'logs',
-            name: 'Fixture Project',
-            description: 'ProjectSelectViewのstage表示用fixtureです。',
-            iconKey: 'rocket',
-            theme: {
-                background: '#0e1b2b',
-                backgroundGlow: '#38bdf8',
-                sphere: '#22d3ee',
-                sphereShadow: 'rgba(34, 211, 238, 0.38)',
-                accent: '#facc15',
-                surface: 'rgba(15, 23, 42, 0.62)',
-                text: '#eef6ff',
-                muted: '#bae6fd',
-            },
-            stages: fixtureState.stages,
-            action: {
-                name: 'アプリログ',
-                description: 'Application log fixture',
-                route: '/projects/logs',
-                iconKey: 'rocket',
-            },
-        },
-    ],
-    sortStagesForProjectSelect: (stages: StageFixture[]) => [...stages],
-}));
-
-vi.mock('./projectNavigation', () => ({
-    buildPortfolioProjectListHref: () => '/portfolio/links-launcher',
-    buildProjectSelectHref: () => '/projects',
-    parseProjectSelectUrl: () => ({
-        state: { screen: 'project-select', projectId: null },
-        canonicalHref: '/projects',
-        shouldCanonicalize: false,
-    }),
-}));
-
-vi.mock('./usePrefersReducedMotion', () => ({
-    default: () => true,
-}));
-
-import ProjectSelectView from './ProjectSelectView';
+vi.mock('./projectData', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./projectData')>();
+    const project = actual.projects.find((candidate) => candidate.id === 'api-discovery-hub');
+    if (project?.kind !== 'staged') {
+        throw new Error('段階表示用の作品定義が見つかりません。');
+    }
+    const fixtureProject = { ...project, stages: fixtureState.stages };
+    return {
+        ...actual,
+        getProjectById: (id: string) => id === fixtureProject.id ? fixtureProject : null,
+    };
+});
 
 const stageFixtures: Record<StageKind, StageFixture> = {
     product: {
@@ -151,29 +117,12 @@ function setSuppliedStages(stageKinds: StageKind[]) {
 
 function renderStageSelection(stageKinds: StageKind[]) {
     setSuppliedStages(stageKinds);
-    act(() => root.render(<ProjectSelectView />));
-    act(() => selectedSphere().click());
-}
-
-function selectedSphere(): HTMLButtonElement {
-    const sphere = container.querySelector<HTMLButtonElement>(
-        '.project-sphere-button',
-    );
-
-    if (sphere === null) {
-        throw new Error('選択中のProject球体が見つかりません。');
-    }
-
-    return sphere;
+    act(() => root.render(<Select />));
 }
 
 describe('ProjectSelectView supplied stage grid', () => {
     beforeEach(() => {
-        (
-            globalThis as typeof globalThis & {
-                IS_REACT_ACT_ENVIRONMENT: boolean;
-            }
-        ).IS_REACT_ACT_ENVIRONMENT = true;
+        vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
         container = document.createElement('div');
         document.body.appendChild(container);
         root = createRoot(container);
@@ -182,6 +131,7 @@ describe('ProjectSelectView supplied stage grid', () => {
     afterEach(() => {
         act(() => root.unmount());
         container.remove();
+        vi.unstubAllGlobals();
     });
 
     it.each(stageCountCases)(
@@ -212,13 +162,4 @@ describe('ProjectSelectView supplied stage grid', () => {
             }
         },
     );
-
-    it('keeps the logs DedicatedProjectAction separate from stage cards', () => {
-        renderStageSelection([]);
-
-        expect(
-            container.querySelector('.project-dedicated-action'),
-        ).not.toBeNull();
-        expect(container.querySelector('.project-stage-action')).toBeNull();
-    });
 });

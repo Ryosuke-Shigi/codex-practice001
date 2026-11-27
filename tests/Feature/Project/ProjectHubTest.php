@@ -17,28 +17,21 @@ class ProjectHubTest extends TestCase
             );
     }
 
-    public function test_project_select_page_is_the_only_project_navigation_entry_and_accepts_url_state(): void
+    public function test_projects_route_resolves_the_compatibility_page_and_stage_entries(): void
     {
-        $this
-            ->get('/projects')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Select', false)
-            );
-
-        $this
-            ->get('/projects?project=dance-shorts-radar')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Select', false)
-            );
-
-        $this
-            ->get('/projects?project=dance-shorts-radar&view=stages')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Projects/Select', false)
-            );
+        // 旧一覧のURLと段階表示を扱う互換入口には、同じPage名を返します。
+        foreach ([
+            '/projects',
+            '/projects?project=dance-shorts-radar',
+            '/projects?project=logs',
+            '/projects?project=dance-shorts-radar&view=stages',
+        ] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('Projects/Select', false)
+                );
+        }
     }
 
     public function test_normal_projects_do_not_keep_a_generic_project_hub_route(): void
@@ -54,6 +47,33 @@ class ProjectHubTest extends TestCase
         ] as $projectId) {
             $this->get('/projects/'.$projectId)->assertNotFound();
         }
+    }
+
+    public function test_project_compatibility_page_preserves_the_requested_query_in_inertia_responses(): void
+    {
+        $initialPage = $this->get('/projects')->assertOk()->inertiaPage();
+        $headers = ['X-Inertia' => 'true', 'X-Inertia-Version' => $initialPage['version'] ?? ''];
+
+        foreach ([
+            '/projects?project=api-discovery-hub&project=dance-shorts-radar',
+            '/projects?view=stages&project=dance-shorts-radar',
+            '/projects?view=stages&project=dance-shorts-radar&extra=a%2Fb',
+        ] as $url) {
+            $this->get($url, $headers)
+                ->assertOk()
+                ->assertJsonPath('component', 'Projects/Select')
+                ->assertJsonPath('url', $url);
+        }
+
+        $this->get('http://localhost/projects/?project=dance-shorts-radar', $headers)
+            ->assertOk()
+            ->assertJsonPath('component', 'Projects/Select')
+            ->assertJsonPath('url', '/projects');
+
+        $this->get('/?z=1&a=2', $headers)
+            ->assertOk()
+            ->assertJsonPath('component', 'Welcome')
+            ->assertJsonPath('url', '/?a=2&z=1');
     }
 
     public function test_project_hub_linked_idea_board_and_mock_pages_remain_available(): void

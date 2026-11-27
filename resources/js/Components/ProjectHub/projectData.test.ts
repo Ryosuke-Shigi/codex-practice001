@@ -93,7 +93,6 @@ describe('Project selection data contract', () => {
         expect(analyzer?.name).toBe('DanceShortsAnalyzer');
         expect(radar?.iconKey).not.toBe(analyzer?.iconKey);
         expect(radar?.theme).not.toEqual(analyzer?.theme);
-        expect(radar?.description).not.toBe(analyzer?.description);
         expect(radar?.stages.map((stage) => stage.route)).not.toEqual(
             analyzer?.stages.map((stage) => stage.route),
         );

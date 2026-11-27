@@ -99,7 +99,7 @@ feature docsは共通ルールを上書きしません。コード、テスト�
 | `docs/features/dance-shorts-analyzer.md` | DanceShortsAnalyzer |
 | `docs/features/dance-shorts-radar.md` | DanceShortsRadar |
 | `docs/features/japan-quake-wave-map.md` | Japan Quake Wave Map |
-| `docs/features/application-logs.md` | Project Selectの専用操作から開くアプリログページ |
+| `docs/features/application-logs.md` | Portfolio版LinksLauncherから開くアプリログページと旧URL互換 |
 | `docs/features/links-launcher.md` | 共通Link選択・Portfolio入口・初期データと履歴 |
 
 新しい機能固有文書を追加した場合は、この一覧と必要なルーターだけを更新します。

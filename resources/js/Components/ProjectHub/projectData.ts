@@ -48,7 +48,6 @@ export type Stage = {
 
 type ProjectBase = {
     name: string;
-    description: string;
     theme: ProjectTheme;
     iconKey: ProjectIconKey;
 };
@@ -62,13 +61,8 @@ export type StagedProject = ProjectBase & {
 export type DedicatedProject = ProjectBase & {
     kind: 'dedicated';
     id: 'logs';
+    description: string;
     stages: [];
-    action: {
-        name: string;
-        description: string;
-        route: string;
-        iconKey: ProjectIconKey;
-    };
 };
 
 export type Project = StagedProject | DedicatedProject;
@@ -85,8 +79,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'api-discovery-hub',
         name: 'API Discovery Hub',
-        description:
-            '公開APIカタログを取得・検索・保存・調査できるポートフォリオProjectです。',
         iconKey: 'globe',
         theme: {
             background: '#0e1b2b',
@@ -132,8 +124,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'dance-shorts-radar',
         name: 'DanceShortsRadar',
-        description:
-            'YouTube Shorts のダンス候補を収集し、地域別ランキングと snapshot 差分を確認するProjectです。',
         iconKey: 'radar',
         theme: {
             background: '#10131f',
@@ -179,8 +169,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'dance-shorts-analyzer',
         name: 'DanceShortsAnalyzer',
-        description:
-            '保存済み動画を検索・選択し、snapshot の推移と差分を比較分析するProjectです。',
         iconKey: 'bar-chart',
         theme: {
             background: '#10131f',
@@ -226,8 +214,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'japan-quake-wave-map',
         name: 'Japan Quake Wave Map',
-        description:
-            '気象庁XML由来の地震情報を保存し、震源・震度・波紋を地図上で確認するProjectです。',
         iconKey: 'radar',
         theme: {
             background: '#13211f',
@@ -273,8 +259,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'lumilab',
         name: 'LumiLab',
-        description:
-            'LumiLabは案件システムを最初のサブシステムとして育てる上位プロダクトです。',
         iconKey: 'lightbulb',
         theme: {
             background: '#111827',
@@ -311,8 +295,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'construction-order',
         name: '工事発注管理',
-        description:
-            '案件、作業カード、見積・請求・領収の流れを、現場向けの入力体験として整理するProjectです。',
         iconKey: 'building',
         theme: {
             background: '#12201c',
@@ -349,8 +331,6 @@ export const projects: Project[] = [
         kind: 'staged',
         id: 'event-card-calendar',
         name: 'イベント・カードカレンダー',
-        description:
-            'イベントを背景・生成元として扱い、入金・出金・請求カードをカレンダー、表、可視化へ広げる構想Projectです。',
         iconKey: 'calendar',
         theme: {
             background: '#111716',
@@ -392,12 +372,6 @@ export const projects: Project[] = [
             muted: '#bfdbfe',
         },
         stages: [],
-        action: {
-            name: 'アプリログ',
-            description: 'API連携ログとエラーログを確認します。',
-            route: '/projects/logs',
-            iconKey: 'clipboard',
-        },
     },
 ];
 
@@ -431,11 +405,4 @@ export function isStageProjectId(
     return projects.some(
         (project) => project.kind === 'staged' && project.id === projectId,
     );
-}
-
-export function getAdjacentProjectIndex(
-    currentIndex: number,
-    offset: -1 | 1,
-): number {
-    return (currentIndex + offset + projects.length) % projects.length;
 }

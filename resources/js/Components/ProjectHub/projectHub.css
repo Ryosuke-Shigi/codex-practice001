@@ -26,7 +26,6 @@
     mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.88), transparent 92%);
 }
 
-.project-select-header,
 .project-logs-header {
     position: relative;
     z-index: var(--project-layer-controls);
@@ -63,8 +62,6 @@
 }
 
 .project-nav-link:focus-visible,
-.project-sphere-button:focus-visible,
-.project-select-arrow:focus-visible,
 .project-logs-tab:focus-visible,
 .project-log-clickable-row:focus-visible,
 .project-log-resolve-button:focus-visible,
@@ -82,10 +79,10 @@
     position: relative;
     z-index: var(--project-layer-content);
     display: grid;
-    min-height: calc(100dvh - 10.5rem);
+    align-content: start;
     align-items: center;
     gap: 1rem;
-    padding: 0 1rem 9.5rem;
+    padding: 2rem 1rem max(1.5rem, env(safe-area-inset-bottom));
 }
 
 .project-logs-title h1 {
@@ -100,35 +97,22 @@
 .project-sphere-stage {
     position: relative;
     display: grid;
-    min-height: 20rem;
+    min-height: 12.5rem;
+    perspective: 1000px;
     place-items: center;
 }
 
-.project-sphere-button {
+.project-sphere {
     position: relative;
     z-index: var(--project-layer-controls);
     display: grid;
     aspect-ratio: 1;
     width: min(58vw, 18rem);
     min-width: 12.5rem;
-    cursor: pointer;
     place-items: center;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    padding: 0;
     color: #ffffff;
-    animation: project-sphere-float 4.8s ease-in-out infinite;
+    transform: translate3d(0, -1.5rem, -9rem) scale(0.72);
     transform-style: preserve-3d;
-    transition: transform 280ms ease, opacity 220ms ease;
-}
-
-.project-sphere-button:hover .project-sphere-core {
-    transform: translateY(-0.25rem) scale(1.035);
-    box-shadow:
-        inset 0 1.6rem 3.4rem rgba(255, 255, 255, 0.34),
-        inset 0 -2rem 4rem rgba(2, 6, 23, 0.38),
-        0 2rem 5.5rem var(--project-sphere-shadow);
 }
 
 .project-sphere-core {
@@ -148,8 +132,7 @@
     box-shadow:
         inset 0 1.4rem 3rem rgba(255, 255, 255, 0.3),
         inset 0 -2rem 4rem rgba(2, 6, 23, 0.34),
-        0 1.6rem 4.5rem var(--project-sphere-shadow);
-    transition: transform 180ms ease, box-shadow 180ms ease;
+        0 2.4rem 6rem var(--project-sphere-shadow);
 }
 
 .project-sphere-shine {
@@ -167,141 +150,10 @@
     filter: drop-shadow(0 0.55rem 1.1rem rgba(2, 6, 23, 0.32));
 }
 
-.project-side-bubble {
-    position: absolute;
-    top: 50%;
-    z-index: var(--project-layer-content);
-    display: grid;
-    width: min(22vw, 6.75rem);
-    transform: translateY(-50%);
-    place-items: center;
-    gap: 0.45rem;
-    opacity: 0.62;
-    transition: transform 280ms ease, opacity 220ms ease;
-}
-
-.project-side-bubble--left {
-    left: max(1rem, 10vw);
-}
-
-.project-side-bubble--right {
-    right: max(1rem, 10vw);
-}
-
-.project-side-bubble-core {
-    display: grid;
-    aspect-ratio: 1;
-    width: 100%;
-    place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.32);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--project-muted);
-    box-shadow: 0 1rem 2rem rgba(2, 6, 23, 0.26);
-    backdrop-filter: blur(18px);
-}
-
-.project-select-arrow {
-    position: absolute;
-    top: 50%;
-    z-index: var(--project-layer-controls);
-    display: grid;
-    width: 3rem;
-    height: 3rem;
-    cursor: pointer;
-    transform: translateY(-50%);
-    place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.32);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
-    color: var(--project-text);
-    backdrop-filter: blur(18px);
-    transition: transform 180ms ease, background 180ms ease;
-}
-
-.project-select-arrow:hover {
-    transform: translateY(-50%) scale(1.05);
-    background: rgba(255, 255, 255, 0.22);
-}
-
-.project-select-arrow--left {
-    left: 0.75rem;
-}
-
-.project-select-arrow--right {
-    right: 0.75rem;
-}
-
-.project-select-message {
-    position: absolute;
-    inset-inline: 1rem;
-    bottom: 1rem;
-    z-index: var(--project-layer-message);
-    min-height: 7.25rem;
-    border: 2px solid color-mix(in srgb, var(--project-accent) 52%, white);
-    border-radius: 8px;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent),
-        rgba(2, 6, 23, 0.78);
-    box-shadow:
-        inset 0 0 0 2px rgba(255, 255, 255, 0.12),
-        0 1rem 2.5rem rgba(0, 0, 0, 0.28);
-    padding: 1rem;
-    color: var(--project-text);
-    backdrop-filter: blur(18px);
-}
-
-.project-select-page--project-expanding .project-sphere-button,
-.project-select-page--stage-select .project-sphere-button,
-.project-select-page--stage-navigating .project-sphere-button {
-    animation: none;
-    transform: translate3d(0, -1.5rem, -9rem) scale(0.72);
-}
-
-.project-select-page--project-returning .project-sphere-button {
-    animation: none;
-    transform: translate3d(0, 0, 0) scale(1);
-}
-
-.project-select-page--project-expanding .project-sphere-stage,
-.project-select-page--stage-select .project-sphere-stage,
-.project-select-page--stage-navigating .project-sphere-stage,
-.project-select-page--project-returning .project-sphere-stage {
-    min-height: 12.5rem;
-    perspective: 1000px;
-}
-
-.project-select-page--project-expanding,
 .project-select-page--stage-select,
-.project-select-page--stage-navigating,
-.project-select-page--project-returning {
+.project-select-page--stage-navigating {
     overflow-y: auto;
     overscroll-behavior-y: contain;
-}
-
-.project-select-page--project-expanding .project-select-main,
-.project-select-page--stage-select .project-select-main,
-.project-select-page--stage-navigating .project-select-main,
-.project-select-page--project-returning .project-select-main {
-    min-height: auto;
-    align-content: start;
-    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
-}
-
-.project-select-page--project-expanding .project-side-bubble,
-.project-select-page--stage-select .project-side-bubble,
-.project-select-page--stage-navigating .project-side-bubble {
-    opacity: 0.25;
-    transform: translateY(-50%) scale(0.76);
-}
-
-.project-select-page--project-expanding .project-sphere-core,
-.project-select-page--stage-select .project-sphere-core,
-.project-select-page--stage-navigating .project-sphere-core {
-    box-shadow:
-        inset 0 1.4rem 3rem rgba(255, 255, 255, 0.3),
-        inset 0 -2rem 4rem rgba(2, 6, 23, 0.34),
-        0 2.4rem 6rem var(--project-sphere-shadow);
 }
 
 .project-depth-select {
@@ -312,16 +164,6 @@
     gap: 0.9rem;
     margin: -1.3rem auto 0;
     padding-bottom: 1rem;
-    opacity: 0;
-    pointer-events: none;
-    transform: translate3d(0, 2rem, 0);
-    transition: opacity 220ms ease, transform 280ms ease;
-}
-
-.project-select-page--stage-select .project-depth-select,
-.project-select-page--stage-navigating .project-depth-select {
-    opacity: 1;
-    pointer-events: auto;
     transform: translate3d(0, 0, 0);
 }
 
@@ -362,15 +204,13 @@
     font-weight: 900;
 }
 
-.project-stage-grid,
-.project-dedicated-action-grid {
+.project-stage-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0.7rem;
 }
 
-.project-stage-grid--1,
-.project-dedicated-action-grid {
+.project-stage-grid--1 {
     width: min(100%, 34rem);
     margin-inline: auto;
 }
@@ -393,15 +233,8 @@
         0 0 1.8rem color-mix(in srgb, var(--project-sphere) 18%, transparent);
     padding: 0.85rem 1rem;
     text-align: left;
-    opacity: 0;
-    transform: translate3d(0, 1.2rem, 0) scale(0.98);
-    transition: transform 220ms ease, border-color 180ms ease, background 180ms ease, opacity 220ms ease;
-}
-
-.project-select-page--stage-select .project-depth-action,
-.project-select-page--stage-navigating .project-depth-action {
-    opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
+    transition: transform 220ms ease, border-color 180ms ease, background 180ms ease, opacity 220ms ease;
 }
 
 .project-select-page--stage-select .project-depth-action:nth-child(2),
@@ -461,15 +294,8 @@
     color: var(--project-accent);
 }
 
-.project-select-arrow:disabled,
-.project-sphere-button:disabled,
-.project-stage-back-button:disabled,
 .project-depth-action:disabled {
     cursor: default;
-}
-
-.project-stage-back-button:disabled,
-.project-depth-action:disabled {
     opacity: 0.68;
 }
 
@@ -477,35 +303,6 @@
 .project-depth-action:focus-visible {
     outline: 3px solid color-mix(in srgb, var(--project-accent) 72%, white);
     outline-offset: 4px;
-}
-
-.project-message-title {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    color: var(--project-accent);
-    font-size: 0.78rem;
-    font-weight: 900;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.project-select-message p {
-    margin: 0.6rem 0 0;
-    color: color-mix(in srgb, var(--project-text) 90%, transparent);
-    font-size: 0.98rem;
-    font-weight: 700;
-    line-height: 1.75;
-}
-
-.project-typing-caret {
-    display: inline-block;
-    width: 0.55rem;
-    height: 1rem;
-    margin-left: 0.2rem;
-    transform: translateY(0.15rem);
-    background: var(--project-accent);
-    animation: project-caret-blink 900ms steps(2, start) infinite;
 }
 
 .project-logs-page {
@@ -860,31 +657,7 @@
     font-weight: 900;
 }
 
-@keyframes project-sphere-float {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-0.8rem);
-    }
-}
-
-@keyframes project-caret-blink {
-    0%,
-    45% {
-        opacity: 1;
-    }
-
-    46%,
-    100% {
-        opacity: 0;
-    }
-}
-
 @media (max-width: 640px) {
-    .project-select-header,
     .project-logs-header {
         padding: 0.75rem;
     }
@@ -896,45 +669,13 @@
     }
 
     .project-select-main {
-        min-height: calc(100dvh - 11rem);
-        padding: 0 0.75rem 9.25rem;
+        padding-top: 1.5rem;
+        padding-inline: 0.75rem;
     }
 
-    .project-sphere-stage {
-        min-height: 17rem;
-    }
-
-    .project-sphere-button {
+    .project-sphere {
         width: min(68vw, 14.5rem);
         min-width: 10.75rem;
-    }
-
-    .project-side-bubble {
-        width: 4.25rem;
-    }
-
-    .project-side-bubble--left {
-        left: 0.5rem;
-    }
-
-    .project-side-bubble--right {
-        right: 0.5rem;
-    }
-
-    .project-select-arrow {
-        width: 2.65rem;
-        height: 2.65rem;
-    }
-
-    .project-select-message {
-        inset-inline: 0.75rem;
-        min-height: 7.65rem;
-        padding: 0.85rem;
-    }
-
-    .project-select-message p {
-        font-size: 0.88rem;
-        line-height: 1.62;
     }
 
     .project-logs-main {
@@ -995,46 +736,15 @@
 }
 
 @media (orientation: landscape) and (max-height: 540px) {
-    .project-select-main {
-        min-height: calc(100dvh - 5rem);
-        padding-bottom: 1rem;
-    }
-
-    .project-sphere-stage {
-        min-height: 14rem;
-    }
-
-    .project-sphere-button {
+    .project-sphere {
         width: min(30vw, 12rem);
         min-width: 9rem;
-    }
-
-    .project-select-message {
-        left: 1rem;
-        right: auto;
-        bottom: 1rem;
-        width: min(42vw, 28rem);
-        min-height: 5.25rem;
-    }
-
-    .project-select-message p {
-        overflow: visible;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .project-sphere-button,
-    .project-typing-caret {
-        animation: none;
-    }
-
     .project-nav-link,
-    .project-sphere-button,
-    .project-sphere-core,
-    .project-select-arrow,
     .project-stage-back-button,
-    .project-side-bubble,
-    .project-depth-select,
     .project-depth-action {
         transition: none;
     }
@@ -1060,18 +770,11 @@
 }
 
 @media (orientation: landscape) and (max-height: 540px) {
-    .project-select-page--project-expanding .project-select-main,
-    .project-select-page--stage-select .project-select-main,
-    .project-select-page--stage-navigating .project-select-main,
-    .project-select-page--project-returning .project-select-main {
+    .project-select-main {
         gap: 0.5rem;
-        padding-top: 0;
     }
 
-    .project-select-page--project-expanding .project-sphere-stage,
-    .project-select-page--stage-select .project-sphere-stage,
-    .project-select-page--stage-navigating .project-sphere-stage,
-    .project-select-page--project-returning .project-sphere-stage {
+    .project-sphere-stage {
         min-height: 8rem;
     }
 

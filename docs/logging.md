@@ -85,7 +85,7 @@ APIキー、Authorization header、秘密情報、レスポンス全文は記録
 
 ### application_logs
 
-Project Selectの専用操作から開くアプリログページは、Laravel標準ログの代替ではなく、画面確認用のDB保存ログとして扱います。
+Portfolio版LinksLauncherの`logs`選択から開くアプリログページは、Laravel標準ログの代替ではなく、画面確認用のDB保存ログとして扱います。旧 `/projects/logs` URLも維持します。
 
 保存先:
 

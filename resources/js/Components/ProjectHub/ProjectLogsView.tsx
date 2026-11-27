@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import './projectHub.css';
 import { projects, type DedicatedProject } from './projectData';
 import { resolveProjectIcon } from './projectIcons';
+import { buildPortfolioProjectListHref } from './projectNavigation';
 import ProjectLogsField, {
     type ProjectLogsProps,
 } from './ProjectLogsField';
@@ -42,10 +43,10 @@ export default function ProjectLogsView({
 
             <header className="project-logs-header">
                 <Link
-                    href="/projects"
+                    href={buildPortfolioProjectListHref(logsProject.id)}
                     className="project-nav-link"
-                    aria-label="PROJECT選択へ戻る"
-                    title="PROJECT選択へ戻る"
+                    aria-label="作品一覧へ戻る"
+                    title="作品一覧へ戻る"
                 >
                     <ArrowLeft aria-hidden="true" size={18} />
                     戻る
