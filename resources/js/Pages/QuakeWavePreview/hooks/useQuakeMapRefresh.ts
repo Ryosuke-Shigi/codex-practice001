@@ -129,7 +129,7 @@ export function useQuakeMapRefresh({ dateRange }: UseQuakeMapRefreshArgs) {
     const startMapRefresh = useCallback(async () => {
         /*
          * POST は「XML取込 + PIN生成」の統合更新をQueueへ依頼するだけです。
-         * 実際のfeed取得、個別XML解析、DB upsertは Laravel Job が既存Serviceを順番に呼びます。
+         * Job は統合更新 Action を呼び、Action が feed entry 同期のあとに map pin 生成へ進めます。
          * 連打で同じ更新Jobが重複しないよう、既に開始中・polling中なら何もしません。
          */
         if (isRefreshing) {

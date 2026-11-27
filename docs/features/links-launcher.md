@@ -15,7 +15,7 @@ TOPのSTARTは `/portfolio/links-launcher` を開く。旧 `/projects` の作品
 | `GET /portfolio/links-launcher` | 固定したPortfolio UUIDを開く。旧project指定もLink UUIDへ変換 |
 | `/projects`、`/projects?project=<有効な作品ID>` | 旧一覧URLの互換入口。Portfolio一覧を開き、指定作品が有効なら選択状態にする。不正なquery、view、hash、重複query、未知のkey、未知の作品IDは未選択一覧へ退避する |
 | `/projects?project=<既存作品ID>&view=stages` | 維持する独立した開発段階選択page |
-| `/projects/logs` | 維持するアプリログ入口。旧Pageからは対応するPortfolioログ選択へ接続する |
+| `/projects/logs` | アプリログ画面を維持し、画面の戻りリンクをPortfolio一覧の `logs` 選択へ接続する |
 
 旧一覧URLは `Projects/Select` Page名を互換入口として残し、ブラウザーの実URLを検査してから置換GETで最新のPortfolio Pageとpropsを取得する。保存済みInertia履歴の旧Page・propsも同じ経路で扱う。直接の作品一覧ではなく段階表示を復元するのは、有効な作品IDと `view=stages` の組だけ。
 
@@ -57,6 +57,8 @@ Migrationは `database/migrations/2026_11_23_000000_create_links_lanchar_tables.
 | resources/js/Pages/LinksLauncher/ | props・metaの入口と専用非公開画面 |
 | resources/js/Components/LinksLauncher/ | 型・画像／球体・背景・説明・選択と遷移のUI状態 |
 | resources/js/Hooks/useLinksLauncherHistory.ts | 履歴項目ごとの到着印・遷移元・再読込復元とTOPとの重複判定 |
+| resources/js/app.tsx | Inertiaの初期履歴への書き込み前に生URLのquery・hashを保持し、履歴監視と初期互換訪問の待機処理を接続する |
+| resources/js/Components/ProjectHub/projectSelectInitialization.ts | 初期Pageが `Projects/Select` の場合に、初回navigate完了まで旧一覧の互換訪問を待機する |
 | resources/js/Pages/Projects/Select.tsx | 旧一覧URLと段階URLの互換入口。旧一覧は実URLを検査して最新Portfolio propsを取得し、段階URLは段階画面を構成する |
 | app/Http/Controllers/Portfolio/PortfolioProjectEntryController.php | Portfolio本体と旧作品IDを共通入力へ変換 |
 | app/Support/Portfolio/PortfolioLinksLauncherDefinition.php | 初期UUID・現行8項目・実URL・素材対応 |

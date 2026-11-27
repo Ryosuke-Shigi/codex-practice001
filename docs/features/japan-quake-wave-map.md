@@ -178,16 +178,14 @@ status APIは、画面が必要とするJSON shapeへ整形します。
 
 ## Request
 
-Request validationで固定する主な内容:
+地図表示の入力・取得・表示件数は、次の境界に分けます。
 
-- 日付範囲
-- limit
-- 型
-- 必須・任意
-- 境界値
-- 不正値
+- `QuakeWavePreviewMapRequest`: 任意の `startDate` / `endDate` が `Y-m-d` 形式であることを検証します。日付の前後関係や `limit` は検証しません。
+- `EarthquakeMapPinListQueryDTOFactory`: 未指定の開始日だけをアプリのタイムゾーンで当日の3日前、未指定の終了日だけを当日で補完してQuery DTOを作ります。
+- Controller / Repository: 地図表示の取得上限はFactoryの既定値100を使い、RepositoryはQuery DTOの上限を1〜100に収めて取得します。HTTP queryの `limit` は地図の取得条件へ渡しません。
+- React: 取得済み候補から地図に表示する件数を選びます。初期値10、5〜45件の表示設定は取得上限とは別です。
 
-フロント側の入力確認だけで完結しません。
+日付の前後が逆でも形式が有効ならRequestは受理し、Repositoryの期間条件に合うpinは0件になります。フロント側の入力確認だけで完結させません。
 
 ## テストで固定する仕様
 
@@ -230,9 +228,9 @@ Request validationで固定する主な内容:
 ### API / Request
 
 - status APIのJSON shape
-- Request validation
-- 日付範囲
-- limit
+- 地図Requestの日付形式検証と、不正形式の拒否
+- Factoryの未指定日付補完、Repositoryの期間条件（日付両端・逆順時0件を含む）
+- 地図取得の既定上限100と、HTTP queryの `limit` を取得条件へ渡さないこと
 - 異常時のresponse
 
 ## 変更時の確認

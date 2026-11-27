@@ -11,6 +11,7 @@
 
 | Path | 対象 |
 |---|---|
+| [../../features/links-launcher.md](../../features/links-launcher.md) | 共通リンク選択とPortfolio入口、旧URL・履歴・段階選択の互換 |
 | [../../features/api-discovery-hub.md](../../features/api-discovery-hub.md) | API Discovery Hubの同期、検索、保存メモ、テスト固定仕様 |
 | [../../features/dance-shorts-analyzer.md](../../features/dance-shorts-analyzer.md) | DanceShortsAnalyzerの保存済み動画検索、Analyze表示、snapshot計算、テスト固定仕様 |
 | [../../features/dance-shorts-radar.md](../../features/dance-shorts-radar.md) | DanceShortsRadarの同期、ランキング、テスト固定仕様 |

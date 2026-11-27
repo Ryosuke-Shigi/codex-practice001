@@ -217,11 +217,11 @@ DTO は比較済みの値を運ぶデータキャリアです。DB取得、上�
 
 `selectedVideoId` が指定されたdisplay-card-windowでは、次の順序で処理します。
 
-1. 選択中タブ、比較日数、並び順でランキング全体順を確定する
-2. 選択カードの順位を特定する
-3. 選択カードの前後を含む最大5件を `DanceShortDisplayCardWindowService` で切り出す
+1. 選択中タブ、比較日数、並び順に対応する有効なread modelを参照する
+2. 選択カードの保存済み順位を確認する
+3. 順位があれば選択カードの前後、なければ1位から最大5件を `DanceShortDisplayCardWindowService` で切り出す
 
-Repositoryはランキング全体のread model取得を担当し、選択カード探索やwindow表示判断は行いません。
+Repositoryは有効なread modelから必要な行を取得し、必要に応じて選択動画の保存済み順位と総件数を取得します。Strategyと `DanceShortDisplayCardWindowService` が表示範囲を決めます。
 
 ## テストで固定する仕様
 

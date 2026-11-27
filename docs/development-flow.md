@@ -46,7 +46,7 @@ Portfolio版LinksLauncherの選択から作品の段階へ進みます。旧 `/p
 
 7作品のStageは `resources/js/Components/ProjectHub/projectData.ts` の静的TypeScriptデータで定義し、合計17段階の順序・routeを保ちます。`/projects` は実URLのquery・hashを検査する互換入口です。有効な `project=<作品ID>&view=stages` だけが段階画面に留まり、それ以外はPortfolio一覧の最新Pageとpropsを取得します。旧Page・propsを含む保存済みInertia履歴もこの経路で一覧へ接続します。アプリログは `/projects/logs` を維持し、Portfolio一覧の`logs`選択からも開けます。
 
-DanceShortsRadarとDanceShortsAnalyzerは別作品として扱います。現時点ではPROTOTYPE stageは表示しません。旧Project Selectの一覧内選択・開閉操作はなく、作品選択はPortfolio一覧、段階表示は各段階URLが担います。旧Lab入口やStageのdirect routeは維持します。
+DanceShortsRadarとDanceShortsAnalyzerは別作品として扱います。現時点ではPROTOTYPE stageは表示しません。旧Project Selectの一覧内選択・開閉操作はなく、作品選択はPortfolio一覧、段階表示は各段階URLが担います。旧 `/lab` 入口は404とし、現行Stageのdirect route（`/lab/...-idea-board` 等を含む）は維持します。
 
 現在のdirect routeは次の通りです。
 

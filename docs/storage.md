@@ -40,6 +40,8 @@ DTO は保存結果のデータキャリアに留め、DB操作、Storage操作�
 
 通常の保存結果ではどちらも `null` です。公開URLまたは一時URLが必要なFeatureは、共通Serviceの引数またはURL取得メソッドで明示的に要求します。
 
+`put()` で公開URLと一時URLを同時に要求すると `InvalidArgumentException` になります。URLを要求しても生成に失敗した場合は、対応するDTO項目は `null` になります。
+
 public公開前提のS3設定にはしません。visibility は原則 `private` から始め、Feature固有の公開要件がある場合だけ個別に判断します。
 
 ## テスト方針

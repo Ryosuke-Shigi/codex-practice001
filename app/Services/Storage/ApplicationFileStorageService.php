@@ -24,6 +24,11 @@ class ApplicationFileStorageService
         private readonly FileStorageRepositoryInterface $storageRepository,
     ) {}
 
+    /**
+     * 公開URLと一時URLは同時に要求できません。要求したURLも生成に失敗すればDTOではnullになります。
+     *
+     * @throws InvalidArgumentException 公開URLと一時URLを同時に要求するなど、保存引数が不正な場合
+     */
     public function put(
         string $contents,
         string $path,
