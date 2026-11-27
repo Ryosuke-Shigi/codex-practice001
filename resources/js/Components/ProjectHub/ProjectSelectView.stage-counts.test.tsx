@@ -78,6 +78,7 @@ vi.mock('./projectData', () => ({
 }));
 
 vi.mock('./projectNavigation', () => ({
+    buildPortfolioProjectListHref: () => '/portfolio/links-launcher',
     buildProjectSelectHref: () => '/projects',
     parseProjectSelectUrl: () => ({
         state: { screen: 'project-select', projectId: null },

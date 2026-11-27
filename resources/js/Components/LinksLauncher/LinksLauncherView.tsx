@@ -22,7 +22,7 @@ import './linksLauncher.css';
 export default function LinksLauncherView(props: LinksLauncherPageProps) {
     const { linksLauncher } = props;
     const {
-        canGoBack, canSwitch, isNavigating, next, openSelected, previous, select, selected,
+        canSwitch, isNavigating, next, openSelected, previous, select, selected, showHistoryBack,
     } = useLinksLauncherNavigation(props);
     const reducedMotion = usePrefersReducedMotion();
     const selectionButton = useRef<HTMLButtonElement>(null);
@@ -82,7 +82,7 @@ export default function LinksLauncherView(props: LinksLauncherPageProps) {
                 <Link className="links-launcher-top" href={props.navigation.topUrl}>
                     TOPへ
                 </Link>
-                {canGoBack && (
+                {showHistoryBack && (
                     <button
                         className="links-launcher-back"
                         type="button"

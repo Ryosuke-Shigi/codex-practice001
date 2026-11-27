@@ -53,8 +53,8 @@ Migrationは `database/migrations/2026_11_23_000000_create_links_lanchar_tables.
 | app/Providers/AppServiceProvider.php | サイト側で指定したTOPの相対URLを共通Responderへ遅延注入 |
 | resources/js/Pages/LinksLauncher/ | props・metaの入口と専用非公開画面 |
 | resources/js/Components/LinksLauncher/ | 型・画像／球体・背景・説明・選択と遷移のUI状態 |
-| resources/js/Hooks/useLinksLauncherHistory.ts | 履歴項目ごとの到着印・再読込復元 |
-| resources/js/Pages/Projects/Select.tsx | 既存段階選択へ履歴状態を渡す薄い接続 |
+| resources/js/Hooks/useLinksLauncherHistory.ts | 履歴項目ごとの到着印・遷移元・再読込復元とTOPとの重複判定 |
+| resources/js/Pages/Projects/Select.tsx | 既存段階選択を構成する薄い入口。履歴による戻り判定を持たない |
 | app/Http/Controllers/Portfolio/PortfolioProjectEntryController.php | Portfolio本体と旧作品IDを共通入力へ変換 |
 | app/Support/Portfolio/PortfolioLinksLauncherDefinition.php | 初期UUID・現行8項目・実URL・素材対応 |
 | database/seeders/PortfolioLinksLauncherSeeder.php | 初期定義の反映・明示UUIDの論理削除 |
@@ -72,9 +72,11 @@ propsはlinksLauncher、selectedLinkKey、linkList.links、navigation.topUrl。L
 画像選択時は中央画像の表示領域を広げ、矢印と隣接プレビューは従来の左右配置を保つ。中央画像を主役とし、隣接プレビューとの多少の重なりは許容する。高さの低い横向きでは従来の画像寸法を保ち、画像を縮めない。画像なしの球体選択には画像専用の寸法を適用しない。
 一覧内の選択変更は履歴置換、行き先へは同一タブで履歴追加。URLなしはpointer・Enter・Spaceで遷移しない。中央focusを維持し、左右キー・前後ボタン・左右swipeを使う。縦scrollや操作ボタンを奪わない。
 同一originはInertiaで開き、当該GETに対応する正常なHTML応答だけ通常の文書遷移へ切り替える。visitごとの識別値・元URL・応答形式を照合し、他の通信へ干渉しない。購読は応答処理・終了・取消・画面破棄時に解除する。
-新一覧と独立した段階選択の戻るはhistory.back()。既存作品内のリンクから段階選択へ入った場合も対象とし、直開きでは画面内戻るなし。旧一覧内から段階へ切り替えた場合の従来操作は残し、各作品内部の戻りリンクは変えない。旧一覧内のURL置換ではInertiaの状態を保持し、段階へ進んだ経緯と選択を失わない。
-公開一覧の「TOPへ」は履歴の「戻る」と独立したリンクで、直開き・公開0件・タイトルと説明なしでも表示する。履歴がある場合は両方を表示し、TOPリンクにもキーボードfocusと既存の戻るに相当する操作領域を確保する。
-履歴印はInertia remembered stateとその項目のURLで判定し、履歴長・referrerだけでは判断しない。実応答のbeforeUpdateと同じPageのnavigateを組にして履歴追加を認定し、同じPageのsuccessで到着印を1回保存する。初期表示・先読み・履歴復帰だけで新しい印を付けない。reload前の印を取得し、同URLの初回navigateにだけ復元する。対象Pageの判定と起動時の接続はapp.tsxに置き、共通HookへPage名を持たせない。
+独立した段階選択には、履歴の有無や進入元にかかわらず「作品一覧へ」を表示する。`projectNavigation`が組み立てる `/portfolio/links-launcher?project=<作品ID>` へ遷移し、既存のPortfolio入口で対応作品を選択して中央操作へfocusを戻す。各作品から段階へ戻る既存URLと `Projects/Select` のPage名は維持する。旧 `/projects` 一覧内から段階へ切り替えた場合は、同じ作品の旧一覧へ戻る従来の画面内操作を残す。そのURL置換ではInertiaの状態を保持し、段階へ進んだ経緯と選択を失わない。
+公開一覧の「TOPへ」はサイト指定のリンクとして、直開き・公開0件・タイトルと説明なしでも表示する。到着印の遷移元が `navigation.topUrl` と同じ場合は履歴の「戻る」を表示しない。START直後・選択変更・再読込・履歴復帰でもTOPとの重複を抑える。異なる遷移元への「戻る」はhistory.back()を使い、TOPと併存する。有効な旧到着印に遷移元がない場合は既存の「戻る」を維持し、推測でTOP由来と扱わない。各リンクにキーボードfocusと既存の戻るに相当する操作領域を確保する。
+履歴印はInertia remembered stateとその項目のURLで判定し、履歴長・referrerだけでは判断しない。実応答のbeforeUpdateで遷移元を取得し、同じPageのnavigateとsuccessを組にして履歴追加と到着印の保存を認定する。初期表示・先読み・履歴復帰だけで新しい印を付けない。選択変更の履歴置換とreloadでは、戻るの表示有無から独立して現在の有効な印と遷移元を引き継ぐ。同じURLでも別の履歴項目へ印を移さない。対象Pageの判定と起動時の接続はapp.tsxに置き、共通HookへPage名を持たせない。
+reload前の印は元の履歴項目のURLへ厳密に照合する。最新の公開Pageが同じ一覧・queryを指す場合は、Inertia初期化前にURLだけをブラウザーの元の表記へ整合させ、query順の違いによる履歴追加を防ぐ。queryのキー順と符号化の差だけを許容し、値・同名キーの順序・件数・異なる明示fragmentは一致と扱わない。最新のpropsとasset versionは保持する。
+asset version更新からの復帰は、旧・正式URLのいずれも最新の公開応答を使う。対応する置換GETのbeforeUpdateでは、Inertiaが自動コピーした現行・旧到着印を応答の保存状態から除き、無関係な保存値は保持する。元の履歴項目・印・再取得・公開応答の厳密な照合に成功した場合だけ、元の遷移元を含む印を再保存する。正規化後のURLが不一致の旧印と偶然一致しても、その印を有効にしない。
 
 旧GIF・PNGは既存の画像参照との互換のため保持する。初期定義の画像参照を変更しても、既存Linkの保存済み参照は自動更新されない。新しい素材の配布と既存データへの参照適用は別工程で扱う。 選択アニメーションの連続的な滑らかさとループ境界の実画面評価は未確認。
 
@@ -91,12 +93,16 @@ propsはlinksLauncher、selectedLinkKey、linkList.links、navigation.topUrl。L
 - tests/Feature/LinksLauncher/ShowLinksLauncherTest.php: HTTP・props・所属・順序・状態・URL・補完・両入口のサイトTOP注入と差し替え。
 - tests/Feature/LinksLauncher/PortfolioLinksLauncherSeederTest.php: 初期8項目・素材・再実行・明示削除。
 - tests/Unit/LinksLauncher/LinkDisplayResolverTest.php: 一覧単位の補完色・指定色の保持・画像の除外。
-- resources/js/Components/LinksLauncher/LinksLauncherView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除・TOPと履歴の戻るの独立性。
+- resources/js/Components/LinksLauncher/LinksLauncherView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除・サイト指定TOPと履歴の戻るの重複判定。
+- resources/js/Components/LinksLauncher/LinksLauncherView.navigation.integration.test.tsx: 実InertiaでSTART・選択置換・一覧A→B→A・同URLの別項目・戻る／進むと、API Discovery Hubの3段階往復・対応作品とfocusを通常表示／動き軽減で検査。
 - resources/js/Hooks/useLinksLauncherHistory.test.tsx: アプリ内到着・直開き・先読み・置換・履歴復帰・購読解除。
 - resources/js/Hooks/useLinksLauncherHistory.integration.test.tsx: 実Inertia・固定HTTP応答で、表示とブラウザ相当の履歴項目への保存を区別して検査。
-- resources/js/Components/ProjectHub/ProjectSelectView.integration.test.tsx: 実InertiaとProjects Pageで、旧一覧から段階選択への両戻る表示・同じ作品への復帰・focusを通常表示と動き軽減で検査。
+- resources/js/Hooks/useLinksLauncherHistory.reload.integration.test.tsx: 実Inertiaの再初期化で、選択変更済みの同じ履歴項目の遷移元・TOP重複抑制と履歴件数を検査。
+- resources/js/Hooks/useLinksLauncherHistory.reloadReordered.integration.test.tsx: 実appの再読込で、最新応答のquery順が変わっても、最新の選択・focusと元のURL・fragment・遷移元・同じ履歴項目を保つことを検査。
+- resources/js/Components/ProjectHub/ProjectSelectView.test.tsx: 全7作品の独立段階にある「作品一覧へ」と、既存17段階の行き先を検査。
+- resources/js/Components/ProjectHub/ProjectSelectView.integration.test.tsx: 実InertiaとProjects Pageで、旧一覧内の段階選択・同じ作品への復帰・focusを通常表示と動き軽減で検査。
 - resources/js/Hooks/useLinksLauncherHistory.legacy.integration.test.tsx: 実Inertiaで旧Page・props・到着印、同じURLの別項目、各不一致、選択・focus・履歴件数・旧非公開画面を検査。
-- resources/js/Hooks/useLinksLauncherHistory.stale.integration.test.tsx: 実app.tsxから異なる新旧asset versionの履歴復帰・旧URL再取得・最新公開状態・有効な到着印の復元と不一致の拒否を検査。
+- resources/js/Hooks/useLinksLauncherHistory.stale.integration.test.tsx: 実app.tsxから異なる新旧asset versionの履歴復帰・旧／正式URL再取得・最新公開状態・遷移元の復元と、正規化後の応答に一致する不正な旧印の拒否・他の保存値の保持を検査。
 - 既存ProjectHubのPHP・React: 旧入口と作品URLの回帰。
 
 初回作成Migrationは履歴識別子を保つため、既存basename `2026_11_23_000000_create_links_lanchar_tables.php` を維持する。内容と通常のdownだけを正式名へ揃え、配布する追加の改名Migrationは作らない。
