@@ -69,6 +69,7 @@ propsはlinksLauncher、selectedLinkKey、linkList.links、navigation.topUrl。L
 素材はpublic/images/links-launcher/portfolio/<作品ID>/に同梱。4作品の選択画像は高解像度の透過PNGを埋め込んだ自己完結SVGで、4秒周期の浮遊または棒グラフの動きを補間する。背景は従来のGIF、アイコンは透過PNGを維持する。動きを減らす設定では、同じ画角・素材を使いアニメーション要素を含まない明示されたSVG静止版へ切り替え、浮遊・タイピング・背景演出を止める。背景の静止版は従来のPNGを使う。ファイル名から静止版を推測しない。主画像なしなら静止版だけで画像表示を有効にしない。
 隣接プレビューは静止版を優先し、通常設定で静止版がなければ主画像を使う。動きを減らす設定で静止版がなければ、枠内の静的タイトルを表示する。
 選択画像は矩形containで全景を保ち、説明は暗い下地で可読性を確保。画像なしは現行配色・標準球体・Lucideを使う。
+選択中の説明は前面・下部の独立レイヤーに置き、作品ボタン・左右矢印の配置領域には説明量に依存しない余白を確保する。同じ画面サイズでは説明なし・短文・複数行や文字送り中の行数で操作位置を変えない。長文は改行を保った欄内の縦スクロールで全文を読めるようにし、説明欄にはキーボードでも移動できる。説明欄内のタッチ操作を作品切替へ伝播させない。
 画像選択時は中央画像の表示領域を広げ、矢印と隣接プレビューは従来の左右配置を保つ。中央画像を主役とし、隣接プレビューとの多少の重なりは許容する。高さの低い横向きでは従来の画像寸法を保ち、画像を縮めない。画像なしの球体選択には画像専用の寸法を適用しない。
 一覧内の選択変更は履歴置換、行き先へは同一タブで履歴追加。URLなしはpointer・Enter・Spaceで遷移しない。中央focusを維持し、左右キー・前後ボタン・左右swipeを使う。縦scrollや操作ボタンを奪わない。
 同一originはInertiaで開き、当該GETに対応する正常なHTML応答だけ通常の文書遷移へ切り替える。visitごとの識別値・元URL・応答形式を照合し、他の通信へ干渉しない。購読は応答処理・終了・取消・画面破棄時に解除する。
@@ -93,7 +94,7 @@ asset version更新からの復帰は、旧・正式URLのいずれも最新の�
 - tests/Feature/LinksLauncher/ShowLinksLauncherTest.php: HTTP・props・所属・順序・状態・URL・補完・両入口のサイトTOP注入と差し替え。
 - tests/Feature/LinksLauncher/PortfolioLinksLauncherSeederTest.php: 初期8項目・素材・再実行・明示削除。
 - tests/Unit/LinksLauncher/LinkDisplayResolverTest.php: 一覧単位の補完色・指定色の保持・画像の除外。
-- resources/js/Components/LinksLauncher/LinksLauncherView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除・サイト指定TOPと履歴の戻るの重複判定。
+- resources/js/Components/LinksLauncher/LinksLauncherView.test.tsx: 空・循環・入力・前後操作後のfocus・素材・静止版・通常HTML遷移と他通信への非干渉・購読解除・サイト指定TOPと履歴の戻るの重複判定・説明欄のキーボード到達と可視本文・タッチ操作の分離。
 - resources/js/Components/LinksLauncher/LinksLauncherView.navigation.integration.test.tsx: 実InertiaでSTART・選択置換・一覧A→B→A・同URLの別項目・戻る／進むと、API Discovery Hubの3段階往復・対応作品とfocusを通常表示／動き軽減で検査。
 - resources/js/Hooks/useLinksLauncherHistory.test.tsx: アプリ内到着・直開き・先読み・置換・履歴復帰・購読解除。
 - resources/js/Hooks/useLinksLauncherHistory.integration.test.tsx: 実Inertia・固定HTTP応答で、表示とブラウザ相当の履歴項目への保存を区別して検査。

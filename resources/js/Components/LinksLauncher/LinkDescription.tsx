@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type TouchEvent } from 'react';
 
 import type { LinkDisplayValues } from './types';
+
+function keepTouchInDescription(event: TouchEvent<HTMLElement>) {
+    event.stopPropagation();
+}
 
 export default function LinkDescription({
     display,
@@ -30,16 +34,24 @@ export default function LinkDescription({
     }, [description, reducedMotion]);
 
     return (
-        <aside className="links-launcher-message">
-            <h2>{display.title}</h2>
-            {description !== null && (
-                <>
-                    <p className="sr-only">{description}</p>
-                    <p aria-hidden="true">
-                        {reducedMotion ? description : description.slice(0, characterCount)}
-                    </p>
-                </>
-            )}
-        </aside>
+        <div className="links-launcher-description-layer">
+            <section
+                aria-label="選択中のリンクの説明"
+                className="links-launcher-message"
+                tabIndex={0}
+                onTouchStart={keepTouchInDescription}
+                onTouchEnd={keepTouchInDescription}
+            >
+                <h2>{display.title}</h2>
+                {description !== null && (
+                    <>
+                        <p className="sr-only">{description}</p>
+                        <p aria-hidden="true">
+                            {reducedMotion ? description : description.slice(0, characterCount)}
+                        </p>
+                    </>
+                )}
+            </section>
+        </div>
     );
 }

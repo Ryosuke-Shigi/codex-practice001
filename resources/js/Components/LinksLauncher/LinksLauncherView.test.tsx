@@ -55,6 +55,7 @@ type VisibleLink = LinksLauncherPageProps['linkList']['links'][number];
 
 const firstKey = 'd65d315a-5898-4472-ab84-f110f1108138';
 const secondKey = '167e7070-2ee9-4cb0-abb1-47e24ec65470';
+const thirdKey = '723cda62-4e63-4403-8206-bfed1bee1a4d';
 const launcherKey = '839ef2e9-2997-4cc8-8612-3a2f42005163';
 const launcherUrl = '/links-launchers/' + launcherKey;
 const linksLauncherStyles = readFileSync('resources/js/Components/LinksLauncher/linksLauncher.css', 'utf8');
@@ -173,6 +174,32 @@ function prefersReducedMotion(value: boolean) {
     })));
 }
 
+function getDescriptionRegion(): HTMLElement {
+    const region = Array.from(host.querySelectorAll<HTMLElement>('[role="region"], section:not([role])'))
+        .find((element) => {
+            const labelId = element.getAttribute('aria-labelledby');
+            const label = labelId === null
+                ? element.getAttribute('aria-label')
+                : document.getElementById(labelId)?.textContent;
+            return label === '選択中のリンクの説明';
+        });
+    if (region === undefined) {
+        throw new Error('選択中のリンクの説明領域が見つかりません。');
+    }
+    return region;
+}
+
+function swipeAcross(target: Element) {
+    const start = new Event('touchstart', { bubbles: true });
+    Object.defineProperty(start, 'touches', { value: [{ clientX: 240, clientY: 100 }] });
+    const end = new Event('touchend', { bubbles: true });
+    Object.defineProperty(end, 'changedTouches', { value: [{ clientX: 115, clientY: 180 }] });
+    act(() => {
+        target.dispatchEvent(start);
+        target.dispatchEvent(end);
+    });
+}
+
 function hasRenderedAsset(url: string): boolean {
     const renderedImage = Array.from(host.querySelectorAll('img[src]'))
         .some((image) => image.getAttribute('src') === url);
@@ -260,6 +287,7 @@ describe('LinksLauncherView', () => {
 
     afterEach(() => {
         act(() => root.unmount());
+        vi.useRealTimers();
         host.remove();
         window.history.replaceState(null, '', '/');
         vi.unstubAllGlobals();
@@ -384,6 +412,104 @@ describe('LinksLauncherView', () => {
 
         expect(lastSelectedUrl().searchParams.get('selectedLinkKey')).toBe(secondKey);
         expect(document.activeElement).toBe(getButton('二番目'));
+    });
+
+    it('keeps selection controls separate from the full, keyboard-reachable description as links change', () => {
+        prefersReducedMotion(true);
+        const short = '短い説明です。';
+        const long = '一行目の説明です。\n二行目に続きます。\nここが説明の末尾です。';
+        const destination = '/projects?project=api-discovery-hub&view=stages';
+        render([
+            makeLink(firstKey, '説明なしの作品', '/projects/logs'),
+            makeLink(secondKey, '短文の作品', '/projects/logs', { description: short }),
+            makeLink(thirdKey, '複数行の作品', destination, { description: long }),
+        ]);
+
+        expect(document.activeElement).toBe(getButton('説明なしの作品'));
+        expect(host.textContent).not.toContain(short);
+        expect(host.textContent).not.toContain(long);
+
+        click(getButton('次のリンク'));
+        expect(getDescriptionRegion().querySelector('p:not(.sr-only)')?.textContent).toBe(short);
+
+        click(getButton('次のリンク'));
+        const region = getDescriptionRegion();
+        const button = getButton('複数行の作品');
+        expect(region.querySelector('p:not(.sr-only)')?.textContent).toBe(long);
+        expect(region.textContent).not.toContain(short);
+        expect(region.tabIndex).toBe(0);
+        expect([button, getButton('前のリンク'), getButton('次のリンク')]
+            .some((control) => region.contains(control))).toBe(false);
+        expect(document.activeElement).toBe(button);
+        expect(inertia.replace).toHaveBeenCalledTimes(2);
+
+        act(() => region.focus());
+        expect(document.activeElement).toBe(region);
+        activateByKey(button, 'Enter');
+        expect(inertia.visit).toHaveBeenCalledTimes(1);
+        expect(inertia.visit.mock.lastCall?.[0]).toBe(destination);
+    });
+
+    it('keeps descriptions out of the layout flow and allows vertical scrolling', () => {
+        const style = document.createElement('style');
+        style.textContent = linksLauncherStyles;
+        document.head.append(style);
+
+        try {
+            prefersReducedMotion(true);
+            const description = '説明の最初です。\n説明の続きです。\n説明の末尾です。';
+            render([makeLink(firstKey, '説明のある作品', null, { description })]);
+
+            const region = getDescriptionRegion();
+            const layout = region.closest('main');
+            const layer = Array.from(layout?.children ?? []).find((element) => element.contains(region));
+            if (layer === undefined) {
+                throw new Error('説明のレイヤーが見つかりません。');
+            }
+
+            expect(['absolute', 'fixed']).toContain(window.getComputedStyle(layer).position);
+            expect(['auto', 'scroll']).toContain(window.getComputedStyle(region).overflowY);
+        } finally {
+            style.remove();
+        }
+    });
+
+    it('reveals the whole multiline description when its typing animation finishes', () => {
+        vi.useFakeTimers();
+        const description = '説明の最初です。\n説明の末尾です。';
+        render([makeLink(firstKey, '説明のある作品', null, { description })]);
+
+        const visibleDescription = getDescriptionRegion().querySelector('p:not(.sr-only)');
+        expect(visibleDescription).not.toBeNull();
+        expect(visibleDescription?.textContent).not.toBe(description);
+
+        act(() => vi.runAllTimers());
+        expect(visibleDescription?.textContent).toBe(description);
+    });
+
+    it('does not switch during a diagonal touch gesture on the description, but still swipes on the stage', () => {
+        prefersReducedMotion(true);
+        const description = 'タッチで読める作品説明です。';
+        render([
+            makeLink(firstKey, '説明のある作品', '/projects/logs', { description }),
+            makeLink(secondKey, '次の作品', '/projects/logs'),
+        ]);
+
+        const stage = host.querySelector('[role="group"][aria-label="リンクの選択"]');
+        const visibleDescription = Array.from(host.querySelectorAll('p:not(.sr-only)'))
+            .find((paragraph) => paragraph.textContent === description);
+        if (stage === null || visibleDescription === undefined) {
+            throw new Error('作品の選択グループまたは説明文が見つかりません。');
+        }
+
+        swipeAcross(visibleDescription);
+        expect(inertia.replace).not.toHaveBeenCalled();
+        expect(document.activeElement).toBe(getButton('説明のある作品'));
+
+        swipeAcross(stage);
+        expect(inertia.replace).toHaveBeenCalledTimes(1);
+        expect(lastSelectedUrl().searchParams.get('selectedLinkKey')).toBe(secondKey);
+        expect(document.activeElement).toBe(getButton('次の作品'));
     });
 
     it('visits the exact saved destination when clicked', () => {
