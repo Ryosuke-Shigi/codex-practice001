@@ -49,7 +49,7 @@ Analyze 画面は、MOCK の UI 契約を引き継ぎ、選択済み動画の保
 - 派生値を DB 保存しない
 - YouTube Shorts URL は Responder で生成する
 - EChartsOption は Responder で生成する
-- React は props 表示と metric / period タブの UI 状態だけを扱う
+- React は props 表示と、metric / period タブや観測位置の UI 状態を扱う
 - 上部の小さいサムネイルは、クリックで YouTube Shorts を別タブ表示する
 - MOCK にない大きな動画詳細カード、最新 snapshot カード、metric card、active region ボタンは Analyze 本体へ追加しない
 - チャートは選択動画ごとの series を持つ

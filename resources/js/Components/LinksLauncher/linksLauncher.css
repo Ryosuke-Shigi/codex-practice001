@@ -109,7 +109,7 @@
     display: grid;
     min-width: 0;
     min-height: max(11rem, var(--links-launcher-sphere-size));
-    /* Reserve the full panel height so its text never sizes the selection row. */
+    /* 説明パネル分の余白を確保し、説明文の長さで選択行の高さが変わらないようにします。 */
     margin-block-end: calc(var(--links-launcher-description-height) + var(--links-launcher-spacing));
     place-items: center;
     touch-action: pan-y;
@@ -243,7 +243,7 @@
     right: 0;
 }
 
-/* Short landscape screens inherit the lateral layout and its full artwork height. */
+/* 高さの低い横長画面では、横並びの配置と画像の高さを引き継ぎます。 */
 @media not all and (orientation: landscape) and (max-height: 540px) {
     .links-launcher-stage--image .links-launcher-selection--image {
         width: min(84vw, 48rem);

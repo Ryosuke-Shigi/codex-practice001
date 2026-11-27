@@ -5,6 +5,10 @@ namespace App\Factories\Earthquake;
 use App\DTO\Earthquake\Map\EarthquakeMapPinListQueryDTO;
 use Carbon\CarbonImmutable;
 
+/**
+ * 検証済みの日付から取得条件DTOを作り、未指定の開始日・終了日だけを既定期間で補完します。
+ * 日付形式の検証はRequest、取得上限の適用はRepositoryが担当します。
+ */
 final readonly class EarthquakeMapPinListQueryDTOFactory
 {
     public function fromDateRange(

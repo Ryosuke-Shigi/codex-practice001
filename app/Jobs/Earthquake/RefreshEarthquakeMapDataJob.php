@@ -71,9 +71,8 @@ class RefreshEarthquakeMapDataJob implements ShouldQueue
     public function failed(?Throwable $exception): void
     {
         /*
-         * timeoutやworker停止ではhandle()内のcatchを通らない場合があります。
-         * ただしfeedだけ完了してmap側で失敗したケースを上書きしないよう、
-         * まだpending/runningのrunだけをfailedへ倒します。
+         * QueueがJobを失敗扱いにした際、まだpending/runningのrunだけをfailedへ倒します。
+         * feedだけ完了してmap側で失敗したケースなど、確定済みのrun結果は上書きしません。
          */
         $feedEntrySyncRunRepository = app(EarthquakeFeedEntrySyncRunRepositoryInterface::class);
         $mapPinSyncRunRepository = app(EarthquakeMapPinSyncRunRepositoryInterface::class);

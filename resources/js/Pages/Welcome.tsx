@@ -20,7 +20,7 @@ import PublicLayout from '@/Layouts/PublicLayout';
 export default function Welcome() {
     /*
      * Welcome は effect 選択の操作だけを担当します。
-     * 選択結果は共有の見た目 preference として保存し、START 後の Lab でも同じ背景を引き継げるようにします。
+     * Welcome に戻ったときも同じ背景を再表示できるよう、選択をブラウザーに保存します。
      */
     const [currentEffect, setCurrentEffect] = useState<EffectName>(
         () => readPreferredEffectName() ?? defaultEffectName,
@@ -29,7 +29,7 @@ export default function Welcome() {
     useEffect(() => {
         /*
          * React が state 変更を受け入れた後に保存します。
-         * Welcome の操作は selector に限定し、Inertia で Lab へ移動した後も browser-local な選択を再利用します。
+         * Welcome の背景選択をブラウザー内の preference へ反映します。
          */
         storePreferredEffectName(currentEffect);
     }, [currentEffect]);

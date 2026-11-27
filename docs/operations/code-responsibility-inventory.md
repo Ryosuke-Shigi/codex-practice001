@@ -2,8 +2,8 @@
 
 - Status: active
 - Scope: `Ryosuke-Shigi/codex-practice001`
-- Last reviewed: 2026-07-04
-- Canonical source: this document for the 2026-07-03 responsibility inventory and 2026-07-04 QuakeWavePreview / JapanQuake additional inventory; current code, feature docs, migrations, configuration, and successful tests for implemented behavior
+- Last reviewed: 2026-11-28
+- Canonical source: this document for the dated responsibility inventories and understanding restart inspection records; current code, feature docs, migrations, configuration, and successful tests for implemented behavior
 
 ## このドキュメントの目的
 
@@ -456,3 +456,43 @@ Sensors:
 
 - コード変更を含むため、ApiPreview feature test、format-check、`git diff --check`、必要なfrontend確認を実行する
 - Laravel test / npm build / typecheck はコード変更を含むため実行対象です。
+
+## 2026-11-28 ポートフォリオ理解再起動点検
+
+### 今回の確認範囲
+
+基点はmain `b8c3137510cdd1dc39adc852c7f45f0dc1d77b89`。上の棚卸しは当時の記録として保持し、この節で現況へ接続します。通常製品の入口から代表的なController / Request / Action / Service / Repository / DTO / Responder、Page / Hook / Component、関連テストとfeature docsを辿りました。src全ファイル・全行の点検完了を意味しません。
+
+| 系統 | 辿った範囲と再開時の参照先 |
+|---|---|
+| TOP・共通選択・段階 | `routes/web.php` → `Welcome` / Portfolio・LinksLauncher Controller → `ShowLinksLauncherAction` / Repository / DTO / Responder → `LinksLauncher/Show` / View / 履歴Hook。旧入口は `app.tsx` → `projectSelectInitialization.ts` → `Projects/Select` / `projectNavigation`。`ShowLinksLauncherTest`、`ProjectHubTest`、`ProjectSelectView.integration.test.tsx` と [LinksLauncher](../features/links-launcher.md) を照合 |
+| アプリログ・設計思想 | ProjectLogsのController / Request / Action / Repository / Sanitizer / DTO / ResponderとEvent / Listener、Logs Page / View。DesignPhilosophyのController / Action / DTO / Responder / Page / View / motion Hook。各Feature / Reactテストと [Application Logs](../features/application-logs.md) を照合 |
+| API Discovery Hub | PreviewのController / Action / Repository / Factory / ResponderとPage、Catalog一覧・詳細・メモの入力と出力、同期Action / Job / Service / 状態Repository / DTO / Responder、一覧Pageと検索・同期Hook。`ApiCatalogSyncTest`、`ApiCatalogSyncServiceTest`、`ApiPreviewTest`、`tests/Frontend/ApiCatalog/Index.test.tsx` と [feature docs](../features/api-discovery-hub.md) を照合 |
+| DanceShortsAnalyzer | Search / AnalyzeのRequest / Action / Repository / Service / DTO / Responder、Pageと検索・グラフ・比較表Fields。`DanceShortsAnalyzerAnalyzePageServiceTest`、Search / Analyze Featureテストと [feature docs](../features/dance-shorts-analyzer.md) を照合 |
+| DanceShortsRadar | ランキングと追加windowのController / Action / Repository / Strategy / Window Service / DTO / Responder、Page / Hook / 表示Component。`DanceShortVideoRankingPageTest` と [feature docs](../features/dance-shorts-radar.md) を照合 |
+| QuakeWave Preview / Japan Quake | 地図Request / Query Factory / Query Action / Repository / DTO / Responder、統合更新Job / Action / Service、Page / 更新Hook / 表示Component。`QuakeWavePreviewMapRequestTest`、`EarthquakeMapRefreshActionTest` と [feature docs](../features/japan-quake-wave-map.md) を照合 |
+| 共通Storage | `ApplicationFileStorageService` → `FileStorageRepositoryInterface` / `LaravelFileStorageRepository` → `StoredFileDTO`、StorageのUnit / Featureテストと [Storage](../storage.md) を照合。実Storageへの接続なし |
+
+### 説明だけを補完した箇所
+
+- 旧 `/lab` の404と現行の段階URL維持、ログ画面維持とPortfolioの `logs` 選択への戻り先を明確化しました。
+- Welcomeの背景選択・保存コメントを現在の責務に合わせ、LinksLauncherの責務表に初期生URL保持と初回navigate待機を接続しました。project docs索引にLinksLauncherを追加しました。
+- Radarの必要行・保存済み順位・件数の取得と表示範囲決定、Catalogの無効化・項目失敗件数と同期全体の失敗、Analyzerの保存済み最新snapshotを終点とする比較と観測位置のUI状態を説明しました。
+- 地震のQuery DTO取得、JobからActionへの委譲、未完了runだけの失敗記録、Request / Factory / Repository / Reactの入力・取得・表示境界を明確化しました。
+- StorageのURL要求の排他制約と生成失敗時のnull、LinksLauncher CSSの既存意図を補足しました。
+
+型・props・URL・処理条件・CSS値・テスト期待値は変更していません。新しい機能・責務再設計・TDD課題は追加していません。
+
+### 変更不要・過去候補との接続
+
+- 既存の履歴Hook、ログ保存・表示の境界、主要Controller / Action、設計思想ページは説明があり、一律のコメント追加は不要でした。
+- ApiCatalogの過去のPage責務分割候補は、現在の `resources/js/Pages/ApiCatalog/Index.tsx` が `useApiCatalogSearch` と `useApiCatalogSync` を接続する構成へ分離済みです。検索・ページ送りは前者、同期開始・状態取得・完了後の一覧再取得は後者を参照します。
+- QuakeWavePreviewの個別同期も、現在のIndex Pageから `useQuakeWavePreviewSync` へ開始・状態取得を委譲します。地図の統合更新は別の `useQuakeMapRefresh` を参照します。
+- ServerHealthはCommand → Action → 取得Service / Repository・判定Service・通知、`ServerHealthStatusServiceTest` とCommand Registryの説明で再開できます。今回読んだCommand / Action / 判定Service / テストには増補しません。
+- ほかの過去のリファクタリング候補は今回へ戻しません。共通規約・Command Registry・Sensorsの追加や変更は不要です。説明の追従は既存の `SENS-016`、責務とpropsの維持は `SENS-007` / `SENS-012` で確認します。
+
+### 未確認・対象外
+
+- 代表経路以外の全ファイル精読、すべての分岐の正しさ、実Browser / Console / Network / DOM / CSS、本番の現況は今回の点検では認定しません。テスト本文の照合と実行結果は区別し、実行結果は作業報告で扱います。
+- StorageのURL要求の排他制約・生成例外時のnullは実装で照合しました。今回読んだ既存テストだけで両分岐の網羅を認定しません。
+- API Discovery Hub紹介Pageの同期内訳を含む画面文言は、製品表示のため編集対象外です。MOCK / IDEA BOARDの全内容、LumiLab、ハーネス・実行機構・権限・設定・DB・本番操作は対象外です。

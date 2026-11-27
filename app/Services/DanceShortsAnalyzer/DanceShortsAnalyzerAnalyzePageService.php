@@ -212,6 +212,7 @@ final readonly class DanceShortsAnalyzerAnalyzePageService
      */
     private function buildComparisonPeriodVideoAnalyses(array $videoAnalyses): array
     {
+        // 比較期間は、比較対象の保存済み最新snapshotの観測時刻を全動画共通の終点として揃えます。
         $latestSnapshot = $this->latestVideoAnalysisSnapshot($videoAnalyses);
         $periodAnalyses = [];
 
