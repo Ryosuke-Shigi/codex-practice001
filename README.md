@@ -7,7 +7,7 @@ Laravel 11、Inertia、React、TypeScriptで構成したポートフォリオア
 ## 公開先
 
 - [公開サイト](https://ada-works.dev)
-- [プロジェクト選択](https://ada-works.dev/projects)
+- [プロジェクト選択](https://ada-works.dev/portfolio/links-launcher)
 - [設計思想](https://ada-works.dev/design-philosophy)
 - [Docker・インフラ構成リポジトリ](https://github.com/Ryosuke-Shigi/laravel11-docker)
 
@@ -44,6 +44,17 @@ Portfolio版LinksLauncherでは7つのプロジェクトに合計17のStageが�
 MOCKやPROTOTYPEのコードを、そのままPRODUCTの完成実装として扱いません。確認したUI契約や仕様を分離し、PRODUCTでは必要な責務とデータ境界を定めて実装します。
 
 ## PRODUCT・運用機能
+
+### LinksLauncher（作品選択）
+
+画像と説明を見ながら、公開作品を選択する機能です。
+
+- 前後ボタン、左右キー、スワイプによる作品選択
+- 段階画面から対応作品を選択した作品一覧へ戻る操作
+- サイトTOPへの導線
+- 説明欄内の長文スクロールと、説明量に左右されない作品ボタン・左右矢印の位置
+
+機能固有の仕様は [LinksLauncher](docs/features/links-launcher.md) に記載しています。
 
 ### API Discovery Hub
 
@@ -103,7 +114,7 @@ DanceShortsRadarで保存した動画とsnapshotを使い、複数動画を横�
 - 緯度、経度、最大震度を持つデータだけをmap pin化
 - 対象外、取得失敗、XML構文破損の分類
 - feed処理とmap pin処理の状態分離
-- 15分ごとのScheduler入口
+- 3分間隔で登録した定期取得の入口
 - 同期状態を返すstatus API
 
 機能固有の仕様は [Japan Quake Wave Map](docs/features/japan-quake-wave-map.md) に記載しています。
@@ -315,6 +326,7 @@ READMEは外部閲覧者向けの概要です。機能固有の仕様、共通�
 - [テスト](docs/testing.md)
 - [セキュリティ](docs/security.md)
 - [Storage](docs/storage.md)
+- [LinksLauncher](docs/features/links-launcher.md)
 - [API Discovery Hub](docs/features/api-discovery-hub.md)
 - [DanceShortsRadar](docs/features/dance-shorts-radar.md)
 - [DanceShortsAnalyzer](docs/features/dance-shorts-analyzer.md)
