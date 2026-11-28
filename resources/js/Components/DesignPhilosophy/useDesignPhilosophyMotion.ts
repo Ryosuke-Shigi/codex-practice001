@@ -1,24 +1,21 @@
 import { useEffect, type RefObject } from 'react';
+import type { DesignPhilosophySection } from './designPhilosophyTypes';
 
-const targetsSelector = '[data-rpg-section], [data-structure-motion], [data-scroll-reveal]';
+const targetsSelector = '[data-scroll-reveal]';
 const seenAttribute = 'data-scroll-seen';
 
 /** 表示を隠さず、画面に入った演出対象だけを一度強調します。 */
 export default function useDesignPhilosophyMotion(
     rootRef: RefObject<HTMLElement | null>,
+    sections: readonly DesignPhilosophySection[],
 ) {
     useEffect(() => {
         const root = rootRef.current;
-        if (!root) return;
-
-        const reducedMotion = typeof window.matchMedia === 'function' &&
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reducedMotion || typeof window.IntersectionObserver !== 'function') return;
+        if (!root || typeof window.IntersectionObserver !== 'function') return;
 
         const targets = root.querySelectorAll<HTMLElement>(targetsSelector);
+        const seenThisRun = new Set<Element>();
         let observer: IntersectionObserver | undefined;
-        const clearSeen = () => targets.forEach((target) => target.removeAttribute(seenAttribute));
-
         try {
             observer = new window.IntersectionObserver((entries) => {
                 if (!observer) return;
@@ -26,15 +23,18 @@ export default function useDesignPhilosophyMotion(
                     if (!isIntersecting || target.hasAttribute(seenAttribute)) continue;
 
                     target.setAttribute(seenAttribute, '');
+                    seenThisRun.add(target);
                     observer.unobserve(target);
                 }
-            }, { rootMargin: '0px 0px -8% 0px', threshold: 0.06 });
+            }, { rootMargin: '0px 0px -5% 0px', threshold: 0.05 });
 
-            for (const target of targets) observer.observe(target);
+            for (const target of targets) {
+                if (!target.hasAttribute(seenAttribute)) observer.observe(target);
+            }
         } catch {
             observer?.disconnect();
             observer = undefined;
-            clearSeen();
+            seenThisRun.forEach(target => target.removeAttribute(seenAttribute));
             return;
         }
 
@@ -49,7 +49,6 @@ export default function useDesignPhilosophyMotion(
             observer = undefined;
             document.removeEventListener('visibilitychange', syncVisibility);
             root.removeAttribute('data-motion-paused');
-            clearSeen();
         };
-    }, [rootRef]);
+    }, [rootRef, sections]);
 }
