@@ -101,6 +101,7 @@ feature docsは共通ルールを上書きしません。コード、テスト�
 | `docs/features/japan-quake-wave-map.md` | Japan Quake Wave Map |
 | `docs/features/application-logs.md` | Portfolio版LinksLauncherから開くアプリログページと旧URL互換 |
 | `docs/features/links-launcher.md` | 共通Link選択・Portfolio入口・初期データと履歴 |
+| `docs/features/design-philosophy.md` | 公開設計思想の5節、表示設定・旧リンク・演出の互換 |
 
 新しい機能固有文書を追加した場合は、この一覧と必要なルーターだけを更新します。
 

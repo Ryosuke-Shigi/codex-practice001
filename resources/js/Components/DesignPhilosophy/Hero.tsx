@@ -1,17 +1,19 @@
-import HeroEvidenceIllustration from './HeroEvidenceIllustration';
-import PhilosophyInkText from './PhilosophyInkText';
-import type { DesignPhilosophySectionProps } from './designPhilosophyTypes';
+import PhilosophyIllustration from './PhilosophyIllustration';
+import type { DesignPhilosophySection } from './designPhilosophyTypes';
 
-export default function Hero({ section }: DesignPhilosophySectionProps) {
-    return <header id={section.key} className="dp-hero" aria-labelledby="design-philosophy-hero" data-scroll-reveal>
-        <div className="dp-shell dp-hero__layout">
-            <div className="dp-hero__content">
-                <p className="dp-eyebrow">{section.eyebrow}</p>
-                <h1 id="design-philosophy-hero" aria-label={section.title}><PhilosophyInkText text={section.title} /></h1>
+export default function Hero({ section }: { section: DesignPhilosophySection }) {
+    return (
+        <header id={section.key} className="dp-hero dp-shell" aria-labelledby="design-philosophy-hero">
+            <div className="dp-hero__copy" data-scroll-reveal>
+                <p className="dp-eyebrow">設計思想</p>
+                <h1 id="design-philosophy-hero">
+                    {section.title.split(/(?<=。)/u).map((phrase, index) => (
+                        <span key={index}>{phrase}</span>
+                    ))}
+                </h1>
                 <p className="dp-hero__lead">{section.lead}</p>
-                {section.body && <p className="dp-hero__body">{section.body}</p>}
             </div>
-            <div className="dp-hero__visual"><HeroEvidenceIllustration /></div>
-        </div>
-    </header>;
+            <PhilosophyIllustration name="hero-open-book" alt="開いた本から設計片が立ち上がり、藍色の光でつながる" />
+        </header>
+    );
 }

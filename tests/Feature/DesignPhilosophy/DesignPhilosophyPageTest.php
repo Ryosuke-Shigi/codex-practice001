@@ -17,13 +17,16 @@ class DesignPhilosophyPageTest extends TestCase
                 ->component('DesignPhilosophy/Index', false)
                 ->has('sections', 9)
                 ->where('sections.0.key', 'hero')
-                ->where('sections.0.title', 'AIとつくる。品質は、仕組みで確かめる。')
+                ->where('sections.0.title', '変更できる。理解し直せる。確かめられる。')
                 ->where('sections.0.eyebrow', '設計思想')
-                ->where('sections.0.lead', '責務が分かるコードと、実装・検証・判断を分ける開発の仕組みを大切にしています。')
+                ->where('sections.0.lead', '継続的に開発・保守できるシステムを目指し、責務を分け、設計の意図を残し、実際の結果を確かめます。')
                 ->where('sections.1.key', 'principles')
                 ->where('sections.2.key', 'human-ai-roles')
                 ->where('sections.2.title', '役割と作業条件を、仕組みでつなぐ。')
                 ->where('sections.3.key', 'ai-development-flow')
+                ->where('sections.3.title', '作業条件から最終判断まで、確認結果をつなぐ。')
+                ->where('sections.3.lead', '作業条件、調査、実装、検証、レビュー、最終判断へと、確認結果と未確認事項を渡します。')
+                ->where('sections.3.body', '技術相談は必要な場合に依頼し、指摘があれば修正と再確認へ戻します。')
                 ->where('sections.4.key', 'architecture')
                 ->where('sections.4.title', '責務を分け、意図を残す。')
                 ->where('sections.5.key', 'development-stages')
@@ -34,6 +37,25 @@ class DesignPhilosophyPageTest extends TestCase
                 ->where('sections.8.key', 'closing')
                 ->where('sections.8.title', '実行可能であることを、実行してよいことへ変換しない。')
             );
+    }
+
+    public function test_design_philosophy_sections_keep_the_existing_props_without_chapter_numbers(): void
+    {
+        $this->get('/design-philosophy')->assertOk()->assertInertia(function (Assert $page): void {
+            for ($index = 0; $index < 9; $index++) {
+                $page->has('sections.'.$index, fn (Assert $section) => $section
+                    ->whereAllType([
+                        'key' => 'string',
+                        'sortOrder' => 'integer',
+                        'eyebrow' => 'string',
+                        'title' => 'string',
+                        'lead' => 'string',
+                        'body' => 'string',
+                    ])
+                    ->where('eyebrow', fn (string $eyebrow): bool => preg_match('~^(?:\d+\s*[/／]|FINAL\b)~iu', $eyebrow) === 0)
+                );
+            }
+        });
     }
 
     public function test_design_philosophy_page_renders_sorted_enabled_sections(): void

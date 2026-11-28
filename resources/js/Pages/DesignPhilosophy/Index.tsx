@@ -21,7 +21,7 @@ export default function DesignPhilosophyIndex({
                 <meta
                     head-key="description"
                     name="description"
-                    content="AIとつくる。品質は、仕組みで確かめる。ハーネスの構造、コーディング思想、大切にする原則、開発段階を図で紹介します。"
+                    content="責務を分け、設計の意図を残し、結果を確かめる。アーキテクチャ、変更への対応、理解再起動、開発と品質、AI駆動開発の考え方を紹介します。"
                 />
                 <meta
                     head-key="theme-color"
